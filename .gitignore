@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+public/pdf.worker.min.mjs
+.env*.local
+npm-debug.log*
+install.log
+
+# Firestore 에뮬레이터 산출물 (규칙 테스트 실행 시 생성)
+firestore-debug.log
+firebase-debug.log
+ui-debug.log

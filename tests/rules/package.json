@@ -1,0 +1,16 @@
+{
+  "name": "class-peer-qna-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Firestore 보안 규칙 테스트 (루트 package.json과 분리 — Vercel 빌드에 영향 주지 않도록)",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-rules-test \"node --test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.9.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-tools": "^14.0.0"
+  }
+}

@@ -1,0 +1,655 @@
+rules_version = '2';
+
+// =============================================================
+// Firestore 보안 규칙 — class-peer-qna
+// -------------------------------------------------------------
+// 원칙
+//  · 로그인하지 않으면 아무것도 못 읽고/못 씀 (기본 거부)
+//  · 질문 게시판(questions·answers·notices·keywords)은 전체 공유
+//  · 공부방(반)의 모든 자산(보드·카드·과일·누가기록·KWL·입장코드)은
+//    그 반을 개설한 교사(classes.createdBy)에게 귀속.
+//    최고 관리자(role=admin 또는 부트스트랩 이메일)만 전체 접근.
+//  · 역할(role)은 클라이언트가 스스로 못 바꿈 — functions/setUserRole로만
+//  · 반이 '보관(archived)' 상태면: 소유 교사도 그 반의 데이터는 읽기만
+//    가능(쓰기 전면 차단, 보관 해제해야 편집 가능) / 학생은 읽기도 불가.
+//    classes 문서 자체(이름 수정·보관 토글)는 예외 — 항상 소유 교사가 수정 가능.
+// 배포:  firebase deploy --only firestore:rules
+// =============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function userRole() { return request.auth.token.get('role', ''); }
+
+    // 초기(최고) 관리자 — 역할 클레임이 없어도 관리자. email_verified 필수.
+    function isInitialAdmin() {
+      return signedIn() && request.auth.token.email == 'iseoul72@gmail.com'
+             && request.auth.token.email_verified == true;
+    }
+    // 최고 관리자 — 모든 반의 데이터·기능에 접근(반 소유 제한의 예외)
+    function isAdmin() {
+      return signedIn() && (userRole() == 'admin' || isInitialAdmin());
+    }
+    // 학교 이메일 계정인지 — request.auth.token.email은 서버가 검증한 값이라
+    // 위조 불가(request.resource.data의 클라이언트 입력값과 다름). 학생 가입
+    // 도메인 제한(users 생성 규칙)에 씁니다.
+    function isSchoolEmail() {
+      return request.auth.token.get('email', '').lower().matches('.*@hansung[.]hs[.]kr$');
+    }
+    // 가입 시 함께 낸 등록 코드(registrationCodes 문서 ID)가 실제로 있고
+    // active인지 — users 생성 규칙에서만 씁니다. 코드 값 자체는 여기 규칙이
+    // 아니라 registrationCodes 컬렉션의 데이터로 관리합니다(교체할 때 규칙을
+    // 다시 배포할 필요가 없도록).
+    function hasValidRegistrationCode() {
+      return request.resource.data.get('regCode', '') is string
+             && request.resource.data.regCode != ''
+             && get(/databases/$(database)/documents/registrationCodes/$(request.resource.data.regCode))
+                  .data.get('active', false) == true;
+    }
+    // 교사(최고 관리자 포함) — 교사용 기능 접근 관문
+    function isTeacher() {
+      return signedIn() &&
+        (userRole() == 'teacher' || userRole() == 'admin' || isInitialAdmin());
+    }
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ── 반 소유권 헬퍼 ────────────────────────────────────────
+    // 반 개설자 uid / 그 반의 소유 교사인지 / 소속 멤버인지.
+    function classOwnerUid(cId) {
+      return get(/databases/$(database)/documents/classes/$(cId)).data.createdBy;
+    }
+    function isClassArchived(cId) {
+      return get(/databases/$(database)/documents/classes/$(cId)).data.get('archived', false) == true;
+    }
+    function ownsClass(cId) {
+      // isTeacher()가 false면 &&에서 단락되어 get을 수행하지 않음(학생 비용 없음)
+      return isTeacher() && classOwnerUid(cId) == uid();
+    }
+    // 쓰기 전용 판정 — 소유 교사라도 반이 보관 상태면 그 반의 데이터는 편집 불가.
+    // (classes 문서 자체의 수정 — 이름 변경·보관 토글 — 은 이 함수를 쓰지 않고
+    //  ownsClass만으로 항상 허용합니다. 그래야 보관 해제 자체가 막히지 않음)
+    function ownsClassEditable(cId) {
+      return ownsClass(cId) && !isClassArchived(cId);
+    }
+    // 보관된 반은 학생도 접근 불가 — 소속 여부와 별개로 항상 거부.
+    function isClassMember(cId) {
+      return !isClassArchived(cId)
+             && exists(/databases/$(database)/documents/memberships/$(uid() + '_' + cId));
+    }
+
+    // ── 공부방 보드 헬퍼 ──────────────────────────────────────
+    function studyBoardClassId(bId) {
+      return get(/databases/$(database)/documents/studyBoards/$(bId)).data.classId;
+    }
+    function ownsBoard(bId) {
+      return ownsClass(studyBoardClassId(bId));
+    }
+    function ownsBoardEditable(bId) {
+      return ownsClassEditable(studyBoardClassId(bId));
+    }
+    function isBoardClassMember(bId) {
+      return isClassMember(studyBoardClassId(bId));
+    }
+    // editMode가 없는 보드 문서(콘솔에서 직접 만들었거나 예전 데이터)에서도
+    // 안전하게 판정합니다. 직접 참조(.editMode)하면 필드가 없을 때 규칙 평가가
+    // 오류로 끝나 학생 카드 쓰기가 통째로 막힙니다. 보드는 항상 'open'으로
+    // 만들어지므로 기본값도 'open'이 맞습니다.
+    function isBoardLocked(bId) {
+      return get(/databases/$(database)/documents/studyBoards/$(bId)).data.get('editMode', 'open') == 'locked';
+    }
+    // '선생님 보드'(type: notice) — 교사 전용 쓰기. 학생은 읽기만(첨부 다운로드 포함).
+    function isNoticeBoard(bId) {
+      return get(/databases/$(database)/documents/studyBoards/$(bId)).data.type == 'notice';
+    }
+    // 모둠 활동 보드 여부 / '함께 보기' 여부
+    function isGroupBoard(bId) {
+      return get(/databases/$(database)/documents/studyBoards/$(bId)).data.get('activityType', 'individual') == 'group';
+    }
+    function isSharedBoard(bId) {
+      return get(/databases/$(database)/documents/studyBoards/$(bId)).data.viewMode == 'shared';
+    }
+    // 이 카드가 모둠 카드이고 내가 그 모둠의 구성원인지
+    function isMyGroupCard() {
+      return resource.data.get('memberUids', []).hasAny([uid()]);
+    }
+
+    // ── 사용자 프로필 ─────────────────────────────────────────
+    // 실명·이메일 등 식별 정보(PII)가 여기에만 있으므로, 읽기는 본인+교사로 제한.
+    // (질문 게시판은 전체 공유라 교사가 타 반 학생 실명도 확인해야 하므로 교사 전체 허용)
+    match /users/{userId} {
+      allow read: if signedIn() && (userId == uid() || isTeacher());
+      // 본인만 생성, 가입 시 role은 'student' 고정 (스스로 승격 불가).
+      // 가입은 학교 이메일(@hansung.hs.kr)만 허용 — 학생·선생님 모두
+      // 마찬가지이며, 최고 관리자 이메일만 유일한 예외입니다. '선생님으로
+      // 가입 신청'(requestedRole=='teacher')도 학교 이메일이어야 하고,
+      // 관리자 승인 전까지는 어차피 role이 student입니다. 클라이언트
+      // (lib/auth.js)에서도 같은 검사를 먼저 하지만, 실제 강제는 여기
+      // (서버 검증 이메일 기준)입니다 — request.resource.data의 email
+      // 필드는 클라이언트가 채운 값이라 위조될 수 있어 이걸로 판정하지 않습니다.
+      // 학교 이메일이어도 등록 코드(선생님이 알려준 값)가 유효해야 가입됩니다.
+      // 코드 자체는 이 문서에 실려 오는 클라이언트 입력값이라 위조될 수 있지만,
+      // registrationCodes/{그 코드} 문서가 실제로 있고 active인지를 get()으로
+      // 다시 확인하므로 아무 문자열이나 넣어서는 통과하지 못합니다.
+      allow create: if signedIn() && userId == uid()
+                    && request.resource.data.role == 'student'
+                    && (isInitialAdmin() || isSchoolEmail())
+                    && (isInitialAdmin() || hasValidRegistrationCode());
+      // 쓰기 범위 — '누가' 뿐 아니라 '어떤 필드를' 쓰는지까지 제한합니다.
+      //  · 최고 관리자: 전체. 역할 부여와 부트스트랩 자가 치유(lib/auth.js가
+      //      초기 관리자 문서에 role='admin'을 맞추는 것)가 여기에 해당합니다.
+      //  · 본인: 이메일·아바타·알림토큰·신청 표시만. 닉네임·실명·학번·역할 불가.
+      //  · 교사: 학생 관리에 실제로 쓰는 필드만(StudentEditModal의 프로필 수정,
+      //      탈퇴 신청 거절). role은 목록에 없어 교사가 역할을 건드릴 수 없습니다 —
+      //      역할 부여는 서버 함수(setUserRole)가 admin 권한으로만 합니다.
+      //      대상도 학생(또는 본인)으로 좁혀, 다른 교사의 프로필은 못 고칩니다.
+      //      선생님 신청 승인·거절(requestedRole)은 최고 관리자 전용 화면이라
+      //      교사 목록에서 뺐습니다.
+      allow update: if signedIn() && (
+        isAdmin()
+        || (userId == uid()
+            && changedOnly(['email','emoji','fcmTokens','requestedRole',
+                            'withdrawRequested','withdrawRequestedAt']))
+        || (isTeacher()
+            && (userId == uid() || resource.data.get('role', 'student') == 'student')
+            && changedOnly(['displayName','emoji','realName','email','studentId',
+                            'withdrawRequested','withdrawRequestedAt']))
+      );
+      // 탈퇴(계정 삭제)는 서버 함수(deleteStudentAccount)로만 합니다.
+      // 그 함수는 admin SDK라 규칙을 우회하며, "담당하는 반의 학생인지"를
+      // 검사합니다. 여기서 교사에게 직접 삭제를 열어 두면 아무 반 학생이나
+      // 프로필을 지울 수 있어(되돌릴 수 없음) 관리자만 남겨 둡니다.
+      allow delete: if isAdmin();
+
+      match /notifications/{nId} {
+        allow read, write: if signedIn() && userId == uid();
+      }
+    }
+
+    // ── 등록 코드 — 최초 가입 관문. 학교 이메일이어도 이 코드가 있어야
+    //    가입할 수 있습니다(아무나 학교 도메인 계정이 있다고 이 서비스에
+    //    들어오는 것을 막기 위함). 문서 ID가 코드 자체이고, 데이터는
+    //    { active: true, note, createdAt } 정도만 둡니다. 지금은 Firebase
+    //    콘솔에서 문서를 직접 추가/폐기하는 방식으로 운영합니다.
+    //  · get : 가입 절차 중(로그인 전) 학교 이메일 검사와 마찬가지로 클라이언트가
+    //    먼저 걸러 볼 수 있어야 해서 공개로 둡니다. 정확한 코드 문자열을 알아야
+    //    1건만 읽히고(list는 막혀 있어 코드 목록 자체는 새어나가지 않음), App
+    //    Check가 이 읽기도 함께 보호해 무차별 대입을 어렵게 합니다.
+    //  · list/write: 최고 관리자만 — 발급 UI가 생기기 전까지는 콘솔에서 관리.
+    match /registrationCodes/{code} {
+      allow get: if true;
+      allow list, write: if isAdmin();
+    }
+
+    // ── 질문 (전체 공유) ──────────────────────────────────────
+    match /questions/{qId} {
+      allow read: if signedIn();
+      // createdAt은 반드시 서버 시각. 임의 값(특히 미래 날짜)을 넣으면
+      // 주간 랭킹 집계 창에서 영원히 빠지지 않습니다.
+      allow create: if signedIn() && request.resource.data.authorId == uid()
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.answerCount == 0
+                    && request.resource.data.meTooIds == []
+                    && request.resource.data.resolved == false;
+      allow update: if signedIn() && (
+        (resource.data.authorId == uid()
+          && changedOnly(['title','content','keyword','imageUrl','images',
+                          'resolved','reflectionPending','understoodAnswerId','reflection']))
+        || isTeacher()
+        || (changedOnly(['meTooIds'])
+            && resource.data.authorId != uid()
+            // 배열에 같은 uid가 여러 번 들어가지 못하게 막습니다.
+            // 아래 두 줄은 집합(toSet)으로만 비교하기 때문에, 중복만으로는
+            // 차집합이 달라지지 않아 ['a','나','나','나'] 같은 배열이 그대로
+            // 통과했습니다. 공감 수와 랭킹은 배열 길이로 세므로(questionRanking.js),
+            // 학생이 자기 uid를 여러 번 넣어 수치를 부풀릴 수 있었습니다.
+            && request.resource.data.meTooIds.size()
+                 == request.resource.data.meTooIds.toSet().size()
+            && request.resource.data.meTooIds.toSet()
+                 .difference(resource.data.meTooIds.toSet()).hasOnly([uid()])
+            && resource.data.meTooIds.toSet()
+                 .difference(request.resource.data.meTooIds.toSet()).hasOnly([uid()]))
+      );
+      allow delete: if signedIn() && (resource.data.authorId == uid() || isTeacher());
+
+      match /answers/{aId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.authorId == uid()
+                      && request.resource.data.createdAt == request.time;
+        allow update: if signedIn() && (
+          (resource.data.authorId == uid()
+            && changedOnly(['content','imageUrl','images']))
+          || isTeacher()
+          || (changedOnly(['understood'])
+              && get(/databases/$(database)/documents/questions/$(qId)).data.authorId == uid())
+        );
+        allow delete: if signedIn() && (resource.data.authorId == uid() || isTeacher());
+      }
+    }
+
+    // ── 공지 — 교사만 작성, 삭제는 작성한 본인이나 최고 관리자만 ──
+    //   (다른 반 교사가 남의 공지를 지울 수 없도록 — 공지는 전체 공유라
+    //    작성자 제한이 없으면 아무나 서로의 공지를 지울 수 있었습니다)
+    match /notices/{nId} {
+      allow read: if signedIn();
+      allow create: if isTeacher() && request.resource.data.authorId == uid();
+      allow delete: if isAdmin() || (isTeacher() && resource.data.authorId == uid());
+    }
+
+    // ── 키워드 — 읽기 모두, 생성/수정/삭제는 교사 (전체 공유) ──
+    match /keywords/{kId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isTeacher();
+    }
+
+    // ── meta/keywordsSeeded — 기본 키워드를 이미 한 번 심었는지 기록 ──
+    //  · keywords 컬렉션이 비어 있을 때, "한 번도 안 심음"과 "교사가 전부
+    //    지움"을 구분하기 위한 플래그. 없으면(과거 시드 이력 없음) 기본
+    //    키워드를 심고, 있으면 비워 둔 채로 둡니다.
+    match /meta/{docId} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+
+    // ── 반(클래스) ────────────────────────────────────────────
+    //  · 이름은 공개 메타데이터(입장 코드 확인 등) → 읽기는 로그인 사용자.
+    //    교사 화면은 본인 개설 반만 클라이언트에서 필터링해 표시.
+    //  · 생성: 교사 본인이 개설자. 수정(이름·보관 토글): 개설자 또는 최고 관리자.
+    //  · 삭제: 개설자(보관된 반만) 또는 최고 관리자 — 위험도가 높아 보관을
+    //    먼저 거치도록 강제합니다.
+    match /classes/{cId} {
+      allow read: if signedIn();
+      allow create: if isTeacher() && request.resource.data.createdBy == uid();
+      allow update: if isAdmin()
+                    || (isTeacher() && resource.data.createdBy == uid());
+      allow delete: if isAdmin()
+                    || (isTeacher() && resource.data.createdBy == uid()
+                        && resource.data.get('archived', false) == true);
+
+      // ── 언제든 질문하기(손들기) ─────────────────────────────
+      //  · 경로 = classes/{classId}/questionSignals/{uid}
+      //  · 학생은 자기 손들기만 켜고/끄고, 담당 교사는 반 전체 목록만 확인합니다.
+      match /questionSignals/{studentUid} {
+        allow get: if signedIn() && (
+          isAdmin()
+          || ownsClass(cId)
+          || studentUid == uid()
+        );
+        allow list: if signedIn() && (
+          isAdmin()
+          || ownsClass(cId)
+        );
+        allow create: if signedIn()
+                      && studentUid == uid()
+                      && request.resource.data.uid == uid()
+                      && request.resource.data.classId == cId
+                      && isClassMember(cId)
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.updatedAt == request.time;
+        allow update: if signedIn()
+                      && studentUid == uid()
+                      && resource.data.uid == uid()
+                      && request.resource.data.uid == resource.data.uid
+                      && request.resource.data.classId == cId
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && isClassMember(cId)
+                      && request.resource.data.updatedAt == request.time;
+        allow delete: if signedIn() && (
+          studentUid == uid()
+          || isAdmin()
+          || ownsClassEditable(cId)
+        );
+      }
+
+      // ── 공부방 출석부 ─────────────────────────────────────
+      //  · 경로 = classes/{classId}/attendanceRecords/{date_uid}
+      //  · 학생은 자기 출석 기록만 만들고 읽습니다. 교사는 반 전체 기록을 봅니다.
+      match /attendanceRecords/{recordId} {
+        allow read: if signedIn() && (
+          isAdmin()
+          || ownsClass(cId)
+          || resource.data.uid == uid()
+        );
+        allow create: if signedIn()
+                      && request.resource.data.uid == uid()
+                      && request.resource.data.classId == cId
+                      && recordId == (request.resource.data.date + '_' + uid())
+                      && request.resource.data.date is string
+                      && isClassMember(cId)
+                      && request.resource.data.attendedAt == request.time
+                      && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+
+      // ── 참여 전광판 자리표 ─────────────────────────────────
+      //  · default: 수업 준비에서 만든 기본 자리표
+      //  · daily_YYYY-MM-DD: 발표 중 임시 이동한 당일 자리표
+      match /seatLayouts/{layoutId} {
+        allow read: if signedIn() && (isAdmin() || ownsClass(cId));
+        allow create, update: if signedIn()
+                              && (isAdmin() || ownsClassEditable(cId))
+                              && request.resource.data.classId == cId
+                              && request.resource.data.layoutId == layoutId
+                              && request.resource.data.seats is list
+                              && request.resource.data.seats.size() <= 30;
+        allow delete: if signedIn() && (isAdmin() || ownsClassEditable(cId));
+      }
+
+      // ── 참여 전광판 기본 모둠 구성 ─────────────────────────
+      //  · 반 단위 장기 모둠입니다. 참여 전광판의 모둠별 보기에서만 씁니다.
+      match /groupAssignments/{assignmentId} {
+        allow read: if signedIn() && (isAdmin() || ownsClass(cId));
+        allow create, update: if signedIn()
+                              && (isAdmin() || ownsClassEditable(cId))
+                              && assignmentId == 'default'
+                              && request.resource.data.classId == cId
+                              && request.resource.data.groups is list
+                              && request.resource.data.groups.size() <= 6;
+        allow delete: if signedIn() && (isAdmin() || ownsClassEditable(cId));
+      }
+    }
+
+    // ── 입장 코드 — 문서 ID가 코드 자체. 코드 소유 교사만 관리. ──
+    //  · get : 정확한 코드를 아는 사람만 1건 읽기(학생 입장 시)
+    //  · list: 최고 관리자 또는 코드 개설 교사만(쿼리를 createdBy로 제한해야 함)
+    //  · 생성: 최고 관리자 또는 개설 교사(보관된 반은 발급 불가)
+    //  · 수정/삭제: 최고 관리자 또는 개설 교사(보관 시 코드를 지우는 데 필요)
+    match /joinCodes/{code} {
+      allow get: if signedIn();
+      allow list: if isAdmin() || resource.data.createdBy == uid();
+      // 자기가 개설한 반의 코드만 만들 수 있습니다. createdBy만 검사하면
+      // 다른 교사의 반(classId는 로그인만 하면 조회 가능)으로 유효한 코드를
+      // 위조해 학생을 남의 반에 가입시킬 수 있었습니다.
+      allow create: if isAdmin()
+                    || (isTeacher()
+                        && request.resource.data.createdBy == uid()
+                        && ownsClassEditable(request.resource.data.classId));
+      allow update, delete: if isAdmin()
+                            || (isTeacher() && resource.data.createdBy == uid());
+    }
+
+    // ── 소속(멤버십) — 본인 것 + 그 반 소유 교사/관리자만. ──
+    match /memberships/{mId} {
+      allow read: if signedIn() && (
+        resource.data.uid == uid() || isAdmin() || ownsClass(resource.data.classId)
+      );
+      allow create: if signedIn()
+                    && request.resource.data.uid == uid()
+                    && mId == (uid() + '_' + request.resource.data.classId)
+                    && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.code))
+                         .data.classId == request.resource.data.classId
+                    && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.code))
+                         .data.expiresAt > request.time;
+      // 학생 본인의 직접 '반 나가기'는 허용하지 않습니다. 소속 변경은
+      // 담당 교사/관리자가 관리합니다.
+      allow delete: if signedIn() && (
+        isAdmin() || ownsClassEditable(resource.data.classId)
+      );
+    }
+
+    // ── 학생 보상(과일) — 반 소유 교사/관리자만 쓰기, 읽기는 소속 학생도. ──
+    //  · 문서 ID = `{classId}_{uid}`. 문서엔 uid·과일 수·이름표만(공부방은 실명 공간).
+    //  · 20개마다 별(⭐)로 접어 표시 — 상한 100(별 5개).
+    match /rewards/{rId} {
+      allow read: if isAdmin()
+                  || ownsClass(resource.data.classId)
+                  || isClassMember(resource.data.classId);
+      allow create, update: if (isAdmin() || ownsClassEditable(request.resource.data.classId))
+                   && request.resource.data.count is int
+                   && request.resource.data.count >= 0
+                   && request.resource.data.count <= 100
+                   && rId == (request.resource.data.classId + '_' + request.resource.data.uid);
+      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+    }
+
+    // ── 수업 자료(수업하기) — 만든 선생님 본인만. 학생은 읽지 않습니다. ──
+    //  · 슬라이드 이미지 URL과 장별 메모를 담습니다. 메모는 교사 전용이라
+    //    학생에게 절대 노출되면 안 되므로 읽기를 소유 교사로 좁힙니다.
+    //  · 학생이 수업 중 보는 슬라이드는 방송 문서(broadcasts)에 실린
+    //    '현재 장 이미지 URL' 하나뿐입니다.
+    match /lessons/{lId} {
+      allow read: if isAdmin() || (isTeacher() && resource.data.ownerId == uid());
+      allow create: if isTeacher() && request.resource.data.ownerId == uid();
+      allow update, delete: if isAdmin()
+                            || (isTeacher() && resource.data.ownerId == uid());
+    }
+
+    // ── 발표 강제 전환(방송) — 문서 ID = classId. 있으면 방송 중, 없으면 아님. ──
+    //  · 반 소유 교사/관리자만 켜고 끌 수 있고, 그 반 소속 학생은 읽기만.
+    //  · 문서 ID가 곧 classId라 get() 없이 바로 판정합니다.
+    match /broadcasts/{classId} {
+      allow read: if isAdmin() || ownsClass(classId) || isClassMember(classId);
+      allow create, update, delete: if isAdmin() || ownsClassEditable(classId);
+    }
+
+    // ── 참여 상태 — 발표 중 학생 화면이 보이는지(교사 전광판용) ──
+    //  · 문서 ID = `{uid}_{classId}`. 학생은 자기 것만 쓰고, 읽기는 담당 교사만.
+    //  · 화면이 보이는지(visible)와 갱신 시각뿐이라 실명·내용은 담지 않습니다.
+    match /presence/{pId} {
+      allow read: if isAdmin() || ownsClass(resource.data.classId);
+      allow create, update: if signedIn()
+                            && request.resource.data.uid == uid()
+                            && pId == (uid() + '_' + request.resource.data.classId)
+                            && request.resource.data.visible is bool
+                            && isClassMember(request.resource.data.classId);
+      allow delete: if isAdmin()
+                    || resource.data.uid == uid()
+                    || ownsClassEditable(resource.data.classId);
+    }
+
+    // ── 누가기록(학생 관찰 메모) — 반 소유 교사/관리자 전용 (학생 열람 불가) ──
+    match /studentNotes/{noteId} {
+      allow read: if isAdmin()
+                  || (resource.data.classId != null && ownsClass(resource.data.classId));
+      allow create: if (isAdmin()
+                        || (request.resource.data.classId != null
+                            && ownsClassEditable(request.resource.data.classId)))
+                    && request.resource.data.teacherId == uid()
+                    && request.resource.data.studentUid is string;
+      allow update, delete: if isAdmin()
+                            || (resource.data.classId != null && ownsClassEditable(resource.data.classId));
+    }
+
+    // ── 공부방 보드 — 읽기는 로그인 사용자(메타데이터), 쓰기는 반 소유 교사/관리자 ──
+    match /studyBoards/{bId} {
+      allow read: if signedIn();
+      allow create: if isAdmin()
+                    || (isTeacher() && ownsClassEditable(request.resource.data.classId));
+      allow update, delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+
+      match /cards/{cardId} {
+        // 읽기 — 본인 카드(0 get, 최우선) / 관리자 / 반 소유 교사 / 반 멤버.
+        // 단, 모둠 보드가 '자기 모둠만'(private)일 때 반 멤버는 자기 모둠
+        // 카드만 읽을 수 있음(memberUids array-contains 쿼리로 접근).
+        // '함께 보기'(shared)면 다른 모둠 카드도 읽기 가능(수정은 불가).
+        allow read: if signedIn() && (
+          resource.data.authorId == uid()
+          || isAdmin()
+          || ownsBoard(bId)
+          || (isBoardClassMember(bId)
+              && (
+                   !isGroupBoard(bId)
+                   || isSharedBoard(bId)
+                   || isMyGroupCard()
+                 ))
+        );
+        // 생성 — 관리자/소유 교사는 자유(모둠 카드도 교사가 생성. 단, 보관 중엔 불가).
+        //   학생은 (문서ID=uid) + 반 멤버 + 잠금 아님 + notice 아님 + 모둠 보드 아님.
+        allow create: if signedIn()
+                      && request.resource.data.authorId == uid()
+                      && (
+                           isAdmin()
+                           || ownsBoardEditable(bId)
+                           || (cardId == uid()
+                               && isBoardClassMember(bId)
+                               && !isBoardLocked(bId)
+                               && !isNoticeBoard(bId)
+                               && !isGroupBoard(bId))
+                         );
+        // 수정 — 관리자/소유 교사(보관 중엔 불가), 본인 카드(작성자 불변·멤버·
+        //   잠금 아님·notice 아님), 또는 내 모둠 카드(내용 필드만 — 모둠
+        //   명단·대표·작성자는 교사만 변경).
+        allow update: if signedIn() && (
+          isAdmin()
+          || ownsBoardEditable(bId)
+          || (cardId == uid()
+              && request.resource.data.authorId == resource.data.authorId
+              && isBoardClassMember(bId)
+              && !isBoardLocked(bId)
+              && !isNoticeBoard(bId))
+          || (isMyGroupCard()
+              && isBoardClassMember(bId)
+              && !isBoardLocked(bId)
+              && changedOnly(['title','content','imageUrl','attachments','updatedAt']))
+        );
+        // 삭제 — 관리자 또는 반 소유 교사만(보관 중엔 불가). 학생은 자기
+        //   카드도 수정만 가능하고 삭제는 못 합니다(실수로 지운 제출물을
+        //   되살릴 방법이 없어 삭제 권한을 교사에게만 둡니다).
+        allow delete: if signedIn() && (isAdmin() || ownsBoardEditable(bId));
+      }
+    }
+
+    // ── 책방 활동 — 닿소리 채우기 (반별) ──────────────────────
+    //  · 활동 문서: 반 구성원 읽기, 반 소유 교사/관리자만 쓰기
+    //  · 모둠 메타: 반 구성원 모두 읽기(대시보드에 전체 모둠 카드 표시).
+    //      쓰기는 교사(구성) + 자유 구성 모드의 학생 본인(참여/나가기)만.
+    //  · 단어: 그 모둠원과 담당 교사만 읽기 — 활동 중 남의 모둠 단어를
+    //      훔쳐보지 못하게 모둠 메타와 분리해 둔 컬렉션입니다.
+    function bookActivityClassId(aId) {
+      return get(/databases/$(database)/documents/bookActivities/$(aId)).data.classId;
+    }
+    function ownsBookActivity(aId) {
+      return ownsClass(bookActivityClassId(aId));
+    }
+    function ownsBookActivityEditable(aId) {
+      return ownsClassEditable(bookActivityClassId(aId));
+    }
+    function isBookActivityMember(aId) {
+      return isClassMember(bookActivityClassId(aId));
+    }
+    function isBookActivityFree(aId) {
+      return get(/databases/$(database)/documents/bookActivities/$(aId)).data.get('groupMode', 'teacher') == 'free';
+    }
+    function isBookActivityLocked(aId) {
+      return get(/databases/$(database)/documents/bookActivities/$(aId)).data.get('locked', false) == true;
+    }
+    // 내가 이 모둠의 구성원인지 (단어 읽기/쓰기 판정)
+    function isMyBookGroup(aId, gId) {
+      return get(/databases/$(database)/documents/bookActivities/$(aId)/groups/$(gId))
+               .data.get('memberUids', []).hasAny([uid()]);
+    }
+
+    match /bookActivities/{aId} {
+      // 문서 자신에 classId가 있으므로 get() 없이 바로 판정합니다.
+      allow read: if signedIn() && (
+        isAdmin()
+        || ownsClass(resource.data.classId)
+        || isClassMember(resource.data.classId)
+      );
+      allow create: if isAdmin()
+                    || (isTeacher() && ownsClassEditable(request.resource.data.classId));
+      allow update, delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+
+      match /groups/{gId} {
+        // 모둠 카드는 반 구성원 모두에게 공개 (누가 어느 모둠인지 확인)
+        allow read: if signedIn() && (isAdmin() || ownsBookActivity(aId) || isBookActivityMember(aId));
+        allow create, delete: if isAdmin() || ownsBookActivityEditable(aId);
+        // 수정 — 교사는 자유롭게(보관 중엔 불가). 학생은 '자유 구성' 모드에서
+        //   자기 자신만 명단에 넣고 뺄 수 있습니다(다른 필드 변경 불가).
+        allow update: if isAdmin()
+                      || ownsBookActivityEditable(aId)
+                      || (signedIn()
+                          && isBookActivityMember(aId)
+                          && isBookActivityFree(aId)
+                          && changedOnly(['memberUids','members'])
+                          && request.resource.data.memberUids.toSet()
+                               .difference(resource.data.memberUids.toSet()).hasOnly([uid()])
+                          && resource.data.memberUids.toSet()
+                               .difference(request.resource.data.memberUids.toSet()).hasOnly([uid()]));
+
+        match /words/{wId} {
+          // 단어는 그 모둠원과 담당 교사만 — 다른 모둠에는 보이지 않습니다.
+          allow read: if signedIn() && (isAdmin() || ownsBookActivity(aId) || isMyBookGroup(aId, gId));
+          allow create: if signedIn()
+                        && request.resource.data.authorId == uid()
+                        && isMyBookGroup(aId, gId)
+                        && !isBookActivityLocked(aId);
+          // 지우기는 본인이 넣은 단어 또는 담당 교사(보관 중엔 교사도 불가)
+          allow delete: if signedIn() && (
+            isAdmin() || ownsBookActivityEditable(aId)
+            || (resource.data.authorId == uid() && !isBookActivityLocked(aId))
+          );
+        }
+      }
+
+      // ── 곁텍스트 읽기 — 개인 활동 기록 ──
+      // 문서 ID를 학생 uid로 고정해 '한 사람이 여러 장을 만드는 일'을 막습니다.
+      // 모둠 활동과 달리 제출물이라, 남의 답은 같은 반이어도 보이지 않습니다
+      // (본인과 담당 교사만). 학생 답에는 실명이 들어가므로 더 좁게 잠급니다.
+      match /entries/{sId} {
+        allow read: if signedIn() && (
+          isAdmin() || ownsBookActivity(aId) || sId == uid()
+        );
+        allow create, update: if signedIn()
+                      && sId == uid()
+                      && request.resource.data.authorId == uid()
+                      && isBookActivityMember(aId)
+                      && !isBookActivityLocked(aId);
+        // 지우기는 담당 교사만 — 학생이 실수로 제출물을 통째로 날리지 못하게
+        allow delete: if isAdmin() || ownsBookActivityEditable(aId);
+      }
+    }
+
+    // ── KWL — 개인 성찰. 본인 + 반 소유 교사/관리자만. ──
+    //  · 생성: 본인 명의 + 자기가 속한 반으로만 (남의 반에 기록을 심지 못하게)
+    //  · 수정: 작성자·반·날짜는 못 바꿉니다 — 예전에는 본인 문서를 다른
+    //    학생·다른 반 기록으로 바꿔치기할 수 있었습니다.
+    //    (변경 키 화이트리스트가 아니라 '불변 필드 고정'으로 검사합니다.
+    //     addKwl이 같은 문서에 merge로 다시 쓰면서 createdAt·이름표를 함께
+    //     갱신하므로, 화이트리스트 방식이면 정상 재저장이 막힙니다)
+    match /kwl/{kwlId} {
+      allow read: if signedIn() && (
+        resource.data.userId == uid() || isAdmin() || ownsClass(resource.data.classId)
+      );
+      // 교사는 반의 '멤버'가 아니라 '소유자'라 두 경로를 모두 열어 둡니다
+      // (교사도 자기 반에서 KWL을 쓸 수 있어야 하므로. 보관 중엔 교사도 불가).
+      allow create: if signedIn()
+                    && request.resource.data.userId == uid()
+                    && (
+                         isClassMember(request.resource.data.classId)
+                         || ownsClassEditable(request.resource.data.classId)
+                         || isAdmin()
+                       );
+      allow update: if signedIn()
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.classId == resource.data.classId
+                    && request.resource.data.date == resource.data.date
+                    && (
+                         resource.data.userId == uid()
+                         || isAdmin()
+                         || ownsClassEditable(resource.data.classId)
+                       );
+      allow delete: if signedIn() && (
+        resource.data.userId == uid() || isAdmin() || ownsClassEditable(resource.data.classId)
+      );
+    }
+
+    // ── 컬렉션 그룹 쿼리 규칙 ─────────────────────────────────
+    // collectionGroup() 쿼리는 {path=**} 그룹 규칙이 없으면 무조건 거부됨.
+    // · answers: 질문 게시판은 전체 공유라 로그인 사용자 읽기(경로 규칙과 동일 노출)
+    // · cards  : 본인 카드(학생 리포트 '내 카드') / 내 모둠 카드 / 최고 관리자만.
+    //   교사에게는 열지 않음 — 반(보드) 격리 유지. 쓰기는 여기 없음(경로 규칙 적용).
+    match /{path=**}/answers/{aId} {
+      allow read: if signedIn();
+    }
+    match /{path=**}/cards/{cardId} {
+      allow read: if signedIn() && (
+        resource.data.authorId == uid()
+        || isAdmin()
+        || resource.data.get('memberUids', []).hasAny([uid()])
+      );
+    }
+  }
+}

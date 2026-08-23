@@ -1,0 +1,77 @@
+{
+  "indexes": [
+    {
+      "//": "subscribeMyTodayKwl — 공부방 오늘 탭: classId==, userId==, date==, order createdAt asc",
+      "collectionGroup": "kwl",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "subscribeMyAllKwl — 공부방 기록 탭: classId==, userId==, order createdAt desc",
+      "collectionGroup": "kwl",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "subscribeUserKwl — 교사 대시보드 학생별: userId==, order createdAt desc",
+      "collectionGroup": "kwl",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "subscribeAllKwl — 교사 오늘 전체: classId==, date==",
+      "collectionGroup": "kwl",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "classId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "//": "subscribeMyStudyCards — 학생 리포트 내 카드: collectionGroup cards, authorId==",
+      "collectionGroup": "cards",
+      "fieldPath": "authorId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "//": "deleteStudent — 탈퇴 시 작성자 답변 정리: collectionGroup answers, authorId==",
+      "collectionGroup": "answers",
+      "fieldPath": "authorId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "//": "purgeStudentData — 탈퇴 시 책방 낱말 정리: collectionGroup words, authorId==",
+      "collectionGroup": "words",
+      "fieldPath": "authorId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "//": "purgeStudentData — 탈퇴 시 책방 모둠 명단에서 제외: collectionGroup groups, memberUids array-contains",
+      "collectionGroup": "groups",
+      "fieldPath": "memberUids",
+      "indexes": [
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
+}
