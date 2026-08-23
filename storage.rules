@@ -1,60 +1,7 @@
 rules_version = '2';
 
-// =============================================================
-// Firebase Storage 보안 규칙 — class-peer-qna
-// -------------------------------------------------------------
-// 첨부 이미지/파일 저장소. 경로: uploads/{uid}/{파일명}
-//  · 읽기 : 로그인한 사용자 (교실 내 공유)
-//  · 쓰기 : 본인 uid 폴더에만 + 용량/타입 제한
-//  · 삭제 : 본인 또는 교사/관리자
-//    (교사가 학생 게시물을 삭제할 때 첨부 파일도 함께 정리하려면
-//     본인 아닌 파일도 지울 수 있어야 합니다. firestore.rules와 동일한
-//     역할 판정 — role 커스텀 클레임 또는 초기 관리자 이메일)
-// 배포:  Firebase 콘솔 → Storage → 규칙 탭에 붙여넣고 게시
-//        (또는 firebase deploy --only storage)
-// =============================================================
 service firebase.storage {
   match /b/{bucket}/o {
-
-    function userRole() { return request.auth.token.get('role', ''); }
-    function isInitialAdmin() {
-      return request.auth != null && request.auth.token.email == 'iseoul72@gmail.com'
-             && request.auth.token.email_verified == true;
-    }
-    function isTeacher() {
-      return request.auth != null &&
-        (userRole() == 'teacher' || userRole() == 'admin' || isInitialAdmin());
-    }
-
-    match /uploads/{userId}/{fileName} {
-      // 로그인하면 읽기 가능 (다운로드 URL은 토큰 기반이라 공유 목적엔 충분)
-      allow read: if request.auth != null;
-
-      // 본인 폴더에만 업로드 + 용량/타입 제한.
-      //  · 이미지: 6MB
-      //  · 그 외: 1MB 이며 허용 타입만 (텍스트/코드·CSV·엑셀). 실행파일·영상·오디오 등 차단.
-      //    (.py 등은 브라우저가 octet-stream으로 올리기도 해서 함께 허용)
-      allow write: if request.auth != null
-                   && request.auth.uid == userId
-                   && (
-                        (request.resource.contentType.matches('image/.*')
-                          && request.resource.size < 6 * 1024 * 1024)
-                        || (
-                          request.resource.size < 1 * 1024 * 1024
-                          && (
-                            request.resource.contentType.matches('text/.*')
-                            || request.resource.contentType == 'application/octet-stream'
-                            || request.resource.contentType == 'application/vnd.ms-excel'
-                            || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                          )
-                        )
-                      );
-
-      // 삭제는 본인 또는 교사/관리자(게시물 삭제 시 첨부 파일 정리 목적)
-      allow delete: if request.auth != null && (request.auth.uid == userId || isTeacher());
-    }
-
-    // 그 외 경로는 전부 거부 (기본 차단)
     match /{allPaths=**} {
       allow read, write: if false;
     }

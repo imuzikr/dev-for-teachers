@@ -1,16 +1,4 @@
 "use client";
-
-// =============================================================
-// 메인 랜딩 페이지
-//   - 전체 배경: public/landing.png (학생들이 질문하는 일러스트)
-//   - 중앙 여백: 서비스 타이틀 + 상세 설명
-//   - 오른쪽 상단: 로그인 / 회원가입 버튼 (클릭 시 모달)
-// -------------------------------------------------------------
-// 실서비스 모드: Firebase Authentication으로 실제 로그인/회원가입합니다
-// (이메일·비밀번호 + Google, lib/auth.js). 회원가입은 학생/선생님 역할을
-// 먼저 고르며, 선생님은 관리자 승인 후 권한이 부여됩니다.
-// 데모 모드(Firebase 미설정)에서는 입력값과 무관하게 임시 유저로 입장합니다.
-// =============================================================
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isFirebaseConfigured } from "@/lib/firebase";
@@ -18,11 +6,12 @@ import { backdropClose } from "@/lib/modal";
 import {
   signUpWithEmail,
   signInWithEmail,
+  signInAsGuestTeacher,
   signInWithGoogle,
   onAuthChange,
   SCHOOL_EMAIL_DOMAIN,
 } from "@/lib/auth";
-import SiteFooter from "@/components/SiteFooter";
+import { saveGuestTeacherSession } from "@/lib/user";
 import { IconLogo } from "@/components/StatusIcons";
 
 // Firebase 인증 오류 코드를 한국어 메시지로
@@ -36,6 +25,8 @@ function authErrorMessage(code) {
     "auth/weak-password": "비밀번호는 6자 이상이어야 합니다.",
     "auth/popup-closed-by-user": "구글 로그인 창이 닫혔습니다.",
     "auth/too-many-requests": "잠시 후 다시 시도해 주세요.",
+    "auth/admin-restricted-operation":
+      "일반 선생님 입장이 아직 활성화되지 않았습니다. Firebase Authentication에서 익명 로그인을 켜 주세요.",
     "auth/school-domain-required": `학교 이메일(@${SCHOOL_EMAIL_DOMAIN})로만 가입할 수 있습니다.`,
     "auth/registration-code-invalid": "등록 코드가 올바르지 않습니다. 선생님께 받은 코드를 다시 확인해 주세요.",
     // 코드를 '확인하지 못한' 경우 — 코드가 틀린 게 아니라 서버 설정 문제라
@@ -67,12 +58,15 @@ function GoogleMark() {
 export default function LandingPage() {
   const router = useRouter();
   const [authMode, setAuthMode] = useState(null); // null | 'login' | 'signup'
-  const [signupRole, setSignupRole] = useState(null); // 회원가입 시 선택: 'student' | 'teacher'
+  const [schoolName, setSchoolName] = useState("");
+  const [teacherName, setTeacherName] = useState("");
+  const [entryError, setEntryError] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [regCode, setRegCode] = useState(""); // 회원가입 시 선생님이 알려준 등록 코드
+  const [regCode, setRegCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [entryBusy, setEntryBusy] = useState(false);
 
   // ── 로그인/회원가입 모달 접근성 ──
   const firstFieldRef = useRef(null);
@@ -95,35 +89,64 @@ export default function LandingPage() {
   // 모드 전환 시 역할 선택·오류 초기화
   function switchMode(mode) {
     setAuthMode(mode);
-    setSignupRole(null);
     setRegCode("");
     setError("");
   }
 
-  // 이미 로그인되어 있으면 게시판으로
+  // 이미 로그인되어 있으면 공부방으로
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     return onAuthChange((u) => {
-      if (u) router.replace("/board");
+      if (u) router.replace("/study");
     });
   }, [router]);
+
+  async function handleGuestStart(e) {
+    e.preventDefault();
+    const nextSchoolName = schoolName.trim();
+    const nextTeacherName = teacherName.trim();
+    if (!nextSchoolName || !nextTeacherName) {
+      setEntryError("학교 이름과 이름을 모두 입력해 주세요.");
+      return;
+    }
+    setEntryError("");
+    setEntryBusy(true);
+    try {
+      if (isFirebaseConfigured) {
+        await signInAsGuestTeacher({
+          schoolName: nextSchoolName,
+          teacherName: nextTeacherName,
+        });
+      } else {
+        saveGuestTeacherSession({
+          schoolName: nextSchoolName,
+          teacherName: nextTeacherName,
+        });
+      }
+      router.push("/study");
+    } catch (err) {
+      setEntryError(authErrorMessage(err?.code));
+    } finally {
+      setEntryBusy(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!isFirebaseConfigured) {
       // 데모 모드 — 바로 입장
-      router.push("/board");
+      router.push("/study");
       return;
     }
     setError("");
     setBusy(true);
     try {
       if (authMode === "signup") {
-        await signUpWithEmail(email.trim(), password, signupRole, regCode);
+        await signUpWithEmail(email.trim(), password, "teacher", regCode);
       } else {
         await signInWithEmail(email.trim(), password);
       }
-      router.push("/board");
+      router.push("/study");
     } catch (err) {
       setError(authErrorMessage(err?.code));
     } finally {
@@ -143,10 +166,10 @@ export default function LandingPage() {
     setBusy(true);
     try {
       await signInWithGoogle(
-        authMode === "signup" ? signupRole : null,
+        authMode === "signup" ? "teacher" : null,
         authMode === "signup" ? regCode : ""
       );
-      router.push("/board");
+      router.push("/study");
     } catch (err) {
       setError(authErrorMessage(err?.code));
     } finally {
@@ -159,35 +182,69 @@ export default function LandingPage() {
     {/* ── 상단 바: 로고(왼쪽) + 로그인/회원가입(오른쪽) — 배경 일러스트 바깥 ── */}
     <header className="landing-top">
       <span className="landing-logo">
-        <IconLogo size={26} /> 배움나눔
+        <IconLogo size={26} /> 교사 개발자
       </span>
-      <div className="landing-actions">
-        <button className="btn-outline" onClick={() => switchMode("login")}>
-          로그인
+      <form className="landing-quick-start" onSubmit={handleGuestStart}>
+        <label className="sr-only" htmlFor="landing-school">학교 이름</label>
+        <input
+          id="landing-school"
+          type="text"
+          autoComplete="organization"
+          placeholder="학교 이름"
+          value={schoolName}
+          onChange={(e) => setSchoolName(e.target.value)}
+          maxLength={40}
+          required
+        />
+        <label className="sr-only" htmlFor="landing-name">이름</label>
+        <input
+          id="landing-name"
+          type="text"
+          autoComplete="name"
+          placeholder="이름"
+          value={teacherName}
+          onChange={(e) => setTeacherName(e.target.value)}
+          maxLength={40}
+          required
+        />
+        <button className="btn-primary" type="submit" disabled={entryBusy}>
+          {entryBusy ? "입장 중" : "시작하기"}
         </button>
-        <button className="btn-primary" onClick={() => switchMode("signup")}>
-          회원가입
+        <button className="btn-outline" type="button" onClick={() => switchMode("login")}>
+          관리자 로그인
         </button>
-      </div>
+        {entryError && (
+          <p className="landing-entry-error" role="alert">{entryError}</p>
+        )}
+      </form>
     </header>
 
     <main className="landing">
       {/* ── 중앙 여백: 타이틀 + 상세 설명 (글래스 카드) ── */}
       <section className="hero">
         <div className="hero-glass">
-          <h1>배움나눔</h1>
-          <p className="hero-sub">함께 묻고 답하며 성장하는 우리들의 공부방</p>
+          <h1>교사 개발자</h1>
+          <p className="hero-sub">
+            <span>함께 연구하고</span>
+            <span>아이디어를 나누는 작업실</span>
+          </p>
           <div className="hero-desc">
-            <p>공부하다 막히는 부분이 있나요?</p>
-            <p>질문을 올리면 친구들이 답변을 달아 줍니다.</p>
-            <p>친구의 질문에 답하면서 내 실력도 함께 자랍니다.</p>
+            <p>
+              <span>학교 이름과 이름만 입력하면</span>
+              <span>바로 수업 공간을 열 수 있어요.</span>
+            </p>
+            <p>
+              <span>연구한 아이디어를 카드로 정리하고</span>
+              <span>동료와 수업 흐름을 발전시켜요.</span>
+            </p>
+            <p>
+              <span>관리자만 별도 로그인으로</span>
+              <span>설정과 권한 관리를 담당합니다.</span>
+            </p>
           </div>
         </div>
       </section>
     </main>
-
-      {/* ── 푸터: 브랜드 · 정책 및 약관 · 문의 (배경 이미지 영역 밖) ── */}
-      <SiteFooter />
 
       {/* ── 로그인 / 회원가입 모달 ── */}
       {authMode && (
@@ -200,7 +257,9 @@ export default function LandingPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-head">
-              <h3 id="auth-modal-title">{authMode === "login" ? "로그인" : "회원가입"}</h3>
+              <h3 id="auth-modal-title">
+                {authMode === "login" ? "관리자 로그인" : "관리자 회원가입"}
+              </h3>
               <button
                 className="btn-close"
                 onClick={() => setAuthMode(null)}
@@ -216,72 +275,24 @@ export default function LandingPage() {
                 className={authMode === "login" ? "active" : ""}
                 onClick={() => switchMode("login")}
               >
-                로그인
+                관리자 로그인
               </button>
               <button
                 type="button"
                 className={authMode === "signup" ? "active" : ""}
                 onClick={() => switchMode("signup")}
               >
-                회원가입
+                관리자 회원가입
               </button>
             </div>
 
-            {/* 회원가입 1단계 — 역할 선택 (실서비스만; 데모는 바로 입력) */}
-            {isFirebaseConfigured && authMode === "signup" && !signupRole ? (
-              <div className="signup-role-select">
-                <p className="signup-role-q">어떤 역할로 가입하시나요?</p>
-                <button
-                  type="button"
-                  className="signup-role-card"
-                  onClick={() => setSignupRole("student")}
-                >
-                  <span className="signup-role-emoji">🎒</span>
-                  <span className="signup-role-text">
-                    <strong>학생</strong>
-                    <small>질문하고 답하며, 공부방에 내 활동 카드를 남겨요.</small>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="signup-role-card"
-                  onClick={() => setSignupRole("teacher")}
-                >
-                  <span className="signup-role-emoji">🧑‍🏫</span>
-                  <span className="signup-role-text">
-                    <strong>선생님</strong>
-                    <small>공지·공부방 관리 등 교사 기능을 사용해요. (관리자 승인 후 활성화)</small>
-                  </span>
-                </button>
-              </div>
-            ) : (
             <form className="form-grid" onSubmit={handleSubmit}>
-              {authMode === "signup" && signupRole && (
+              {authMode === "signup" && (
                 <>
-                  <div className="signup-role-chosen">
-                    <span>
-                      {signupRole === "teacher" ? "🧑‍🏫 선생님" : "🎒 학생"}(으)로 가입
-                    </span>
-                    <button
-                      type="button"
-                      className="signup-role-change"
-                      onClick={() => setSignupRole(null)}
-                    >
-                      역할 변경
-                    </button>
-                  </div>
-                  {signupRole === "teacher" ? (
-                    <p className="signup-role-note">
-                      선생님도 <strong>학교 이메일(@{SCHOOL_EMAIL_DOMAIN})</strong>로 가입해야 하며,
-                      권한은 <strong>관리자 승인 후</strong> 부여됩니다. 승인 전까지는 학생으로
-                      이용할 수 있어요.
-                    </p>
-                  ) : (
-                    <p className="signup-role-note">
-                      가입은 <strong>학교 이메일(@{SCHOOL_EMAIL_DOMAIN})</strong>로만
-                      가능해요.
-                    </p>
-                  )}
+                  <p className="signup-role-note">
+                    관리자 계정은 <strong>학교 이메일(@{SCHOOL_EMAIL_DOMAIN})</strong>과
+                    등록 코드로만 만들 수 있어요.
+                  </p>
                   <label className="sr-only" htmlFor="auth-regcode">등록 코드</label>
                   <input
                     id="auth-regcode"
@@ -324,7 +335,7 @@ export default function LandingPage() {
               )}
 
               <button type="submit" className="btn-primary" disabled={busy}>
-                {busy ? "처리 중…" : authMode === "login" ? "로그인" : "회원가입"}
+                {busy ? "처리 중…" : authMode === "login" ? "관리자 로그인" : "관리자 회원가입"}
               </button>
 
               {isFirebaseConfigured && (
@@ -348,7 +359,6 @@ export default function LandingPage() {
                 </div>
               )}
             </form>
-            )}
           </div>
         </div>
       )}

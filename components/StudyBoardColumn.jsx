@@ -46,9 +46,7 @@ export default function StudyBoardColumn({
   canCollapseAll = false, // 접을 수 있는 중간 보드가 남아 있는지 (모두 접기 활성화용)
   classRoster = [], // 교사: 반 학생 명단(모둠 구성용) [{uid, name, emoji}]
   baseGroupAssignment = null,
-  questions = [],
   classes = [],
-  onAsk,
   onModalChange,
   onDuplicated,
   isDragging = false,
@@ -141,16 +139,6 @@ export default function StudyBoardColumn({
     : visibleCards.filter(
         (c) => !(c.authorId?.startsWith?.("teacher_") || c.authorName === "선생님")
       );
-
-  // 이전 단일 keyword 필드와 새 keywords 배열 모두 지원
-  const boardKeywords = Array.isArray(board.keywords)
-    ? board.keywords
-    : board.keyword
-    ? [board.keyword]
-    : [];
-  const relatedQuestions = boardKeywords.length > 0
-    ? questions.filter((q) => boardKeywords.includes(q.keyword))
-    : [];
 
   function canEditCard(card) {
     if (locked || !user) return false;
@@ -794,12 +782,10 @@ export default function StudyBoardColumn({
                 ))
               : false
           }
-          relatedQuestions={relatedQuestions}
           onClose={() => {
             setSelectedCard(null);
             setCreating(false);
           }}
-          onAsk={onAsk}
         />
       )}
 

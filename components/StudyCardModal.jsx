@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================
-// 공부방 카드 통합 모달 — 읽기 + 수정 + 삭제 + 질문하기 + 관련 질문
+// 공부방 카드 통합 모달 — 읽기 + 수정 + 삭제
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useState, useEffect, useRef } from "react";
@@ -24,27 +24,18 @@ import RichTextEditor, { IconImage, IconPen } from "./RichTextEditor";
 
 // 그리기 캔버스는 무거워 열 때만 로딩
 const DrawingCanvas = dynamic(() => import("./DrawingCanvas"), { ssr: false });
-import StudyQuestionPeek from "./StudyQuestionPeek";
 import ZoomableImage from "./ZoomableImage";
 import UploadProgress from "./UploadProgress";
-import { IconAsk, IconSolved, IconTrash, IconTeacher } from "./StatusIcons";
+import { IconTrash, IconTeacher } from "./StatusIcons";
 
 export default function StudyCardModal({
   board,
   card = null,
   canEdit = false,
   mine = false,
-  relatedQuestions = [],
   onClose,
-  onAsk,
 }) {
   const isNew = card === null;
-  const boardKeywords = Array.isArray(board.keywords)
-    ? board.keywords
-    : board.keyword
-    ? [board.keyword]
-    : [];
-  const linked = boardKeywords.length > 0;
   const isTeacherCard =
     card?.authorId?.startsWith?.("teacher_") || card?.authorName === "선생님";
   // 학생에겐 익명 닉네임만, 교사에겐 디렉터리의 실명을 표시 (교사 카드는 "선생님")
@@ -104,9 +95,7 @@ export default function StudyCardModal({
   }, [activitiesKey]);
   const [drawing, setDrawing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [showRelated, setShowRelated] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [peekQuestion, setPeekQuestion] = useState(null);
   const [uploadPct, setUploadPct] = useState(null); // 첨부 업로드 진행률
   const [autoStatus, setAutoStatus] = useState("idle"); // idle | saving | saved | error
   const [expanded, setExpanded] = useState(false); // 발표 모드처럼 크게 보기
@@ -729,51 +718,6 @@ export default function StudyCardModal({
 
         {/* 하단 액션 영역 */}
         <div className="study-card-modal-foot">
-          {mine && linked && (
-            <div className="study-card-modal-links">
-              <button
-                className="study-chip"
-                onClick={() => onAsk?.(boardKeywords[0] ?? null)}
-              >
-                ❓ 질문하기
-              </button>
-              <button
-                className={`study-chip ${showRelated ? "open" : ""}`}
-                onClick={() => setShowRelated((v) => !v)}
-                aria-expanded={showRelated}
-              >
-                🔗 관련 질문{relatedQuestions.length > 0 && ` (${relatedQuestions.length})`}
-              </button>
-            </div>
-          )}
-
-          {mine && linked && showRelated && (
-            <div className="study-related study-related-modal">
-              {relatedQuestions.length === 0 ? (
-                <p className="study-related-empty">
-                  아직 #{board.keyword} 키워드의 질문이 없어요. "질문하기"로
-                  막힌 점을 올려 보세요.
-                </p>
-              ) : (
-                relatedQuestions.map((q) => (
-                  <button
-                    key={q.id}
-                    className="study-related-item"
-                    onClick={() => setPeekQuestion(q)}
-                  >
-                    <span className={`mini-status ${q.resolved ? "done" : "open"}`}>
-                      {q.resolved ? <IconSolved size={20} /> : <IconAsk size={20} />}
-                    </span>
-                    <span className="study-related-title">{q.title}</span>
-                    <span className="study-related-preview">
-                      {q.content?.replace(/<[^>]*>/g, "").slice(0, 60)}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-
           {(canEdit || (canDelete && !isNew && !card?.groupId)) && (
             <div className="study-card-modal-save-row">
               {canEdit && autoStatus === "error" && (
@@ -823,13 +767,6 @@ export default function StudyCardModal({
         />
       )}
 
-      {peekQuestion && (
-        <StudyQuestionPeek
-          question={peekQuestion}
-          onClose={() => { setPeekQuestion(null); setShowRelated(false); }}
-          onBackToList={() => { setPeekQuestion(null); setShowRelated(true); }}
-        />
-      )}
     </div>
   );
 }

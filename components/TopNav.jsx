@@ -3,7 +3,7 @@
 // =============================================================
 // 공통 상단 내비게이션
 // -------------------------------------------------------------
-// 왼쪽: 배움나눔 로고 ｜ 학습 공간 드롭다운(공부방·질문게시판) ｜ 파이썬 실행기 ｜ (리포트|관리자)
+// 왼쪽: 교사 개발자 로고 ｜ 학습 공간(공부방·책방) ｜ 파이썬 실행기
 // 오른쪽: 역할 전환(개발용) ｜ 사용자 프로필 ｜ 로그아웃
 // =============================================================
 import { useEffect, useState } from "react";
@@ -14,7 +14,6 @@ import { signOutUser } from "@/lib/auth";
 import {
   subscribeUserDirectory,
   subscribeMyMemberships,
-  subscribeMyClassRewardCount,
   subscribeBroadcast,
   stopBroadcast,
   reportPresence,
@@ -23,21 +22,18 @@ import {
 import { getSelectedClassId } from "@/lib/classroom";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import UserProfile from "./UserProfile";
-import NotificationBell from "./NotificationBell";
-import QuestionSignalButton from "./QuestionSignalButton";
 import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
-import { IconReport, IconPythonRunner, IconLogo, IconAnswer, IconBlackboard, IconBook, IconTeacher, IconLogout } from "./StatusIcons";
+import { IconPythonRunner, IconLogo, IconBlackboard, IconBook, IconLogout } from "./StatusIcons";
 
 export default function TopNav({ active, onPython, pyActive = false }) {
   const router = useRouter();
   const user = useCurrentUser();
-  const admin = user ? isTeacher(user) : false;      // 교사+관리자 (대시보드 접근)
+  const admin = user ? isTeacher(user) : false;      // 교사+관리자
   const isStrictAdmin = user ? isAdmin(user) : false; // 최고 관리자만 (역할 관리)
   const [roleMgrOpen, setRoleMgrOpen] = useState(false);
   const [directory, setDirectory] = useState([]);
-  const [fruitTotal, setFruitTotal] = useState(0);
   const [memberships, setMemberships] = useState([]);
   const [sessionClassId, setSessionClassId] = useState(null);
 
@@ -65,22 +61,14 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     return () => window.removeEventListener("class-change", sync);
   }, []);
 
-  // 학생만 "지금 보고 있는 반"에서 받은 과일 개수를 구독 — 프로필 옆 뱃지 표시용
   const membershipIds = memberships.map((m) => m.classId);
   const activeClassId =
     sessionClassId && membershipIds.includes(sessionClassId)
       ? sessionClassId
       : membershipIds[0] ?? null;
-  useEffect(() => {
-    if (!isFirebaseConfigured || admin || !activeClassId || !user?.uid) {
-      setFruitTotal(0);
-      return;
-    }
-    return subscribeMyClassRewardCount(activeClassId, user.uid, setFruitTotal);
-  }, [admin, activeClassId, user?.uid]);
 
   // 발표 강제 전환(방송) 구독 — 학생은 "지금 보고 있는 반", 교사는 자신이
-  // 마지막으로 고른 반 기준. 어느 화면에 있든(질문방·책방·리포트 등) 이
+  // 마지막으로 고른 반 기준. 어느 화면에 있든(공부방·책방 등) 이
   // 상단바가 항상 떠 있으므로 여기서 구독하면 앱 전체에 적용됩니다.
   const [broadcast, setBroadcast] = useState(null);
   const broadcastClassId = admin ? sessionClassId : activeClassId;
@@ -128,15 +116,13 @@ export default function TopNav({ active, onPython, pyActive = false }) {
 
   // 이동 가능성이 높은 라우트를 미리 프리페치 → 클릭 시 즉시 전환
   useEffect(() => {
-    router.prefetch("/board");
     router.prefetch("/study");
     router.prefetch("/books");
-    router.prefetch(admin ? "/admin" : "/report");
-  }, [admin, router]);
+  }, [router]);
 
   function handlePython() {
     if (onPython) onPython();
-    else router.push("/board?py=1");
+    else router.push("/study");
   }
 
   function go(path) {
@@ -159,20 +145,13 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     <header className="topbar">
       {/* 왼쪽: 로고 + 주요 메뉴 */}
       <div className="topbar-left">
-        <button className="logo logo-button" onClick={() => go("/board")}>
-          <IconLogo size={30} /> 배움나눔
+        <button className="logo logo-button" onClick={() => go("/study")}>
+          <IconLogo size={30} /> 교사 개발자
         </button>
         <span className="topbar-divider" aria-hidden="true" />
         <nav className="topnav-menu">
 
-          {/* 학습 공간 — 질문방 · 공부방 · 책방 (버튼 3개) */}
-          <button
-            className={`btn-ghost ${active === "board" ? "nav-active" : ""}`}
-            onClick={() => go("/board")}
-            title="질문방"
-          >
-            <IconAnswer size={20} /> <span className="nav-label">질문방</span>
-          </button>
+          {/* 학습 공간 — 공부방 · 책방 */}
           <button
             className={`btn-ghost ${active === "study" ? "nav-active" : ""}`}
             onClick={() => go("/study")}
@@ -196,25 +175,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
           >
             <IconPythonRunner size={20} /> <span className="nav-label">파이썬 실행기</span>
           </button>
-          {admin ? (
-            <button
-              className={`btn-ghost ${active === "admin" ? "nav-active" : ""}`}
-              onClick={() => go("/admin")}
-              title="선생님 대시보드"
-            >
-              <IconTeacher size={20} />{" "}
-              <span className="nav-label">선생님 대시보드</span>
-            </button>
-          ) : (
-            <button
-              className={`btn-ghost ${active === "report" ? "nav-active" : ""}`}
-              onClick={() => go("/report")}
-              title="학습 리포트"
-            >
-              <IconReport size={20} /> <span className="nav-label">학습 리포트</span>
-            </button>
-          )}
-
           {/* 역할 관리는 프로필 메뉴의 '관리자 설정'으로 이동 */}
         </nav>
       </div>
@@ -229,15 +189,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
       {/* 오른쪽: 역할 전환(데모 전용) + 프로필 + 로그아웃 */}
       <div className="user-area">
         {!isFirebaseConfigured && <RoleSwitcher />}
-        {user && broadcastClassId && (
-          <QuestionSignalButton classId={broadcastClassId} user={user} isTeacher={admin} />
-        )}
-        {!admin && user && (
-          <span className="fruit-total-chip" title="지금까지 받은 과일 총 개수">
-            🍎 {fruitTotal}
-          </span>
-        )}
-        {user && isFirebaseConfigured && <NotificationBell uid={user.uid} />}
         <UserProfile
           pendingCount={isStrictAdmin ? pendingTeacherCount : 0}
           onOpenRoleMgr={isStrictAdmin ? () => setRoleMgrOpen(true) : null}

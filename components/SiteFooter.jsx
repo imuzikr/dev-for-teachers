@@ -30,12 +30,12 @@ export default function SiteFooter() {
             <span className="footer-logo" aria-hidden="true">
               <IconLogo size={30} />
             </span>
-            <strong>배움나눔</strong>
+            <strong>교사 개발자</strong>
           </div>
           <p className="footer-tagline">
-            함께 묻고 답하며 성장하는 우리들의 공부방
+            수업 자료와 활동 아이디어를 정리하는 선생님들의 작업실
             <br />
-            수업 속 질문과 배움을 실시간으로 나누는 교실 Q&amp;A
+            동료와 연구 흐름을 나누는 교실 협업 공간
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export default function SiteFooter() {
 
       {/* 하단 저작권 바 — 정책 링크는 위 '정책 및 약관'에 이미 있어 중복 표기하지 않음 */}
       <div className="site-footer-bottom">
-        <span>© {year} 배움나눔. All rights reserved.</span>
+        <span>© {year} 교사 개발자. All rights reserved.</span>
       </div>
 
       {/* 정책 모달 */}

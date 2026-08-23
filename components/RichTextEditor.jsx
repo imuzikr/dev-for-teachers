@@ -172,8 +172,7 @@ export default function RichTextEditor({
     onChange(ref.current.innerHTML);
   }
 
-  // 본문에 이미지를 붙여넣으면 data URL이 문서에 박혀(1MB 한도·피드 부하) 문제이므로,
-  // Storage에 업로드하고 그 URL로 <img>를 삽입합니다. (데모 모드는 data URL 유지)
+  // 본문에 이미지를 붙여넣으면 data URL로 압축해 <img>를 삽입합니다.
   async function handlePaste(e) {
     const items = e.clipboardData?.items;
     if (!items) return;

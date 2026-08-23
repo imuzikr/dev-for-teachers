@@ -84,7 +84,7 @@ export default function StudentEditModal({ student, onClose }) {
       // 닫게 합니다(바로 onClose하면 메시지도 같이 사라져 버립니다).
       setConfirmDelete(false);
       setDeleteError(
-        e?.code === "functions/permission-denied"
+        e?.code === "permission-denied"
           ? "담당하는 반의 학생만 탈퇴 처리할 수 있어요. 관리자에게 요청해 주세요."
           : e?.partial
           ? e.message

@@ -11,7 +11,7 @@
 // - 실행 엔진: Pyodide(WebAssembly)를 Web Worker에서 실행, 15초 제한
 // =============================================================
 import { useEffect, useRef, useState } from "react";
-import { IconPythonRunner, IconKeyboard, IconAnswer } from "@/components/StatusIcons";
+import { IconPythonRunner, IconKeyboard } from "@/components/StatusIcons";
 import { EditorView, basicSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
@@ -75,7 +75,7 @@ for i in range(1, 6):
     print(f"{i}단계: {'★' * i}")
 `;
 
-export default function PythonRunner({ open, onClose, onAskQuestion, hasModalOpen = false }) {
+export default function PythonRunner({ open, onClose, hasModalOpen = false }) {
   const [stdinText, setStdinText] = useState("홍길동");
   const [lines, setLines] = useState([]); // 출력 줄 목록 {type, text}
   const [status, setStatus] = useState("idle"); // idle | loading | running
@@ -332,18 +332,6 @@ export default function PythonRunner({ open, onClose, onAskQuestion, hasModalOpe
             {status === "running" && (
               <button className="btn-ghost" onClick={stop}>
                 ⏹ 중단
-              </button>
-            )}
-            {/* 지금 에디터의 코드를 코드 블록으로 담아 질문 모달 열기 */}
-            {onAskQuestion && (
-              <button
-                className="btn-ghost"
-                onClick={() => {
-                  const code = viewRef.current?.state.doc.toString() ?? "";
-                  if (code.trim()) onAskQuestion(code);
-                }}
-              >
-                <IconAnswer size={22} /> 질문 만들기
               </button>
             )}
             <button className="btn-ghost" onClick={() => setLines([])}>

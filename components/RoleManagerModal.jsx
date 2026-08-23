@@ -4,10 +4,6 @@
 // 역할 관리 (최고 관리자 전용)
 // -------------------------------------------------------------
 // 권한 구조: 최고 관리자(1명) → 중간 관리자(선생님) → 학생
-//  · 선생님 승인/강등/탈퇴·역할 부여는 최고 관리자만 가능 (이 모달 자체가
-//    role==='admin'에게만 열립니다. 서버의 setUserRole도 관리자만 허용)
-// 실제 권한 변경은 Cloud Functions(setUserRole)가 커스텀 클레임으로 부여합니다.
-// (대상 계정은 재로그인해야 반영)
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -24,11 +20,9 @@ const ROLE_LABELS = { student: "학생", teacher: "선생님", admin: "관리자
 
 function errorText(err) {
   const code = err?.code ?? "";
-  if (code === "functions/permission-denied")
+  if (code === "permission-denied")
     return "권한이 없습니다. (최고 관리자 계정으로 로그인했는지 확인해 주세요)";
-  if (code === "functions/not-found")
-    return "setUserRole 함수를 찾을 수 없어요. Cloud Functions가 배포되지 않은 것 같습니다.";
-  if (code === "functions/unauthenticated")
+  if (code === "unauthenticated")
     return "로그인 상태가 아닙니다. 다시 로그인한 뒤 시도해 주세요.";
   return `처리에 실패했어요. (${code || err?.message || "알 수 없는 오류"})`;
 }

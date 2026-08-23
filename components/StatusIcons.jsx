@@ -1,4 +1,4 @@
-// 궁금해요 / 해결됐어요 / 답변 수 / 학습 리포트 아이콘
+// 공용 상태 및 내비게이션 아이콘
 
 export function IconAsk({ size = 20, className = "" }) {
   return (
@@ -239,39 +239,6 @@ export function IconNotice({ size = 18, className = "" }) {
         strokeLinejoin="round"
       />
       <circle cx="4.05" cy="6.15" r="1.05" fill="currentColor" opacity="0.5" />
-    </svg>
-  );
-}
-
-export function IconKwlK({ size = 22, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-      <rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#4E74A8"/>
-      <path d="M8.25 7.35v9.3" stroke="#FFF7ED" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M15.45 7.55 10.45 12l5.1 4.45" stroke="#FFF7ED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M15.9 5.9h1.7c.28 0 .5.22.5.5v1.7" stroke="#CFE0FF" strokeWidth="1.15" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-export function IconKwlW({ size = 22, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-      <rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#9B6A42"/>
-      <path d="m7.15 7.65 1.7 8.7 3.15-5.6 3.15 5.6 1.7-8.7" stroke="#FFF7ED" strokeWidth="1.95" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M16.15 5.85c.28-.45.78-.72 1.34-.72.84 0 1.45.54 1.45 1.26 0 .52-.28.84-.82 1.14-.42.24-.57.43-.57.82" stroke="#FFE0A3" strokeWidth="1.05" strokeLinecap="round"/>
-      <path d="M17.57 9.95h.01" stroke="#FFE0A3" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-export function IconKwlL({ size = 22, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-      <rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#4F8A63"/>
-      <path d="M8.4 7.35v9.3h6.4" stroke="#FFF7ED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M13.5 9.5c1.55-2.25 3.7-2.1 4.65-1.25-.1 1.34-1.25 2.95-3.4 2.95h-1.25V9.5Z" fill="#CFEED7"/>
-      <path d="M13.45 12.4c.86-1.2 1.96-2.12 3.34-2.82" stroke="#2F6345" strokeWidth=".9" strokeLinecap="round"/>
     </svg>
   );
 }

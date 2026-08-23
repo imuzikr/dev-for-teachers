@@ -20,7 +20,7 @@
 // (방송 문서를 새 내용으로 덮어쓰기만 하므로 깜빡임이 없습니다).
 // =============================================================
 import { useEffect, useMemo, useRef, useState } from "react";
-import { subscribeParatextEntries } from "@/lib/store";
+import { subscribeBookEntries } from "@/lib/store";
 import { useEntryCast } from "@/lib/useEntryCast";
 import {
   MINDMAP_LAYOUTS,
@@ -29,7 +29,7 @@ import {
   mindmapStarted,
   normalizeMindmap,
 } from "@/lib/mindmap";
-import { safeBookUrl } from "@/lib/paratext";
+import { safeBookUrl } from "@/lib/bookUrl";
 import MindmapCanvas from "./MindmapCanvas";
 import CastBar from "./CastBar";
 import { IconBook, IconLock } from "./StatusIcons";
@@ -53,7 +53,7 @@ export default function MindmapBoard({
   const [draftMap, setDraftMap] = useState(null);
   const dirtyRef = useRef(false);
 
-  useEffect(() => subscribeParatextEntries(activity.id, setEntries), [activity.id]);
+  useEffect(() => subscribeBookEntries(activity.id, setEntries), [activity.id]);
 
   // 편집판이 노드를 고르고 지울 때 씁니다(학생 화면과 같은 방식).
   const [selectedId, setSelectedId] = useState(null);

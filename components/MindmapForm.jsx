@@ -10,7 +10,7 @@
 // 저장은 자동입니다(입력을 멈추면 조용히 저장).
 // =============================================================
 import { useEffect, useMemo, useRef, useState } from "react";
-import { subscribeMyParatextEntry, saveParatextEntry } from "@/lib/store";
+import { subscribeMyBookEntry, saveBookEntry } from "@/lib/store";
 import {
   MINDMAP_LAYOUTS,
   ROOT_ID,
@@ -20,7 +20,7 @@ import {
   normalizeMindmap,
   withRadialPositions,
 } from "@/lib/mindmap";
-import { safeBookUrl } from "@/lib/paratext";
+import { safeBookUrl } from "@/lib/bookUrl";
 import MindmapCanvas from "./MindmapCanvas";
 import { IconBook, IconLock } from "./StatusIcons";
 
@@ -40,7 +40,7 @@ export default function MindmapForm({ activity, user, onBack }) {
   const bookUrl = safeBookUrl(activity.bookUrl);
 
   useEffect(() => {
-    return subscribeMyParatextEntry(activity.id, user?.uid, (entry) => {
+    return subscribeMyBookEntry(activity.id, user?.uid, (entry) => {
       if (!dirtyRef.current) {
         setMap(normalizeMindmap(entry?.answers, activity.topic));
       }
@@ -54,7 +54,7 @@ export default function MindmapForm({ activity, user, onBack }) {
     setStatus("saving");
     timerRef.current = setTimeout(async () => {
       try {
-        await saveParatextEntry(activity.id, user, map);
+        await saveBookEntry(activity.id, user, map);
         setStatus("saved");
       } catch {
         setStatus("idle");

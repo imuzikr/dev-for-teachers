@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "배움나눔 — 우리 반 질문/답변 게시판",
-  description: "공부하다 막히는 내용을 서로 묻고 답하는 학습 커뮤니티",
+  title: "교사 개발자 — 선생님들의 수업 연구 작업실",
+  description: "선생님들이 수업 자료와 활동 아이디어를 함께 정리하는 협업 공간",
 };
 
 export const viewport = {

@@ -2,11 +2,8 @@
 
 // =============================================================
 // 공부방 — 수업의 연장. 반(클래스)별 Trello/Padlet 스타일 보드.
-//   · 질문 게시판은 전체 공유 공간, 공부방은 "반별" 공간입니다.
 //   · 학생: 입장 코드로 반에 들어와 그 반의 보드만 봅니다.
 //   · 교사: 상단 드롭다운으로 반을 고르고, 반을 새로 만들 수 있습니다.
-// 키워드를 연계한 보드에서는 카드에서 바로 질문하고(질문하기),
-// 관련 질문을 모아 볼 수 있습니다.
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -15,15 +12,11 @@ import {
   subscribeStudyBoards,
   updateStudyBoard,
   fetchStudyCardsOnce,
-  subscribeQuestions,
-  subscribeKeywords,
   subscribeClasses,
   subscribeUserDirectory,
   subscribeMyMemberships,
   subscribeJoinCodes,
   subscribeClassMembers,
-  subscribeClassRewards,
-  setStudentReward,
   regenerateJoinCode,
   reorderStudyBoards,
   ensureDefaultStudyBoard,
@@ -39,7 +32,6 @@ import { isAdmin, isTeacher, getCurrentUser } from "@/lib/user";
 import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
-import { codeBlockHtml } from "@/lib/html";
 import {
   buildStudyRows,
   downloadStudyCsv,
@@ -48,14 +40,11 @@ import {
   printStudyPdfSections,
 } from "@/lib/exportStudy";
 import TopNav from "@/components/TopNav";
-import StudyRewardPanel from "@/components/StudyRewardPanel";
 import StudyBoardColumn from "@/components/StudyBoardColumn";
 import StudyBoardForm from "@/components/StudyBoardForm";
-import NewQuestionForm from "@/components/NewQuestionForm";
 import ClassEntry from "@/components/ClassEntry";
 import ClassManagerModal from "@/components/ClassManagerModal";
 import Toast from "@/components/Toast";
-import KwlPanel from "@/components/KwlPanel";
 import LessonManagerModal from "@/components/LessonManagerModal";
 import LessonMode from "@/components/LessonMode";
 import StudyAttendanceModal from "@/components/StudyAttendanceModal";
@@ -72,8 +61,6 @@ export default function StudyPage() {
   useRequireAuth();
   const [classes, setClasses] = useState([]);
   const [boards, setBoards] = useState([]);
-  const [questions, setQuestions] = useState([]);
-  const [keywordDocs, setKeywordDocs] = useState([]);
   // 학생이 입장한 반(세션 선택 + 서버 소속)과 교사가 보고 있는 반(화면 상태)은 별개입니다.
   const [localSelectedId, setLocalSelectedId] = useState(null); // 세션에서 고른 반
   const [memberships, setMemberships] = useState([]); // 서버 소속(기기 무관)
@@ -90,17 +77,12 @@ export default function StudyPage() {
   const [lessonPicker, setLessonPicker] = useState(false); // 수업 준비(목록·새로 만들기) 모달
   const [teaching, setTeaching] = useState(null);   // 수업 중인 자료(학생 화면 전환)
   const [editingLesson, setEditingLesson] = useState(null); // 장별 메모 작성
-  const [askKeyword, setAskKeyword] = useState(null); // "질문하기"로 새 질문 작성
-  const [askCode, setAskCode] = useState(null);     // 파이썬 실행기에서 넘어온 코드
-  const [askKwlW, setAskKwlW] = useState(null);    // KWL W칸에서 넘어온 텍스트
   const [pyOpen, setPyOpen] = useState(false);      // 파이썬 실행 패널
   const [cardModalOpen, setCardModalOpen] = useState(false); // StudyBoardColumn 모달
-  const [kwlMobileOpen, setKwlMobileOpen] = useState(false); // 모바일 KWL 패널
   const [draggingBoardId, setDraggingBoardId] = useState(null); // 보드 순서 변경 DnD
   const [toast, setToast] = useState("");
   const [directory, setDirectory] = useState([]);   // 교사: uid→실명 등 프로필
   const [memberUids, setMemberUids] = useState([]);  // 현재 반 소속 학생 uid
-  const [rewards, setRewards] = useState([]);        // 현재 반 보상(과일) 목록
   const ensuringDefaultBoardRef = useRef(new Set());
   // 보드 접힘 상태는 보드 문서(board.collapsed)에 저장 — 교사가 접으면
   // 학생 화면에도 동일하게 반영됩니다(공유 상태). 쓰기는 교사만(규칙에서 강제).
@@ -177,13 +159,9 @@ export default function StudyPage() {
   useEffect(() => {
     const unsubC = subscribeClasses(setClasses);
     const unsubB = subscribeStudyBoards(setBoards);
-    const unsubQ = subscribeQuestions(setQuestions);
-    const unsubK = subscribeKeywords(setKeywordDocs);
     return () => {
       unsubC();
       unsubB();
-      unsubQ();
-      unsubK();
     };
   }, []);
 
@@ -238,11 +216,6 @@ export default function StudyPage() {
     localSelectedId && activeMembershipIds.includes(localSelectedId)
       ? localSelectedId
       : activeMembershipIds[0] ?? null;
-
-  const keywordNames = useMemo(
-    () => keywordDocs.map((k) => k.name),
-    [keywordDocs]
-  );
 
   // 교사가 접근 가능한 반 — 일반 교사는 본인 개설 반만, 최고 관리자는 전체.
   // (반 이름 자체는 규칙상 공개 메타데이터라 목록은 여기서 소유자로 걸러냅니다.)
@@ -314,15 +287,6 @@ export default function StudyPage() {
     });
   }, [admin, user, currentClass, classBoards]);
 
-  // 현재 반의 보상(과일) 구독 — 교사·학생 공통 (학생은 규칙상 자기 반만 읽기 가능)
-  useEffect(() => {
-    if (!classId) {
-      setRewards([]);
-      return;
-    }
-    return subscribeClassRewards(classId, setRewards);
-  }, [classId]);
-
   // 교사: 현재 반의 소속 학생 구독 (반이 바뀌면 재구독)
   useEffect(() => {
     if (!admin || !classId) {
@@ -332,24 +296,9 @@ export default function StudyPage() {
     return subscribeClassMembers(classId, setMemberUids);
   }, [admin, classId]);
 
-  // 보상 명단
-  //  · 교사: 소속 학생 전체를 디렉터리(실명)·과일 수와 합쳐 학번순 정렬
-  //  · 학생: 보상 문서만으로 구성 — 과일 받은 친구만, 실명 이름표(공부방은 실명 공간)
   const roster = useMemo(() => {
-    if (!admin) {
-      return rewards
-        .filter((r) => (r.count ?? 0) > 0)
-        .map((r) => ({
-          uid: r.uid,
-          name: r.name || "이름 준비 중", // 과거 문서 — 다음 과일 때 실명이 채워짐
-          emoji: r.emoji || "🙂",
-          count: r.count ?? 0,
-        }))
-        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
-    }
+    if (!admin) return [];
     const dir = new Map(directory.map((d) => [d.uid, d]));
-    const countByUid = {};
-    rewards.forEach((r) => { countByUid[r.uid] = r.count ?? 0; });
     return memberUids
       .map((uid) => {
         const d = dir.get(uid) || {};
@@ -358,31 +307,12 @@ export default function StudyPage() {
           name: d.realName || d.studentId || "이름 미설정",
           studentId: d.studentId || null,
           emoji: d.emoji || "🙂",
-          count: countByUid[uid] ?? 0,
         };
       })
       .sort((a, b) =>
         (a.studentId || a.name).localeCompare(b.studentId || b.name, "ko")
       );
-  }, [admin, memberUids, directory, rewards]);
-
-  // 과일 부여 시 실명을 문서에 함께 저장 — 공부방은 실명 참여 공간이라
-  // 학생(읽기 전용) 화면에도 실명 이름표를 보여줍니다.
-  // (rewards는 규칙상 그 반 소속 학생만 읽을 수 있어 반 밖으로 새지 않음)
-  function awardReward(uid, count) {
-    const d = directory.find((x) => x.uid === uid);
-    setStudentReward(
-      classId,
-      uid,
-      count,
-      d
-        ? {
-            name: d.realName || d.studentId || d.displayName || "",
-            emoji: d.emoji || "🙂",
-          }
-        : null
-    );
-  }
+  }, [admin, memberUids, directory]);
 
   // '반 관리하기' 모달에서 새 반을 만들면 그 반으로 전환합니다.
   function handleClassCreated(newClassId) {
@@ -464,16 +394,7 @@ export default function StudyPage() {
         <ClassEntry />
       ) : (
         <main className="study-main">
-          {/* 본문 — KWL 사이드 패널 + 보드 컬럼 (사이드바와 동일 높이) */}
           <div className="study-body">
-            <KwlPanel
-              classId={classId}
-              user={user}
-              isTeacher={admin && !currentClass?.archived}
-              onAsk={(text) => setAskKwlW(text)}
-              mobileOpen={kwlMobileOpen}
-              onMobileClose={() => setKwlMobileOpen(false)}
-            />
             <div className="study-cols-wrap">
               {/* 제목 영역 — cols-wrap 안에 위치해 보드 컬럼과 정렬됨 */}
               <div className="study-head">
@@ -614,9 +535,7 @@ export default function StudyPage() {
                       )}
                       classRoster={admin ? roster : []}
                       baseGroupAssignment={baseGroupAssignment}
-                      questions={questions}
                       classes={myClasses}
-                      onAsk={(kw) => setAskKeyword(kw)}
                       onModalChange={setCardModalOpen}
                       onDuplicated={(className) =>
                         setToast(`'${board.title}' 보드를 '${className}' 반으로 복제했어요.`)
@@ -640,38 +559,8 @@ export default function StudyPage() {
               )}
             </div>
 
-            {/* 오른쪽: 멋진 순간 패널 — 교사 전용(과일 주기 관리).
-                학생은 상단바 프로필 옆의 총 개수 뱃지로 확인합니다. 보관된
-                반은 보기 전용이라 표시하지 않습니다(과일 부여는 쓰기라 막힘). */}
-            {currentClass && admin && !currentClass.archived && (
-              <StudyRewardPanel
-                roster={roster}
-                classId={classId}
-                readOnly={false}
-                onAward={awardReward}
-              />
-            )}
           </div>
         </main>
-      )}
-
-      {/* 모바일 KWLS 열기 버튼 (FAB) */}
-      {classId && user && !kwlMobileOpen && (
-        <button
-          className="kwl-fab"
-          onClick={() => setKwlMobileOpen(true)}
-          aria-label="KWLS 패널 열기"
-        >
-          📝 KWLS
-        </button>
-      )}
-
-      {/* KWLS 패널 열릴 때 배경 오버레이 */}
-      {kwlMobileOpen && (
-        <div
-          className="kwl-mobile-backdrop"
-          onClick={() => setKwlMobileOpen(false)}
-        />
       )}
 
       {/* 입장 코드 크게 보기 모달 — 학생들이 멀리서도 볼 수 있게 */}
@@ -804,40 +693,15 @@ export default function StudyPage() {
 
       {addingBoard && currentClass && (
         <StudyBoardForm
-          keywords={keywordNames}
           classId={currentClass.id}
           onClose={() => setAddingBoard(false)}
-        />
-      )}
-
-      {(askKeyword !== null || askCode !== null || askKwlW !== null) && (
-        <NewQuestionForm
-          defaultKeyword={askKeyword ?? ""}
-          keywords={keywordNames}
-          initialContent={
-            askCode ? codeBlockHtml(askCode) :
-            askKwlW ? `<p>${askKwlW}</p>` :
-            ""
-          }
-          onClose={(submitted) => {
-            setAskKeyword(null);
-            setAskCode(null);
-            setAskKwlW(null);
-            if (submitted === true) {
-              setToast("질문이 게시판에 등록됐어요. 공부방에서 계속 활동하세요!");
-            }
-          }}
         />
       )}
 
       <PythonRunner
         open={pyOpen}
         onClose={() => setPyOpen(false)}
-        onAskQuestion={(code) => {
-          setAskCode(code);
-          setAskKeyword(null);
-        }}
-        hasModalOpen={cardModalOpen || classManagerOpen || addingBoard || attendanceOpen || (askKeyword !== null || askCode !== null)}
+        hasModalOpen={cardModalOpen || classManagerOpen || addingBoard || attendanceOpen}
       />
 
       {/* ── 수업 준비 (목록 · 새로 만들기) ── */}

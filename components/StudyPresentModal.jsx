@@ -6,36 +6,20 @@
 // -------------------------------------------------------------
 // · 좌우 화살표(‹ ›) + 키보드 ← → 이동, Esc 닫기
 // · 상단에 진행 위치(n / 총원)와 학생 실명 표시
-// · 하단에 🍎 과일 주기 버튼 — 발표를 보며 바로 '멋진 순간' 부여
 // =============================================================
 import { useEffect, useState } from "react";
 import {
-  subscribeClassRewards,
-  setStudentReward,
   getDirectoryRealName,
   startBroadcast,
   stopBroadcast,
-  REWARD_MAX,
 } from "@/lib/store";
 import { getCurrentUser, isTeacher } from "@/lib/user";
 import { sanitizeHtml, stripImgTags } from "@/lib/html";
-import RewardFruits, { rewardStars } from "./RewardFruits";
 
 export default function StudyPresentModal({ board, cards = [], onClose }) {
   const [idx, setIdx] = useState(0);
-  const [rewardMap, setRewardMap] = useState({}); // uid -> count
   const total = cards.length;
   const card = cards[Math.min(idx, total - 1)];
-
-  // 이번 반의 과일 보상 구독 (실시간)
-  useEffect(() => {
-    if (!board.classId) return;
-    return subscribeClassRewards(board.classId, (list) => {
-      const m = {};
-      list.forEach((r) => { m[r.uid] = r.count ?? 0; });
-      setRewardMap(m);
-    });
-  }, [board.classId]);
 
   // 키보드: ← → 이동, Esc 닫기
   useEffect(() => {
@@ -82,28 +66,15 @@ export default function StudyPresentModal({ board, cards = [], onClose }) {
 
   if (!card) return null;
 
-  // 모둠 카드: 작성자(교사) 대신 모둠 이름·구성원을 표시하고,
-  // 과일 주기는 개인 단위 보상이라 숨깁니다(작성자=교사 uid라 오지급 방지).
   const isGroupCard = !!card.groupId;
   const displayName = isGroupCard
     ? card.title || card.groupName || "모둠"
     : getDirectoryRealName(card.authorId) || card.authorName || "익명";
-  const count = rewardMap[card.authorId] ?? 0;
 
   // 발표 화면은 텍스트만 — 이미지·첨부파일은 보여주지 않습니다.
   const safeContent = sanitizeHtml(card.content || "");
   const textHtml = stripImgTags(safeContent);
   const hasText = textHtml.replace(/<[^>]*>/g, "").trim().length > 0;
-
-  function awardFruit() {
-    if (count >= REWARD_MAX) return;
-    // 실명을 함께 저장 — 공부방은 실명 참여 공간(학생 화면 이름표용).
-    // rewards는 규칙상 그 반 소속 학생만 읽을 수 있음.
-    setStudentReward(board.classId, card.authorId, count + 1, {
-      name: displayName,
-      emoji: card.authorEmoji || "🙂",
-    });
-  }
 
   return (
     <div className="modal-backdrop present-backdrop" onClick={onClose}>
@@ -143,32 +114,12 @@ export default function StudyPresentModal({ board, cards = [], onClose }) {
           </div>
         </div>
 
-        {/* 하단 — 과일 주기 (모둠 카드는 개인 보상이라 표시하지 않음) */}
         <div className="present-foot">
           {isGroupCard ? (
             <span className="present-group-note">
-              모둠 카드 — 과일은 공부방 '멋진 순간' 패널에서 학생별로 주세요.
+              모둠 카드
             </span>
-          ) : (
-          <div className="present-fruits">
-            {rewardStars(count) > 0 && (
-              <span className="present-star" title={`⭐ = 과일 20개`}>
-                {"⭐".repeat(rewardStars(count))}
-              </span>
-            )}
-            <RewardFruits count={count} className="reward-fruits present-fruit-strip" />
-            <span className="present-fruit-count">{count}개</span>
-          </div>
-          )}
-          {!isGroupCard && (
-            <button
-              className="btn-primary present-award"
-              onClick={awardFruit}
-              disabled={count >= REWARD_MAX}
-            >
-              🍎 과일 주기{count >= REWARD_MAX ? " (최대)" : ""}
-            </button>
-          )}
+          ) : null}
         </div>
 
         {/* 좌우 이동 화살표 */}

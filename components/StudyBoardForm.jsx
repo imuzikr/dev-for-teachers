@@ -3,40 +3,19 @@
 // =============================================================
 // 공부방 보드 추가 모달 (교사 전용)
 // -------------------------------------------------------------
-// · 제목 행 오른쪽에 토글로 "질문 게시판 연계하기" 설정
-// · 연계 ON 시 키워드 칩을 복수로 선택 가능 (제목 바로 아래)
-// · 설명 입력 (선택)
+// · 활동 유형 선택
+// · 제목과 설명 입력
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useState } from "react";
-import { addStudyBoard, addKeyword } from "@/lib/store";
+import { addStudyBoard } from "@/lib/store";
 import { getCurrentUser } from "@/lib/user";
 
-export default function StudyBoardForm({ keywords = [], classId = null, onClose }) {
+export default function StudyBoardForm({ classId = null, onClose }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [activityType, setActivityType] = useState("individual"); // 개별 | 모둠
-  const [linkKeyword, setLinkKeyword] = useState(false);
-  const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [addingKw, setAddingKw] = useState(false); // 새 키워드 입력 중
-  const [newKw, setNewKw] = useState("");
-
-  function toggleKeyword(kw) {
-    setSelectedKeywords((prev) =>
-      prev.includes(kw) ? prev.filter((k) => k !== kw) : [...prev, kw]
-    );
-  }
-
-  // 새 키워드 추가 — 전역 키워드 목록에 만들고(중복이면 생략) 이 보드에 바로 선택.
-  async function handleAddKeyword() {
-    const name = newKw.trim().replace(/^#\s*/, "");
-    if (!name) return;
-    if (!keywords.includes(name)) await addKeyword(name);
-    setSelectedKeywords((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    setNewKw("");
-    setAddingKw(false);
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -47,7 +26,7 @@ export default function StudyBoardForm({ keywords = [], classId = null, onClose 
         title: title.trim(),
         type: "student",
         description: description.trim(),
-        keywords: linkKeyword ? selectedKeywords : [],
+        keywords: [],
         classId,
         activityType,
       });
@@ -88,69 +67,13 @@ export default function StudyBoardForm({ keywords = [], classId = null, onClose 
             </button>
           </div>
 
-          {/* 제목 + 연계 토글 */}
-          <div className="study-board-form-title-row">
-            <input
-              type="text"
-              placeholder="보드 제목 (예: 이온 결합 모형 탐구)"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
-            />
-            <label
-              className="toggle-switch"
-              title="질문 게시판 주제와 연계하기"
-            >
-              <input
-                type="checkbox"
-                checked={linkKeyword}
-                onChange={(e) => setLinkKeyword(e.target.checked)}
-              />
-              <span className="toggle-track" />
-              <span className="toggle-label">연계하기</span>
-            </label>
-          </div>
-
-          {/* 키워드 칩 (연계 ON일 때) — 맨 끝 '+'로 새 키워드 추가 */}
-          {linkKeyword && (
-            <div className="study-keyword-chips">
-              {keywords.map((kw) => (
-                <button
-                  key={kw}
-                  type="button"
-                  className={`study-keyword-chip${selectedKeywords.includes(kw) ? " selected" : ""}`}
-                  onClick={() => toggleKeyword(kw)}
-                >
-                  # {kw}
-                </button>
-              ))}
-              {addingKw ? (
-                <span className="study-keyword-add-inline">
-                  <input
-                    type="text"
-                    value={newKw}
-                    onChange={(e) => setNewKw(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); handleAddKeyword(); }
-                      if (e.key === "Escape") { setAddingKw(false); setNewKw(""); }
-                    }}
-                    placeholder="새 키워드"
-                    autoFocus
-                  />
-                  <button type="button" onClick={handleAddKeyword}>추가</button>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="study-keyword-chip study-keyword-add"
-                  onClick={() => setAddingKw(true)}
-                  title="키워드 추가"
-                >
-                  +
-                </button>
-              )}
-            </div>
-          )}
+          <input
+            type="text"
+            placeholder="보드 제목 (예: 이온 결합 모형 탐구)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            autoFocus
+          />
 
           <textarea
             className="study-board-desc-input"
