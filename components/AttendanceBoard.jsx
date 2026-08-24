@@ -5,7 +5,13 @@
 // =============================================================
 import { useEffect, useMemo, useState } from "react";
 import { backdropClose } from "@/lib/modal";
-import { PRESENCE_STALE_MS, STUDY_SEAT_COUNT, toDate, todayDateKey } from "@/lib/store";
+import {
+  PRESENCE_STALE_MS,
+  STUDY_SEAT_COUNT,
+  subscribeQuestionSignals,
+  toDate,
+  todayDateKey,
+} from "@/lib/store";
 import { getCurrentUser } from "@/lib/user";
 
 const DEFAULT_GROUP_COLORS = ["#2563eb", "#16a34a", "#f97316", "#9333ea", "#dc2626", "#0891b2"];
@@ -61,6 +67,7 @@ export default function AttendanceBoard({
   seatLayout = null,
   dailySeatLayout = null,
   groupAssignment = null,
+  classId = null,
   onSaveDailySeats,
   onClose,
 }) {
@@ -70,6 +77,17 @@ export default function AttendanceBoard({
   const [seats, setSeats] = useState(() =>
     normalizeSeats(dailySeatLayout?.seats ?? seatLayout?.seats ?? [], roster)
   );
+  const [raisedUids, setRaisedUids] = useState(() => new Set());
+
+  useEffect(() => {
+    if (!classId) {
+      setRaisedUids(new Set());
+      return;
+    }
+    return subscribeQuestionSignals(classId, (signals) => {
+      setRaisedUids(new Set(signals.map((signal) => signal.uid).filter(Boolean)));
+    });
+  }, [classId]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 5000);
@@ -105,9 +123,12 @@ export default function AttendanceBoard({
       name: s.name,
       studentId: s.studentId ?? null,
       state: stateOf(s.uid),
+      raised: raisedUids.has(s.uid),
       group,
     };
   });
+
+  const raisedCount = roster.filter((student) => raisedUids.has(student.uid)).length;
 
   const counts = desks.reduce(
     (acc, d) => {
@@ -142,7 +163,7 @@ export default function AttendanceBoard({
     const groupName = d.group?.name ?? "미배정";
     return (
       <div
-        className={`attend-desk attend-desk--${d.state}`}
+        className={`attend-desk attend-desk--${d.state}${d.raised ? " attend-desk--raised" : ""}`}
         style={d.group ? { "--group-color": d.group.color } : undefined}
         title={`${d.name} · ${LABEL[d.state]} · ${groupName}`}
         draggable={draggable}
@@ -159,6 +180,9 @@ export default function AttendanceBoard({
           moveSeat(dragIndex, d.index);
         }}
       >
+        {d.raised && (
+          <span className="attend-desk-hand" aria-label="질문 있어요" title="질문 있어요">🖐️</span>
+        )}
         <span className="attend-desk-no">{d.studentId || "-"}</span>
         <span className="attend-desk-name">
           {d.name}
@@ -207,6 +231,9 @@ export default function AttendanceBoard({
           <span className="attend-legend-item"><i className="attend-chip attend-chip--away" /> 화면 가려짐 {counts.away}</span>
           <span className="attend-legend-item"><i className="attend-chip attend-chip--off" /> 미접속 {counts.off}</span>
           <span className="attend-legend-item"><i className="attend-chip attend-chip--absent" /> 결석 {counts.absent}</span>
+          {raisedCount > 0 && (
+            <span className="attend-legend-item attend-legend-item--hand">🖐️ 질문 {raisedCount}</span>
+          )}
         </div>
 
         {roster.length === 0 ? (
@@ -228,6 +255,7 @@ export default function AttendanceBoard({
                           name: s.name,
                           studentId: s.studentId ?? null,
                           state: stateOf(s.uid),
+                          raised: raisedUids.has(s.uid),
                           group: groupsByUid.get(s.uid) ?? { name: g.name, color: g.color },
                         }}
                       />

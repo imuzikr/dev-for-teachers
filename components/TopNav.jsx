@@ -25,6 +25,7 @@ import UserProfile from "./UserProfile";
 import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
+import QuestionSignalButton from "./QuestionSignalButton";
 import { IconPythonRunner, IconLogo, IconBlackboard, IconBook, IconLogout } from "./StatusIcons";
 
 export default function TopNav({ active, onPython, pyActive = false }) {
@@ -189,6 +190,9 @@ export default function TopNav({ active, onPython, pyActive = false }) {
       {/* 오른쪽: 역할 전환(데모 전용) + 프로필 + 로그아웃 */}
       <div className="user-area">
         {!isFirebaseConfigured && <RoleSwitcher />}
+        {user && broadcastClassId && (
+          <QuestionSignalButton classId={broadcastClassId} user={user} isTeacher={admin} />
+        )}
         <UserProfile
           pendingCount={isStrictAdmin ? pendingTeacherCount : 0}
           onOpenRoleMgr={isStrictAdmin ? () => setRoleMgrOpen(true) : null}

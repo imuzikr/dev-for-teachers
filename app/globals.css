@@ -913,6 +913,7 @@ button.footer-link:hover {
 }
 .question-signal-name {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -924,6 +925,65 @@ button.footer-link:hover {
 .question-signal-name small {
   font-size: 11.5px;
   color: var(--text-sub);
+}
+.question-signal-clear {
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--landing-outline-border);
+  border-radius: 7px;
+  background: var(--landing-outline-bg);
+  color: var(--primary-dark);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.question-signal-clear:hover {
+  background: var(--primary-light);
+}
+.question-signal-clear:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.question-signal-heading {
+  padding: 8px 10px 7px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  border-bottom: 1px solid var(--border);
+}
+.question-signal-count {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.question-signal-error {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 300;
+  width: min(280px, calc(100vw - 24px));
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--auth-error-border);
+  border-radius: 8px;
+  background: var(--auth-error-bg);
+  color: #9f2f25;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(31, 46, 37, 0.14);
 }
 
 .avatar {
@@ -6398,6 +6458,7 @@ pre code {
   gap: 10px;
 }
 .attend-desk {
+  position: relative;
   aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
@@ -6408,7 +6469,7 @@ pre code {
   border: 1px solid var(--border);
   border-radius: 10px;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
 }
 .attend-desk[style*="--group-color"] {
   border: 3px solid var(--group-color);
@@ -6428,6 +6489,27 @@ pre code {
 .attend-desk--absent {
   background: #f3d8d8;
   color: #7f2b2b;
+}
+.attend-desk--raised {
+  outline: 3px solid #cde85b;
+  outline-offset: 2px;
+  box-shadow: 0 8px 22px rgba(47, 111, 62, 0.2);
+}
+.attend-desk-hand {
+  position: absolute;
+  top: -13px;
+  right: -8px;
+  z-index: 2;
+  font-size: 27px;
+  line-height: 1;
+  transform: rotate(-8deg);
+  filter: drop-shadow(0 2px 3px rgba(31, 46, 37, 0.22));
+}
+.attend-legend-item--hand {
+  color: var(--primary-dark);
+  font-weight: 800;
+  background: #f2f9cd;
+  border-color: #cde85b;
 }
 /* 빈 자리 — 테두리만 옅게 남겨 '자리는 있으나 학생이 없음'을 표시 */
 .attend-desk--empty {
@@ -10454,6 +10536,7 @@ pre code {
     gap: 0;
   }
   .topbar-left { gap: 8px; }
+  .topbar .logo { font-size: 17px; white-space: nowrap; }
   .topbar-divider { display: none; }
 
   /* 네비게이션 — 모바일에선 교사 개발자 타이틀만 두고 모두 아이콘만 */
@@ -10478,7 +10561,8 @@ pre code {
   .avatar { width: 32px; height: 32px; font-size: 16px; }
 
   /* 로그아웃 버튼 최소화 */
-  .user-area { gap: 4px; }
+  .topbar .user-area { gap: 4px; }
+  .question-signal-btn { width: 34px; height: 34px; }
   .user-area .btn-ghost:last-child {
     font-size: 12px;
     padding: 5px 8px;
