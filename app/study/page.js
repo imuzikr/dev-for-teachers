@@ -2,8 +2,8 @@
 
 // =============================================================
 // 공부방 — 수업의 연장. 반(클래스)별 Trello/Padlet 스타일 보드.
-//   · 학생: 입장 코드로 반에 들어와 그 반의 보드만 봅니다.
-//   · 교사: 상단 드롭다운으로 반을 고르고, 반을 새로 만들 수 있습니다.
+//   · 일반 사용자: 입장 코드로 반에 들어와 그 반의 보드를 사용합니다.
+//   · 관리자: 상단 드롭다운으로 반을 고르고, 반을 만들고 관리합니다.
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -177,7 +177,7 @@ export default function StudyPage() {
     };
   }, []);
 
-  const admin = user ? isTeacher(user) : false;      // 교사+최고관리자 (교사 화면)
+  const admin = user ? isTeacher(user) : false;      // 관리자 전용 운영 화면
   const superAdmin = user ? isAdmin(user) : false;   // 최고 관리자 (모든 반 접근)
 
   // 학생: 서버 소속 구독 — 기기·캐시가 바뀌어도 로그인하면 소속이 따라옵니다.

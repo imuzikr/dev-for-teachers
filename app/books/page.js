@@ -284,7 +284,8 @@ function BooksPageInner() {
           </div>
 
           <p className="books-intro">
-            책을 읽으며 떠올린 생각을 마인드맵으로 정리하고 함께 살펴볼 수 있어요.
+            책을 읽으며 떠올린 생각을 마인드맵으로 정리하고{" "}
+            <span className="keep-together">함께 살펴볼 수 있어요.</span>
           </p>
 
           {admin && myClasses.length === 0 ? (

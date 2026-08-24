@@ -33,10 +33,10 @@ service cloud.firestore {
       return signedIn()
              && request.auth.token.firebase.sign_in_provider == 'anonymous';
     }
-    function isGuestTeacherProfile(userId) {
+    function isGuestUserProfile(userId) {
       return isGuestTeacher()
              && userId == uid()
-             && request.resource.data.role == 'teacher'
+             && request.resource.data.role == 'student'
              && request.resource.data.email == ''
              && request.resource.data.realName is string
              && request.resource.data.displayName is string
@@ -51,28 +51,12 @@ service cloud.firestore {
     }
     // 최고 관리자 — 모든 반의 데이터·기능에 접근(반 소유 제한의 예외)
     function isAdmin() {
-      return signedIn() && (userRole() == 'admin' || isInitialAdmin());
+      return isInitialAdmin();
     }
-    // 학교 이메일 계정인지 — request.auth.token.email은 서버가 검증한 값이라
-    // 위조 불가(request.resource.data의 클라이언트 입력값과 다름). 학생 가입
-    // 도메인 제한(users 생성 규칙)에 씁니다.
-    function isSchoolEmail() {
-      return request.auth.token.get('email', '').lower().matches('.*@hansung[.]hs[.]kr$');
-    }
-    // 가입 시 함께 낸 등록 코드(registrationCodes 문서 ID)가 실제로 있고
-    // active인지 — users 생성 규칙에서만 씁니다. 코드 값 자체는 여기 규칙이
-    // 아니라 registrationCodes 컬렉션의 데이터로 관리합니다(교체할 때 규칙을
-    // 다시 배포할 필요가 없도록).
-    function hasValidRegistrationCode() {
-      return request.resource.data.get('regCode', '') is string
-             && request.resource.data.regCode != ''
-             && get(/databases/$(database)/documents/registrationCodes/$(request.resource.data.regCode))
-                  .data.get('active', false) == true;
-    }
-    // 교사(최고 관리자 포함) — 교사용 기능 접근 관문
+    // 운영 기능 접근 관문 — 관리자 계정만 허용.
+    // 함수 이름은 기존 규칙 호출부 호환을 위해 유지합니다.
     function isTeacher() {
-      return signedIn() &&
-        (userRole() == 'teacher' || userRole() == 'admin' || isInitialAdmin() || isGuestTeacher());
+      return isAdmin();
     }
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
@@ -143,26 +127,10 @@ service cloud.firestore {
     // (질문 게시판은 전체 공유라 교사가 타 반 학생 실명도 확인해야 하므로 교사 전체 허용)
     match /users/{userId} {
       allow read: if signedIn() && (userId == uid() || isTeacher());
-      // 본인만 생성, 가입 시 role은 'student' 고정 (스스로 승격 불가).
-      // 가입은 학교 이메일(@hansung.hs.kr)만 허용 — 학생·선생님 모두
-      // 마찬가지이며, 최고 관리자 이메일만 유일한 예외입니다. '선생님으로
-      // 가입 신청'(requestedRole=='teacher')도 학교 이메일이어야 하고,
-      // 관리자 승인 전까지는 어차피 role이 student입니다. 클라이언트
-      // (lib/auth.js)에서도 같은 검사를 먼저 하지만, 실제 강제는 여기
-      // (서버 검증 이메일 기준)입니다 — request.resource.data의 email
-      // 필드는 클라이언트가 채운 값이라 위조될 수 있어 이걸로 판정하지 않습니다.
-      // 학교 이메일이어도 등록 코드(선생님이 알려준 값)가 유효해야 가입됩니다.
-      // 코드 자체는 이 문서에 실려 오는 클라이언트 입력값이라 위조될 수 있지만,
-      // registrationCodes/{그 코드} 문서가 실제로 있고 active인지를 get()으로
-      // 다시 확인하므로 아무 문자열이나 넣어서는 통과하지 못합니다.
+      // 일반 사용자는 익명 프로필만, 지정 Google 계정은 관리자 프로필만 생성합니다.
       allow create: if signedIn() && userId == uid() && (
-        isGuestTeacherProfile(userId)
+        isGuestUserProfile(userId)
         || (isInitialAdmin() && request.resource.data.role == 'admin')
-        || (
-          request.resource.data.role == 'student'
-          && (isInitialAdmin() || isSchoolEmail())
-          && (isInitialAdmin() || hasValidRegistrationCode())
-        )
       );
       // 쓰기 범위 — '누가' 뿐 아니라 '어떤 필드를' 쓰는지까지 제한합니다.
       //  · 최고 관리자: 전체. 역할 부여와 부트스트랩 자가 치유(lib/auth.js가
@@ -185,21 +153,6 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
 
-    }
-
-    // ── 등록 코드 — 최초 가입 관문. 학교 이메일이어도 이 코드가 있어야
-    //    가입할 수 있습니다(아무나 학교 도메인 계정이 있다고 이 서비스에
-    //    들어오는 것을 막기 위함). 문서 ID가 코드 자체이고, 데이터는
-    //    { active: true, note, createdAt } 정도만 둡니다. 지금은 Firebase
-    //    콘솔에서 문서를 직접 추가/폐기하는 방식으로 운영합니다.
-    //  · get : 가입 절차 중(로그인 전) 학교 이메일 검사와 마찬가지로 클라이언트가
-    //    먼저 걸러 볼 수 있어야 해서 공개로 둡니다. 정확한 코드 문자열을 알아야
-    //    1건만 읽히고(list는 막혀 있어 코드 목록 자체는 새어나가지 않음), App
-    //    Check가 이 읽기도 함께 보호해 무차별 대입을 어렵게 합니다.
-    //  · list/write: 최고 관리자만 — 발급 UI가 생기기 전까지는 콘솔에서 관리.
-    match /registrationCodes/{code} {
-      allow get: if true;
-      allow list, write: if isAdmin();
     }
 
     // ── 질문 (전체 공유) ──────────────────────────────────────
@@ -275,17 +228,11 @@ service cloud.firestore {
     // ── 반(클래스) ────────────────────────────────────────────
     //  · 이름은 공개 메타데이터(입장 코드 확인 등) → 읽기는 로그인 사용자.
     //    교사 화면은 본인 개설 반만 클라이언트에서 필터링해 표시.
-    //  · 생성: 교사 본인이 개설자. 수정(이름·보관 토글): 개설자 또는 최고 관리자.
-    //  · 삭제: 개설자(보관된 반만) 또는 최고 관리자 — 위험도가 높아 보관을
-    //    먼저 거치도록 강제합니다.
+    //  · 생성·수정·삭제: 관리자 전용.
     match /classes/{cId} {
       allow read: if signedIn();
-      allow create: if isTeacher() && request.resource.data.createdBy == uid();
-      allow update: if isAdmin()
-                    || (isTeacher() && resource.data.createdBy == uid());
-      allow delete: if isAdmin()
-                    || (isTeacher() && resource.data.createdBy == uid()
-                        && resource.data.get('archived', false) == true);
+      allow create: if isAdmin() && request.resource.data.createdBy == uid();
+      allow update, delete: if isAdmin();
 
       // ── 언제든 질문하기(손들기) ─────────────────────────────
       //  · 경로 = classes/{classId}/questionSignals/{uid}

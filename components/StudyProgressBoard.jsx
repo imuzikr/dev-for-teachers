@@ -39,7 +39,7 @@ export function cardProgress(card, activityCount) {
 
 // 칸 하나의 상태 — 색으로 구분합니다.
 //   done   연한 초록 : 10자 이상 썼음 (잠겼더라도 쓴 건 쓴 것)
-//   open   연한 주황 : 열려 있는데 아직 덜 씀
+//   open   연한 세이지 : 열려 있는데 아직 덜 씀
 //   locked 회색     : 아직 열어 주지 않음
 function cellState(done, locked) {
   if (done) return "done";

@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { readImageAsDataUrl } from "@/lib/image";
 import { IconTrash } from "./StatusIcons";
 
-const COLORS = ["#262625", "#c04a3f", "#d97757", "#3d7a4a", "#d4a017"];
+const COLORS = ["#262625", "#c04a3f", "#2f6f3e", "#3d7a4a", "#d4a017"];
 const SIZES = [
   { label: "가늘게", value: 3 },
   { label: "보통", value: 6 },
@@ -292,7 +292,7 @@ export default function DrawingCanvas({ onSave, onClose }) {
     if (sel) drawSelectionOverlay(ctx, sel);
   }
 
-  // 선택 오버레이: 테라코타 점선 상자, 모서리 핸들 4개, 위쪽 회전 핸들
+  // 선택 오버레이: 강조색 점선 상자, 모서리 핸들 4개, 위쪽 회전 핸들
   function drawSelectionOverlay(ctx, s) {
     const c0 = centerOf(s);
     const box = bboxOf(s);
@@ -303,7 +303,7 @@ export default function DrawingCanvas({ onSave, onClose }) {
       ctx.rotate(s.rot);
       ctx.translate(-c0.x, -c0.y);
     }
-    ctx.strokeStyle = "#d97757";
+    ctx.strokeStyle = "#2f6f3e";
     ctx.lineWidth = 1.5;
     // 점선 상자
     ctx.setLineDash([6, 4]);
