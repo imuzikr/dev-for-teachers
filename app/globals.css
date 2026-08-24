@@ -6783,6 +6783,14 @@ pre code {
   opacity: 0.5;
   cursor: default;
 }
+.lesson-board-actadd .lesson-board-act-cancel {
+  color: var(--text);
+  background: var(--color-white);
+  border: 1px solid var(--border);
+}
+.lesson-board-actadd .lesson-board-act-cancel:hover:not(:disabled) {
+  background: var(--neutral);
+}
 
 @media (max-width: 768px) {
   .lesson-board-select { max-width: none; }

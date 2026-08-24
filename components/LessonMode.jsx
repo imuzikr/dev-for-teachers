@@ -213,6 +213,13 @@ export default function LessonMode({
     setNewAct("");
   }
 
+  function cancelAddAct() {
+    if (actBusy) return;
+    setNewAct("");
+    setActError("");
+    actInputRef.current?.blur();
+  }
+
   // 수업 자료 이름으로 새 보드를 만들고 바로 연결합니다.
   async function handleAddBoard() {
     if (!classId || makingBoard) return;
@@ -629,10 +636,24 @@ export default function LessonMode({
                       type="text"
                       value={newAct}
                       onChange={(e) => setNewAct(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelAddAct();
+                        }
+                      }}
                       placeholder="예) 실험 결과 정리하기"
                       maxLength={40}
                       aria-label="추가할 활동 이름"
                     />
+                    <button
+                      type="button"
+                      className="lesson-board-act-cancel"
+                      onClick={cancelAddAct}
+                      disabled={actBusy || (!newAct && !actError)}
+                    >
+                      취소
+                    </button>
                     {/* 조합 중인 한글은 state에 늦게 들어오므로 입력값으로
                         버튼을 잠그지 않습니다(빈 값은 handleAddAct가 거릅니다) */}
                     <button type="submit" disabled={actBusy}>
