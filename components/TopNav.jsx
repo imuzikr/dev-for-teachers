@@ -13,6 +13,7 @@ import { isFirebaseConfigured } from "@/lib/firebase";
 import { signOutUser } from "@/lib/auth";
 import {
   subscribeUserDirectory,
+  subscribeClasses,
   subscribeMyMemberships,
   subscribeBroadcast,
   stopBroadcast,
@@ -35,6 +36,7 @@ export default function TopNav({ active, onPython, pyActive = false }) {
   const isStrictAdmin = user ? isAdmin(user) : false; // 최고 관리자만 (역할 관리)
   const [roleMgrOpen, setRoleMgrOpen] = useState(false);
   const [directory, setDirectory] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [sessionClassId, setSessionClassId] = useState(null);
 
@@ -43,6 +45,14 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     if (!isFirebaseConfigured || !isStrictAdmin) return;
     return subscribeUserDirectory(setDirectory);
   }, [isStrictAdmin]);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured || !admin) {
+      setClasses([]);
+      return;
+    }
+    return subscribeClasses(setClasses);
+  }, [admin]);
 
   // 학생 소속 반 구독 — 공부방 화면과 동일한 기준으로 "지금 보는 반"을 정하기 위함
   useEffect(() => {
@@ -67,6 +77,12 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     sessionClassId && membershipIds.includes(sessionClassId)
       ? sessionClassId
       : membershipIds[0] ?? null;
+  const teacherClasses = classes.filter((item) => item.createdBy === user?.uid && !item.archived);
+  const signalClassId = admin
+    ? teacherClasses.some((item) => item.id === sessionClassId)
+      ? sessionClassId
+      : teacherClasses[0]?.id ?? null
+    : activeClassId;
 
   // 발표 강제 전환(방송) 구독 — 학생은 "지금 보고 있는 반", 교사는 자신이
   // 마지막으로 고른 반 기준. 어느 화면에 있든(공부방·책방 등) 이
@@ -190,8 +206,8 @@ export default function TopNav({ active, onPython, pyActive = false }) {
       {/* 오른쪽: 역할 전환(데모 전용) + 프로필 + 로그아웃 */}
       <div className="user-area">
         {!isFirebaseConfigured && <RoleSwitcher />}
-        {user && broadcastClassId && (
-          <QuestionSignalButton classId={broadcastClassId} user={user} isTeacher={admin} />
+        {user && signalClassId && (
+          <QuestionSignalButton classId={signalClassId} user={user} isTeacher={admin} />
         )}
         <UserProfile
           pendingCount={isStrictAdmin ? pendingTeacherCount : 0}

@@ -369,7 +369,6 @@ export default function LessonMode({
 
       {attendOpen && (
         <AttendanceBoard
-          classId={classId}
           roster={roster}
           presence={presence}
           attendanceRecords={attendanceRecords}

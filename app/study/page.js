@@ -246,6 +246,7 @@ export default function StudyPage() {
         ? localSelectedId
         : myClasses[0]?.id ?? myClassesAll[0].id;
     setTeacherClassId(remembered);
+    setSelectedClassId(remembered);
   }, [admin, myClasses, myClassesAll, teacherClassId, localSelectedId]);
 
   const classId = admin ? teacherClassId : studentClassId;

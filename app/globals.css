@@ -6458,7 +6458,6 @@ pre code {
   gap: 10px;
 }
 .attend-desk {
-  position: relative;
   aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
@@ -6469,7 +6468,7 @@ pre code {
   border: 1px solid var(--border);
   border-radius: 10px;
   text-align: center;
-  overflow: visible;
+  overflow: hidden;
 }
 .attend-desk[style*="--group-color"] {
   border: 3px solid var(--group-color);
@@ -6489,27 +6488,6 @@ pre code {
 .attend-desk--absent {
   background: #f3d8d8;
   color: #7f2b2b;
-}
-.attend-desk--raised {
-  outline: 3px solid #cde85b;
-  outline-offset: 2px;
-  box-shadow: 0 8px 22px rgba(47, 111, 62, 0.2);
-}
-.attend-desk-hand {
-  position: absolute;
-  top: -13px;
-  right: -8px;
-  z-index: 2;
-  font-size: 27px;
-  line-height: 1;
-  transform: rotate(-8deg);
-  filter: drop-shadow(0 2px 3px rgba(31, 46, 37, 0.22));
-}
-.attend-legend-item--hand {
-  color: var(--primary-dark);
-  font-weight: 800;
-  background: #f2f9cd;
-  border-color: #cde85b;
 }
 /* 빈 자리 — 테두리만 옅게 남겨 '자리는 있으나 학생이 없음'을 표시 */
 .attend-desk--empty {
