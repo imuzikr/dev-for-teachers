@@ -14,7 +14,6 @@ import { IconLogo, IconBlackboard, IconWrite, IconSchool } from "./StatusIcons";
 import PrivacyContent from "./policies/PrivacyContent";
 import TermsContent from "./policies/TermsContent";
 
-const CONTACT_EMAIL = "iseoul72@gmail.com"; // 문의 이메일
 const AFFILIATION = "한성여자고등학교 소속"; // 소속 표기(개인정보처리방침 제8조와 일치)
 
 export default function SiteFooter() {
@@ -61,9 +60,9 @@ export default function SiteFooter() {
         {/* 문의 */}
         <div className="footer-col">
           <h4>문의</h4>
-          <a className="footer-link" href={`mailto:${CONTACT_EMAIL}`}>
-            <IconWrite size={26} /> {CONTACT_EMAIL}
-          </a>
+          <span className="footer-link footer-link--static">
+            <IconWrite size={26} /> 서비스 관리자에게 문의
+          </span>
           <span className="footer-link footer-link--static">
             {/* IconSchool은 어두운 획 색이 고정돼 있어 어두운 배경에서 잘 안 보임
                 → 이 위치(소속 표기)에 한해서만 아이콘을 흰색으로 강제 변환 */}

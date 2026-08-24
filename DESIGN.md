@@ -27,10 +27,11 @@
 
 ## 4. Components
 
-- `landing-top`: white app bar with logo on the left and compact entry controls on the right.
+- `landing-top`: white app bar with logo on the left and compact entry controls on the right; it stays in normal document flow above the illustration and never overlays it.
+- `landing`: desktop hero preserves the source illustration ratio so the top of the artwork begins directly below the app bar without cropping.
 - `landing-quick-start`: school/name inputs, start button, and admin login button in one responsive row.
 - `hero-glass`: centered compact translucent panel containing only the brand title and tagline.
-- `modal-auth`: Google-only admin sign-in dialog restricted to `iseoul72@gmail.com`.
+- `modal-auth`: Google-only sign-in dialog; the first successful Google login claims administration.
 
 ## 5. States
 

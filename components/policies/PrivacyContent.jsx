@@ -145,9 +145,7 @@ export default function PrivacyContent() {
           <li>성명: 강현수</li>
           <li>소속: 한성여자고등학교</li>
           <li>직위: 교사</li>
-          <li>
-            연락처: <a href="mailto:iseoul72@gmail.com">iseoul72@gmail.com</a>
-          </li>
+          <li>연락처: 서비스 내 관리자 안내를 통해 문의</li>
         </ul>
 
         <h2>제9조 (개인정보의 제3자 제공)</h2>

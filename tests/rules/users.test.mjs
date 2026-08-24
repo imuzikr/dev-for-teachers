@@ -7,15 +7,10 @@
 // =============================================================
 import { describe, it, before, after, beforeEach } from "node:test";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, runTransaction, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
-// 초기(최고) 관리자 — 규칙이 이메일로 판정하므로 클레임 없이도 admin입니다.
-const asInitialAdmin = (env) =>
-  env.authenticatedContext("rootAdmin", {
-    email: "iseoul72@gmail.com",
-    email_verified: true,
-  });
+const asRegisteredAdmin = (env) => env.authenticatedContext("rootAdmin");
 
 describe("사용자 프로필 규칙", () => {
   let env;
@@ -41,6 +36,7 @@ describe("사용자 프로필 규칙", () => {
         uid: "teacherB", role: "teacher", realName: "박선생", displayName: "선생님", emoji: "🧑‍🏫",
       });
       await setDoc(doc(db, "users", "rootAdmin"), { uid: "rootAdmin", role: "student" });
+      await setDoc(doc(db, "system", "admin"), { uid: "rootAdmin", createdAt: new Date() });
     });
   });
 
@@ -139,13 +135,109 @@ describe("사용자 프로필 규칙", () => {
   });
 
   describe("최고 관리자", () => {
+    it("관리자가 없으면 첫 Google 로그인 사용자가 관리자 UID를 선점한다", async () => {
+      await env.clearFirestore();
+      const db = env.authenticatedContext("firstGoogleUser", {
+        email: "first-admin@example.test",
+        email_verified: true,
+        firebase: { sign_in_provider: "google.com" },
+      }).firestore();
+
+      await assertSucceeds(
+        runTransaction(db, async (transaction) => {
+          transaction.set(doc(db, "system", "admin"), {
+            uid: "firstGoogleUser",
+            createdAt: serverTimestamp(),
+          });
+          transaction.set(doc(db, "users", "firstGoogleUser"), {
+            uid: "firstGoogleUser",
+            role: "admin",
+          });
+        })
+      );
+    });
+
+    it("이미 관리자가 있으면 다른 Google 계정은 선점할 수 없다", async () => {
+      const db = env.authenticatedContext("secondGoogleUser", {
+        email: "second-admin@example.test",
+        email_verified: true,
+        firebase: { sign_in_provider: "google.com" },
+      }).firestore();
+      await assertFails(
+        setDoc(doc(db, "system", "admin"), {
+          uid: "secondGoogleUser",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("미검증 또는 Google이 아닌 계정은 최초 관리자를 선점할 수 없다", async () => {
+      await env.clearFirestore();
+      const unverified = env.authenticatedContext("unverified", {
+        email: "unverified@example.test",
+        email_verified: false,
+        firebase: { sign_in_provider: "google.com" },
+      }).firestore();
+      const passwordUser = env.authenticatedContext("passwordUser", {
+        email: "password@example.test",
+        email_verified: true,
+        firebase: { sign_in_provider: "password" },
+      }).firestore();
+      await assertFails(
+        setDoc(doc(unverified, "system", "admin"), {
+          uid: "unverified",
+          createdAt: serverTimestamp(),
+        })
+      );
+      await assertFails(
+        setDoc(doc(passwordUser, "system", "admin"), {
+          uid: "passwordUser",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("관리자 UID 선점 없이 admin 프로필만 만들 수 없다", async () => {
+      await env.clearFirestore();
+      const db = env.authenticatedContext("profileOnly", {
+        email: "profile-only@example.test",
+        email_verified: true,
+        firebase: { sign_in_provider: "google.com" },
+      }).firestore();
+      await assertFails(
+        setDoc(doc(db, "users", "profileOnly"), {
+          uid: "profileOnly",
+          role: "admin",
+        })
+      );
+    });
+
+    it("익명 사용자는 관리자 UID를 선점할 수 없다", async () => {
+      await env.clearFirestore();
+      const db = env.authenticatedContext("anonymousUser", {
+        firebase: { sign_in_provider: "anonymous" },
+      }).firestore();
+      await assertFails(
+        setDoc(doc(db, "system", "admin"), {
+          uid: "anonymousUser",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("등록된 관리자 문서는 수정하거나 삭제할 수 없다", async () => {
+      const db = asRegisteredAdmin(env).firestore();
+      await assertFails(updateDoc(doc(db, "system", "admin"), { uid: "other" }));
+      await assertFails(deleteDoc(doc(db, "system", "admin")));
+    });
+
     it("역할을 부여할 수 있다", async () => {
-      const db = asInitialAdmin(env).firestore();
+      const db = asRegisteredAdmin(env).firestore();
       await assertSucceeds(updateDoc(doc(db, "users", "stu1"), { role: "teacher" }));
     });
 
-    it("자기 문서를 admin으로 맞출 수 있다 (부트스트랩 자가 치유)", async () => {
-      const db = asInitialAdmin(env).firestore();
+    it("자기 문서를 admin으로 맞출 수 있다", async () => {
+      const db = asRegisteredAdmin(env).firestore();
       await assertSucceeds(
         updateDoc(doc(db, "users", "rootAdmin"), {
           role: "admin", displayName: "선생님", emoji: "🧑‍🏫",
@@ -154,7 +246,7 @@ describe("사용자 프로필 규칙", () => {
     });
 
     it("선생님 신청을 승인·거절할 수 있다", async () => {
-      const db = asInitialAdmin(env).firestore();
+      const db = asRegisteredAdmin(env).firestore();
       await assertSucceeds(
         updateDoc(doc(db, "users", "stu1"), {
           requestedRole: null, displayName: "선생님", emoji: "🧑‍🏫",

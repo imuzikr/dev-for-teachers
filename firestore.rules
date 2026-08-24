@@ -8,7 +8,7 @@ rules_version = '2';
 //  · 질문 게시판(questions·answers·notices·keywords)은 전체 공유
 //  · 공부방(반)의 모든 자산(보드·카드·누가기록·입장코드)은
 //    그 반을 개설한 교사(classes.createdBy)에게 귀속.
-//    최고 관리자(role=admin 또는 부트스트랩 이메일)만 전체 접근.
+//    Firestore에 최초 등록된 관리자만 전체 접근.
 //  · 반이 '보관(archived)' 상태면: 소유 교사도 그 반의 데이터는 읽기만
 //    가능(쓰기 전면 차단, 보관 해제해야 편집 가능) / 학생은 읽기도 불가.
 //    classes 문서 자체(이름 수정·보관 토글)는 예외 — 항상 소유 교사가 수정 가능.
@@ -36,6 +36,10 @@ service cloud.firestore {
     function isGuestUserProfile(userId) {
       return isGuestTeacher()
              && userId == uid()
+             && request.resource.data.keys().hasOnly([
+                  'email', 'realName', 'displayName', 'emoji', 'role',
+                  'requestedRole', 'studentId', 'schoolName', 'createdAt'
+                ])
              && request.resource.data.role == 'student'
              && request.resource.data.email == ''
              && request.resource.data.realName is string
@@ -44,14 +48,23 @@ service cloud.firestore {
              && request.resource.data.createdAt == request.time;
     }
 
-    // 초기(최고) 관리자 — 역할 클레임이 없어도 관리자. email_verified 필수.
-    function isInitialAdmin() {
-      return signedIn() && request.auth.token.email == 'iseoul72@gmail.com'
-             && request.auth.token.email_verified == true;
+    function adminPath() {
+      return /databases/$(database)/documents/system/admin;
     }
-    // 최고 관리자 — 모든 반의 데이터·기능에 접근(반 소유 제한의 예외)
+    function isVerifiedGoogleUser() {
+      return signedIn()
+             && request.auth.token.email_verified == true
+             && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
     function isAdmin() {
-      return isInitialAdmin();
+      return signedIn()
+             && exists(adminPath())
+             && get(adminPath()).data.uid == uid();
+    }
+    function isAdminAfterWrite() {
+      return signedIn()
+             && existsAfter(adminPath())
+             && getAfter(adminPath()).data.uid == uid();
     }
     // 운영 기능 접근 관문 — 관리자 계정만 허용.
     // 함수 이름은 기존 규칙 호출부 호환을 위해 유지합니다.
@@ -60,6 +73,17 @@ service cloud.firestore {
     }
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    match /system/{docId} {
+      allow get: if docId == 'admin' && isVerifiedGoogleUser();
+      allow create: if docId == 'admin'
+                    && isVerifiedGoogleUser()
+                    && !exists(adminPath())
+                    && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+                    && request.resource.data.uid == uid()
+                    && request.resource.data.createdAt == request.time;
+      allow list, update, delete: if false;
     }
 
     // ── 반 소유권 헬퍼 ────────────────────────────────────────
@@ -130,7 +154,7 @@ service cloud.firestore {
       // 일반 사용자는 익명 프로필만, 지정 Google 계정은 관리자 프로필만 생성합니다.
       allow create: if signedIn() && userId == uid() && (
         isGuestUserProfile(userId)
-        || (isInitialAdmin() && request.resource.data.role == 'admin')
+        || (isAdminAfterWrite() && request.resource.data.role == 'admin')
       );
       // 쓰기 범위 — '누가' 뿐 아니라 '어떤 필드를' 쓰는지까지 제한합니다.
       //  · 최고 관리자: 전체. 역할 부여와 부트스트랩 자가 치유(lib/auth.js가
@@ -143,6 +167,8 @@ service cloud.firestore {
       //      교사 목록에서 뺐습니다.
       allow update: if signedIn() && (
         isAdmin()
+        || (userId == uid() && isAdminAfterWrite()
+            && request.resource.data.role == 'admin')
         || (userId == uid()
             && changedOnly(['email','emoji','fcmTokens','requestedRole',
                             'withdrawRequested','withdrawRequestedAt']))

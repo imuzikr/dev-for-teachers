@@ -36,6 +36,7 @@
   --landing-top-gap: 18px;
   --landing-top-padding: 14px 28px;
   --landing-header-height: 73px;
+  --landing-artwork-height: calc(100vw * 941 / 1674);
   --landing-form-gap: 10px;
   --landing-control-width: clamp(128px, 12vw, 180px);
   --landing-control-height: 44px;
@@ -108,13 +109,16 @@ select:focus {
 
 /* ===================== 랜딩 페이지 ===================== */
 .landing {
-  min-height: calc(100dvh - var(--landing-header-height));
+  min-height: max(
+    calc(100dvh - var(--landing-header-height)),
+    var(--landing-artwork-height)
+  );
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
   background-image: url("/teacher-collaboration-hero.png");
   background-size: cover;
-  background-position: center bottom;
+  background-position: center top;
   background-repeat: no-repeat;
 }
 
@@ -272,6 +276,9 @@ select:focus {
   font-size: 14px;
   line-height: 1.6;
 }
+.admin-login-note span {
+  display: block;
+}
 
 /* 화면에는 안 보이지만 스크린 리더는 읽는 텍스트 (입력칸 라벨 등) */
 .sr-only {
@@ -363,6 +370,12 @@ select:focus {
     align-items: stretch;
     flex-direction: column;
     padding: 14px 16px;
+  }
+
+  .landing {
+    min-height: calc(100dvh - var(--landing-header-height));
+    background-size: cover;
+    background-position: center top;
   }
 
   .landing-logo {

@@ -18,8 +18,8 @@ function authErrorMessage(code) {
     "auth/too-many-requests": "잠시 후 다시 시도해 주세요.",
     "auth/admin-restricted-operation":
       "일반 선생님 입장이 아직 활성화되지 않았습니다. Firebase Authentication에서 익명 로그인을 켜 주세요.",
-    "auth/admin-email-required":
-      "관리자는 iseoul72@gmail.com Google 계정으로만 로그인할 수 있습니다.",
+    "auth/admin-email-unverified": "확인된 Google 계정으로 로그인해 주세요.",
+    "auth/admin-already-claimed": "이미 등록된 관리자 Google 계정으로 로그인해 주세요.",
     "auth/profile-create-failed": "관리자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     "permission-denied":
       "계정 정보를 읽지 못했습니다. 잠시 후 다시 시도하고, 계속 안 되면 선생님께 알려 주세요.",
@@ -194,7 +194,8 @@ export default function LandingPage() {
 
             <div className="form-grid admin-google-login">
               <p className="admin-login-note">
-                관리자 Google 계정으로 로그인해 주세요.
+                <span>Google 관리자 계정으로 로그인하세요.</span>
+                <span>관리자가 없으면 이 계정이 자동 등록됩니다.</span>
               </p>
               {error && (
                 <p className="auth-error" role="alert">{error}</p>
