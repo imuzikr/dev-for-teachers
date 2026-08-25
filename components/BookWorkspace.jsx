@@ -17,8 +17,10 @@ export default function BookWorkspace({
   project,
   editingProject,
   projectEditorKey,
+  appendProjectStep,
   savingProject,
   onSaveProject,
+  onEditProject,
   onOpen,
   onDelete,
 }) {
@@ -68,8 +70,10 @@ export default function BookWorkspace({
             key={projectEditorKey}
             project={project}
             editing={editingProject}
+            appendStep={appendProjectStep}
             saving={savingProject}
             onSave={onSaveProject}
+            onEdit={isTeacher ? onEditProject : null}
             onOpen={onOpen}
             onDelete={isTeacher ? onDelete : null}
           />

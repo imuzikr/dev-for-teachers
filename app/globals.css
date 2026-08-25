@@ -8790,7 +8790,7 @@ pre code {
 .book-step-item-edit input {
   width: 100%;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
 }
 
 .book-step-card {
@@ -8862,6 +8862,10 @@ pre code {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
 }
 
 .book-step-items-head {
@@ -8904,13 +8908,48 @@ pre code {
 
 .book-project-view > header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 2px 2px 4px;
 }
+.book-project-view > header > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .book-project-view > header strong { color: var(--text); font-size: 15px; }
 .book-project-view > header small { color: var(--primary-dark); font-size: 11px; font-weight: 800; }
+.book-project-edit {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 6px 9px;
+  color: var(--primary-dark);
+}
+
+.book-project-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.book-project-section + .book-project-section {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.book-project-section h3 {
+  margin: 0 0 2px;
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+.book-project-section > p {
+  margin: 0;
+  padding: 7px 8px;
+  color: var(--text-sub);
+  font-size: 11px;
+}
 
 .book-project-item {
   display: grid;
@@ -8939,6 +8978,8 @@ pre code {
 .book-project-item > button:first-child span,
 .book-project-resource strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .book-project-resource span { color: var(--primary-dark); font-size: 10px; font-weight: 800; }
+.book-project-resource.is-text { cursor: default; }
+.book-project-resource strong { flex: 1; min-width: 0; }
 .book-project-item .btn-ghost { width: 44px; min-height: 44px; padding: 0; }
 
 .book-personal-dashboard {

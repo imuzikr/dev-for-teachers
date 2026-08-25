@@ -58,6 +58,7 @@ function BooksPageInner() {
   const [project, setProject] = useState(null);
   const [editingProject, setEditingProject] = useState(false);
   const [projectEditorKey, setProjectEditorKey] = useState(0);
+  const [appendProjectStep, setAppendProjectStep] = useState(false);
   const [savingProject, setSavingProject] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
@@ -144,13 +145,19 @@ function BooksPageInner() {
   }, [memberUids, directory]);
 
   const visibleActivities = useMemo(
-    () => activities.filter((activity) =>
-      SUPPORTED_ACTIVITY_TYPES.has(activity.type)
-      && (!project || (
-        activity.projectId === project.id
-        && (!project.version || activity.projectVersion === project.version)
-      ))
-    ),
+    () => {
+      const projectActivityIds = new Set(
+        (project?.steps ?? []).flatMap((step) => (step.activities ?? []).map((activity) => activity.id))
+      );
+      return activities.filter((activity) =>
+        SUPPORTED_ACTIVITY_TYPES.has(activity.type)
+        && (!project || (
+          projectActivityIds.has(activity.id)
+          && activity.projectId === project.id
+          && (!project.version || activity.projectVersion === project.version)
+        ))
+      );
+    },
     [activities, project]
   );
   const displayedProject = useMemo(() => {
@@ -196,6 +203,12 @@ function BooksPageInner() {
     } finally {
       setSavingProject(false);
     }
+  }
+
+  function openProjectEditor(appendStep = false) {
+    setAppendProjectStep(appendStep);
+    setProjectEditorKey((current) => current + 1);
+    setEditingProject(true);
   }
 
   async function handleDelete() {
@@ -278,12 +291,9 @@ function BooksPageInner() {
               <button
                 type="button"
                 className="btn-primary books-project-create"
-                onClick={() => {
-                  setProjectEditorKey((current) => current + 1);
-                  setEditingProject(true);
-                }}
+                onClick={() => openProjectEditor(false)}
               >
-                프로젝트 만들기
+                {project ? "프로젝트 편집" : "프로젝트 만들기"}
               </button>
             )}
           </div>
@@ -302,8 +312,10 @@ function BooksPageInner() {
             project={displayedProject}
             editingProject={editingProject}
             projectEditorKey={projectEditorKey}
+            appendProjectStep={appendProjectStep}
             savingProject={savingProject}
             onSaveProject={handleSaveProject}
+            onEditProject={openProjectEditor}
             onOpen={goToActivity}
             onDelete={setConfirmDelete}
           />

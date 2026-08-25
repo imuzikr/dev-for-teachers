@@ -11,10 +11,25 @@ function newItem() {
   return { id: crypto.randomUUID(), title: "", topic: "", url: "" };
 }
 
-export default function BookProjectPanel({ project, editing, saving, onSave, onOpen, onDelete }) {
-  const [title, setTitle] = useState("");
-  const [steps, setSteps] = useState([]);
-  const [openIds, setOpenIds] = useState(new Set());
+function initialDraft(project, appendStep) {
+  const existingSteps = (project?.steps ?? []).map((step) => ({
+    ...step,
+    activities: (step.activities ?? []).map((activity) => ({ ...activity })),
+    resources: (step.resources ?? []).map((resource) => ({ ...resource })),
+  }));
+  const steps = appendStep ? [...existingSteps, newStep(existingSteps.length)] : existingSteps;
+  return {
+    title: project?.title ?? "",
+    steps,
+    openIds: new Set(appendStep && steps.length > 0 ? [steps.at(-1).id] : steps.slice(0, 1).map((step) => step.id)),
+  };
+}
+
+export default function BookProjectPanel({ project, editing, appendStep, saving, onSave, onEdit, onOpen, onDelete }) {
+  const [draft] = useState(() => initialDraft(project, appendStep));
+  const [title, setTitle] = useState(draft.title);
+  const [steps, setSteps] = useState(draft.steps);
+  const [openIds, setOpenIds] = useState(draft.openIds);
 
   function updateStep(stepId, patch) {
     setSteps((current) => current.map((step) => step.id === stepId ? { ...step, ...patch } : step));
@@ -103,35 +118,60 @@ export default function BookProjectPanel({ project, editing, saving, onSave, onO
 
   return (
     <div className="book-project-view">
-      <header><strong>{project.title}</strong><small>{project.steps?.length ?? 0} Steps</small></header>
+      <header>
+        <span><strong>{project.title}</strong><small>{project.steps?.length ?? 0} Steps</small></span>
+        {onEdit && <button type="button" className="btn-ghost book-project-edit" onClick={() => onEdit(false)}>프로젝트 편집</button>}
+      </header>
       {(project.steps ?? []).map((step, index) => (
         <details className="book-step-card" key={step.id} open={index === 0}>
           <summary><span>Step {index + 1}</span><strong>{step.title}</strong><small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small></summary>
           <div className="book-step-content">
-            {step.activities.map((activity) => (
-              <div className="book-project-item" key={activity.id}>
-                <button type="button" onClick={() => onOpen(activity)}><IconBook size={17} /><span>{activity.title}</span></button>
-                {onDelete && <button type="button" className="btn-ghost role-danger-btn" title="활동 삭제" onClick={() => onDelete(activity)}><IconTrash size={14} /></button>}
-              </div>
-            ))}
-            {step.resources.map((resource) => (
-              <a className="book-project-resource" key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><span>자료</span><strong>{resource.title}</strong></a>
-            ))}
+            <ProjectSection title="활동" empty="등록된 활동이 없습니다.">
+              {step.activities.map((activity) => (
+                <div className="book-project-item" key={activity.id}>
+                  <button type="button" onClick={() => onOpen(activity)}><IconBook size={17} /><span>{activity.title}</span></button>
+                  {onDelete && <button type="button" className="btn-ghost role-danger-btn" title="활동 삭제" onClick={() => onDelete(activity)}><IconTrash size={14} /></button>}
+                </div>
+              ))}
+            </ProjectSection>
+            <ProjectSection title="자료" empty="등록된 자료가 없습니다.">
+              {step.resources.map((resource) => resource.url ? (
+                <a className="book-project-resource" key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><strong>{resource.title}</strong><span>링크 열기</span></a>
+              ) : (
+                <div className="book-project-resource is-text" key={resource.id}><strong>{resource.title}</strong><span>텍스트</span></div>
+              ))}
+            </ProjectSection>
           </div>
         </details>
       ))}
+      {onEdit && (
+        <button type="button" className="btn-outline book-step-add" onClick={() => onEdit(true)}>
+          <IconAddFeature size={17} /> Step 추가
+        </button>
+      )}
     </div>
   );
 }
 
+function ProjectSection({ title, empty, children }) {
+  const items = Array.isArray(children) ? children : children ? [children] : [];
+  return (
+    <section className="book-project-section">
+      <h3>{title}</h3>
+      {items.length > 0 ? children : <p>{empty}</p>}
+    </section>
+  );
+}
+
 function ProjectItems({ label, items, resource = false, onAdd, onChange, onRemove }) {
+  const firstPlaceholder = resource ? "자료 내용" : `${label} ${items.length > 1 ? "이름" : "제목"}`;
   return (
     <section className="book-step-items">
       <div className="book-step-items-head"><strong>{label}</strong><button type="button" className="btn-ghost" onClick={onAdd}>+ {label} 추가</button></div>
       {items.map((item, index) => (
         <div className="book-step-item-edit" key={item.id}>
-          <input value={item.title} onChange={(event) => onChange(item.id, { title: event.target.value })} placeholder={`${label} ${index + 1} 이름`} />
-          {resource ? <input value={item.url} onChange={(event) => onChange(item.id, { url: event.target.value })} placeholder="https:// 자료 주소" type="url" /> : <input value={item.topic} onChange={(event) => onChange(item.id, { topic: event.target.value })} placeholder="활동 주제" />}
+          <input value={item.title} onChange={(event) => onChange(item.id, { title: event.target.value })} placeholder={`${firstPlaceholder}${items.length > 1 ? ` ${index + 1}` : ""}`} />
+          {resource ? <input value={item.url} onChange={(event) => onChange(item.id, { url: event.target.value })} placeholder="링크 URL (선택)" type="url" /> : <input value={item.topic} onChange={(event) => onChange(item.id, { topic: event.target.value })} placeholder="활동 주제" />}
           <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} onClick={() => onRemove(item.id)}><IconTrash size={14} /></button>
         </div>
       ))}
