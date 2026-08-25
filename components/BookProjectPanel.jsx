@@ -90,17 +90,26 @@ export default function BookProjectPanel({ project, editing, appendStep, saving,
             const open = openIds.has(step.id);
             return (
               <article className="book-step-card" key={step.id}>
-                <button type="button" className="book-step-toggle" onClick={() => toggleStep(step.id)} aria-expanded={open}>
+                <header className="book-step-edit-head">
                   <span>Step {index + 1}</span>
-                  <strong>{step.title}</strong>
+                  <input
+                    value={step.title}
+                    onChange={(event) => updateStep(step.id, { title: event.target.value })}
+                    aria-label={`Step ${index + 1} 제목`}
+                  />
                   <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>
-                  <i aria-hidden="true">{open ? "−" : "+"}</i>
-                </button>
+                  <button type="button" onClick={() => toggleStep(step.id)} aria-expanded={open} aria-label={`Step ${index + 1} ${open ? "접기" : "펼치기"}`}>
+                    <span aria-hidden="true">{open ? "−" : "+"}</span>
+                  </button>
+                </header>
                 {open && (
                   <div className="book-step-body">
-                    <input value={step.title} onChange={(event) => updateStep(step.id, { title: event.target.value })} aria-label={`Step ${index + 1} 이름`} />
-                    <ProjectItems label="활동" items={step.activities} onAdd={() => addItem(step.id, "activities")} onChange={(id, patch) => updateItem(step.id, "activities", id, patch)} onRemove={(id) => removeItem(step.id, "activities", id)} />
-                    <ProjectItems label="자료" items={step.resources} resource onAdd={() => addItem(step.id, "resources")} onChange={(id, patch) => updateItem(step.id, "resources", id, patch)} onRemove={(id) => removeItem(step.id, "resources", id)} />
+                    {step.activities.length > 0 && <ProjectItems label="활동" items={step.activities} onChange={(id, patch) => updateItem(step.id, "activities", id, patch)} onRemove={(id) => removeItem(step.id, "activities", id)} />}
+                    {step.resources.length > 0 && <ProjectItems label="자료" items={step.resources} resource onChange={(id, patch) => updateItem(step.id, "resources", id, patch)} onRemove={(id) => removeItem(step.id, "resources", id)} />}
+                    <div className="book-step-add-actions">
+                      <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
+                      <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>
+                    </div>
                   </div>
                 )}
               </article>
@@ -163,15 +172,24 @@ function ProjectSection({ title, empty, children }) {
   );
 }
 
-function ProjectItems({ label, items, resource = false, onAdd, onChange, onRemove }) {
+function ProjectItems({ label, items, resource = false, onChange, onRemove }) {
   const firstPlaceholder = resource ? "자료 내용" : `${label} ${items.length > 1 ? "이름" : "제목"}`;
   return (
     <section className="book-step-items">
-      <div className="book-step-items-head"><strong>{label}</strong><button type="button" className="btn-ghost" onClick={onAdd}>+ {label} 추가</button></div>
+      <div className="book-step-items-head"><strong>{label}</strong></div>
       {items.map((item, index) => (
         <div className="book-step-item-edit" key={item.id}>
-          <input value={item.title} onChange={(event) => onChange(item.id, { title: event.target.value })} placeholder={`${firstPlaceholder}${items.length > 1 ? ` ${index + 1}` : ""}`} />
-          {resource ? <input value={item.url} onChange={(event) => onChange(item.id, { url: event.target.value })} placeholder="링크 URL (선택)" type="url" /> : <input value={item.topic} onChange={(event) => onChange(item.id, { topic: event.target.value })} placeholder="활동 주제" />}
+          <input
+            value={item.title}
+            onChange={(event) => onChange(item.id, { title: event.target.value })}
+            placeholder={`${firstPlaceholder}${items.length > 1 ? ` ${index + 1}` : ""}`}
+            aria-label={`${label} ${index + 1} ${resource ? "내용" : "제목"}`}
+          />
+          {resource ? (
+            <input value={item.url} onChange={(event) => onChange(item.id, { url: event.target.value })} placeholder="링크 URL (선택)" aria-label={`자료 ${index + 1} 링크 URL`} type="url" />
+          ) : (
+            <input value={item.topic} onChange={(event) => onChange(item.id, { topic: event.target.value })} placeholder="활동 주제" aria-label={`활동 ${index + 1} 주제`} />
+          )}
           <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} onClick={() => onRemove(item.id)}><IconTrash size={14} /></button>
         </div>
       ))}
