@@ -32,9 +32,15 @@
 - `landing-quick-start`: school/name inputs, start button, and admin login button in one responsive row.
 - `hero-glass`: centered compact translucent panel containing only the brand title and tagline.
 - `modal-auth`: Google-only sign-in dialog; the first successful Google login claims administration.
+- `admin-layout`: 관리자 전용 2열 작업 화면. 왼쪽에는 검색 가능한 사용자 디렉터리와 탈퇴 명령을 유지하고, 오른쪽에는 선택 사용자의 52주 활동 히트맵만 표시한다.
+- `heatmap-panel`: 5단계 세이지-포레스트 활동 밀도와 미래 날짜 중립 상태를 사용하는 가로 스크롤 가능 잔디 히트맵.
+- `book-workspace`: 왼쪽 고정 폭 활동·자료 카드 패널과 오른쪽 유동 폭 개인 카드 대시보드로 구성한다. 사용자 프로필이 개인 카드의 단일 출처이며 별도 카드 문서를 중복 생성하지 않는다.
+- `book-personal-card`: 학교명, 이름, 활동 진행률과 활동별 상태를 표시한다. 교사는 참여자 전체를 보고 일반 사용자는 자신의 카드만 본다.
 
 ## 5. States
 
 - Inputs keep visible focus rings using the existing primary color.
 - Start and admin login controls use real buttons, preserve keyboard submission, and do not rely on placeholder-only labeling.
 - On mobile, the entry controls wrap into a two-column grid with full-width buttons so Korean labels do not clip.
+- 관리자 화면은 모바일에서 사용자 목록이 위쪽 밴드로 전환되고 히트맵은 셀 크기를 유지한 채 가로 스크롤한다.
+- 책방은 모바일에서 활동 패널이 위쪽, 개인 카드가 아래쪽으로 쌓이며 활동 카드와 상태 버튼의 텍스트가 잘리지 않아야 한다.

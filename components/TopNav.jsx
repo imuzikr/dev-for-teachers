@@ -27,7 +27,7 @@ import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
 import QuestionSignalButton from "./QuestionSignalButton";
-import { IconPythonRunner, IconLogo, IconBlackboard, IconBook, IconLogout } from "./StatusIcons";
+import { IconPythonRunner, IconLogo, IconBlackboard, IconBook, IconLogout, IconPeople } from "./StatusIcons";
 
 export default function TopNav({ active, onPython, pyActive = false }) {
   const router = useRouter();
@@ -135,7 +135,8 @@ export default function TopNav({ active, onPython, pyActive = false }) {
   useEffect(() => {
     router.prefetch("/study");
     router.prefetch("/books");
-  }, [router]);
+    if (isStrictAdmin) router.prefetch("/admin");
+  }, [isStrictAdmin, router]);
 
   function handlePython() {
     if (onPython) onPython();
@@ -162,7 +163,7 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     <header className="topbar">
       {/* 왼쪽: 로고 + 주요 메뉴 */}
       <div className="topbar-left">
-        <button className="logo logo-button" onClick={() => go("/study")}>
+        <button className="logo logo-button" onClick={() => go("/books")}>
           <IconLogo size={30} /> 교사 개발자
         </button>
         <span className="topbar-divider" aria-hidden="true" />
@@ -183,6 +184,15 @@ export default function TopNav({ active, onPython, pyActive = false }) {
           >
             <IconBook size={20} /> <span className="nav-label">책방</span>
           </button>
+          {isStrictAdmin && (
+            <button
+              className={`btn-ghost ${active === "admin" ? "nav-active" : ""}`}
+              onClick={() => go("/admin")}
+              title="사용자 관리"
+            >
+              <IconPeople size={20} /> <span className="nav-label">사용자 관리</span>
+            </button>
+          )}
 
           <button
             data-py-toggle

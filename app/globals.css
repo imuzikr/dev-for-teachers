@@ -3558,6 +3558,39 @@ pre code {
   overflow-y: auto;
 }
 
+.admin-user-search {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.admin-user-search input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--landing-control-bg);
+  color: var(--text);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-user-search input:focus {
+  outline: 2px solid var(--primary-light);
+  border-color: var(--primary);
+}
+
+.admin-user-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a4543c;
+}
+
+.admin-heatmap-heading {
+  min-height: 56px;
+}
+
 .admin-panel-head {
   display: flex;
   align-items: center;
@@ -4115,6 +4148,18 @@ pre code {
   border-radius: 3px;
   cursor: default;
 }
+
+.heatmap-cell.level-0,
+.heatmap-legend-swatch.level-0 { background: #ebe9e2; }
+.heatmap-cell.level-1,
+.heatmap-legend-swatch.level-1 { background: #c8e6ca; }
+.heatmap-cell.level-2,
+.heatmap-legend-swatch.level-2 { background: #8ec892; }
+.heatmap-cell.level-3,
+.heatmap-legend-swatch.level-3 { background: #5c9e68; }
+.heatmap-cell.level-4,
+.heatmap-legend-swatch.level-4 { background: var(--primary); }
+.heatmap-cell.is-future { background: #f5f4ef; }
 
 .heatmap-legend-swatch {
   width: 15px;
@@ -11040,6 +11085,268 @@ pre code {
   color: var(--text-sub);
   margin-bottom: 20px;
 }
+
+/* ── 책방 작업 화면: 왼쪽 제시물, 오른쪽 개인 카드 ── */
+.book-library-layout {
+  display: grid;
+  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr);
+  min-height: 520px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.book-library-side {
+  min-width: 0;
+  padding: 16px;
+  background: var(--sage-card, var(--primary-light));
+  border-right: 1px solid var(--border);
+}
+
+.book-library-title,
+.book-dashboard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.book-library-title h2,
+.book-dashboard-head h2 {
+  margin: 0 0 3px;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.book-library-title p,
+.book-dashboard-head p {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 12px;
+}
+
+.book-add-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.book-resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.book-resource-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+}
+
+.book-resource-card:hover { border-color: var(--primary); }
+
+.book-resource-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.book-resource-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-btn);
+  color: var(--primary-dark);
+  background: var(--primary-light);
+}
+
+.book-resource-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.book-resource-copy strong,
+.book-resource-copy small,
+.book-resource-copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-resource-copy strong { font-size: 13px; }
+.book-resource-copy small { color: var(--text-sub); font-size: 12px; }
+.book-resource-copy em { color: var(--primary-dark); font-size: 11px; font-style: normal; }
+
+.book-resource-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px;
+  border-left: 1px solid var(--border);
+}
+
+.book-resource-actions .btn-ghost {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.book-library-empty,
+.book-dashboard-empty {
+  padding: 24px 12px;
+  color: var(--text-sub);
+  font-size: 13px;
+  text-align: center;
+}
+
+.book-personal-dashboard {
+  min-width: 0;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.book-dashboard-head > span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.book-personal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.book-personal-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+}
+
+.book-personal-card > header {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-personal-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary-light);
+  font-size: 18px;
+}
+
+.book-personal-card header > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.book-personal-card header strong,
+.book-personal-card header small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-personal-card header strong { color: var(--text); font-size: 14px; }
+.book-personal-card header small { color: var(--text-sub); font-size: 11px; }
+.book-personal-card header > em { color: var(--primary-dark); font-size: 12px; font-style: normal; font-weight: 800; }
+
+.book-personal-progress {
+  height: 5px;
+  margin: 12px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--neutral);
+}
+
+.book-personal-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.book-personal-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.book-personal-activities button {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.book-personal-activities button:hover { background: var(--primary-light); }
+.book-personal-activities button > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-personal-activities em { flex: 0 0 auto; color: var(--text-sub); font-size: 11px; font-style: normal; }
+.book-personal-activities em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-empty { margin: 12px 0 0; color: var(--text-sub); font-size: 12px; }
+
+.class-entry--compact {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.class-entry--compact .class-entry-card {
+  width: 100%;
+  padding: 16px 12px;
+  box-shadow: none;
+}
+
+.class-entry--compact .class-entry-emoji { display: none; }
+.class-entry--compact h2 { font-size: 15px; }
+.class-entry--compact p { font-size: 12px; }
+.class-entry--compact .class-entry-form { flex-direction: column; }
+.class-entry--compact .class-entry-input,
+.class-entry--compact .btn-primary { width: 100%; }
 .book-head-actions {
   display: flex;
   align-items: center;
@@ -11868,6 +12175,10 @@ pre code {
 /* ── 모바일 ── */
 @media (max-width: 768px) {
   .books-main { padding: 16px 12px 60px; }
+  .book-library-layout { grid-template-columns: 1fr; }
+  .book-library-side { border-right: 0; border-bottom: 1px solid var(--border); }
+  .book-personal-dashboard { padding: 16px 12px; }
+  .book-personal-grid { grid-template-columns: 1fr; }
   .canvas-main { padding: 12px 10px 16px; overflow-y: auto; }
   .consonant-grid {
     grid-template-columns: repeat(2, 1fr);

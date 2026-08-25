@@ -8,7 +8,7 @@ import {
   signInAsAdminWithGoogle,
   onAuthChange,
 } from "@/lib/auth";
-import { saveGuestTeacherSession } from "@/lib/user";
+import { getGuestTeacherSession, saveGuestTeacherSession } from "@/lib/user";
 import { IconLogo } from "@/components/StatusIcons";
 
 // Firebase 인증 오류 코드를 한국어 메시지로
@@ -48,6 +48,13 @@ export default function LandingPage() {
   const [busy, setBusy] = useState(false);
   const [entryBusy, setEntryBusy] = useState(false);
 
+  useEffect(() => {
+    const saved = getGuestTeacherSession();
+    if (!saved) return;
+    setSchoolName(saved.schoolName);
+    setTeacherName(saved.teacherName);
+  }, []);
+
   // Escape로 닫기 — 마우스로만 닫을 수 있으면 키보드 사용자가 갇힙니다.
   useEffect(() => {
     if (!authOpen) return;
@@ -58,11 +65,11 @@ export default function LandingPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [authOpen]);
 
-  // 이미 로그인되어 있으면 공부방으로
+  // 이미 로그인되어 있으면 책방으로
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     return onAuthChange((u) => {
-      if (u) router.replace("/study");
+      if (u && !u.isGuestTeacher) router.replace("/books");
     });
   }, [router]);
 
@@ -88,7 +95,7 @@ export default function LandingPage() {
           teacherName: nextTeacherName,
         });
       }
-      router.push("/study");
+      router.push("/books");
     } catch (err) {
       setEntryError(authErrorMessage(err?.code));
     } finally {
@@ -101,7 +108,7 @@ export default function LandingPage() {
     setBusy(true);
     try {
       await signInAsAdminWithGoogle();
-      router.push("/study");
+      router.push("/books");
     } catch (err) {
       setError(authErrorMessage(err?.code));
     } finally {

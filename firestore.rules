@@ -542,5 +542,14 @@ service cloud.firestore {
         || resource.data.get('memberUids', []).hasAny([uid()])
       );
     }
+    match /{path=**}/entries/{entryId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.authorId == uid());
+    }
+    match /{path=**}/attendanceRecords/{recordId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.uid == uid());
+    }
+    match /{path=**}/questionSignals/{signalId} {
+      allow read: if isAdmin();
+    }
   }
 }

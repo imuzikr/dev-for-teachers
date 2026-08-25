@@ -12,7 +12,7 @@ import { setSelectedClassId } from "@/lib/classroom";
 import { getCurrentUser } from "@/lib/user";
 import { isFirebaseConfigured } from "@/lib/firebase";
 
-export default function ClassEntry() {
+export default function ClassEntry({ compact = false, title = "공부방에 입장하기" }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
@@ -43,10 +43,10 @@ export default function ClassEntry() {
   }
 
   return (
-    <div className="class-entry">
+    <div className={`class-entry${compact ? " class-entry--compact" : ""}`}>
       <div className="class-entry-card">
         <div className="class-entry-emoji" aria-hidden="true">🧩</div>
-        <h2>공부방에 입장하기</h2>
+        <h2>{title}</h2>
         <p>선생님이 알려 준 우리 반 입장 코드를 입력해 주세요.</p>
         <form onSubmit={handleSubmit} className="class-entry-form">
           <input
