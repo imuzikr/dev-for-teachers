@@ -484,6 +484,30 @@ service cloud.firestore {
     function isBookActivityLocked(aId) {
       return get(/databases/$(database)/documents/bookActivities/$(aId)).data.get('locked', false) == true;
     }
+    function validBookProject(classId) {
+      return request.resource.data.keys().hasOnly([
+               'classId', 'title', 'version', 'steps', 'createdBy', 'updatedAt'
+             ])
+             && request.resource.data.classId == classId
+             && request.resource.data.title is string
+             && request.resource.data.title.size() > 0
+             && request.resource.data.title.size() <= 100
+             && request.resource.data.version is string
+             && request.resource.data.version.size() > 0
+             && request.resource.data.steps is list
+             && request.resource.data.steps.size() <= 30
+             && request.resource.data.createdBy == uid()
+             && request.resource.data.updatedAt == request.time;
+    }
+
+    match /bookProjects/{classId} {
+      allow read: if signedIn() && (
+        isAdmin() || ownsClass(classId) || isClassMember(classId)
+      );
+      allow create, update: if (isAdmin() || ownsClassEditable(classId))
+                            && validBookProject(classId);
+      allow delete: if isAdmin() || ownsClassEditable(classId);
+    }
 
     match /bookActivities/{aId} {
       allow read: if signedIn() && (

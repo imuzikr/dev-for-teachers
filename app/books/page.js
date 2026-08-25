@@ -3,14 +3,14 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  addBookActivity,
   deleteBookActivity,
+  saveBookProject,
   subscribeBookActivities,
+  subscribeBookProject,
   subscribeClassMembers,
   subscribeClasses,
   subscribeMyMemberships,
   subscribeUserDirectory,
-  updateBookActivity,
 } from "@/lib/store";
 import { isAdmin, isTeacher } from "@/lib/user";
 import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
@@ -20,7 +20,6 @@ import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
 import Toast from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
-import BookActivityForm from "@/components/BookActivityForm";
 import MindmapBoard from "@/components/MindmapBoard";
 import MindmapForm from "@/components/MindmapForm";
 import BookWorkspace from "@/components/BookWorkspace";
@@ -56,7 +55,10 @@ function BooksPageInner() {
   const [directory, setDirectory] = useState([]);
   const [memberUids, setMemberUids] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [creatingType, setCreatingType] = useState(null);
+  const [project, setProject] = useState(null);
+  const [editingProject, setEditingProject] = useState(false);
+  const [projectEditorKey, setProjectEditorKey] = useState(0);
+  const [savingProject, setSavingProject] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
 
@@ -115,6 +117,7 @@ function BooksPageInner() {
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
   useEffect(() => subscribeBookActivities(classId, setActivities), [classId]);
+  useEffect(() => subscribeBookProject(classId, setProject), [classId]);
 
   useEffect(() => {
     if (!admin || !classId) {
@@ -141,9 +144,28 @@ function BooksPageInner() {
   }, [memberUids, directory]);
 
   const visibleActivities = useMemo(
-    () => activities.filter((a) => SUPPORTED_ACTIVITY_TYPES.has(a.type)),
-    [activities]
+    () => activities.filter((activity) =>
+      SUPPORTED_ACTIVITY_TYPES.has(activity.type)
+      && (!project || (
+        activity.projectId === project.id
+        && (!project.version || activity.projectVersion === project.version)
+      ))
+    ),
+    [activities, project]
   );
+  const displayedProject = useMemo(() => {
+    if (!project) return null;
+    const activityById = new Map(visibleActivities.map((activity) => [activity.id, activity]));
+    return {
+      ...project,
+      steps: (project.steps ?? []).map((step) => ({
+        ...step,
+        activities: (step.activities ?? [])
+          .map((activity) => activityById.get(activity.id))
+          .filter(Boolean),
+      })),
+    };
+  }, [project, visibleActivities]);
   const activeActivity = openActivityId
     ? visibleActivities.find((a) => a.id === openActivityId) ?? null
     : null;
@@ -162,10 +184,18 @@ function BooksPageInner() {
     }];
   }, [admin, roster, user]);
 
-  async function handleCreate(form) {
-    await addBookActivity(user, { classId, ...form });
-    setCreatingType(null);
-    setToast("활동을 만들었어요.");
+  async function handleSaveProject(draft) {
+    setSavingProject(true);
+    try {
+      await saveBookProject(user, { classId, ...draft });
+      setEditingProject(false);
+      setToast("프로젝트를 저장했어요.");
+    } catch (error) {
+      console.error("[책방] 프로젝트 저장 실패:", error);
+      setToast("프로젝트를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSavingProject(false);
+    }
   }
 
   async function handleDelete() {
@@ -244,6 +274,18 @@ function BooksPageInner() {
                 onToast={setToast}
               />
             </div>
+            {admin && classId && (
+              <button
+                type="button"
+                className="btn-primary books-project-create"
+                onClick={() => {
+                  setProjectEditorKey((current) => current + 1);
+                  setEditingProject(true);
+                }}
+              >
+                프로젝트 만들기
+              </button>
+            )}
           </div>
 
           <p className="books-intro">
@@ -257,21 +299,15 @@ function BooksPageInner() {
             user={user}
             isTeacher={admin}
             hasClass={!!classId}
-            onAdd={() => setCreatingType("mindmap")}
+            project={displayedProject}
+            editingProject={editingProject}
+            projectEditorKey={projectEditorKey}
+            savingProject={savingProject}
+            onSaveProject={handleSaveProject}
             onOpen={goToActivity}
             onDelete={setConfirmDelete}
-            onToggleLock={(activity) => updateBookActivity(activity.id, { locked: !activity.locked })}
           />
         </main>
-      )}
-
-      {creatingType && (
-        <BookActivityForm
-          initialType={creatingType}
-          fixedType
-          onSave={handleCreate}
-          onClose={() => setCreatingType(null)}
-        />
       )}
 
       {confirmDelete && (

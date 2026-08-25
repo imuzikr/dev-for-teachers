@@ -2,17 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
-import { IconBook, IconLock, IconTrash } from "./StatusIcons";
+import BookProjectPanel from "./BookProjectPanel";
 
 function participantName(participant) {
   return participant.name || participant.realName || participant.displayName || "이름 미설정";
-}
-
-function activityDate(activity) {
-  const value = activity?.createdAt;
-  const date = typeof value?.toDate === "function" ? value.toDate() : value ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) return "날짜 없음";
-  return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(date);
 }
 
 export default function BookWorkspace({
@@ -21,10 +14,13 @@ export default function BookWorkspace({
   user,
   isTeacher,
   hasClass,
-  onAdd,
+  project,
+  editingProject,
+  projectEditorKey,
+  savingProject,
+  onSaveProject,
   onOpen,
   onDelete,
-  onToggleLock,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
 
@@ -60,47 +56,23 @@ export default function BookWorkspace({
       <aside className="book-library-side" aria-label="선생님이 준비한 활동과 자료">
         <div className="book-library-title">
           <div>
-            <h2>활동 · 자료</h2>
-            <p>선생님이 준비한 책방 활동</p>
+            <h2>{editingProject ? "프로젝트 구성" : "프로젝트"}</h2>
+            <p>{editingProject ? "Step별 활동과 자료를 준비하세요." : "선생님이 준비한 책방 흐름"}</p>
           </div>
-          {isTeacher && hasClass && (
-            <button type="button" className="btn-primary book-add-icon" onClick={onAdd} title="활동 추가">
-              +
-            </button>
-          )}
         </div>
 
         {!hasClass && !isTeacher ? (
           <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
-        ) : activities.length === 0 ? (
-          <div className="book-library-empty">
-            {isTeacher ? "아직 준비한 활동이 없습니다." : "선생님이 활동을 준비하고 있습니다."}
-          </div>
         ) : (
-          <div className="book-resource-list">
-            {activities.map((activity) => (
-              <article className="book-resource-card" key={activity.id}>
-                <button type="button" className="book-resource-open" onClick={() => onOpen(activity)}>
-                  <span className="book-resource-icon"><IconBook size={18} /></span>
-                  <span className="book-resource-copy">
-                    <strong>{activity.title}</strong>
-                    <small>{activity.topic || "주제 미정"}</small>
-                    <em>{activityDate(activity)}{activity.locked ? " · 잠김" : ""}</em>
-                  </span>
-                </button>
-                {isTeacher && (
-                  <div className="book-resource-actions">
-                    <button type="button" className="btn-ghost" onClick={() => onToggleLock(activity)} title={activity.locked ? "잠금 해제" : "잠그기"}>
-                      <IconLock size={15} />
-                    </button>
-                    <button type="button" className="btn-ghost role-danger-btn" onClick={() => onDelete(activity)} title="삭제">
-                      <IconTrash size={15} />
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
+          <BookProjectPanel
+            key={projectEditorKey}
+            project={project}
+            editing={editingProject}
+            saving={savingProject}
+            onSave={onSaveProject}
+            onOpen={onOpen}
+            onDelete={isTeacher ? onDelete : null}
+          />
         )}
       </aside>
 
