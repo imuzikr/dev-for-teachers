@@ -54,14 +54,14 @@ export default function StudyAttendanceModal({
   return (
     <div className="modal-backdrop" {...backdropClose(onClose)}>
       <div
-        className="modal study-attendance-modal"
+        className="modal attendance-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="study-attendance-title"
+        aria-labelledby="attendance-title"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-head">
-          <h3 id="study-attendance-title">{isTeacher ? "출석부 보기" : "내 출석부"}</h3>
+          <h3 id="attendance-title">{isTeacher ? "출석부 보기" : "내 출석부"}</h3>
           <button className="btn-close" onClick={onClose} aria-label="닫기">
             ×
           </button>
@@ -73,7 +73,7 @@ export default function StudyAttendanceModal({
           </p>
         ) : isTeacher ? (
           <>
-            <div className="study-attendance-toolbar">
+            <div className="attendance-toolbar">
               <label>
                 날짜
                 <select value={activeDate} onChange={(e) => setSelectedDate(e.target.value)}>
@@ -88,8 +88,8 @@ export default function StudyAttendanceModal({
                 출석 {studentRows.filter((s) => s.record).length} / {studentRows.length}
               </span>
             </div>
-            <div className="study-attendance-table-wrap">
-              <table className="study-attendance-table">
+            <div className="attendance-table-wrap">
+              <table className="attendance-table">
                 <thead>
                   <tr>
                     <th>학생</th>
@@ -101,7 +101,7 @@ export default function StudyAttendanceModal({
                   {studentRows.map((student) => (
                     <tr key={student.uid}>
                       <td>
-                        <span className="study-attendance-student">
+                        <span className="attendance-student">
                           <span aria-hidden="true">{student.emoji || "🙂"}</span>
                           <span>
                             <strong>{student.name || "이름 미설정"}</strong>
@@ -110,7 +110,7 @@ export default function StudyAttendanceModal({
                         </span>
                       </td>
                       <td>
-                        <span className={`study-attendance-status${student.record ? " on" : ""}`}>
+                        <span className={`attendance-status${student.record ? " on" : ""}`}>
                           {student.record ? "출석" : "기록 없음"}
                         </span>
                       </td>
@@ -126,7 +126,7 @@ export default function StudyAttendanceModal({
             </div>
           </>
         ) : (
-          <ul className="study-attendance-list">
+          <ul className="attendance-list">
             {records.map((record) => (
               <li key={record.id}>
                 <strong>{formatDateLabel(record.date)}</strong>

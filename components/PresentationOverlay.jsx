@@ -146,7 +146,7 @@ function PresentationOverlayBody({ broadcast }) {
           {broadcast.title && <h2 className="present-slide-title">{broadcast.title}</h2>}
           {hasText ? (
             <div
-              className="present-slide-content study-card-body"
+              className="present-slide-content presentation-card-body"
               dangerouslySetInnerHTML={{ __html: html }}
             />
           ) : (

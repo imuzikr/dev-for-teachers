@@ -506,6 +506,14 @@ service cloud.firestore {
                       && !isBookActivityLocked(aId);
         allow delete: if isAdmin() || ownsBookActivityEditable(aId);
       }
+
+      match /groups/{gId} {
+        allow read, delete: if isAdmin() || ownsBookActivityEditable(aId);
+
+        match /words/{wordId} {
+          allow read, delete: if isAdmin() || ownsBookActivityEditable(aId);
+        }
+      }
     }
 
     // ── 컬렉션 그룹 쿼리 규칙 ─────────────────────────────────

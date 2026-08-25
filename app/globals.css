@@ -1108,10 +1108,7 @@ button.footer-link:hover {
 
 /* 아이콘 + 글자 버튼 세로 중앙 정렬 일괄 (아이콘이 글자 기준선보다 내려가던 문제) */
 .status-toggle,
-.study-form-title-pen,
-.notice-author,
-.kwl-entry-edit-btn,
-.kwl-tab {
+.notice-author {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1119,18 +1116,9 @@ button.footer-link:hover {
   line-height: 1;
 }
 /* 공부방 설정 칩 — '복제·삭제'는 전체 폭을 유지하므로 inline-flex가 아닌 flex */
-.study-chip,
-.study-add-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  line-height: 1.1;
-}
 /* 인라인 SVG 아이콘 기본 정렬 보정 */
 .btn-ghost svg,
 .status-toggle svg,
-.study-chip svg,
 .metoo-btn svg,
 .filter-item svg {
   flex-shrink: 0;
@@ -2029,28 +2017,9 @@ body:has(.modal-backdrop) .landing {
   color: var(--danger);
 }
 
-/* 보관된 반 표시 배지 — 상단 반 선택 드롭다운 대신 노출 */
-.study-class-archived-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--neutral);
-  color: var(--text-sub);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-/* 수업 보드 만들기 모달 — 폭을 절반으로(1000→520px). 키워드 칩은
-   .study-keyword-chips의 flex-wrap으로 좁아지면 자동 줄바꿈됨 */
-.modal.modal-study-board {
-  max-width: 520px;
-}
-
 /* 본문(에디터/표시)에 들어간 인라인 이미지 크기 제한 */
 .rte-area img,
-.study-card-body img,
+.presentation-card-body img,
 .notice-content img,
 .qa-content img,
 .chat-text img {
@@ -4210,86 +4179,8 @@ pre code {
 }
 
 /* 공부방별 통계 표 — 제출률/참여 막대 셀 */
-.study-stats-table .rate-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: center;
-}
-
-.study-stats-table .rate-track {
-  flex: 1;
-  max-width: 90px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--neutral, #eee);
-  overflow: hidden;
-}
-
-.study-stats-table .rate-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: var(--primary, #2f6f3e);
-}
-
-.study-stats-table .rate-fill.kwl {
-  background: #5c9e68;
-}
-
-.study-stats-table .rate-cell span {
-  font-size: 11px;
-  color: var(--text-sub);
-  white-space: nowrap;
-  min-width: 30px;
-  text-align: right;
-}
 
 /* ── 학생 KWL 기록 패널 (관리자) ── */
-.kwl-record-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 4px;
-}
-
-.kwl-record-day {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.kwl-record-date {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-sub);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
-}
-
-.kwl-record-entry {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  background: var(--card-bg, #faf9f6);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.kwl-record-entry .kwl-history-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.kwl-record-entry .kwl-history-row p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-}
 
 /* ── 접속 시간 추이 (선 그래프) ── */
 .access-panel {
@@ -5525,41 +5416,10 @@ pre code {
 }
 
 /* ===================== 공부방 (Study) ===================== */
-.study-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.study-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  /* padding은 study-head와 study-cols-wrap에서 각각 처리 */
-}
 
 /* KWL 패널 + 보드 컬럼 나란히 */
-.study-body {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
-}
 
 /* 보드 컬럼 영역 래퍼 */
-.study-cols-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0 24px;
-}
-
-.study-cols-wrap .empty-note {
-  margin-top: 20px;
-}
 
 /* 발표 모드 — 모둠 카드의 구성원·안내 */
 .present-group-members {
@@ -5570,176 +5430,12 @@ pre code {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.present-group-note {
-  font-size: 13.5px;
-  color: var(--text-sub);
-}
 /* ── 발표 모드 — 아이콘(▶) 전용 원형 버튼 ── */
-.study-present-btn {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--primary);
-  background: var(--primary-light);
-  color: var(--primary-dark);
-  font-size: 11px;
-  line-height: 1;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  padding: 0 0 0 2px; /* ▶ 글리프의 시각 중심 보정 */
-  flex-shrink: 0;
-}
-.study-present-btn:hover:not(:disabled) {
-  background: #dbeadf;
-}
-.study-present-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
 
 /* ── 보드 접기 / 모두 펴기 (« ») — 아이콘 전용 원형 버튼 ── */
-.study-collapse-btn {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text-sub);
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  padding-bottom: 2px;
-  flex-shrink: 0;
-}
-.study-collapse-btn:hover:not(:disabled) {
-  background: var(--neutral);
-  color: var(--dark);
-}
-.study-collapse-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
 
 /* ── 접힌 보드 — 폭 48px 세로 슬림 바 ── */
-.study-column.study-column--collapsed {
-  flex: 0 0 48px;
-  width: 48px;
-  max-width: 48px;
-  min-height: 340px;
-  align-self: stretch;
-  /* 일반 보드의 첫 카드(.study-board-info)가 컬럼 상단에서 12px 내려와 시작하므로
-     접힌 슬림 바 상자도 12px 내려 상단을 맞춥니다. */
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0 16px;
-  background: var(--bg-deep);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.study-column.study-column--collapsed:hover {
-  background: var(--neutral);
-}
-.study-collapsed-expand {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-sub);
-}
-.study-collapsed-count {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-}
-.study-collapsed-title {
-  writing-mode: vertical-rl;
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 3px;
-  color: var(--dark);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-height: 60vh;
-}
-
-.present-backdrop {
-  z-index: 1000;
-}
-.present-modal {
-  position: relative;
-  width: 94vw;
-  height: 94vh;
-  max-width: 1600px;
-  background: #fff;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
-}
-.present-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 26px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.present-who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.present-avatar {
-  font-size: 30px;
-  flex-shrink: 0;
-}
-.present-name {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 24px;
-  color: var(--dark);
-  white-space: nowrap;
-}
-.present-progress {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--primary-dark);
-  background: var(--primary-light);
-  padding: 4px 14px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-.present-board {
-  color: var(--text-sub);
-  font-size: 15px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 /* 발표 화면 본문 — 첨부는 없고, 가운데 슬라이드 카드 한 장에 텍스트만 크게 */
-.present-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 40px 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .present-slide {
   width: 100%;
   max-width: 880px;
@@ -5768,47 +5464,6 @@ pre code {
   color: var(--text-sub);
   font-size: 18px;
   text-align: center;
-}
-.present-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 26px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.present-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(30, 25, 20, 0.4);
-  color: #fff;
-  font-size: 40px;
-  line-height: 1;
-  display: grid;
-  place-items: center;
-  /* ‹ › 글리프의 베이스라인 여백 때문에 아래로 쳐져 보여 위로 보정 */
-  padding-bottom: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.present-nav:hover:not(:disabled) {
-  background: rgba(30, 25, 20, 0.62);
-}
-.present-nav:disabled {
-  opacity: 0.2;
-  cursor: default;
-}
-.present-prev {
-  left: 18px;
-}
-.present-next {
-  right: 18px;
 }
 
 /* ── 발표 강제 전환(방송) — 학생 화면 전체를 덮는 오버레이 ── */
@@ -7188,22 +6843,6 @@ pre code {
   50% { opacity: 1; }
 }
 
-.kwl-fullscreen-btn {
-  margin-left: auto;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--sidebar-text);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.kwl-fullscreen-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-
 /* 날짜 이동 — 좌우 화살표 + 달력 선택 */
 .kwlfs-date-nav {
   position: relative;
@@ -7478,506 +7117,20 @@ pre code {
 }
 
 /* ── KWL 사이드 패널 ── */
-.kwl-panel {
-  width: 300px;
-  flex-shrink: 0;
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
-  overflow-y: auto;
-  padding: 20px 14px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.kwl-panel-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.kwl-panel-title {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #c5c4bc;
-}
-
-.kwl-panel-date {
-  font-size: 13px;
-  color: #5c5b55;
-}
-
-.kwl-section {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.kwl-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.kwl-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #87867f;
-  letter-spacing: 0.3px;
-}
-
-.kwl-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-}
-
-.kwl-badge-k { background: #3d5a80; color: #d0e4f7; }
-.kwl-badge-w { background: #6b4c2a; color: #f5dfc0; }
-.kwl-badge-l { background: #2e6b3e; color: #c2eacb; }
-.kwl-badge-s { background: #604c8b; color: #e8ddff; }
-
-.kwl-textarea {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #e8e8e4;
-  font-size: 14px;
-  line-height: 1.6;
-  padding: 10px 12px;
-  resize: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.kwl-textarea::placeholder { color: #9a988e; }
-
-.kwl-textarea:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.kwl-ask-btn {
-  background: none;
-  border: none;
-  color: #5f9151;
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 2px 0;
-  white-space: nowrap;
-}
-.kwl-ask-btn:hover { text-decoration: underline; }
-
-.kwl-save-btn {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-btn);
-  padding: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  width: 100%;
-}
-.kwl-save-btn:hover:not(:disabled) { background: var(--primary-dark); }
 
 /* 오늘 이미 작성한 경우 — 입력 폼 대신 안내 문구 */
-.kwl-already-done {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--sidebar-text);
-}
-.kwl-already-done strong {
-  color: #fff;
-}
-.kwl-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* 교사: 학생 W 모아보기 */
-.kwl-all-w {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 10px;
-  margin-top: 4px;
-}
-
-.kwl-all-w-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: none;
-  border: none;
-  color: #87867f;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  gap: 4px;
-}
-.kwl-all-w-toggle:hover { color: #c5c4bc; }
-
-.kwl-chevron { font-size: 9px; opacity: 0.7; }
-
-.kwl-all-w-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.kwl-all-w-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  padding: 7px 9px;
-}
-
-.kwl-all-w-author {
-  font-size: 10px;
-  color: #5c5b55;
-  display: block;
-  margin-bottom: 3px;
-}
-
-.kwl-all-w-text {
-  font-size: 12px;
-  color: #c5c4bc;
-  margin: 0;
-  line-height: 1.45;
-}
 
 /* ── KWL 탭 ── */
-.kwl-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 10px;
-  margin-bottom: 2px;
-}
-
-.kwl-tab {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #d8d6cc; /* 어두운 사이드바에서도 잘 보이도록 밝은 회색 */
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-.kwl-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-.kwl-tab.active {
-  background: var(--primary); /* 선택 탭이 확실히 보이게 */
-  color: #fff;
-}
-
-.kwl-panel-date {
-  font-size: 13px;
-  color: #5c5b55;
-  margin-bottom: 6px;
-}
 
 /* ── KWL 지난 기록 탭 ── */
-.kwl-history { flex: 1; overflow-y: auto; }
-
-.kwl-history-empty {
-  font-size: 12px;
-  color: #5c5b55;
-  text-align: center;
-  margin-top: 24px;
-}
-
-.kwl-history-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.kwl-history-item {
-  border-radius: 7px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.04);
-}
-
-.kwl-history-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: none;
-  border: none;
-  color: #c5c4bc;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 10px;
-  cursor: pointer;
-  text-align: left;
-}
-.kwl-history-toggle:hover { background: rgba(255,255,255,0.06); }
-
-.kwl-history-toggle-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.kwl-history-date { flex: 1; }
-
-.kwl-history-preview {
-  font-size: 11px;
-  font-weight: 400;
-  color: #87867f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.kwl-history-body {
-  padding: 4px 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.kwl-history-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.kwl-history-row p {
-  font-size: 12px;
-  color: #87867f;
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.kwl-today-entries {
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-}
-
-.kwl-today-entries-label {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin: 0 0 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.kwl-entry {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  cursor: pointer;
-  transition: border-color 0.1s;
-}
-.kwl-entry:hover { border-color: var(--primary, #2f6f3e); }
-
-.kwl-entry--open .kwl-history-row p {
-  white-space: pre-wrap;
-  overflow: visible;
-  text-overflow: unset;
-}
 
 /* 오늘 항목 — 수정 버튼 / 인라인 편집 */
-.kwl-entry-edit-btn {
-  align-self: flex-end;
-  background: none;
-  border: none;
-  color: var(--text-sub);
-  font-size: 11px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-}
-.kwl-entry-edit-btn:hover {
-  color: var(--primary, #2f6f3e);
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.kwl-entry--editing {
-  cursor: default;
-}
-.kwl-entry--editing:hover {
-  border-color: var(--border);
-}
-
-.kwl-edit-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.kwl-edit-textarea {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  background: var(--card-bg, #fff);
-  color: inherit;
-}
-.kwl-edit-textarea:focus {
-  outline: none;
-  border-color: var(--primary, #2f6f3e);
-}
-
-.kwl-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.kwl-edit-cancel,
-.kwl-edit-save {
-  border: none;
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.kwl-edit-cancel {
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--text-sub);
-}
-.kwl-edit-save {
-  background: var(--primary, #2f6f3e);
-  color: #fff;
-}
-.kwl-edit-save:disabled,
-.kwl-edit-cancel:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.kwl-history-count {
-  font-size: 11px;
-  color: var(--text-sub);
-  font-weight: 400;
-}
 
 /* 오늘 탭 — 저장된 항목 목록 */
-.kwl-today-entries {
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-}
 
-.kwl-today-entries-label {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin: 0 0 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.kwl-entry {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.kwl-history-count {
-  font-size: 11px;
-  color: var(--text-sub);
-  font-weight: 400;
-}
-
-.study-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 20px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-.study-head h1 {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  color: var(--dark);
-}
-
-.study-head p {
-  margin-top: 4px;
-  color: var(--text-sub);
-  font-size: 14px;
-}
-
-.study-class-name {
-  color: var(--primary-dark);
-  font-weight: 700;
-}
-
-.study-head-main {
-  min-width: 0;
-}
-
-.study-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.study-class-select {
+.class-select {
   width: auto; /* 전역 select { width:100% } 무시 — 제목 옆에 인라인 배치 */
   max-width: 240px;
   border: 1px solid var(--border);
@@ -7988,17 +7141,6 @@ pre code {
   color: var(--text);
   background: #fff;
   cursor: pointer;
-}
-
-.study-title-row > .study-class-select,
-.study-title-row > .btn-ghost {
-  height: 38px;
-  padding: 0 14px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-sizing: border-box;
 }
 
 /* 활동 자료 다운로드 모달 — 범위(이 반/전체)·형식(CSV/Excel/PDF) 선택 */
@@ -8031,43 +7173,23 @@ pre code {
   flex-wrap: wrap;
   justify-content: center;
 }
-.study-export-btn {
-  height: 40px;
-  padding: 0 20px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--primary);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.study-export-btn:hover:not(:disabled) {
-  background: var(--primary-light);
-  border-color: var(--primary);
-}
-.study-export-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 .export-hint {
   font-size: 12px;
   color: var(--text-sub);
   margin-top: 4px;
 }
 
-.study-attend-btn.done {
+.attendance-mark-btn.done {
   color: #2f7d54;
   border-color: #b7dec6;
   background: #eef9f2;
 }
 
-.modal.study-attendance-modal {
+.modal.attendance-modal {
   max-width: 720px;
 }
 
-.study-attendance-toolbar {
+.attendance-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -8078,13 +7200,13 @@ pre code {
   font-weight: 700;
 }
 
-.study-attendance-toolbar label {
+.attendance-toolbar label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.study-attendance-toolbar select {
+.attendance-toolbar select {
   width: auto;
   min-width: 150px;
   padding: 7px 10px;
@@ -8095,21 +7217,21 @@ pre code {
   font-weight: 700;
 }
 
-.study-attendance-table-wrap {
+.attendance-table-wrap {
   max-height: 430px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 12px;
 }
 
-.study-attendance-table {
+.attendance-table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
 }
 
-.study-attendance-table th,
-.study-attendance-table td {
+.attendance-table th,
+.attendance-table td {
   padding: 11px 12px;
   border-bottom: 1px solid var(--border);
   text-align: left;
@@ -8117,7 +7239,7 @@ pre code {
   font-size: 13px;
 }
 
-.study-attendance-table th {
+.attendance-table th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -8126,31 +7248,31 @@ pre code {
   font-size: 12px;
 }
 
-.study-attendance-table tr:last-child td {
+.attendance-table tr:last-child td {
   border-bottom: none;
 }
 
-.study-attendance-student {
+.attendance-student {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   min-width: 0;
 }
 
-.study-attendance-student strong {
+.attendance-student strong {
   display: block;
   color: var(--text);
   font-size: 13.5px;
 }
 
-.study-attendance-student small {
+.attendance-student small {
   display: block;
   margin-top: 2px;
   color: var(--text-sub);
   font-size: 11.5px;
 }
 
-.study-attendance-status {
+.attendance-status {
   display: inline-flex;
   align-items: center;
   height: 24px;
@@ -8162,12 +7284,12 @@ pre code {
   font-weight: 800;
 }
 
-.study-attendance-status.on {
+.attendance-status.on {
   background: #e8f7ed;
   color: #26734a;
 }
 
-.study-attendance-list {
+.attendance-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -8176,7 +7298,7 @@ pre code {
   gap: 8px;
 }
 
-.study-attendance-list li {
+.attendance-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -8187,475 +7309,44 @@ pre code {
   background: #fff;
 }
 
-.study-attendance-list strong {
+.attendance-list strong {
   color: var(--text);
   font-size: 14px;
 }
 
-.study-attendance-list span {
+.attendance-list span {
   color: #26734a;
   font-size: 12px;
   font-weight: 800;
 }
 
 /* 가로 스크롤 컬럼 영역 */
-.study-columns {
-  flex: 1;
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 20px;
-  align-items: flex-start;
-}
-
-.study-column {
-  flex: 0 0 320px;
-  width: 320px;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.study-column.is-notice {
-  background: #fffaf0;
-}
 
 /* 첫 보드 고정 — 수평 스크롤해도 왼쪽에 붙어 있음(자료·공지 전달용) */
-.study-column.is-pinned {
-  position: sticky;
-  left: 0;
-  z-index: 6;
-  box-shadow: 10px 0 22px -8px rgba(31, 46, 37, 0.28);
-}
 
 /* 고정(핀) 토글 버튼 — 첫 보드 헤더에만 표시 */
-.study-pin-btn {
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  line-height: 1;
-  padding: 4px;
-  border-radius: 8px;
-  opacity: 0.35;
-  flex-shrink: 0;
-  filter: grayscale(1);
-}
-.study-pin-btn:hover {
-  opacity: 0.8;
-  background: rgba(0, 0, 0, 0.05);
-}
-.study-pin-btn.on {
-  opacity: 1;
-  filter: none;
-}
-.study-pin-mark {
-  font-size: 14px;
-}
 
 /* 보드 추가 — 항상 마지막 보드 오른쪽에 오는 컬럼형 버튼 */
-.study-add-board-col {
-  flex: 0 0 220px;
-  width: 220px;
-  align-self: flex-start;
-  /* 일반 보드 첫 카드와 상단 정렬 (컬럼 상단에서 12px) */
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 18px;
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  background: transparent;
-  color: var(--primary);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.study-add-board-col:hover {
-  background: var(--primary-light);
-  border-color: var(--primary);
-}
-
-.study-add-board-plus {
-  font-size: 18px;
-}
 
 /* 교사 관리 영역 — 보드 정보 카드 */
-.study-board-info {
-  margin: 12px 12px 0;
-  background: var(--primary-light);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(31, 46, 37, 0.06);
-  overflow: hidden;
-}
-
-.study-board-info-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px 10px;
-  background: var(--primary-light);
-}
-
-.is-notice .study-board-info {
-  background: #fffbf0;
-  border-color: #e8d9b8;
-}
-
-.is-notice .study-board-info-head {
-  background: #fffbf0;
-}
-
-.study-board-info-head h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--dark);
-  flex: 1;
-  min-width: 0;
-}
-
-.study-gear {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 2px;
-  border-radius: 6px;
-}
-
-.study-gear:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.study-column-desc {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-sub);
-  padding: 8px 14px 12px;
-  background: var(--card-bg);
-  /* 3줄 고정 높이: font-size(13px) × line-height(1.5) × 3줄 + 상하 padding */
-  height: calc(13px * 1.5 * 3 + 8px + 12px);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-
-.is-notice .study-column-desc {
-  background: #fffbf0;
-}
-
-.study-column-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.study-mode-chip {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--border);
-  color: var(--text-sub);
-}
-
-.study-mode-chip.shared {
-  background: #eef5ef;
-  border-color: #bcd9c2;
-  color: #3f7a4a;
-}
-
-.study-mode-chip.locked {
-  background: #f3efe6;
-  border-color: #ddd0b5;
-  color: #8a6d2c;
-}
 
 /* 교사 설정 패널 */
-.study-settings {
-  margin: 0 14px 10px;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.study-setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-sub);
-}
 /* 활동 줄 — 칩이 여러 개라 좁은 컬럼에서는 아래로 접힙니다 */
-.study-setting-row--acts {
-  align-items: flex-start;
-  gap: 8px;
-}
 /* 라벨은 줄바꿈 금지 — 칩이 자리를 밀어 '활/동'으로 쪼개지던 것을 막습니다 */
-.study-setting-row--acts > span {
-  flex-shrink: 0;
-  white-space: nowrap;
-  padding-top: 5px;
-}
-.study-act-chips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 5px;
-  min-width: 0;
-}
 /* 아이콘 없이 배경색만으로 열림/잠김을 구분합니다 */
-.study-act-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  /* 열림 — 학생이 지금 쓸 수 있는 활동 */
-  background: var(--primary-light);
-  border: 1px solid #b9d8c1;
-  color: var(--primary-dark, #24552f);
-}
 /* 잠김 — 아직 열어 주지 않음 */
-.study-act-chip.locked {
-  background: var(--neutral);
-  border-color: var(--border);
-  color: var(--text-sub);
-}
 /* 활동 추가 — 둥근 모서리를 가진 정사각형, 가운데에 + 기호만 */
-.study-act-chip--add {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-size: 15px;
-  line-height: 1;
-  background: #fff;
-  border: 1px dashed var(--border);
-  color: var(--text-sub);
-}
-.study-act-chip--add:hover {
-  border-color: var(--primary);
-  border-style: solid;
-  color: var(--primary-dark, #24552f);
-}
 
 /* 카드 목록 (세로 스크롤) */
-.study-column-cards {
-  flex: 1;
-  overflow-y: auto;
-  /* 스크롤바 자리(약 8px)를 항상 예약하고 오른쪽 패딩(4px)에 흡수
-     → 4 + 8 ≈ 12px로 좌우 여백이 같아져, 카드가 많아 스크롤바가 생겨도
-     카드 폭이 위 보드 헤더 카드(margin 12px)와 항상 동일하게 유지됩니다. */
-  padding: 12px 4px 12px 12px;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(31, 46, 37, 0.28) transparent;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.study-column-empty {
-  font-size: 13px;
-  color: var(--text-sub);
-  text-align: center;
-  padding: 16px 8px;
-}
-
-.study-add-card {
-  border: 1px dashed var(--border);
-  background: #fff;
-  border-radius: 10px;
-  padding: 12px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.study-add-card:hover {
-  background: var(--primary-light);
-}
-
-.study-one-card-note {
-  font-size: 11px;
-  color: var(--text-sub);
-  text-align: center;
-}
 
 /* 카드 */
-.study-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.12s;
-}
-
-.study-card:hover {
-  box-shadow: 0 4px 14px rgba(31, 46, 37, 0.1);
-  transform: translateY(-1px);
-}
-
-.study-card:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.study-card-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.study-card-author {
-  font-size: 13px;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-}
-
-.study-card-studentid {
-  font-size: 11px;
-  color: var(--text-sub);
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.study-card-time {
-  font-size: 11px;
-  color: var(--text-sub);
-  flex-shrink: 0;
-}
 
 /* 헤더 첨부 파일 카운트 배지 */
-.study-card-attach-count {
-  font-size: 11px;
-  color: var(--text-sub);
-  flex-shrink: 0;
-  letter-spacing: -0.5px;
-}
 
 /* 이미지 첨부 썸네일 — preview 텍스트와 동일한 높이, 전체 폭 */
-.study-card-thumb-wrap {
-  overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  height: calc(13px * 1.5 * 3); /* study-card-preview 3줄 높이와 동일 */
-}
-
-.study-card-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
 
 /* 교사 전용 정렬 버튼 */
 /* 보드 제목 인라인 편집 — 제목(h3) 자리에서 더블 클릭으로 바로 수정 */
-.study-title-h3--editable {
-  cursor: text;
-  border-radius: 6px;
-}
-.study-title-edit-wrap {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.study-title-inline {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 8px;
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--dark);
-  border: 1px solid var(--primary);
-  border-radius: 8px;
-  background: #fff;
-  box-sizing: border-box;
-}
-.study-title-inline:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary-light);
-}
-.study-title-save {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.study-title-save:hover {
-  background: var(--primary-dark, #24552f);
-}
-
-.study-desc-edit-wrap {
-  padding: 6px 14px 10px;
-  background: var(--card-bg);
-}
-.study-desc-inline {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-  font-family: inherit;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--dark);
-  border: 1px solid var(--primary);
-  border-radius: 8px;
-  background: #fff;
-  resize: none;
-  /* .study-column-desc와 같은 3줄 높이 */
-  height: calc(13px * 1.5 * 3 + 12px);
-}
-.study-desc-inline:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary-light);
-}
-
-.study-sort {
-  display: flex;
-  gap: 6px;
-  padding: 10px 12px 8px;
-}
 
 /* ── 모둠 활동 보드 ─────────────────────────────────────────── */
 /* 보드 생성: 활동 유형 선택(개별/모둠) */
@@ -8691,38 +7382,8 @@ pre code {
 }
 
 /* 모둠 구성 버튼(보드 패널) */
-.study-sort-btn--group {
-  background: #efe7fa;
-  color: #6b4fa3;
-  border-color: #cdbceb;
-}
 
 /* 카드의 모둠 구성원 줄 */
-.study-card-members {
-  font-size: 12px;
-  color: var(--text-sub);
-  line-height: 1.5;
-  margin: 2px 0 4px;
-}
-.study-card-retired {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-sub);
-}
-.study-card-meta-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.35;
-}
-.study-card-meta-group strong { font-size: 14px; color: var(--text); }
-.study-card-meta-members {
-  font-size: 11.5px;
-  color: var(--text-sub);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* 모둠 구성 모달 */
 .modal.modal-group-composer {
@@ -9035,80 +7696,16 @@ pre code {
   color: var(--text-sub);
 }
 
-.study-sort-btn {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text-sub);
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
 /* 학번 — 따뜻한 세이지 그린 */
-.study-sort-btn--studentid {
-  background: #EBF4F1;
-  color: #3B7A6A;
-  border-color: #B0CECA;
-}
-.study-sort-btn--studentid:hover,
-.study-sort-btn--studentid.active {
-  background: #5A9E8A;
-  color: #fff;
-  border-color: #5A9E8A;
-}
 
 /* 제출 — 프라이머리 그린 */
-.study-sort-btn--time {
-  background: var(--primary-light);
-  color: var(--primary-dark);
-  border-color: #b9d8c1;
-}
-.study-sort-btn--time:hover,
-.study-sort-btn--time.active {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
 
 
 /* 정렬·활동·설정 패널 — 제목 카드 클릭 시 한 번에 펼침 */
-.study-board-panel {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.3s ease;
-}
-.study-board-panel.open {
-  max-height: 400px;
-}
 
 /* 설명 더블 클릭으로 편집 — 제목과 같은 방식(단일 클릭은 안내만, 더블 클릭이 편집) */
-.study-column-desc--editable {
-  cursor: text;
-}
-.study-column-desc--editable:hover {
-  background: var(--primary-light);
-}
 
 /* 보드 순서 변경(드래그) — 헤더가 손잡이 */
-.study-board-info-head.draggable {
-  cursor: grab;
-}
-.study-board-info-head.draggable:active {
-  cursor: grabbing;
-}
-.study-column.board-dragging {
-  opacity: 0.45;
-}
-.study-column.board-drag-over {
-  outline: 2px dashed var(--primary);
-  outline-offset: 2px;
-  border-radius: var(--radius);
-}
 
 /* 다른 반으로 복제 모달 */
 .modal.modal-duplicate {
@@ -9146,123 +7743,10 @@ pre code {
 }
 
 /* + 토글 버튼 — 열릴 때 45° 회전해서 × 형태 */
-.study-panel-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  border-radius: 6px;
-  transition: transform 0.25s ease, background 0.15s;
-}
-.study-panel-toggle:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-.study-panel-toggle.open {
-  transform: rotate(45deg);
-}
 
 /* 활동 설정 모달 */
-.study-activity-modal {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px;
-  width: 460px;
-  max-width: 94vw;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-}
-.study-activity-modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.study-activity-modal-head h3 {
-  font-size: 16px;
-  font-weight: 700;
-}
-.study-activity-hint {
-  font-size: 13px;
-  color: var(--text-sub);
-  margin: -4px 0 0;
-}
-.study-activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.study-activity-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.study-activity-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-  white-space: nowrap;
-  min-width: 48px;
-}
-.study-activity-input {
-  flex: 1;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  color: var(--dark);
-  background: var(--bg);
-}
-.study-activity-input:focus {
-  border-color: var(--primary);
-}
-.study-activity-del {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-sub);
-  padding: 4px 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-.study-activity-del:hover {
-  background: var(--border);
-  color: var(--dark);
-}
-.study-activity-add {
-  background: none;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 13px;
-  color: var(--text-sub);
-  cursor: pointer;
-  text-align: center;
-  transition: border-color 0.15s, color 0.15s;
-}
-.study-activity-add:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-.study-activity-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 4px;
-}
 
 /* 활동 폼 — 모달 바디가 외부 스크롤 담당, 섹션은 콘텐츠에 맞게 자동 늘어남 */
-.study-card-modal-body.activity-mode {
-  overflow-y: auto;
-  padding-bottom: 24px;
-}
 
 /* 활동 섹션 목록 — 높이 고정 없음, 자연스럽게 쌓임 */
 .activity-form-list {
@@ -9294,11 +7778,6 @@ pre code {
   background: var(--primary-light);
   border-radius: 999px;
   padding: 2px 10px;
-}
-.activity-form-section .study-card-title-input {
-  flex-shrink: 0;
-  margin-bottom: 0;
-  background: #fff;
 }
 
 /* ── 잠긴 활동 — 아직 열어 주지 않은 활동(입력칸 대신 안내) ── */
@@ -9336,16 +7815,6 @@ pre code {
 }
 
 /* 읽기 모드 활동 섹션 */
-.study-card-body .activity-section {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  background: var(--bg);
-}
-.study-card-body .activity-section:last-child {
-  margin-bottom: 0;
-}
 .activity-title {
   font-size: 14px;
   font-weight: 700;
@@ -9355,298 +7824,32 @@ pre code {
 }
 
 /* 카드 목록에서 보이는 제목 */
-.study-card-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dark);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 /* 모달 작성/수정 모드 제목 입력 */
-.study-card-title-input {
-  width: 100%;
-  padding: 9px 12px;
-  font-size: 15px;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--dark);
-  outline: none;
-  margin-bottom: 10px;
-  font-family: inherit;
-}
-
-.study-card-title-input:focus {
-  border-color: var(--primary);
-  background: #fff;
-}
-
-.study-card-title-input::placeholder {
-  color: var(--text-sub);
-  font-weight: 400;
-}
 
 /* 모달 읽기 모드 제목 */
-.study-card-read-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--dark);
-  font-family: var(--font-serif);
-  margin-bottom: 12px;
-  line-height: 1.4;
-}
-
-.study-card-preview {
-  font-size: 13px;
-  line-height: 1.5;
-  min-height: calc(13px * 1.5 * 3); /* 내용 없어도 3줄 높이 보장 */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0;
-  color: transparent;
-  user-select: none;
-}
 
 /* 모달 내 카드 본문 */
-.study-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-
-.study-card-meta strong {
-  font-size: 14px;
-  color: var(--text);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 55%;
-}
-
-.study-card-meta-time {
-  font-size: 12px;
-  color: var(--text-sub);
-  margin-left: auto; /* 시각만 오른쪽 끝으로 (크게보기 버튼은 이름 옆) */
-}
-
-.study-card-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 24px;
-  min-height: 280px;
-}
-
-.study-card-body {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text);
-  word-break: break-word;
-}
-
-.study-card-body pre {
-  background: #f4f4f4;
-  border-radius: 8px;
-  padding: 10px;
-  overflow-x: auto;
-  font-size: 13px;
-}
-
-.study-card-image {
-  margin-top: 8px;
-  max-width: 100%;
-  border-radius: 8px;
-}
 
 /* 모달 하단 액션 영역 */
-.study-card-modal-foot {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  margin-top: 12px;
-}
-
-.study-card-modal-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.study-card-modal-save-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: flex-end;
-}
 
 /* 자동저장 상태 — 저장 행 왼쪽(오류 안내용) */
-.study-autosave {
-  margin-right: auto;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-sub);
-  transition: color 0.2s;
-}
-.study-autosave--saved {
-  color: #5c9e68;
-}
-.study-autosave--error {
-  color: var(--danger);
-}
 
 /* 자동저장 배지 — 제목 줄에 잠깐 표시됐다가 사라짐(다음 입력 때 재표시) */
-.study-autosave-pill {
-  margin-left: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--neutral);
-  color: var(--text-sub);
-  vertical-align: middle;
-  white-space: nowrap;
-  animation: autosave-pill-in 0.25s ease;
-}
 @keyframes autosave-pill-in {
   from { opacity: 0; transform: translateY(-2px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.study-autosave-pill--saving {
-  background: var(--neutral);
-  color: var(--text-sub);
-}
-.study-autosave-pill--saved {
-  background: #e7f3e9;
-  color: #3f8a4f;
-}
-.study-autosave-pill--error {
-  background: #fdecea;
-  color: var(--danger);
-}
 
 /* 모달 푸터의 두 버튼을 동일한 크기·강조색으로 통일 */
-.study-card-modal-save-row > .btn-primary,
-.study-peek-foot > .btn-primary {
-  padding: 9px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 96px;
-  text-align: center;
-}
 
 /* 삭제 확인 인라인 */
-.study-delete-confirm {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.study-delete-warn {
-  font-size: 13px;
-  color: #c0392b;
-  font-weight: 600;
-  flex: 1;
-  min-width: 0;
-}
 
 /* 카드 하단 삭제 확인 버튼 — 저장 버튼과 동일 크기(btn-primary), 색만 다르게 */
-.study-foot-danger {
-  background: var(--danger);
-}
-.study-foot-danger:hover {
-  background: #a83a30;
-}
-.study-foot-ghost {
-  background: var(--bg);
-  color: var(--text-sub);
-  border: 1px solid var(--border);
-}
-.study-foot-ghost:hover {
-  background: var(--neutral);
-}
 
 /* 관련 질문(모달 내 버전) */
-.study-related-modal {
-  margin-top: 4px;
-}
-
-/* modal-study-card 너비 */
-.modal-study-card {
-  max-width: 640px;
-  min-height: 480px;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-  transition: max-width 0.2s ease;
-}
-/* 크게 보기(발표 크기) — 창을 무작정 키우기보다, 첨부는 감추고
-   제목·본문 텍스트를 슬라이드 한 장처럼 가운데에 크게 보여줍니다. */
-.modal-study-card.modal-study-card--expanded {
-  max-width: 880px;
-  width: 90vw;
-  height: 86vh;
-  max-height: 86vh;
-}
-.study-card-modal-body.study-slide-mode {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 12px 40px 24px;
-}
-.study-slide-mode .study-card-title-input {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 24px;
-}
-.study-slide-mode .study-card-read-title {
-  font-family: var(--font-serif);
-  font-size: 32px;
-  text-align: center;
-  margin-bottom: 24px;
-}
-.study-slide-mode .study-card-body,
-.study-slide-mode .rte-full .rte-area {
-  font-size: 21px;
-  line-height: 1.9;
-}
-.study-card-expand-btn {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-sub);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.study-card-expand-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary);
-}
 
 /* 관련 질문 읽기 전용 미리보기 (편집 모달 위에 겹침) */
-.study-peek-backdrop {
-  z-index: 110;
-  background: rgba(38, 38, 37, 0.35);
-}
 
 .modal-peek {
   max-width: 560px;
@@ -9655,153 +7858,7 @@ pre code {
   max-height: 85vh;
 }
 
-.study-peek-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.study-peek-readonly {
-  font-size: 12px;
-  color: var(--text-sub);
-  background: #f2efe9;
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-weight: 600;
-}
-
-.study-peek-body {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.study-peek-answers {
-  margin-top: 18px;
-  border-top: 1px solid var(--border);
-  padding-top: 14px;
-}
-
-.study-peek-answers h4 {
-  font-size: 13px;
-  color: var(--text-sub);
-  margin-bottom: 10px;
-}
-
-.study-peek-answers h4 span {
-  color: var(--primary-dark);
-  font-weight: 700;
-}
-
-.study-peek-answer {
-  background: #faf8f4;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-
-.study-peek-answer.understood {
-  border-color: #b9d8c1;
-  background: #f6f8e2;
-}
-
-.study-peek-answer-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.study-peek-answer-head time {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-.study-peek-understood {
-  font-size: 11px;
-  font-weight: 700;
-  color: #8a5a12;
-  background: #fff4d7;
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-
-.study-peek-foot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  margin-top: 12px;
-}
-
-.study-chip {
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.study-chip:hover {
-  background: var(--primary-light);
-}
-
-.study-chip.open {
-  background: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.study-chip.ghost {
-  color: var(--text-sub);
-}
-
-.study-chip.danger {
-  color: #c0392b;
-  border-color: #e6b8b2;
-}
-
 /* 관련 질문 아코디언 */
-.study-related {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.study-related-empty {
-  font-size: 12px;
-  color: var(--text-sub);
-  line-height: 1.5;
-}
-
-.study-related-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  gap: 0 8px;
-  text-align: left;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.study-related-item:hover {
-  border-color: var(--primary);
-}
 
 .mini-status {
   grid-row: 1 / 3;
@@ -9812,37 +7869,9 @@ pre code {
 .mini-status.open { color: var(--primary); }
 .mini-status.done { color: #5c9e68; }
 
-.study-related-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.study-related-preview {
-  font-size: 12px;
-  color: var(--text-sub);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* 보드 추가 폼 입력 */
-.study-board-desc-input {
-  min-height: 350px;
-  resize: vertical;
-}
 
 /* 보드 폼 — 제목 + 연계 토글 한 줄 */
-.study-board-form-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.study-board-form-title-row > input[type="text"] {
-  flex: 1;
-  min-width: 0;
-}
 
 /* 토글 스위치 */
 .toggle-switch {
@@ -9904,82 +7933,8 @@ pre code {
 }
 
 /* 키워드 칩 다중 선택 */
-.study-keyword-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 2px 0 4px;
-}
-
-.study-keyword-chip {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1.5px solid var(--border);
-  background: #fff;
-  color: var(--text-sub);
-  cursor: pointer;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
-}
 
 /* 키워드 추가 '+' 칩 + 인라인 입력 */
-.study-keyword-add {
-  font-weight: 700;
-  color: var(--primary);
-  border-style: dashed;
-  padding: 5px 12px;
-}
-.study-keyword-add:hover {
-  border-color: var(--primary);
-  background: var(--primary-light);
-}
-.study-keyword-add-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.study-keyword-add-inline input {
-  width: 120px;
-  padding: 5px 10px;
-  border: 1.5px solid var(--primary);
-  border-radius: 999px;
-  font-size: 12px;
-}
-.study-keyword-add-inline button {
-  padding: 5px 12px;
-  border: none;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.study-keyword-chip:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.study-keyword-chip.selected {
-  background: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary-dark);
-}
-
-.study-link-hint {
-  font-size: 12px;
-  color: var(--text-sub);
-  line-height: 1.5;
-}
-
-.study-form-board {
-  margin-left: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-}
 
 /* 질문 상세의 "수업으로 돌아가기" */
 /* 돌아가기 버튼 묶음 — 한 줄에 중앙 정렬로 높이/정렬 일치 */
@@ -9989,31 +7944,6 @@ pre code {
   flex-wrap: wrap;
   gap: 8px;
   margin: 4px 0 12px;
-}
-
-.back-to-study {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  box-sizing: border-box;
-  padding: 0 14px;
-  background: #fffaf0;
-  border: 1px solid #e8d9b8;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #8a6d2c;
-  cursor: pointer;
-}
-
-.back-to-study svg {
-  display: block;
-  flex-shrink: 0;
-}
-
-.back-to-study:hover {
-  background: #fdf3df;
 }
 
 /* 인사이트로 돌아가기 — 인사이트 테마 색 */
@@ -10027,90 +7957,11 @@ pre code {
 }
 
 /* 기존 리포트 — 공부방 활동 섹션 */
-.study-report {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.study-report-bar {
-  height: 8px;
-  background: var(--bg);
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 4px 0 14px;
-}
-
-.study-report-fill {
-  height: 100%;
-  background: var(--primary);
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
-
-.study-report-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  /* 최대 5개까지 보이고, 그 이상은 스크롤 */
-  max-height: 230px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.study-report-item {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-}
-
-.study-report-item:hover {
-  background: var(--bg);
-}
-
-.study-report-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.study-report-preview {
-  font-size: 13px;
-  color: var(--text-sub);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.study-report-item time {
-  font-size: 12px;
-  color: var(--text-sub);
-  white-space: nowrap;
-}
 
 @media (max-width: 820px) {
   /* 좁은 화면에서는 최근 활동·KWL을 세로로 */
   .admin-bottom-row {
     grid-template-columns: 1fr;
-  }
-  .study-report-item {
-    grid-template-columns: auto 1fr;
-  }
-  .study-report-preview,
-  .study-report-item time {
-    display: none;
   }
 }
 
@@ -10365,17 +8216,6 @@ pre code {
 /* =============================================================
    KWL FAB (모바일 전용 — 데스크톱에서는 숨김)
    ============================================================= */
-.kwl-fab {
-  display: none;
-}
-
-.kwl-mobile-backdrop {
-  display: none;
-}
-
-.kwl-mobile-close {
-  display: none;
-}
 
 /* =============================================================
    MOBILE — 768px 이하 반응형
@@ -10518,75 +8358,23 @@ pre code {
   /* ──────────────────────────────────────────────────────────
      공부방 레이아웃
      ────────────────────────────────────────────────────────── */
-  .study-body { position: relative; }
-  .study-cols-wrap { padding: 0 10px 80px; }
-
-  .study-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding-top: 14px;
-  }
-  .study-head h1 { font-size: 17px; }
-  .study-title-row { flex-wrap: wrap; gap: 6px; }
 
   /* 보드 컬럼: 가로 스냅 스크롤 */
-  .study-columns {
-    gap: 10px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 16px;
-  }
-  .study-column {
-    flex: 0 0 88vw;
-    max-width: 88vw;
-    scroll-snap-align: start;
-  }
-  .study-add-board-col { flex: 0 0 160px; }
 
   /* 고정(핀) 보드: 모바일에선 컬럼이 88vw라 sticky로 두면 첫 보드가
      화면을 덮어 다른 보드가 그 뒤로 숨습니다 → 고정 해제(일반 스크롤) */
-  .study-column.is-pinned {
-    position: static;
-    box-shadow: none;
-  }
 
   /* ──────────────────────────────────────────────────────────
      발표 모드 · KWL 전체 보기 모달: 좁은 화면 대응
      — 헤더가 한 줄에 안 들어가 화살표·닫기가 화면 밖으로 밀리던 문제
      ────────────────────────────────────────────────────────── */
-  .present-modal {
-    width: 100vw;
-    height: 100dvh;
-    border-radius: 0;
-  }
-  .present-head {
-    position: relative;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 44px 10px 12px; /* 오른쪽은 닫기(×) 자리 */
-  }
   /* 닫기 버튼은 항상 오른쪽 위에 고정 */
-  .present-head .btn-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-  }
-  .present-who {
-    flex-wrap: wrap;
-    row-gap: 6px;
-    gap: 8px;
-  }
-  .present-name { font-size: 18px; white-space: normal; }
-  .present-avatar { font-size: 22px; }
   .kwlfs-date-nav { flex-wrap: wrap; row-gap: 6px; }
   .kwlfs-head-actions { gap: 8px; }
   .kwlfs-refresh-btn { font-size: 12px; padding: 5px 9px; }
-  .present-body { padding: 16px 14px; }
   .present-slide { padding: 28px 22px; border-radius: 18px; }
   .present-slide-title { font-size: 24px; margin-bottom: 18px; }
   .present-slide-content { font-size: 18px; line-height: 1.75; }
-  .present-foot { padding: 10px 12px; }
   .broadcast-bar { padding: 10px 14px; font-size: 13px; }
   .broadcast-body { padding: 20px 14px; }
   .broadcast-stop-pill { right: 12px; bottom: 12px; font-size: 12px; padding: 8px 14px; }
@@ -10603,11 +8391,6 @@ pre code {
   .lesson-ctrl-btn { width: 88px; padding: 9px 4px; font-size: 13px; }
   .lesson-dots { display: none; }
   .lesson-activity { margin-top: 40px; }
-  .present-nav {
-    width: 40px;
-    height: 40px;
-    font-size: 26px;
-  }
 
   /* ──────────────────────────────────────────────────────────
      대시보드·리포트 잔디 히트맵: 세로 배치
@@ -10628,95 +8411,18 @@ pre code {
   /* ──────────────────────────────────────────────────────────
      KWL 패널: 왼쪽에서 슬라이드인 오버레이
      ────────────────────────────────────────────────────────── */
-  .kwl-panel {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 500;
-    width: 88vw;
-    max-width: 320px;
-    padding-top: 52px;
-    overflow-y: auto;
-    box-shadow: 6px 0 32px rgba(0,0,0,0.4);
-  }
-
-  .kwl-panel.kwl-panel--open { display: flex; }
-
-  .kwl-mobile-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 499;
-    background: rgba(0,0,0,0.45);
-  }
-
-  .kwl-mobile-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 56px;
-    right: 10px;
-    width: 28px;
-    height: 28px;
-    background: rgba(255,255,255,0.12);
-    border: none;
-    border-radius: 50%;
-    color: var(--sidebar-text);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .kwl-fab {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    position: fixed;
-    bottom: 20px;
-    right: 16px;
-    z-index: 300;
-    background: var(--primary, #2f6f3e);
-    color: #fff;
-    border: none;
-    border-radius: 24px;
-    padding: 11px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 4px 18px rgba(47,111,62,0.45);
-    cursor: pointer;
-    transition: transform 0.15s, background 0.15s;
-  }
-  .kwl-fab:active { background: #24552f; transform: scale(0.96); }
 
   /* 모달이 열려 있으면 FAB를 숨깁니다 — FAB(z-index 300)가 모달 배경
      (z-index 100)보다 위에 있어, 그대로 두면 모달 오른쪽 아래 버튼
      ('저장하고 닫기' 등)을 가리고 탭까지 가로챕니다.
      공부방에서 열리는 모달이 여러 컴포넌트에 흩어져 있어 페이지에서
      일일이 상태로 추적하기 어려우므로 :has()로 한 번에 처리합니다. */
-  body:has(.modal-backdrop) .kwl-fab,
-  body:has(.confirm-backdrop) .kwl-fab {
-    display: none;
-  }
 
   /* ──────────────────────────────────────────────────────────
      보드 헤더 버튼 — 데스크톱 기준 24~27px이라 손가락으로는 너무 작습니다.
      헤더 버튼 사이 간격이 8px뿐이라 여백만 넓히면 옆 버튼과 탭 영역이
      겹치므로, 버튼 자체를 34px로 키웁니다.
      ────────────────────────────────────────────────────────── */
-  .study-collapse-btn,
-  .study-present-btn {
-    width: 34px;
-    height: 34px;
-  }
-  .study-panel-toggle,
-  .study-pin-btn {
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-  }
 
   /* 모달 닫기(×) — 글자만 있어 13×22px밖에 안 됩니다. 눈에 보이는 크기는
      그대로 두고 탭 영역만 40px로 넓힙니다. */
@@ -10729,10 +8435,6 @@ pre code {
   }
 
   /* 보드 설정 칩(공개 범위·편집 상태·복제·삭제) — 높이 25px는 너무 얇습니다 */
-  .study-chip {
-    min-height: 34px;
-    padding: 6px 12px;
-  }
 
   /* ──────────────────────────────────────────────────────────
      모달: 하단 슬라이드업 시트
@@ -10858,7 +8560,6 @@ pre code {
      터치 영역 확보 (최소 44px)
      ────────────────────────────────────────────────────────── */
   .btn-primary { min-height: 44px; font-size: 15px; }
-  .kwl-save-btn { min-height: 44px; }
   .filter-btn { min-height: 40px; }
   .vote-btn { min-height: 40px; min-width: 40px; }
 }
@@ -10868,10 +8569,7 @@ pre code {
   .topbar { padding: 0 10px; }
   .topbar-left .logo { font-size: 15px; }
   .topnav-drop-btn { font-size: 12px; padding: 4px 8px; }
-  .study-column { flex: 0 0 92vw; max-width: 92vw; }
   .modal { padding: 16px 14px 32px; }
-  .kwl-panel { width: 92vw; max-width: 92vw; }
-  .kwl-fab { bottom: 16px; right: 12px; padding: 10px 14px; font-size: 13px; }
 }
 
 /* =============================================================
@@ -10894,7 +8592,14 @@ pre code {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   min-width: 0;
+}
+.books-classroom-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .books-head-main h1 {
   display: inline-flex;

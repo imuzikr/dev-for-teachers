@@ -3,7 +3,6 @@
 // =============================================================
 // 공통 상단 내비게이션
 // -------------------------------------------------------------
-// 왼쪽: 교사 개발자 로고 ｜ 학습 공간(공부방·책방) ｜ 파이썬 실행기
 // 오른쪽: 역할 전환(개발용) ｜ 사용자 프로필 ｜ 로그아웃
 // =============================================================
 import { useEffect, useState } from "react";
@@ -27,7 +26,7 @@ import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
 import QuestionSignalButton from "./QuestionSignalButton";
-import { IconPythonRunner, IconLogo, IconBlackboard, IconBook, IconLogout, IconPeople } from "./StatusIcons";
+import { IconPythonRunner, IconLogo, IconBook, IconLogout, IconPeople } from "./StatusIcons";
 
 export default function TopNav({ active, onPython, pyActive = false }) {
   const router = useRouter();
@@ -54,7 +53,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     return subscribeClasses(setClasses);
   }, [admin]);
 
-  // 학생 소속 반 구독 — 공부방 화면과 동일한 기준으로 "지금 보는 반"을 정하기 위함
   useEffect(() => {
     if (!isFirebaseConfigured || admin || !user?.uid) {
       setMemberships([]);
@@ -63,7 +61,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     return subscribeMyMemberships(user.uid, setMemberships);
   }, [admin, user?.uid]);
 
-  // 공부방에서 세션에 기억해 둔 반 id — 공부방 화면과 같은 값을 봐야
   // 뱃지 숫자와 교사가 관리하는 화면의 숫자가 항상 일치합니다.
   useEffect(() => {
     function sync() { setSessionClassId(getSelectedClassId()); }
@@ -85,7 +82,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     : activeClassId;
 
   // 발표 강제 전환(방송) 구독 — 학생은 "지금 보고 있는 반", 교사는 자신이
-  // 마지막으로 고른 반 기준. 어느 화면에 있든(공부방·책방 등) 이
   // 상단바가 항상 떠 있으므로 여기서 구독하면 앱 전체에 적용됩니다.
   const [broadcast, setBroadcast] = useState(null);
   const broadcastClassId = admin ? sessionClassId : activeClassId;
@@ -133,14 +129,13 @@ export default function TopNav({ active, onPython, pyActive = false }) {
 
   // 이동 가능성이 높은 라우트를 미리 프리페치 → 클릭 시 즉시 전환
   useEffect(() => {
-    router.prefetch("/study");
     router.prefetch("/books");
     if (isStrictAdmin) router.prefetch("/admin");
   }, [isStrictAdmin, router]);
 
   function handlePython() {
     if (onPython) onPython();
-    else router.push("/study");
+    else router.push("/books?python=1");
   }
 
   function go(path) {
@@ -169,14 +164,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
         <span className="topbar-divider" aria-hidden="true" />
         <nav className="topnav-menu">
 
-          {/* 학습 공간 — 공부방 · 책방 */}
-          <button
-            className={`btn-ghost ${active === "study" ? "nav-active" : ""}`}
-            onClick={() => go("/study")}
-            title="공부방"
-          >
-            <IconBlackboard size={20} /> <span className="nav-label">공부방</span>
-          </button>
           <button
             className={`btn-ghost ${active === "books" ? "nav-active" : ""}`}
             onClick={() => go("/books")}

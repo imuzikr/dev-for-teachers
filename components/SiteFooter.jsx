@@ -10,7 +10,7 @@
 // =============================================================
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
-import { IconLogo, IconBlackboard, IconWrite, IconSchool } from "./StatusIcons";
+import { IconLogo, IconBook, IconWrite, IconSchool } from "./StatusIcons";
 import PrivacyContent from "./policies/PrivacyContent";
 import TermsContent from "./policies/TermsContent";
 
@@ -46,14 +46,14 @@ export default function SiteFooter() {
             className="footer-link"
             onClick={() => setPolicyOpen("privacy")}
           >
-            <IconBlackboard size={26} /> 개인정보처리방침
+            <IconBook size={26} /> 개인정보처리방침
           </button>
           <button
             type="button"
             className="footer-link"
             onClick={() => setPolicyOpen("terms")}
           >
-            <IconBlackboard size={26} /> 이용약관
+            <IconBook size={26} /> 이용약관
           </button>
         </div>
 

@@ -24,6 +24,7 @@ import BookActivityForm from "@/components/BookActivityForm";
 import MindmapBoard from "@/components/MindmapBoard";
 import MindmapForm from "@/components/MindmapForm";
 import BookWorkspace from "@/components/BookWorkspace";
+import BookClassroomTools from "@/components/BookClassroomTools";
 import { IconBook } from "@/components/StatusIcons";
 
 const SUPPORTED_ACTIVITY_TYPES = new Set(["mindmap"]);
@@ -88,10 +89,11 @@ function BooksPageInner() {
     return subscribeUserDirectory(setDirectory);
   }, [admin]);
 
-  const myClasses = useMemo(
+  const myClassesAll = useMemo(
     () => (superAdmin ? classes : classes.filter((c) => c.createdBy === user?.uid)),
     [classes, superAdmin, user?.uid]
   );
+  const myClasses = useMemo(() => myClassesAll.filter((c) => !c.archived), [myClassesAll]);
   const membershipIds = useMemo(() => memberships.map((m) => m.classId), [memberships]);
   const studentClassId =
     localSelectedId && membershipIds.includes(localSelectedId)
@@ -110,7 +112,7 @@ function BooksPageInner() {
   }, [admin, myClasses, teacherClassId, localSelectedId]);
 
   const classId = admin ? teacherClassId : studentClassId;
-  const currentClass = (admin ? myClasses : classes).find((c) => c.id === classId) ?? null;
+  const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
   useEffect(() => subscribeBookActivities(classId, setActivities), [classId]);
 
@@ -202,7 +204,7 @@ function BooksPageInner() {
               </h1>
               {admin && myClasses.length > 0 && (
                 <select
-                  className="study-class-select"
+                  className="class-select"
                   value={classId ?? ""}
                   onChange={(e) => {
                     setTeacherClassId(e.target.value);
@@ -216,7 +218,7 @@ function BooksPageInner() {
               )}
               {!admin && membershipIds.length > 1 ? (
                 <select
-                  className="study-class-select"
+                  className="class-select"
                   value={classId ?? ""}
                   onChange={(e) => setSelectedClassId(e.target.value)}
                 >
@@ -231,6 +233,16 @@ function BooksPageInner() {
                   <span className="books-class-name">{currentClass.name}</span>
                 )
               )}
+              <BookClassroomTools
+                user={user}
+                isTeacher={admin}
+                classId={classId}
+                currentClass={currentClass}
+                classes={myClassesAll}
+                roster={roster}
+                onSelectClass={setTeacherClassId}
+                onToast={setToast}
+              />
             </div>
           </div>
 
