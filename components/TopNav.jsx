@@ -26,9 +26,9 @@ import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
 import QuestionSignalButton from "./QuestionSignalButton";
-import { IconPythonRunner, IconLogo, IconBook, IconLogout, IconPeople } from "./StatusIcons";
+import { IconLogo, IconBook, IconLogout, IconPeople } from "./StatusIcons";
 
-export default function TopNav({ active, onPython, pyActive = false }) {
+export default function TopNav({ active }) {
   const router = useRouter();
   const user = useCurrentUser();
   const admin = user ? isTeacher(user) : false;      // 교사+관리자
@@ -133,11 +133,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
     if (isStrictAdmin) router.prefetch("/admin");
   }, [isStrictAdmin, router]);
 
-  function handlePython() {
-    if (onPython) onPython();
-    else router.push("/books?python=1");
-  }
-
   function go(path) {
     router.push(path);
   }
@@ -181,14 +176,6 @@ export default function TopNav({ active, onPython, pyActive = false }) {
             </button>
           )}
 
-          <button
-            data-py-toggle
-            className={`btn-ghost ${pyActive ? "py-btn-active" : ""}`}
-            onClick={handlePython}
-            title="파이썬 실행기"
-          >
-            <IconPythonRunner size={20} /> <span className="nav-label">파이썬 실행기</span>
-          </button>
           {/* 역할 관리는 프로필 메뉴의 '관리자 설정'으로 이동 */}
         </nav>
       </div>

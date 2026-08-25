@@ -143,56 +143,6 @@ export function IconReport({ size = 18, className = "" }) {
   );
 }
 
-export function IconPythonRunner({ size = 18, className = "" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M5.75 5.25h12.5c.83 0 1.5.67 1.5 1.5v10.5c0 .83-.67 1.5-1.5 1.5H5.75c-.83 0-1.5-.67-1.5-1.5V6.75c0-.83.67-1.5 1.5-1.5Z"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.55 8.65h14.9"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
-      />
-      <path
-        d="m9.05 11.35-2.1 2.1 2.1 2.1"
-        stroke="currentColor"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="m14.95 11.35 2.1 2.1-2.1 2.1"
-        stroke="currentColor"
-        strokeWidth="1.65"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12.85 10.95 11.15 16"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      <circle cx="6.8" cy="6.95" r=".55" fill="currentColor" />
-      <circle cx="8.65" cy="6.95" r=".55" fill="currentColor" />
-    </svg>
-  );
-}
-
 export function IconNotice({ size = 18, className = "" }) {
   return (
     <svg

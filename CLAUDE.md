@@ -46,7 +46,6 @@ Firebase 미설정 시 자동으로 **데모 모드**로 동작 (새로고침 �
 | `app/globals.css` | 전체 스타일. 모바일 반응형은 파일 하단 `@media (max-width: 768px)` |
 | `components/RichTextEditor.jsx` | 서식 입력 에디터 (variant: full/chat) |
 | `components/KwlPanel.jsx` | KWL 사이드 패널 (오늘 탭 + 기록 탭) |
-| `components/PythonRunner.jsx` | Python 코드 실행기 (코드 복사 버튼 포함) |
 
 ## 모바일 레이아웃 핵심 패턴
 
@@ -73,10 +72,6 @@ Firebase 미설정 시 자동으로 **데모 모드**로 동작 (새로고침 �
 - `users` — 사용자 프로필 (uid, email, displayName(익명), realName, studentId, role)
   - **식별 정보(실명·이메일·학번)는 여기에만** 저장. 게시물·카드엔 익명 정보만 넣음.
   - 읽기 규칙: 본인+교사. 교사 화면은 `subscribeUserDirectory`로 uid→실명/학번 조회.
-
-### PythonRunner 복사 버튼
-- `.py-copy-btn` — `py-head-actions` 안, '전체 화면' 버튼 왼쪽에 위치
-- 복사 후 2초간 초록 체크 아이콘으로 교체 (`copied` state)
 
 ## 주의 사항
 

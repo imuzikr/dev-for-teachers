@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
   markStudyAttendance,
   subscribeClassStudyAttendance,
@@ -17,8 +15,6 @@ import LessonManagerModal from "./LessonManagerModal";
 import LessonMode from "./LessonMode";
 import StudyAttendanceModal from "./StudyAttendanceModal";
 
-const PythonRunner = dynamic(() => import("./PythonRunner"), { ssr: false });
-
 export default function BookClassroomTools({
   user,
   isTeacher,
@@ -29,9 +25,6 @@ export default function BookClassroomTools({
   onSelectClass,
   onToast,
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pyOpen = searchParams.get("python") === "1";
   const [classManagerOpen, setClassManagerOpen] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -180,11 +173,6 @@ export default function BookClassroomTools({
         />
       )}
 
-      <PythonRunner
-        open={pyOpen}
-        onClose={() => router.replace("/books")}
-        hasModalOpen={classManagerOpen || attendanceOpen || lessonPicker || !!editingLesson || !!teaching}
-      />
     </>
   );
 }
