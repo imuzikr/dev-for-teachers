@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  markStudyAttendance,
   subscribeClassStudyAttendance,
-  subscribeMyStudyAttendance,
-  todayDateKey,
   updateLesson,
 } from "@/lib/store";
 import { getCurrentUser } from "@/lib/user";
@@ -28,38 +25,22 @@ export default function BookClassroomTools({
   const [classManagerOpen, setClassManagerOpen] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [attending, setAttending] = useState(false);
   const [lessonPicker, setLessonPicker] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
   const [teaching, setTeaching] = useState(null);
 
-  const today = todayDateKey();
-  const attendedToday = !isTeacher && attendanceRecords.some((record) => record.date === today);
-
   useEffect(() => {
-    if (!classId || !user?.uid) {
+    if (!isTeacher || !classId || !user?.uid) {
       setAttendanceRecords([]);
       return;
     }
-    if (isTeacher) return subscribeClassStudyAttendance(classId, setAttendanceRecords);
-    return subscribeMyStudyAttendance(classId, user.uid, setAttendanceRecords);
+    return subscribeClassStudyAttendance(classId, setAttendanceRecords);
   }, [classId, isTeacher, user?.uid]);
 
   function selectClass(id) {
     onSelectClass(id);
     setSelectedClassId(id);
     setClassManagerOpen(false);
-  }
-
-  async function markAttendance() {
-    if (!classId || !user || isTeacher || attending) return;
-    setAttending(true);
-    try {
-      await markStudyAttendance(classId, user, today);
-      onToast(attendedToday ? "오늘 출석은 이미 기록되어 있어요." : "오늘 출석을 기록했어요.");
-    } finally {
-      setAttending(false);
-    }
   }
 
   async function saveLessonSlides(index, text) {
@@ -87,20 +68,6 @@ export default function BookClassroomTools({
   return (
     <>
       <div className="books-classroom-tools">
-        {!isTeacher && currentClass && (
-          <>
-            <button
-              className={`btn-ghost attendance-mark-btn${attendedToday ? " done" : ""}`}
-              onClick={markAttendance}
-              disabled={attending || attendedToday}
-            >
-              {attendedToday ? "출석 완료" : "출석하기"}
-            </button>
-            <button className="btn-ghost" onClick={() => setAttendanceOpen(true)}>
-              내 출석부
-            </button>
-          </>
-        )}
         {isTeacher && currentClass && !currentClass.archived && (
           <>
             <button className="btn-ghost" onClick={() => setLessonPicker(true)}>
@@ -118,11 +85,11 @@ export default function BookClassroomTools({
         )}
       </div>
 
-      {attendanceOpen && currentClass && (
+      {isTeacher && attendanceOpen && currentClass && (
         <StudyAttendanceModal
-          isTeacher={isTeacher}
+          isTeacher
           records={attendanceRecords}
-          roster={isTeacher ? roster : []}
+          roster={roster}
           onClose={() => setAttendanceOpen(false)}
         />
       )}

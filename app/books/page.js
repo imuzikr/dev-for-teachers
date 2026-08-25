@@ -59,6 +59,7 @@ function BooksPageInner() {
   const [editingProject, setEditingProject] = useState(false);
   const [projectEditorKey, setProjectEditorKey] = useState(0);
   const [appendProjectStep, setAppendProjectStep] = useState(false);
+  const [projectEditorStepId, setProjectEditorStepId] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
@@ -205,8 +206,9 @@ function BooksPageInner() {
     }
   }
 
-  function openProjectEditor(appendStep = false) {
+  function openProjectEditor(appendStep = false, stepId = null) {
     setAppendProjectStep(appendStep);
+    setProjectEditorStepId(stepId);
     setProjectEditorKey((current) => current + 1);
     setEditingProject(true);
   }
@@ -313,6 +315,7 @@ function BooksPageInner() {
             editingProject={editingProject}
             projectEditorKey={projectEditorKey}
             appendProjectStep={appendProjectStep}
+            projectEditorStepId={projectEditorStepId}
             savingProject={savingProject}
             onSaveProject={handleSaveProject}
             onEditProject={openProjectEditor}

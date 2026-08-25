@@ -6937,12 +6937,6 @@ pre code {
   margin-top: 4px;
 }
 
-.attendance-mark-btn.done {
-  color: #2f7d54;
-  border-color: #b7dec6;
-  background: #eef9f2;
-}
-
 .modal.attendance-modal {
   max-width: 720px;
 }
@@ -8399,6 +8393,9 @@ pre code {
 
 .book-library-side {
   min-width: 0;
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 16px;
   background: var(--sage-card, var(--primary-light));
   border-right: 1px solid var(--border);
@@ -8556,6 +8553,26 @@ pre code {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+}
+
+.book-step-view-shell {
+  position: relative;
+}
+
+.book-step-view-card.book-step-card > summary {
+  padding-right: 88px;
+}
+
+.book-step-view-edit {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 1;
+  min-height: 44px;
+  padding: 6px 8px;
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .book-step-toggle,
@@ -8719,6 +8736,11 @@ pre code {
   color: var(--primary-dark);
   border: 1px dashed var(--primary);
   background: var(--card-bg);
+}
+
+.book-step-save {
+  width: 100%;
+  min-height: 44px;
 }
 
 .book-step-add {
@@ -9757,7 +9779,11 @@ pre code {
 @media (max-width: 768px) {
   .books-main { padding: 16px 12px 60px; }
   .book-library-layout { grid-template-columns: 1fr; }
-  .book-library-side { border-right: 0; border-bottom: 1px solid var(--border); }
+  .book-library-side {
+    max-height: min(68dvh, 640px);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
   .book-personal-dashboard { padding: 16px 12px; }
   .book-personal-grid { grid-template-columns: 1fr; }
   .canvas-main { padding: 12px 10px 16px; overflow-y: auto; }

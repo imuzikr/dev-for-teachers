@@ -11,22 +11,27 @@ function newItem() {
   return { id: crypto.randomUUID(), title: "", topic: "", content: "", url: "" };
 }
 
-function initialDraft(project, appendStep) {
+function initialDraft(project, appendStep, initialOpenStepId) {
   const existingSteps = (project?.steps ?? []).map((step) => ({
     ...step,
     activities: (step.activities ?? []).map((activity) => ({ ...activity })),
     resources: (step.resources ?? []).map((resource) => ({ ...resource })),
   }));
   const steps = appendStep ? [...existingSteps, newStep(existingSteps.length)] : existingSteps;
+  const selectedStepId = appendStep
+    ? steps.at(-1)?.id
+    : steps.some((step) => step.id === initialOpenStepId)
+      ? initialOpenStepId
+      : steps[0]?.id;
   return {
     title: project?.title ?? "",
     steps,
-    openIds: new Set(appendStep && steps.length > 0 ? [steps.at(-1).id] : steps.slice(0, 1).map((step) => step.id)),
+    openIds: new Set(selectedStepId ? [selectedStepId] : []),
   };
 }
 
-export default function BookProjectPanel({ project, editing, appendStep, saving, onSave, onEdit, onOpen, onDelete }) {
-  const [draft] = useState(() => initialDraft(project, appendStep));
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, onSave, onEdit, onOpen, onDelete }) {
+  const [draft] = useState(() => initialDraft(project, appendStep, initialOpenStepId));
   const [title, setTitle] = useState(draft.title);
   const [steps, setSteps] = useState(draft.steps);
   const [openIds, setOpenIds] = useState(draft.openIds);
@@ -122,6 +127,14 @@ export default function BookProjectPanel({ project, editing, appendStep, saving,
                       <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
                       <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>
                     </div>
+                    <button
+                      type="button"
+                      className="btn-primary book-step-save"
+                      disabled={saving || !title.trim()}
+                      onClick={() => onSave({ title: title.trim(), steps })}
+                    >
+                      {saving ? "저장 중..." : `Step ${index + 1} 저장`}
+                    </button>
                   </div>
                 )}
               </article>
@@ -144,26 +157,33 @@ export default function BookProjectPanel({ project, editing, appendStep, saving,
         {onEdit && <button type="button" className="btn-ghost book-project-edit" onClick={() => onEdit(false)}>프로젝트 편집</button>}
       </header>
       {(project.steps ?? []).map((step, index) => (
-        <details className="book-step-card" key={step.id} open={index === 0}>
-          <summary><span>Step {index + 1}</span><strong>{step.title}</strong><small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small></summary>
-          <div className="book-step-content">
-            <ProjectSection title="활동" empty="등록된 활동이 없습니다.">
-              {step.activities.map((activity) => (
-                <div className="book-project-item" key={activity.id}>
-                  <button type="button" onClick={() => onOpen(activity)}><IconBook size={17} /><span>{activity.title}</span></button>
-                  {onDelete && <button type="button" className="btn-ghost role-danger-btn" title="활동 삭제" onClick={() => onDelete(activity)}><IconTrash size={14} /></button>}
-                </div>
-              ))}
-            </ProjectSection>
-            <ProjectSection title="자료" empty="등록된 자료가 없습니다.">
-              {step.resources.map((resource) => resource.url ? (
-                <a className="book-project-resource" key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>링크 열기</em></a>
-              ) : (
-                <div className="book-project-resource is-text" key={resource.id}><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>텍스트</em></div>
-              ))}
-            </ProjectSection>
-          </div>
-        </details>
+        <article className="book-step-view-shell" key={step.id}>
+          <details className="book-step-card book-step-view-card" open={index === 0}>
+            <summary><span>Step {index + 1}</span><strong>{step.title}</strong><small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small></summary>
+            <div className="book-step-content">
+              <ProjectSection title="활동" empty="등록된 활동이 없습니다.">
+                {step.activities.map((activity) => (
+                  <div className="book-project-item" key={activity.id}>
+                    <button type="button" onClick={() => onOpen(activity)}><IconBook size={17} /><span>{activity.title}</span></button>
+                    {onDelete && <button type="button" className="btn-ghost role-danger-btn" title="활동 삭제" onClick={() => onDelete(activity)}><IconTrash size={14} /></button>}
+                  </div>
+                ))}
+              </ProjectSection>
+              <ProjectSection title="자료" empty="등록된 자료가 없습니다.">
+                {step.resources.map((resource) => resource.url ? (
+                  <a className="book-project-resource" key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>링크 열기</em></a>
+                ) : (
+                  <div className="book-project-resource is-text" key={resource.id}><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>텍스트</em></div>
+                ))}
+              </ProjectSection>
+            </div>
+          </details>
+          {onEdit && (
+            <button type="button" className="btn-ghost book-step-view-edit" onClick={() => onEdit(false, step.id)}>
+              Step 편집
+            </button>
+          )}
+        </article>
       ))}
       {onEdit && (
         <button type="button" className="btn-outline book-step-add" onClick={() => onEdit(true)}>
