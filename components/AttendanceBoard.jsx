@@ -209,7 +209,7 @@ export default function AttendanceBoard({
         </div>
 
         {roster.length === 0 ? (
-          <p className="lesson-note-empty">이 반에 입장한 학생이 없어요. 입장 코드를 알려 주세요.</p>
+          <p className="lesson-note-empty">아직 이 반에 참여한 학생이 없어요.</p>
         ) : viewMode === "group" ? (
           <div className="attend-group-view">
             {groupSections.map((g, i) => (

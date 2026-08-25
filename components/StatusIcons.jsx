@@ -326,18 +326,6 @@ export function IconAllPosts({ size = 20, className = "" }) {
   );
 }
 
-export function IconKey({ size = 20, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-      <circle cx="8.15" cy="11.85" r="3.9" fill="#e6f1ea" stroke="#1f2e25" strokeWidth="1.55"/>
-      <circle cx="8.15" cy="11.85" r="1.35" stroke="#2f6f3e" strokeWidth="1.25"/>
-      <path d="M12.05 11.85h7.15" stroke="#1f2e25" strokeWidth="1.75" strokeLinecap="round"/>
-      <path d="M18.85 11.85v2.15h-2.05v1.85h-2.05v-4" stroke="#1f2e25" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M13.4 10.2h2.8" stroke="#2f6f3e" strokeWidth="1.25" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
 export function IconRecord({ size = 20, className = "" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">

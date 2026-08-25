@@ -105,7 +105,7 @@ export default function StudyProgressBoard({
           </p>
         ) : roster.length === 0 ? (
           <p className="lesson-note-empty">
-            이 반에 입장한 학생이 없어요. 입장 코드를 알려 주세요.
+            아직 이 반에 참여한 학생이 없어요.
           </p>
         ) : (
           <div className="progress-scroll">

@@ -67,7 +67,6 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await db.doc(`studentNotes/n1`).set({ classId: GONE, studentUid: "stu1", text: "관찰 메모" });
     await db.doc(`kwl/k1`).set({ classId: GONE, userId: "stu1", date: "2026-08-23", K: "안다" });
     await db.doc(`presence/stu1_${GONE}`).set({ classId: GONE, uid: "stu1", visible: true });
-    await db.doc(`joinCodes/CODE1`).set({ classId: GONE, createdBy: "teacherA" });
     await db.doc(`memberships/stu1_${GONE}`).set({ classId: GONE, uid: "stu1" });
     await db.doc(`broadcasts/${GONE}`).set({ classId: GONE, mode: "slide" });
 
@@ -127,7 +126,6 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await gone("studentNotes/n1");
     await gone("kwl/k1");
     await gone(`presence/stu1_${GONE}`);
-    await gone("joinCodes/CODE1");
     await gone(`memberships/stu1_${GONE}`);
     await gone(`broadcasts/${GONE}`);
   });

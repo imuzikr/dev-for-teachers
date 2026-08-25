@@ -14,6 +14,7 @@ import {
 } from "@/lib/store";
 import { isAdmin, isTeacher } from "@/lib/user";
 import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
+import { useAutomaticClassMembership } from "@/lib/useAutomaticClassMembership";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
@@ -76,6 +77,8 @@ function BooksPageInner() {
     }
     return subscribeMyMemberships(user.uid, setMemberships);
   }, [user?.uid, admin]);
+
+  useAutomaticClassMembership({ user, isOperator: admin, classes, memberships });
 
   useEffect(() => {
     if (!admin) {

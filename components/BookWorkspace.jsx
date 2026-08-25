@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { IconBook, IconLock, IconTrash } from "./StatusIcons";
-import ClassEntry from "./ClassEntry";
 
 function participantName(participant) {
   return participant.name || participant.realName || participant.displayName || "이름 미설정";
@@ -72,7 +71,7 @@ export default function BookWorkspace({
         </div>
 
         {!hasClass && !isTeacher ? (
-          <ClassEntry compact title="책방에 참여하기" />
+          <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
         ) : activities.length === 0 ? (
           <div className="book-library-empty">
             {isTeacher ? "아직 준비한 활동이 없습니다." : "선생님이 활동을 준비하고 있습니다."}

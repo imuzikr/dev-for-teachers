@@ -2,7 +2,6 @@
 
 // =============================================================
 // 공부방 — 수업의 연장. 반(클래스)별 Trello/Padlet 스타일 보드.
-//   · 일반 사용자: 입장 코드로 반에 들어와 그 반의 보드를 사용합니다.
 //   · 관리자: 상단 드롭다운으로 반을 고르고, 반을 만들고 관리합니다.
 // =============================================================
 import { backdropClose } from "@/lib/modal";
@@ -15,9 +14,7 @@ import {
   subscribeClasses,
   subscribeUserDirectory,
   subscribeMyMemberships,
-  subscribeJoinCodes,
   subscribeClassMembers,
-  regenerateJoinCode,
   reorderStudyBoards,
   ensureDefaultStudyBoard,
   markStudyAttendance,
@@ -25,7 +22,6 @@ import {
   subscribeClassStudyAttendance,
   todayDateKey,
   subscribeStudyGroupAssignment,
-  toDate,
 } from "@/lib/store";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { isAdmin, isTeacher, getCurrentUser } from "@/lib/user";
@@ -42,14 +38,13 @@ import {
 import TopNav from "@/components/TopNav";
 import StudyBoardColumn from "@/components/StudyBoardColumn";
 import StudyBoardForm from "@/components/StudyBoardForm";
-import ClassEntry from "@/components/ClassEntry";
 import ClassManagerModal from "@/components/ClassManagerModal";
 import Toast from "@/components/Toast";
 import LessonManagerModal from "@/components/LessonManagerModal";
 import LessonMode from "@/components/LessonMode";
 import StudyAttendanceModal from "@/components/StudyAttendanceModal";
 import { updateLesson } from "@/lib/store";
-import { IconKey } from "@/components/StatusIcons";
+import { useAutomaticClassMembership } from "@/lib/useAutomaticClassMembership";
 
 // 파이썬 실행기(CodeMirror 등)는 무거워 지연 로딩 → 초기 로드/전환 속도 개선
 const PythonRunner = dynamic(() => import("@/components/PythonRunner"), {
@@ -65,11 +60,8 @@ export default function StudyPage() {
   const [localSelectedId, setLocalSelectedId] = useState(null); // 세션에서 고른 반
   const [memberships, setMemberships] = useState([]); // 서버 소속(기기 무관)
   const [teacherClassId, setTeacherClassId] = useState(null);
-  const [joinCodesMap, setJoinCodesMap] = useState({}); // 교사: classId→{code,expiresAt}
-  const [regenerating, setRegenerating] = useState(false);
   const [addingBoard, setAddingBoard] = useState(false);
   const [classManagerOpen, setClassManagerOpen] = useState(false);
-  const [showCode, setShowCode] = useState(false); // 입장 코드 표시 토글
   const [attendanceOpen, setAttendanceOpen] = useState(false); // 출석부 모달
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [baseGroupAssignment, setBaseGroupAssignment] = useState(null);
@@ -189,21 +181,15 @@ export default function StudyPage() {
     return subscribeMyMemberships(user.uid, setMemberships);
   }, [user?.uid, admin]);
 
-  // 교사/관리자만 사용자 디렉터리(실명) + 입장 코드 구독.
-  // 학생은 보안 규칙상 users·joinCodes 목록을 읽을 수 없으므로 구독하지 않습니다.
   useEffect(() => {
     if (!admin) {
       setDirectory([]);
       return;
     }
-    const unsubDir = subscribeUserDirectory(setDirectory);
-    // 일반 교사는 본인 코드만(규칙상 소유 코드만 나열 가능), 최고 관리자는 전체
-    const unsubCodes = subscribeJoinCodes(setJoinCodesMap, isAdmin(user) ? null : user?.uid);
-    return () => {
-      unsubDir();
-      unsubCodes();
-    };
+    return subscribeUserDirectory(setDirectory);
   }, [admin, user?.uid]);
+
+  useAutomaticClassMembership({ user, isOperator: admin, classes, memberships });
 
   // 학생이 보고 있는 반: 세션 선택이 내 소속에 있으면 그것, 아니면 첫 소속.
   // 보관된 반은 학생 접근이 막히므로 후보에서 제외합니다.
@@ -252,7 +238,6 @@ export default function StudyPage() {
   const classId = admin ? teacherClassId : studentClassId;
   const currentClass =
     (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
-  const currentCode = joinCodesMap[classId] ?? null; // { code, expiresAt } | null
   const classBoards = useMemo(
     () => boards.filter((b) => b.classId === classId),
     [boards, classId]
@@ -325,28 +310,7 @@ export default function StudyPage() {
   function handleViewArchivedClass(id) {
     setTeacherClassId(id);
     setSelectedClassId(id);
-    setShowCode(false);
     setClassManagerOpen(false);
-  }
-
-  // 입장 코드 만료 여부 + 표시용 포맷
-  const codeExpired = currentCode?.expiresAt
-    ? toDate(currentCode.expiresAt) < new Date()
-    : false;
-  function formatExpiry(ts) {
-    return toDate(ts).toLocaleDateString("ko-KR", {
-      month: "long",
-      day: "numeric",
-    });
-  }
-  async function handleRegenerate() {
-    if (!classId) return;
-    setRegenerating(true);
-    try {
-      await regenerateJoinCode(classId, getCurrentUser());
-    } finally {
-      setRegenerating(false);
-    }
   }
   async function handleAttendance() {
     if (!classId || !user || attending || admin) return;
@@ -373,9 +337,6 @@ export default function StudyPage() {
     await reorderStudyBoards(ids);
   }
 
-  // 학생이 아직 반에 입장하지 않았으면 입장 화면을 보여줍니다
-  const showEntry = user && !admin && !classId;
-
   return (
     <div className="board-shell study-shell">
       {!isFirebaseConfigured && (
@@ -391,10 +352,7 @@ export default function StudyPage() {
         pyActive={pyOpen}
       />
 
-      {showEntry ? (
-        <ClassEntry />
-      ) : (
-        <main className="study-main">
+      <main className="study-main">
           <div className="study-body">
             <div className="study-cols-wrap">
               {/* 제목 영역 — cols-wrap 안에 위치해 보드 컬럼과 정렬됨 */}
@@ -432,7 +390,6 @@ export default function StudyPage() {
                           onChange={(e) => {
                             setTeacherClassId(e.target.value);
                             setSelectedClassId(e.target.value); // 새로고침해도 이 반 유지
-                            setShowCode(false);
                           }}
                           aria-label="반 선택"
                         >
@@ -459,15 +416,6 @@ export default function StudyPage() {
                         onClick={() => setAttendanceOpen(true)}
                       >
                         📋 출석부 보기
-                      </button>
-                    )}
-                    {admin && currentClass && !currentClass.archived && (
-                      <button
-                        className="btn-ghost"
-                        onClick={() => setShowCode(true)}
-                        title="학생에게 알려 줄 입장 코드 크게 보기"
-                      >
-                        <IconKey size={17} /> 입장 코드
                       </button>
                     )}
                     {admin && (
@@ -509,8 +457,7 @@ export default function StudyPage() {
               </div>
               {admin && myClassesAll.length === 0 ? (
                 <p className="empty-note">
-                  아직 만든 반이 없어요. ‘반 관리하기’로 첫 반을 추가하고 학생에게
-                  입장 코드를 알려 주세요.
+                  아직 만든 반이 없어요. ‘반 관리하기’로 첫 반을 추가해 주세요.
                 </p>
               ) : !admin && classBoards.length === 0 ? (
                 <p className="empty-note">아직 열린 수업 보드가 없어요.</p>
@@ -562,45 +509,6 @@ export default function StudyPage() {
 
           </div>
         </main>
-      )}
-
-      {/* 입장 코드 크게 보기 모달 — 학생들이 멀리서도 볼 수 있게 */}
-      {showCode && currentClass && (
-        <div className="modal-backdrop" {...backdropClose(() => setShowCode(false))}>
-          <div
-            className="modal modal-joincode"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="btn-close joincode-close"
-              onClick={() => setShowCode(false)}
-              aria-label="닫기"
-            >
-              ×
-            </button>
-            <p className="joincode-class">{currentClass.name}</p>
-            <p className="joincode-label">입장 코드</p>
-            <p className="joincode-value">{currentCode?.code ?? "—"}</p>
-            <p className="joincode-hint">
-              공부방 입장 화면에서 이 코드를 입력하세요
-            </p>
-            {currentCode?.expiresAt && (
-              <p className={`joincode-expiry${codeExpired ? " expired" : ""}`}>
-                {codeExpired
-                  ? "⚠️ 만료된 코드예요 — 재발급해 주세요"
-                  : `${formatExpiry(currentCode.expiresAt)}까지 유효`}
-              </p>
-            )}
-            <button
-              className="joincode-regen"
-              onClick={handleRegenerate}
-              disabled={regenerating}
-            >
-              {regenerating ? "재발급 중…" : "🔄 코드 재발급"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 반 만들기 모달 */}
       {/* 활동 자료 다운로드 모달 — 범위·형식은 여기서 선택 */}

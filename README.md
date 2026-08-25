@@ -58,7 +58,7 @@ firebase deploy --only firestore
 
 ```
 users/{uid}          프로필 (email, realName, displayName, role, requestedRole ...)
-classes              반 / joinCodes 입장 코드 / memberships 소속
+classes              반 / memberships 소속
 studyBoards          공부방 보드
   └ cards            공부방 카드 (반 멤버 격리)
 bookActivities       책방 활동

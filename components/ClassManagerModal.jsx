@@ -3,11 +3,6 @@
 // =============================================================
 // 반 관리하기 — 새 반 만들기 · 이름 수정 · 보관 · (보관된 반) 복원·삭제
 // -------------------------------------------------------------
-// 보관한 반은 반 선택 목록(상단 드롭다운)에서 사라지고, 이 모달의
-// '보관된 반' 목록에서만 확인·복원·삭제할 수 있습니다. 보관 중엔
-// 학생 접근이 완전히 막히고(입장 코드 폐기), 교사도 데이터를 보기만
-// 할 수 있습니다(편집하려면 먼저 복원). 삭제는 되돌릴 수 없어
-// 보관을 거친 반만 가능합니다.
 // =============================================================
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
@@ -78,8 +73,8 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     setBusyId(c.id);
     setError("");
     try {
-      await unarchiveClass(c.id, user);
-      onToast?.(`'${c.name}' 반을 복원했어요. 새 입장 코드가 발급됐어요.`);
+      await unarchiveClass(c.id);
+      onToast?.(`'${c.name}' 반을 복원했어요.`);
     } catch {
       setError("반을 복원하지 못했어요.");
     } finally {
@@ -199,7 +194,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
                       className="btn-ghost"
                       onClick={() => handleUnarchive(c)}
                       disabled={busyId === c.id}
-                      title="다시 운영 중인 반으로 되돌립니다(새 입장 코드 발급)"
+                      title="다시 운영 중인 반으로 되돌립니다"
                     >
                       ♻️ 복원
                     </button>
