@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
+import BookPersonalDashboard from "./BookPersonalDashboard";
 import BookProjectPanel from "./BookProjectPanel";
-
-function participantName(participant) {
-  return participant.name || participant.realName || participant.displayName || "이름 미설정";
-}
 
 export default function BookWorkspace({
   activities,
@@ -82,54 +79,14 @@ export default function BookWorkspace({
         )}
       </aside>
 
-      <section className="book-personal-dashboard" aria-label="참여자 개인 카드">
-        <div className="book-dashboard-head">
-          <div>
-            <h2>개인 카드</h2>
-            <p>{isTeacher ? "참여자의 활동 진행 상황" : "나의 책방 활동 공간"}</p>
-          </div>
-          <span>{participants.length}명</span>
-        </div>
-
-        {participants.length === 0 ? (
-          <div className="book-dashboard-empty">참여자가 들어오면 개인 카드가 여기에 만들어집니다.</div>
-        ) : (
-          <div className="book-personal-grid">
-            {participants.map((participant) => {
-              const completed = progressByUser.get(participant.uid) ?? new Set();
-              return (
-                <article className="book-personal-card" key={participant.uid}>
-                  <header>
-                    <span className="book-personal-avatar" aria-hidden="true">{participant.emoji || "·"}</span>
-                    <span>
-                      <strong>{participantName(participant)}</strong>
-                      <small>{participant.schoolName || "학교 미입력"}</small>
-                    </span>
-                    <em>{completed.size}/{activities.length}</em>
-                  </header>
-                  <div className="book-personal-progress" aria-label={`활동 ${completed.size}개 완료`}>
-                    <span style={{ width: `${activities.length ? (completed.size / activities.length) * 100 : 0}%` }} />
-                  </div>
-                  {activities.length === 0 ? (
-                    <p className="book-personal-empty">새 활동을 기다리고 있습니다.</p>
-                  ) : (
-                    <div className="book-personal-activities">
-                      {activities.map((activity) => (
-                        <button type="button" key={activity.id} onClick={() => onOpen(activity)}>
-                          <span>{activity.title}</span>
-                          <em className={completed.has(activity.id) ? "is-done" : ""}>
-                            {completed.has(activity.id) ? "작성함" : "시작 전"}
-                          </em>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      <BookPersonalDashboard
+        participants={participants}
+        activities={activities}
+        progressByUser={progressByUser}
+        user={user}
+        isTeacher={isTeacher}
+        onOpen={onOpen}
+      />
     </div>
   );
 }

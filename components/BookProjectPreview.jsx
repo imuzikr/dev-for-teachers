@@ -1,7 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
 import { IconTrash } from "./StatusIcons";
+
+function IconEdit({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 19.5h4l10-10a2.12 2.12 0 0 0-3-3l-10 10-1 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="m14 8 3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+}
+
+function IconCopy({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+}
 
 export function stepPreviewItems(step) {
   return [
@@ -25,8 +34,17 @@ export function stepPreviewItems(step) {
   ];
 }
 
-export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onDelete }) {
+export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete }) {
+  const [copied, setCopied] = useState(false);
   const content = kind === "activity" ? item.topic : item.content;
+
+  async function copyResource() {
+    const text = [item.content, item.url].filter(Boolean).join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
   return (
     <article className="book-project-detail-item">
       <div className="book-project-detail-copy">
@@ -39,8 +57,18 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onDelete }) 
           <a className="btn-ghost" href={item.url} target="_blank" rel="noreferrer">링크 열기</a>
         )}
         <button type="button" className="btn-ghost" onClick={onPreview}>전체보기</button>
+        {kind === "resource" && (
+          <button type="button" className="btn-ghost book-project-icon-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
+            <IconCopy />
+          </button>
+        )}
+        {onEdit && (
+          <button type="button" className="btn-ghost book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 수정`} aria-label={`${kind === "activity" ? "활동" : "자료"} 수정`} onClick={onEdit}>
+            <IconEdit />
+          </button>
+        )}
         {onDelete && (
-          <button type="button" className="btn-ghost role-danger-btn book-project-detail-delete" title="활동 삭제" aria-label="활동 삭제" onClick={onDelete}>
+          <button type="button" className="btn-ghost role-danger-btn book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 삭제`} aria-label={`${kind === "activity" ? "활동" : "자료"} 삭제`} onClick={onDelete}>
             <IconTrash size={14} />
           </button>
         )}
@@ -72,7 +100,7 @@ export function StepContentModal({ step, item, index, total, onMove, onOpenActiv
         </header>
         <div className="book-step-preview-body">
           <p>{item.content}</p>
-          {item.url && <a href={item.url} target="_blank" rel="noreferrer">자료 링크 열기</a>}
+          {item.url && <a className="btn-outline book-step-preview-link" href={item.url} target="_blank" rel="noreferrer">자료 링크 열기</a>}
         </div>
         <footer className="book-step-preview-footer">
           <span>{index + 1} / {total}</span>

@@ -19,12 +19,10 @@ import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
 import Toast from "@/components/Toast";
-import ConfirmModal from "@/components/ConfirmModal";
 import MindmapBoard from "@/components/MindmapBoard";
 import MindmapForm from "@/components/MindmapForm";
-import BookWorkspace from "@/components/BookWorkspace";
-import BookClassroomTools from "@/components/BookClassroomTools";
-import { IconBook } from "@/components/StatusIcons";
+import BooksHome from "@/components/BooksHome";
+import ProjectItemDeleteModal from "@/components/ProjectItemDeleteModal";
 
 const SUPPORTED_ACTIVITY_TYPES = new Set(["mindmap"]);
 
@@ -216,9 +214,20 @@ function BooksPageInner() {
   async function handleDelete() {
     const target = confirmDelete;
     setConfirmDelete(null);
-    await deleteBookActivity(target.id);
-    if (openActivityId === target.id) goToGrid();
-    setToast("활동을 삭제했어요.");
+    const nextSteps = (project?.steps ?? []).map((step) => step.id !== target.stepId ? step : {
+      ...step,
+      activities: target.kind === "activity" ? step.activities.filter((item) => item.id !== target.item.id) : step.activities,
+      resources: target.kind === "resource" ? step.resources.filter((item) => item.id !== target.item.id) : step.resources,
+    });
+    try {
+      if (target.kind === "activity") await deleteBookActivity(target.item.id);
+      await saveBookProject(user, { classId, title: project.title, steps: nextSteps });
+      if (openActivityId === target.item.id) goToGrid();
+      setToast(`${target.kind === "activity" ? "활동" : "자료"}을 삭제했어요.`);
+    } catch (error) {
+      console.error("[책방] 프로젝트 항목 삭제 실패:", error);
+      setToast("삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   return (
@@ -241,101 +250,18 @@ function BooksPageInner() {
           onBack={goToGrid}
         />
       ) : (
-        <main className="books-main">
-          <div className="books-head">
-            <div className="books-head-main">
-              <h1>
-                <IconBook size={26} /> 책방
-              </h1>
-              {admin && myClasses.length > 0 && (
-                <select
-                  className="class-select"
-                  value={classId ?? ""}
-                  onChange={(e) => {
-                    setTeacherClassId(e.target.value);
-                    setSelectedClassId(e.target.value);
-                  }}
-                >
-                  {myClasses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              )}
-              {!admin && membershipIds.length > 1 ? (
-                <select
-                  className="class-select"
-                  value={classId ?? ""}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                >
-                  {membershipIds.map((cid) => (
-                    <option key={cid} value={cid}>
-                      {classes.find((c) => c.id === cid)?.name ?? "우리 반"}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                !admin && currentClass && (
-                  <span className="books-class-name">{currentClass.name}</span>
-                )
-              )}
-              <BookClassroomTools
-                user={user}
-                isTeacher={admin}
-                classId={classId}
-                currentClass={currentClass}
-                classes={myClassesAll}
-                roster={roster}
-                onSelectClass={setTeacherClassId}
-                onToast={setToast}
-              />
-            </div>
-            {admin && classId && (
-              <button
-                type="button"
-                className="btn-primary books-project-create"
-                onClick={() => openProjectEditor(false)}
-              >
-                {project ? "프로젝트 편집" : "프로젝트 만들기"}
-              </button>
-            )}
-          </div>
-
-          <p className="books-intro">
-            책을 읽으며 떠올린 생각을 마인드맵으로 정리하고{" "}
-            <span className="keep-together">함께 살펴볼 수 있어요.</span>
-          </p>
-
-          <BookWorkspace
-            activities={visibleActivities}
-            participants={participants}
-            user={user}
-            isTeacher={admin}
-            hasClass={!!classId}
-            project={displayedProject}
-            editingProject={editingProject}
-            projectEditorKey={projectEditorKey}
-            appendProjectStep={appendProjectStep}
-            projectEditorStepId={projectEditorStepId}
-            savingProject={savingProject}
-            onSaveProject={handleSaveProject}
-            onEditProject={openProjectEditor}
-            onOpen={goToActivity}
-            onDelete={setConfirmDelete}
-          />
-        </main>
-      )}
-
-      {confirmDelete && (
-        <ConfirmModal
-          title="활동 삭제"
-          preview={confirmDelete.title}
-          description={"이 활동과 학생들이 만든 내용이 모두 삭제됩니다.\n되돌릴 수 없습니다."}
-          confirmLabel="삭제"
-          danger
-          onConfirm={handleDelete}
-          onClose={() => setConfirmDelete(null)}
+        <BooksHome
+          admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
+          myClasses={myClasses} myClassesAll={myClassesAll} membershipIds={membershipIds} roster={roster}
+          project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
+          participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
+          appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
+          onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
+          onSaveProject={handleSaveProject} onOpenActivity={goToActivity} onDelete={setConfirmDelete}
         />
       )}
+
+      <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />
 
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </div>
