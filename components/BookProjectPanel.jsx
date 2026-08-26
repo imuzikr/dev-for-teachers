@@ -181,7 +181,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
                     key={activity.id}
                     item={activity}
                     kind="activity"
-                    onOpen={() => onOpen(activity)}
+                    onOpen={() => openPreview(step, "activity", activity.id)}
                     onPreview={() => openPreview(step, "activity", activity.id)}
                     onEdit={onEdit ? () => onEdit(false, step.id) : null}
                     onDelete={onDelete ? () => onDelete({ kind: "activity", item: activity, stepId: step.id }) : null}
@@ -194,6 +194,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
                     key={resource.id}
                     item={resource}
                     kind="resource"
+                    onOpen={() => openPreview(step, "resource", resource.id)}
                     onPreview={() => openPreview(step, "resource", resource.id)}
                     onEdit={onEdit ? () => onEdit(false, step.id) : null}
                     onDelete={onDelete ? () => onDelete({ kind: "resource", item: resource, stepId: step.id }) : null}

@@ -50,18 +50,15 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       <div className="book-project-detail-copy">
         <strong>{item.title}</strong>
         {content && <p>{content}</p>}
-      </div>
-      <div className="book-project-detail-actions">
-        {kind === "activity" && <button type="button" className="btn-ghost" onClick={onOpen}>활동 열기</button>}
-        {kind === "resource" && item.url && (
-          <a className="btn-ghost" href={item.url} target="_blank" rel="noreferrer">링크 열기</a>
-        )}
-        <button type="button" className="btn-ghost" onClick={onPreview}>전체보기</button>
         {kind === "resource" && (
-          <button type="button" className="btn-ghost book-project-icon-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
+          <button type="button" className="btn-ghost book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
             <IconCopy />
           </button>
         )}
+      </div>
+      <div className="book-project-detail-actions">
+        <button type="button" className="btn-ghost" onClick={onOpen}>열기</button>
+        <button type="button" className="btn-ghost" onClick={onPreview}>전체보기</button>
         {onEdit && (
           <button type="button" className="btn-ghost book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 수정`} aria-label={`${kind === "activity" ? "활동" : "자료"} 수정`} onClick={onEdit}>
             <IconEdit />

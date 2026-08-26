@@ -8813,7 +8813,9 @@ pre code {
 }
 
 .book-project-detail-copy {
+  position: relative;
   min-width: 0;
+  padding-right: 40px;
 }
 
 .book-project-detail-copy strong {
@@ -8833,14 +8835,15 @@ pre code {
 }
 
 .book-project-detail-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
-  flex-wrap: wrap;
   gap: 5px;
 }
 
 .book-project-detail-actions .btn-ghost,
 .book-project-detail-actions a.btn-ghost {
+  width: 100%;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -8852,11 +8855,21 @@ pre code {
 }
 
 .book-project-detail-actions .book-project-icon-action {
-  width: 44px;
+  width: 100%;
   min-height: 44px;
   padding: 0;
 }
-.book-project-detail-actions .role-danger-btn { margin-left: auto; }
+.book-project-copy-action {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 36px;
+  min-height: 36px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  color: var(--primary-dark);
+}
 
 .book-step-preview-modal {
   width: min(94vw, 920px);
@@ -9071,47 +9084,71 @@ pre code {
 .book-personal-card-hint { margin: 0; color: var(--primary-dark); font-size: 11px; font-weight: 800; }
 .book-personal-empty { margin: 12px 0 0; color: var(--text-sub); font-size: 12px; }
 
-.book-personal-modal {
-  width: min(94vw, 960px);
-  max-width: none;
-  max-height: 90dvh;
-  overflow: hidden;
-}
-.book-personal-modal .modal-head { align-items: flex-start; }
-.book-personal-modal .modal-head span { color: var(--primary-dark); font-size: 12px; font-weight: 800; }
-.book-personal-modal .modal-head h3 { margin-top: 4px; font-size: 26px; }
-.book-personal-modal .modal-head p { margin: 5px 0 0; color: var(--text-sub); font-size: 13px; }
-.book-personal-modal-list {
-  max-height: calc(90dvh - 130px);
+.book-personal-detail { min-height: 100%; }
+.book-personal-detail-head {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.book-personal-detail-head > button { min-height: 44px; }
+.book-personal-detail-head span { color: var(--primary-dark); font-size: 12px; font-weight: 800; }
+.book-personal-detail-head h2 { margin: 4px 0 0; color: var(--text); font-size: 24px; }
+.book-personal-detail-head p { margin: 5px 0 0; color: var(--text-sub); font-size: 13px; }
+.book-personal-detail-list {
+  display: grid;
   gap: 12px;
-  overflow-y: auto;
-  padding: 18px 2px 2px;
 }
 .book-personal-activity-card {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
 }
-.book-personal-activity-card > div > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; }
+.book-personal-activity-order {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  font-size: 15px;
+  font-weight: 900;
+}
+.book-personal-activity-copy { min-width: 0; }
+.book-personal-activity-copy > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; }
 .book-personal-activity-card strong { display: block; margin-top: 5px; color: var(--text); font-size: 17px; }
 .book-personal-activity-card p { margin: 9px 0 0; color: var(--text-sub); font-size: 13px; line-height: 1.65; word-break: keep-all; }
-.book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.book-personal-activity-card footer { min-width: 112px; display: flex; align-items: flex-end; flex-direction: column; gap: 10px; }
 .book-personal-activity-card footer em { color: var(--text-sub); font-size: 12px; font-style: normal; }
 .book-personal-activity-card footer em.is-done { color: var(--primary-dark); font-weight: 800; }
 .book-personal-activity-card footer button { min-height: 44px; }
 
 @media (max-width: 640px) {
-  .book-personal-modal { width: calc(100vw - 16px); max-height: calc(100dvh - 20px); }
-  .book-personal-modal-list { max-height: calc(100dvh - 150px); grid-template-columns: 1fr; }
-  .book-personal-activity-card { padding: 15px; }
+  .book-personal-detail-head { grid-template-columns: 1fr; gap: 12px; }
+  .book-personal-detail-head > button { width: max-content; }
+  .book-personal-activity-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 12px;
+    padding: 15px;
+  }
+  .book-personal-activity-order { width: 40px; height: 40px; }
+  .book-personal-activity-card footer {
+    grid-column: 1 / -1;
+    width: 100%;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }
 
 

@@ -145,17 +145,16 @@ function BooksPageInner() {
 
   const visibleActivities = useMemo(
     () => {
-      const projectActivityIds = new Set(
-        (project?.steps ?? []).flatMap((step) => (step.activities ?? []).map((activity) => activity.id))
-      );
-      return activities.filter((activity) =>
-        SUPPORTED_ACTIVITY_TYPES.has(activity.type)
-        && (!project || (
-          projectActivityIds.has(activity.id)
+      const supported = activities.filter((activity) => SUPPORTED_ACTIVITY_TYPES.has(activity.type));
+      if (!project) return supported;
+
+      const activityById = new Map(supported.map((activity) => [activity.id, activity]));
+      return (project.steps ?? [])
+        .flatMap((step) => step.activities ?? [])
+        .map((projectActivity) => activityById.get(projectActivity.id))
+        .filter((activity) => activity
           && activity.projectId === project.id
-          && (!project.version || activity.projectVersion === project.version)
-        ))
-      );
+          && (!project.version || activity.projectVersion === project.version));
     },
     [activities, project]
   );
