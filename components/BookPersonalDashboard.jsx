@@ -13,11 +13,11 @@ export default function BookPersonalDashboard({ participants, activities, progre
 
   if (selected) {
     return (
-      <section className="book-personal-dashboard book-personal-detail" aria-label="나의 활동 대시보드">
+      <section className="book-personal-dashboard book-personal-detail" aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
         <header className="book-personal-detail-head">
           <button type="button" className="btn-outline" onClick={() => setSelectedUid(null)}>← 개인 카드</button>
           <div>
-            <span>나의 책방</span>
+            <span>{isTeacher ? "참여자 활동" : "나의 책방"}</span>
             <h2>{participantName(selected)} 활동 대시보드</h2>
             <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{activities.length} 완료</p>
           </div>
@@ -66,9 +66,10 @@ export default function BookPersonalDashboard({ participants, activities, progre
           {participants.map((participant) => {
             const completed = progressByUser.get(participant.uid) ?? new Set();
             const isOwn = !isTeacher && participant.uid === user?.uid;
+            const canOpen = isTeacher || isOwn;
             return (
-              <article className={`book-personal-card${isOwn ? " is-openable" : ""}`} key={participant.uid}>
-                <button type="button" className="book-personal-card-trigger" disabled={!isOwn} onClick={() => setSelectedUid(participant.uid)} aria-label={isOwn ? `${participantName(participant)} 개인 카드 열기` : undefined}>
+              <article className={`book-personal-card${canOpen ? " is-openable" : ""}`} key={participant.uid}>
+                <button type="button" className="book-personal-card-trigger" disabled={!canOpen} onClick={() => setSelectedUid(participant.uid)} aria-label={canOpen ? `${participantName(participant)} 개인 카드 열기` : undefined}>
                   <header>
                     <span className="book-personal-avatar" aria-hidden="true">{participant.emoji || "·"}</span>
                     <span>
@@ -80,7 +81,7 @@ export default function BookPersonalDashboard({ participants, activities, progre
                   <div className="book-personal-progress" aria-label={`활동 ${completed.size}개 완료`}>
                     <span style={{ width: `${activities.length ? (completed.size / activities.length) * 100 : 0}%` }} />
                   </div>
-                  <p className="book-personal-card-hint">{isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
+                  <p className="book-personal-card-hint">{isTeacher ? "학생 활동 보기" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
                 </button>
               </article>
             );
