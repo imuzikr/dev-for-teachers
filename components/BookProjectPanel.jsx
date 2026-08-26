@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { IconAddFeature, IconBook, IconTrash } from "./StatusIcons";
+import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems } from "./BookProjectPreview";
+import { IconAddFeature, IconTrash } from "./StatusIcons";
 
 function newStep(index) {
   return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [] };
@@ -35,6 +36,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   const [title, setTitle] = useState(draft.title);
   const [steps, setSteps] = useState(draft.steps);
   const [openIds, setOpenIds] = useState(draft.openIds);
+  const [preview, setPreview] = useState(null);
 
   function updateStep(stepId, patch) {
     setSteps((current) => current.map((step) => step.id === stepId ? { ...step, ...patch } : step));
@@ -82,6 +84,12 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
       else next.add(stepId);
       return next;
     });
+  }
+
+  function openPreview(step, kind, itemId) {
+    const items = stepPreviewItems(step);
+    const index = items.findIndex((item) => item.kind === kind && item.id === itemId);
+    if (index >= 0) setPreview({ stepId: step.id, index });
   }
 
   if (editing) {
@@ -150,7 +158,12 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
 
   if (!project) return <div className="book-library-empty">오른쪽 위의 프로젝트 만들기 버튼으로 수업 흐름을 준비하세요.</div>;
 
+  const previewStep = (project.steps ?? []).find((step) => step.id === preview?.stepId);
+  const previewItems = previewStep ? stepPreviewItems(previewStep) : [];
+  const previewItem = previewItems[preview?.index] ?? null;
+
   return (
+    <>
     <div className="book-project-view">
       <header>
         <span><strong>{project.title}</strong><small>{project.steps?.length ?? 0} Steps</small></span>
@@ -163,17 +176,24 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
             <div className="book-step-content">
               <ProjectSection title="활동" empty="등록된 활동이 없습니다.">
                 {step.activities.map((activity) => (
-                  <div className="book-project-item" key={activity.id}>
-                    <button type="button" onClick={() => onOpen(activity)}><IconBook size={17} /><span>{activity.title}</span></button>
-                    {onDelete && <button type="button" className="btn-ghost role-danger-btn" title="활동 삭제" onClick={() => onDelete(activity)}><IconTrash size={14} /></button>}
-                  </div>
+                  <ProjectDisplayItem
+                    key={activity.id}
+                    item={activity}
+                    kind="activity"
+                    onOpen={() => onOpen(activity)}
+                    onPreview={() => openPreview(step, "activity", activity.id)}
+                    onDelete={onDelete ? () => onDelete(activity) : null}
+                  />
                 ))}
               </ProjectSection>
               <ProjectSection title="자료" empty="등록된 자료가 없습니다.">
-                {step.resources.map((resource) => resource.url ? (
-                  <a className="book-project-resource" key={resource.id} href={resource.url} target="_blank" rel="noreferrer"><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>링크 열기</em></a>
-                ) : (
-                  <div className="book-project-resource is-text" key={resource.id}><span className="book-project-resource-copy"><strong>{resource.title}</strong>{resource.content && <small>{resource.content}</small>}</span><em>텍스트</em></div>
+                {step.resources.map((resource) => (
+                  <ProjectDisplayItem
+                    key={resource.id}
+                    item={resource}
+                    kind="resource"
+                    onPreview={() => openPreview(step, "resource", resource.id)}
+                  />
                 ))}
               </ProjectSection>
             </div>
@@ -191,16 +211,24 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
         </button>
       )}
     </div>
-  );
-}
-
-function ProjectSection({ title, empty, children }) {
-  const items = Array.isArray(children) ? children : children ? [children] : [];
-  return (
-    <section className="book-project-section">
-      <h3>{title}</h3>
-      {items.length > 0 ? children : <p>{empty}</p>}
-    </section>
+    {previewItem && (
+      <StepContentModal
+        step={previewStep}
+        item={previewItem}
+        index={preview.index}
+        total={previewItems.length}
+        onMove={(offset) => setPreview((current) => ({
+          ...current,
+          index: (current.index + offset + previewItems.length) % previewItems.length,
+        }))}
+        onOpenActivity={previewItem.kind === "activity" ? () => {
+          setPreview(null);
+          onOpen(previewItem.source);
+        } : null}
+        onClose={() => setPreview(null)}
+      />
+    )}
+    </>
   );
 }
 
