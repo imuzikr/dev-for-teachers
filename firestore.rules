@@ -295,24 +295,12 @@ service cloud.firestore {
         );
       }
 
-      // ── 공부방 출석부 ─────────────────────────────────────
-      //  · 경로 = classes/{classId}/attendanceRecords/{date_uid}
-      //  · 학생은 자기 출석 기록만 만들고 읽습니다. 교사는 반 전체 기록을 봅니다.
+      // ── 기존 출석 기록 ─────────────────────────────────────
+      // 학생 화면의 출석 기능은 제거되었습니다. 과거 기록은 관리자만 읽고,
+      // 클라이언트에서는 새 기록을 만들거나 수정·삭제할 수 없습니다.
       match /attendanceRecords/{recordId} {
-        allow read: if signedIn() && (
-          isAdmin()
-          || ownsClass(cId)
-          || resource.data.uid == uid()
-        );
-        allow create: if signedIn()
-                      && request.resource.data.uid == uid()
-                      && request.resource.data.classId == cId
-                      && recordId == (request.resource.data.date + '_' + uid())
-                      && request.resource.data.date is string
-                      && isClassMember(cId)
-                      && request.resource.data.attendedAt == request.time
-                      && request.resource.data.createdAt == request.time;
-        allow update, delete: if false;
+        allow read: if isAdmin();
+        allow create, update, delete: if false;
       }
 
       // ── 참여 전광판 자리표 ─────────────────────────────────
@@ -559,7 +547,7 @@ service cloud.firestore {
       allow read: if signedIn() && (isAdmin() || resource.data.authorId == uid());
     }
     match /{path=**}/attendanceRecords/{recordId} {
-      allow read: if signedIn() && (isAdmin() || resource.data.uid == uid());
+      allow read: if isAdmin();
     }
     match /{path=**}/questionSignals/{signalId} {
       allow read: if isAdmin();
