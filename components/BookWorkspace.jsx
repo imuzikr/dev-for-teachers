@@ -8,6 +8,7 @@ import BookProjectPanel from "./BookProjectPanel";
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 
 export default function BookWorkspace({
+  header,
   activities,
   participants,
   user,
@@ -110,14 +111,17 @@ export default function BookWorkspace({
         </div>
       </aside>
 
-      <BookPersonalDashboard
-        participants={participants}
-        activities={activities}
-        progressByUser={progressByUser}
-        user={user}
-        isTeacher={isTeacher}
-        onOpen={onOpen}
-      />
+      <section className="book-library-main" aria-label="책방 메인 화면">
+        {header}
+        <BookPersonalDashboard
+          participants={participants}
+          activities={activities}
+          progressByUser={progressByUser}
+          user={user}
+          isTeacher={isTeacher}
+          onOpen={onOpen}
+        />
+      </section>
     </div>
   );
 }

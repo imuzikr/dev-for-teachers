@@ -7,51 +7,57 @@ import { IconBook } from "./StatusIcons";
 
 export default function BooksHome(props) {
   const {
-    admin, user, classId, classes, currentClass, myClasses, myClassesAll, membershipIds, roster,
+    topNav, admin, user, classId, classes, currentClass, myClasses, myClassesAll, membershipIds, roster,
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     onEditProject, onSaveProject, onOpenActivity, onDelete,
   } = props;
 
   return (
-    <main className="books-main">
-      <div className="books-head">
-        <div className="books-head-main">
-          <h1><IconBook size={26} /> 책방</h1>
-          {admin && myClasses.length > 0 && (
-            <select className="class-select" value={classId ?? ""} onChange={(event) => {
-              onSelectTeacherClass(event.target.value);
-              setSelectedClassId(event.target.value);
-            }}>
-              {myClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          )}
-          {!admin && membershipIds.length > 1 ? (
-            <select className="class-select" value={classId ?? ""} onChange={(event) => setSelectedClassId(event.target.value)}>
-              {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
-            </select>
-          ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
-          <BookClassroomTools
-            user={user}
-            isTeacher={admin}
-            classId={classId}
-            currentClass={currentClass}
-            classes={myClassesAll}
-            roster={roster}
-            onSelectClass={onSelectTeacherClass}
-            onToast={onToast}
-          />
-        </div>
-        {admin && classId && (
-          <button type="button" className="btn-primary books-project-create" onClick={() => onEditProject(false)}>
-            {project ? "프로젝트 편집" : "프로젝트 만들기"}
-          </button>
-        )}
-      </div>
-
-      <p className="books-intro">책을 읽으며 떠올린 생각을 마인드맵으로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
-
+    <main className="books-main books-main--split">
       <BookWorkspace
+        header={(
+          <>
+            {topNav}
+            <div className="books-content-head">
+              <div className="books-head">
+                <div className="books-head-main">
+                  <h1><IconBook size={26} /> 책방</h1>
+                  {admin && myClasses.length > 0 && (
+                    <select className="class-select" value={classId ?? ""} onChange={(event) => {
+                      onSelectTeacherClass(event.target.value);
+                      setSelectedClassId(event.target.value);
+                    }}>
+                      {myClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </select>
+                  )}
+                  {!admin && membershipIds.length > 1 ? (
+                    <select className="class-select" value={classId ?? ""} onChange={(event) => setSelectedClassId(event.target.value)}>
+                      {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
+                    </select>
+                  ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
+                  <BookClassroomTools
+                    user={user}
+                    isTeacher={admin}
+                    classId={classId}
+                    currentClass={currentClass}
+                    classes={myClassesAll}
+                    roster={roster}
+                    onSelectClass={onSelectTeacherClass}
+                    onToast={onToast}
+                  />
+                </div>
+                {admin && classId && (
+                  <button type="button" className="btn-primary books-project-create" onClick={() => onEditProject(false)}>
+                    {project ? "프로젝트 편집" : "프로젝트 만들기"}
+                  </button>
+                )}
+              </div>
+
+              <p className="books-intro">책을 읽으며 떠올린 생각을 마인드맵으로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
+            </div>
+          </>
+        )}
         activities={visibleActivities}
         participants={participants}
         user={user}

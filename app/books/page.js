@@ -230,8 +230,8 @@ function BooksPageInner() {
   }
 
   return (
-    <div className="board-shell">
-      <TopNav active="books" />
+    <div className={`board-shell${isMindmap ? "" : " books-board-shell"}`}>
+      {isMindmap && <TopNav active="books" />}
 
       {isMindmap && admin ? (
         <MindmapBoard
@@ -250,6 +250,7 @@ function BooksPageInner() {
         />
       ) : (
         <BooksHome
+          topNav={<TopNav active="books" />}
           admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
           myClasses={myClasses} myClassesAll={myClassesAll} membershipIds={membershipIds} roster={roster}
           project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
