@@ -59,12 +59,14 @@ export default function BookProjectEditor({
   }
 
   function removeStep(stepId) {
+    const nextSteps = steps.filter((step) => step.id !== stepId);
     setSteps((current) => current.filter((step) => step.id !== stepId));
     setOpenIds((current) => {
       const next = new Set(current);
       next.delete(stepId);
       return next;
     });
+    setActiveStepId((current) => current === stepId ? nextSteps[0]?.id ?? null : current);
   }
 
   function addItem(stepId, key) {
@@ -88,22 +90,54 @@ export default function BookProjectEditor({
   }
 
   function toggleStep(stepId) {
-    setOpenIds((current) => {
-      const next = new Set(current);
-      if (next.has(stepId)) next.delete(stepId);
-      else next.add(stepId);
-      return next;
-    });
+    const open = !openIds.has(stepId);
+    setOpenIds(new Set(open ? [stepId] : []));
+    setActiveStepId(open ? stepId : null);
   }
 
-  function pickStep(stepId) {
-    setActiveStepId(stepId);
-    setOpenIds((current) => new Set(current).add(stepId));
-    if (typeof document !== "undefined") {
-      window.requestAnimationFrame(() => {
-        document.getElementById(`book-step-${stepId}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      });
-    }
+  function renderStepEditor(step) {
+    const index = steps.findIndex((item) => item.id === step.id);
+    const stepNumber = index >= 0 ? index + 1 : 1;
+    return (
+      <div className="book-step-edit-panel">
+        <label className="book-step-title-field">
+          <span>Step {stepNumber} 제목</span>
+          <input
+            value={step.title}
+            onChange={(event) => updateStep(step.id, { title: event.target.value })}
+            aria-label={`Step ${stepNumber} 제목`}
+          />
+        </label>
+        <div className="book-step-edit-meta">
+          <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>
+          <button type="button" className="btn-ghost role-danger-btn book-step-remove" onClick={() => removeStep(step.id)}>
+            <IconTrash size={15} /> Step 삭제
+          </button>
+        </div>
+        {step.activities.length > 0 ? (
+          <BookProjectEditorItems label="활동" items={step.activities} onChange={(id, patch) => updateItem(step.id, "activities", id, patch)} onRemove={(id) => removeItem(step.id, "activities", id)} />
+        ) : (
+          <p className="book-step-empty">등록된 활동이 없습니다.</p>
+        )}
+        {step.resources.length > 0 ? (
+          <BookProjectEditorItems label="자료" items={step.resources} resource onChange={(id, patch) => updateItem(step.id, "resources", id, patch)} onRemove={(id) => removeItem(step.id, "resources", id)} />
+        ) : (
+          <p className="book-step-empty">등록된 자료가 없습니다.</p>
+        )}
+        <div className="book-step-add-actions">
+          <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
+          <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>
+        </div>
+        <button
+          type="button"
+          className="btn-primary book-step-save"
+          disabled={saving || !title.trim()}
+          onClick={() => onSave({ title: title.trim(), steps })}
+        >
+          {saving ? "저장 중..." : `Step ${stepNumber} 저장`}
+        </button>
+      </div>
+    );
   }
 
   const draftProject = { ...project, title, steps };
@@ -115,7 +149,9 @@ export default function BookProjectEditor({
         participantCount={participantCount}
         activeStepId={activeStepId}
         editing
-        onPickStep={pickStep}
+        openStepIds={openIds}
+        onPickStep={toggleStep}
+        renderStepContent={renderStepEditor}
       />
       <button
         type="button"
@@ -129,48 +165,6 @@ export default function BookProjectEditor({
         <span>프로젝트 이름</span>
         <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
       </label>
-      <div className="book-project-steps">
-        {steps.map((step, index) => {
-          const open = openIds.has(step.id);
-          return (
-            <article className={`book-step-card${activeStepId === step.id ? " is-active" : ""}`} id={`book-step-${step.id}`} key={step.id}>
-              <header className="book-step-edit-head">
-                <span>Step {index + 1}</span>
-                <input
-                  value={step.title}
-                  onChange={(event) => updateStep(step.id, { title: event.target.value })}
-                  aria-label={`Step ${index + 1} 제목`}
-                />
-                <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>
-                <button type="button" className="book-step-remove" onClick={() => removeStep(step.id)} aria-label={`Step ${index + 1} 삭제`} title="Step 삭제">
-                  <IconTrash size={15} />
-                </button>
-                <button type="button" className="book-step-collapse" onClick={() => toggleStep(step.id)} aria-expanded={open} aria-label={`Step ${index + 1} ${open ? "접기" : "펼치기"}`}>
-                  <span aria-hidden="true">{open ? "−" : "+"}</span>
-                </button>
-              </header>
-              {open && (
-                <div className="book-step-body">
-                  {step.activities.length > 0 && <BookProjectEditorItems label="활동" items={step.activities} onChange={(id, patch) => updateItem(step.id, "activities", id, patch)} onRemove={(id) => removeItem(step.id, "activities", id)} />}
-                  {step.resources.length > 0 && <BookProjectEditorItems label="자료" items={step.resources} resource onChange={(id, patch) => updateItem(step.id, "resources", id, patch)} onRemove={(id) => removeItem(step.id, "resources", id)} />}
-                  <div className="book-step-add-actions">
-                    <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
-                    <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-primary book-step-save"
-                    disabled={saving || !title.trim()}
-                    onClick={() => onSave({ title: title.trim(), steps })}
-                  >
-                    {saving ? "저장 중..." : `Step ${index + 1} 저장`}
-                  </button>
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
       <button type="button" className="btn-outline book-step-add" onClick={addStep}>
         <IconAddFeature size={17} /> Step 추가
       </button>

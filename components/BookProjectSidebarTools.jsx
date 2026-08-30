@@ -45,10 +45,10 @@ export default function BookProjectSidebarTools({
         </span>
       </div>
 
-      <nav className="book-step-nav" aria-label={editing ? "편집 중인 Step 바로가기" : "프로젝트 Step 흐름"}>
+      <nav className="book-step-nav" aria-label={editing ? "프로젝트 Step 편집" : "프로젝트 Step 흐름"}>
         <div className="book-step-nav-head">
-          <strong>{editing ? "Step 바로가기" : "수업 흐름"}</strong>
-          <small>{editing ? "편집 위치" : "펼쳐 보기"}</small>
+          <strong>{editing ? "Step 편집" : "수업 흐름"}</strong>
+          <small>{editing ? "펼쳐 수정" : "펼쳐 보기"}</small>
         </div>
         {steps.map((step, index) => {
           const open = openStepIds?.has(step.id) ?? false;
