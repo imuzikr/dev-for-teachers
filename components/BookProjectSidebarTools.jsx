@@ -13,16 +13,19 @@ export default function BookProjectSidebarTools({
   participantCount,
   activeStepId,
   editing,
+  openStepIds,
   onPickStep,
+  renderStepContent,
 }) {
   const steps = project?.steps ?? [];
   if (!project || steps.length === 0) return null;
 
   const activityCount = countItems(steps, "activities");
   const resourceCount = countItems(steps, "resources");
+  const expandable = typeof renderStepContent === "function";
 
   return (
-    <div className="book-side-tools" aria-label="책방 프로젝트 빠른 이동">
+    <div className="book-side-tools" aria-label="책방 프로젝트 흐름">
       <div className="book-side-summary">
         <span>
           <strong>{steps.length}</strong>
@@ -42,25 +45,44 @@ export default function BookProjectSidebarTools({
         </span>
       </div>
 
-      <nav className="book-step-nav" aria-label={editing ? "편집 중인 Step 바로가기" : "프로젝트 Step 바로가기"}>
+      <nav className="book-step-nav" aria-label={editing ? "편집 중인 Step 바로가기" : "프로젝트 Step 흐름"}>
         <div className="book-step-nav-head">
-          <strong>Step 바로가기</strong>
-          <small>{editing ? "편집 위치" : "수업 흐름"}</small>
+          <strong>{editing ? "Step 바로가기" : "수업 흐름"}</strong>
+          <small>{editing ? "편집 위치" : "펼쳐 보기"}</small>
         </div>
         {steps.map((step, index) => {
-          const active = activeStepId === step.id || (!activeStepId && index === 0);
-          return (
+          const open = openStepIds?.has(step.id) ?? false;
+          const active = activeStepId === step.id;
+          const panelId = `book-step-flow-${step.id}`;
+          const trigger = (
             <button
               type="button"
-              className={`book-step-nav-item${active ? " is-active" : ""}`}
-              key={step.id}
+              className={`book-step-nav-item${active ? " is-active" : ""}${expandable ? " book-step-flow-trigger" : ""}`}
               onClick={() => onPickStep(step.id)}
               aria-current={active ? "step" : undefined}
+              aria-expanded={expandable ? open : undefined}
+              aria-controls={expandable ? panelId : undefined}
             >
               <span>{stepLabel(index)}</span>
               <strong>{step.title || stepLabel(index)}</strong>
               <small>{step.activities?.length ?? 0} 활동 · {step.resources?.length ?? 0} 자료</small>
+              {expandable && <i aria-hidden="true">{open ? "−" : "+"}</i>}
             </button>
+          );
+
+          if (!expandable) {
+            return <div className="book-step-flow-item" key={step.id}>{trigger}</div>;
+          }
+
+          return (
+            <article className={`book-step-flow-item${open ? " is-open" : ""}`} key={step.id}>
+              {trigger}
+              {open && (
+                <div className="book-step-flow-body" id={panelId}>
+                  {renderStepContent(step)}
+                </div>
+              )}
+            </article>
           );
         })}
       </nav>
