@@ -1,0 +1,210 @@
+.book-library-layout.is-library-collapsed {
+  grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.book-library-side {
+  transition: width 0.16s ease, padding 0.16s ease;
+}
+
+.book-library-side.is-collapsed {
+  overflow: hidden;
+  padding: 10px 8px;
+}
+
+.book-library-content {
+  min-width: 0;
+}
+
+.book-library-side.is-collapsed .book-library-content {
+  display: none;
+}
+
+.book-library-collapse {
+  width: 100%;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.book-library-collapse:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.book-library-collapse span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.book-library-side.is-collapsed .book-library-collapse {
+  min-height: calc(100dvh - 204px);
+  flex-direction: column;
+  margin-bottom: 0;
+  padding: 10px 4px;
+}
+
+.book-library-side.is-collapsed .book-library-collapse strong {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+}
+
+.book-side-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.book-side-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.book-side-summary span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  text-align: center;
+}
+
+.book-side-summary strong {
+  color: var(--primary-dark);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.book-side-summary small {
+  overflow: hidden;
+  color: var(--text-sub);
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-step-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.book-step-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 1px 2px 4px;
+}
+
+.book-step-nav-head strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.book-step-nav-head small {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.book-step-nav-item {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: center;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.book-step-nav-item:hover {
+  background: var(--primary-light);
+}
+
+.book-step-nav-item.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--color-white);
+}
+
+.book-step-nav-item > span {
+  grid-row: 1 / 3;
+  color: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  opacity: 0.8;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.book-step-nav-item > strong,
+.book-step-nav-item > small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-step-nav-item > strong {
+  font-size: 12px;
+}
+
+.book-step-nav-item > small {
+  font-size: 10px;
+  opacity: 0.78;
+}
+
+.book-step-card.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+@media (max-width: 768px) {
+  .book-library-layout.is-library-collapsed {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .book-library-side.is-collapsed {
+    align-self: start;
+    max-height: none;
+    padding: 8px;
+  }
+
+  .book-library-side.is-collapsed .book-library-collapse {
+    min-height: 44px;
+    flex-direction: row;
+  }
+
+  .book-library-side.is-collapsed .book-library-collapse strong {
+    writing-mode: horizontal-tb;
+  }
+
+  .book-side-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
