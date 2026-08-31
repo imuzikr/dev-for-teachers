@@ -12,6 +12,34 @@ function IconCopy({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
+function resourceHref(url) {
+  const trimmed = String(url ?? "").trim();
+  if (!trimmed) return "";
+  const candidate = /^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
+function resourceLinkLabel(url) {
+  const href = resourceHref(url);
+  if (!href) return "";
+
+  try {
+    const parsed = new URL(href);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const path = parsed.pathname.replace(/\/$/, "");
+    return `${host}${path && path !== "/" ? path : ""}`;
+  } catch {
+    return href;
+  }
+}
+
 export function stepPreviewItems(step) {
   return [
     ...(step.activities ?? []).map((item) => ({
@@ -37,6 +65,8 @@ export function stepPreviewItems(step) {
 export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete }) {
   const [copied, setCopied] = useState(false);
   const content = kind === "activity" ? item.topic : item.content;
+  const linkHref = kind === "resource" ? resourceHref(item.url) : "";
+  const linkLabel = kind === "resource" ? resourceLinkLabel(item.url) : "";
 
   async function copyResource() {
     const text = [item.content, item.url].filter(Boolean).join("\n");
@@ -50,6 +80,12 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       <div className="book-project-detail-copy">
         <strong>{item.title}</strong>
         {content && <p>{content}</p>}
+        {linkHref && (
+          <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
+            <span>링크</span>
+            <strong>{linkLabel}</strong>
+          </a>
+        )}
         {kind === "resource" && (
           <button type="button" className="btn-ghost book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
             <IconCopy />
@@ -58,7 +94,7 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       </div>
       <div className="book-project-detail-actions">
         <button type="button" className="btn-ghost" onClick={onOpen}>열기</button>
-        <button type="button" className="btn-ghost" onClick={onPreview}>전체보기</button>
+        <button type="button" className="btn-ghost" title="확대해서 보기" onClick={onPreview}>확대</button>
         {onEdit && (
           <button type="button" className="btn-ghost book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 수정`} aria-label={`${kind === "activity" ? "활동" : "자료"} 수정`} onClick={onEdit}>
             <IconEdit />
@@ -85,6 +121,8 @@ export function ProjectSection({ title, empty, children }) {
 }
 
 export function StepContentModal({ step, item, index, total, onMove, onOpenActivity, onClose }) {
+  const linkHref = item.url ? resourceHref(item.url) : "";
+
   return (
     <div className="modal-backdrop" {...backdropClose(onClose)}>
       <section className="modal book-step-preview-modal" role="dialog" aria-modal="true" aria-labelledby="book-step-preview-title" onClick={(event) => event.stopPropagation()}>
@@ -97,7 +135,7 @@ export function StepContentModal({ step, item, index, total, onMove, onOpenActiv
         </header>
         <div className="book-step-preview-body">
           <p>{item.content}</p>
-          {item.url && <a className="btn-outline book-step-preview-link" href={item.url} target="_blank" rel="noreferrer">자료 링크 열기</a>}
+          {linkHref && <a className="btn-outline book-step-preview-link" href={linkHref} target="_blank" rel="noreferrer">자료 링크 열기</a>}
         </div>
         <footer className="book-step-preview-footer">
           <span>{index + 1} / {total}</span>
