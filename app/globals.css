@@ -8870,15 +8870,23 @@ pre code {
 }
 
 .book-project-detail-copy {
-  position: relative;
   min-width: 0;
-  padding-right: 40px;
 }
 
-.book-project-detail-copy > strong {
-  display: block;
+.book-project-detail-headline {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.book-project-detail-headline > strong {
+  min-width: 0;
+  flex: 1;
   color: var(--text);
   font-size: 12px;
+  overflow-wrap: break-word;
 }
 
 .book-project-detail-copy p {
@@ -8956,9 +8964,7 @@ pre code {
   padding: 0;
 }
 .book-project-copy-action {
-  position: absolute;
-  top: -4px;
-  right: -4px;
+  flex: 0 0 36px;
   width: 36px;
   min-height: 36px;
   display: inline-grid;

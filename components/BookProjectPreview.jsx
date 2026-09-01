@@ -78,18 +78,20 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
   return (
     <article className="book-project-detail-item">
       <div className="book-project-detail-copy">
-        <strong>{item.title}</strong>
+        <div className="book-project-detail-headline">
+          <strong>{item.title}</strong>
+          {kind === "resource" && (
+            <button type="button" className="btn-ghost book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
+              <IconCopy />
+            </button>
+          )}
+        </div>
         {content && <p>{content}</p>}
         {linkHref && (
           <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
             <span>링크</span>
             <strong>{linkLabel}</strong>
           </a>
-        )}
-        {kind === "resource" && (
-          <button type="button" className="btn-ghost book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
-            <IconCopy />
-          </button>
         )}
       </div>
       <div className="book-project-detail-actions">
