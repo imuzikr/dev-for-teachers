@@ -66,6 +66,7 @@ export default function MindmapBoard({
   }, [openUid]);
 
   const bookUrl = safeBookUrl(activity.bookUrl);
+  const activityText = activity.title || activity.topic || "";
   const cast = useEntryCast(classId, user);
 
   const cards = useMemo(() => {
@@ -74,7 +75,7 @@ export default function MindmapBoard({
       uid: s.uid,
       name: s.name,
       studentId: s.studentId,
-      map: normalizeMindmap(byUid.get(s.uid)?.answers, activity.topic),
+      map: normalizeMindmap(byUid.get(s.uid)?.answers, activityText),
       hasEntry: byUid.has(s.uid),
     }));
     const seen = new Set(roster.map((s) => s.uid));
@@ -84,11 +85,11 @@ export default function MindmapBoard({
         uid: e.authorId,
         name: e.authorName || "이름 미설정",
         studentId: null,
-        map: normalizeMindmap(e.answers, activity.topic),
+        map: normalizeMindmap(e.answers, activityText),
         hasEntry: true,
       }));
     return [...fromRoster, ...strays];
-  }, [roster, entries, activity.topic]);
+  }, [roster, entries, activityText]);
 
   // 학생 목록이 바뀌어 지금 열어 둔 학생이 사라진 경우에만 선택을 비웁니다.
   // 처음 진입할 때는 교사가 학생을 직접 고르기 전까지 오른쪽 판을 비워 둡니다.
@@ -133,7 +134,6 @@ export default function MindmapBoard({
           <button type="button" className="btn-ghost" onClick={onBack}>← 활동 목록</button>
           <h1 className="book-group-title">
             {activity.title}
-            <span className="book-group-topic">{activity.topic}</span>
             {className && <span className="book-group-class">{className}</span>}
           </h1>
           {bookUrl && (
@@ -281,10 +281,11 @@ export default function MindmapBoard({
 function buildPayload(activity, card) {
   const branchTotal = branchCount(card.map);
   const depth = maxDepth(card.map);
+  const activityText = activity.title || activity.topic || "";
   return {
     mode: "mindmap",
     activityTitle: activity.title ?? "",
-    topic: activity.topic ?? "",
+    topic: activityText,
     writerName: card.name,
     // 오래 켜져 있던 학생 브라우저가 mindmap 전용 오버레이를 아직 모를 때도
     // 빈 발표 카드가 뜨지 않도록 일반 발표 필드도 함께 싣습니다.
@@ -294,7 +295,7 @@ function buildPayload(activity, card) {
     content:
       branchTotal === 0
         ? "아직 작성된 가지가 없습니다."
-        : `주제: ${activity.topic ?? ""}\n가지 ${branchTotal}개 · ${depth}단계`,
+        : `주제: ${activityText}\n가지 ${branchTotal}개 · ${depth}단계`,
     layout: card.map.layout,
     nodes: card.map.nodes.map((n) => ({
       id: n.id,

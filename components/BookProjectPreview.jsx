@@ -12,6 +12,14 @@ function IconCopy({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
+function IconOpen({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 7H6.8A2.8 2.8 0 0 0 4 9.8v7.4A2.8 2.8 0 0 0 6.8 20h7.4a2.8 2.8 0 0 0 2.8-2.8V16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M12.5 4H20v7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M10.5 13.5 19.4 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+}
+
+function IconExpand({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.4 4H4v4.4M15.6 4H20v4.4M20 15.6V20h-4.4M4 15.6V20h4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.2 9.2 4.6 4.6M14.8 9.2l4.6-4.6M14.8 14.8l4.6 4.6M9.2 14.8l-4.6 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+}
+
 function resourceHref(url) {
   const trimmed = String(url ?? "").trim();
   if (!trimmed) return "";
@@ -47,7 +55,7 @@ export function stepPreviewItems(step) {
       kind: "activity",
       label: "활동",
       title: item.title,
-      content: item.topic || "등록된 활동 내용이 없습니다.",
+      content: item.title || "등록된 활동 내용이 없습니다.",
       source: item,
     })),
     ...(step.resources ?? []).map((item) => ({
@@ -64,9 +72,10 @@ export function stepPreviewItems(step) {
 
 export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete }) {
   const [copied, setCopied] = useState(false);
-  const content = kind === "activity" ? item.topic : item.content;
+  const content = kind === "resource" ? item.content : "";
   const linkHref = kind === "resource" ? resourceHref(item.url) : "";
   const linkLabel = kind === "resource" ? resourceLinkLabel(item.url) : "";
+  const itemLabel = kind === "activity" ? "활동" : "자료";
 
   async function copyResource() {
     const text = [item.content, item.url].filter(Boolean).join("\n");
@@ -80,11 +89,29 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       <div className="book-project-detail-copy">
         <div className="book-project-detail-headline">
           <strong>{item.title}</strong>
-          {kind === "resource" && (
-            <button type="button" className="btn-ghost book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
-              <IconCopy />
+          <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
+            <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 열기`} aria-label={`${itemLabel} 열기`} onClick={onOpen}>
+              <IconOpen />
             </button>
-          )}
+            <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 확대`} aria-label={`${itemLabel} 확대`} onClick={onPreview}>
+              <IconExpand />
+            </button>
+            {onEdit && (
+              <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 수정`} aria-label={`${itemLabel} 수정`} onClick={onEdit}>
+                <IconEdit />
+              </button>
+            )}
+            {onDelete && (
+              <button type="button" className="btn-ghost role-danger-btn book-project-icon-action" title={`${itemLabel} 삭제`} aria-label={`${itemLabel} 삭제`} onClick={onDelete}>
+                <IconTrash size={14} />
+              </button>
+            )}
+            {kind === "resource" && (
+              <button type="button" className="btn-ghost book-project-icon-action book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
+                <IconCopy />
+              </button>
+            )}
+          </div>
         </div>
         {content && <p>{content}</p>}
         {linkHref && (
@@ -92,20 +119,6 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
             <span>링크</span>
             <strong>{linkLabel}</strong>
           </a>
-        )}
-      </div>
-      <div className="book-project-detail-actions">
-        <button type="button" className="btn-ghost" onClick={onOpen}>열기</button>
-        <button type="button" className="btn-ghost" title="확대해서 보기" onClick={onPreview}>확대</button>
-        {onEdit && (
-          <button type="button" className="btn-ghost book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 수정`} aria-label={`${kind === "activity" ? "활동" : "자료"} 수정`} onClick={onEdit}>
-            <IconEdit />
-          </button>
-        )}
-        {onDelete && (
-          <button type="button" className="btn-ghost role-danger-btn book-project-icon-action" title={`${kind === "activity" ? "활동" : "자료"} 삭제`} aria-label={`${kind === "activity" ? "활동" : "자료"} 삭제`} onClick={onDelete}>
-            <IconTrash size={14} />
-          </button>
         )}
       </div>
     </article>

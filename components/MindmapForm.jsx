@@ -27,7 +27,8 @@ import { IconBook, IconLock } from "./StatusIcons";
 const SAVE_DELAY = 900; // ms — 이만큼 입력이 없으면 저장
 
 export default function MindmapForm({ activity, user, onBack }) {
-  const [map, setMap] = useState(() => emptyMindmap(activity.topic));
+  const activityText = activity.title || activity.topic || "";
+  const [map, setMap] = useState(() => emptyMindmap(activityText));
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false); // 내 카드를 눌러 판으로 들어왔는지
   const [selectedId, setSelectedId] = useState(ROOT_ID);
@@ -42,11 +43,11 @@ export default function MindmapForm({ activity, user, onBack }) {
   useEffect(() => {
     return subscribeMyBookEntry(activity.id, user?.uid, (entry) => {
       if (!dirtyRef.current) {
-        setMap(normalizeMindmap(entry?.answers, activity.topic));
+        setMap(normalizeMindmap(entry?.answers, activityText));
       }
       setLoaded(true);
     });
-  }, [activity.id, user?.uid, activity.topic]);
+  }, [activity.id, user?.uid, activityText]);
 
   useEffect(() => {
     if (!dirtyRef.current || locked) return;
@@ -92,7 +93,6 @@ export default function MindmapForm({ activity, user, onBack }) {
           )}
           <h1 className="book-group-title">
             {activity.title}
-            <span className="book-group-topic">{activity.topic}</span>
           </h1>
           {bookUrl && !open && (
             <a
@@ -143,7 +143,7 @@ export default function MindmapForm({ activity, user, onBack }) {
               <strong>내 마인드맵</strong>
               <span className="mindmap-layout-tag">{layoutKo}</span>
             </span>
-            <span className="mindmap-own-topic">{map.nodes[0]?.text || activity.topic}</span>
+            <span className="mindmap-own-topic">{map.nodes[0]?.text || activityText}</span>
             <span className="paratext-student-meta">
               {branches === 0
                 ? "아직 가지가 없어요 — 눌러서 시작하기"

@@ -8878,12 +8878,13 @@ pre code {
   min-width: 0;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
 
 .book-project-detail-headline > strong {
   min-width: 0;
   flex: 1;
+  padding-top: 5px;
   color: var(--text);
   font-size: 12px;
   overflow-wrap: break-word;
@@ -8938,35 +8939,37 @@ pre code {
 }
 
 .book-project-detail-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 5px;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: 156px;
 }
 
 .book-project-detail-actions .btn-ghost,
 .book-project-detail-actions a.btn-ghost {
-  width: 100%;
-  min-height: 44px;
+  width: 28px;
+  min-height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 9px;
+  padding: 0;
+  border-radius: 8px;
   color: var(--primary-dark);
-  font-size: 11px;
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .book-project-detail-actions .book-project-icon-action {
-  width: 100%;
-  min-height: 44px;
+  width: 28px;
+  min-height: 28px;
   padding: 0;
 }
 .book-project-copy-action {
-  flex: 0 0 36px;
-  width: 36px;
-  min-height: 36px;
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 28px;
   display: inline-grid;
   place-items: center;
   padding: 0;
