@@ -9,6 +9,11 @@ function drawerItemState(confirmedCount, totalCount) {
   return "is-none";
 }
 
+function confirmationRatio(confirmedCount, totalCount) {
+  if (totalCount <= 0) return "0%";
+  return `${Math.round((confirmedCount / totalCount) * 100)}%`;
+}
+
 function confirmedStudents(participants, confirmationsByUser, item) {
   const key = bookConfirmationKey(item.kind, item.id);
   return participants.filter((participant) => confirmationsByUser.get(participant.uid)?.has(key));
@@ -48,31 +53,34 @@ export default function BookProgressDrawer({ sections, participants, confirmatio
         {sections.length === 0 ? (
           <p className="book-progress-empty">표시할 활동과 자료가 없습니다.</p>
         ) : (
-          <div className="book-progress-steps">
+          <div className="book-progress-pipeline">
             {sections.map((section, sectionIndex) => (
-              <section className="book-progress-step" key={section.id}>
-                <header>
+              <section className="book-progress-lane" key={section.id}>
+                <div className="book-progress-lane-label">
                   <span>STEP {sectionIndex + 1}</span>
                   <strong>{section.title}</strong>
-                </header>
-                <div className="book-progress-items">
-                  {section.items.map((item) => {
+                  <em>{section.items.length}개</em>
+                </div>
+                <ol className="book-progress-segments" aria-label={`${section.title} 확인 상태바`}>
+                  {section.items.map((item, itemIndex) => {
                     const students = confirmedStudents(participants, confirmationsByUser, item);
                     const state = drawerItemState(students.length, participants.length);
                     const studentNames = students.map((student) => student.name || student.realName || student.displayName).filter(Boolean).join(", ");
+                    const itemLabel = `${section.title} ${item.kind === "activity" ? "활동" : "자료"} ${itemIndex + 1}: ${item.title}`;
                     return (
-                      <article
-                        className={`book-progress-item ${state}`}
+                      <li
+                        className={`book-progress-segment ${state}`}
                         key={`${item.kind}:${item.id}`}
-                        title={studentNames || "아직 확인한 학생이 없습니다"}
+                        style={{ "--progress-ratio": confirmationRatio(students.length, participants.length) }}
+                        title={`${itemLabel}\n${students.length}/${participants.length} 확인${studentNames ? `\n${studentNames}` : ""}`}
+                        aria-label={`${itemLabel}, ${students.length}/${participants.length} 확인`}
                       >
-                        <span>{item.kind === "activity" ? "활동" : "자료"}</span>
-                        <strong>{item.title}</strong>
-                        <em>{students.length}/{participants.length}</em>
-                      </article>
+                        <span>{item.kind === "activity" ? "A" : "R"}</span>
+                        <em>{itemIndex + 1}</em>
+                      </li>
                     );
                   })}
-                </div>
+                </ol>
               </section>
             ))}
           </div>

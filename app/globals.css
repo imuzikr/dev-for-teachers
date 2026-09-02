@@ -8548,99 +8548,153 @@ pre code {
   word-break: keep-all;
 }
 
-.book-progress-steps {
+.book-progress-pipeline {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
-.book-progress-step {
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.58);
-}
-
-.book-progress-step > header {
+.book-progress-lane {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 8px;
-  align-items: center;
-  margin-bottom: 8px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 6px;
+  padding: 0 0 18px;
 }
 
-.book-progress-step > header span {
+.book-progress-lane:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 21px;
+  top: 48px;
+  bottom: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, rgba(60, 113, 65, 0.38), rgba(60, 113, 65, 0.08));
+}
+
+.book-progress-lane-label {
+  position: relative;
+  z-index: 1;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid rgba(60, 113, 65, 0.24);
+  border-radius: 8px;
+  background: var(--card-bg);
+  text-align: center;
+}
+
+.book-progress-lane-label span {
   color: var(--primary-dark);
   font-size: 10px;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.book-progress-step > header strong {
-  min-width: 0;
+.book-progress-lane-label strong {
+  width: 100%;
+  padding: 0 4px;
   overflow: hidden;
   color: var(--text);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.book-progress-items {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+.book-progress-lane-label em {
+  color: var(--text-sub);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.book-progress-item {
+.book-progress-segments {
   min-width: 0;
-  min-height: 74px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(16px, 1fr));
   gap: 4px;
-  padding: 8px;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.book-progress-segment {
+  position: relative;
+  min-width: 0;
+  height: 34px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--card-bg);
   color: var(--text);
   transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
-.book-progress-item span,
-.book-progress-item em {
+.book-progress-segment::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--progress-ratio, 0%);
+  background: rgba(60, 113, 65, 0.2);
+  transition: height 0.18s ease;
+}
+
+.book-progress-segment span,
+.book-progress-segment em {
+  position: relative;
+  z-index: 1;
   font-size: 10px;
   font-style: normal;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1;
 }
 
-.book-progress-item strong {
-  min-width: 0;
-  overflow: hidden;
-  color: inherit;
-  font-size: 12px;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.book-progress-segment span {
+  align-self: end;
 }
 
-.book-progress-item em {
-  margin-top: auto;
+.book-progress-segment em {
+  align-self: start;
+  color: var(--text-sub);
+  font-size: 9px;
 }
 
-.book-progress-item.is-some {
+.book-progress-segment.is-some {
   border-color: rgba(205, 232, 91, 0.88);
-  background: rgba(205, 232, 91, 0.22);
+  background: rgba(205, 232, 91, 0.12);
 }
 
-.book-progress-item.is-many {
+.book-progress-segment.is-some::before {
+  background: rgba(205, 232, 91, 0.7);
+}
+
+.book-progress-segment.is-many {
   border-color: rgba(60, 113, 65, 0.42);
-  background: rgba(60, 113, 65, 0.16);
+  background: rgba(60, 113, 65, 0.12);
 }
 
-.book-progress-item.is-all {
-  border-color: var(--primary);
+.book-progress-segment.is-many::before,
+.book-progress-segment.is-all::before {
   background: var(--primary);
+}
+
+.book-progress-segment.is-all {
+  border-color: var(--primary);
   color: var(--color-white);
+}
+
+.book-progress-segment.is-all em {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .books-content-head {
