@@ -54,7 +54,6 @@ function DetailUrlSlot({ href, label }) {
   return (
     <div className="book-project-resource-link book-project-resource-link--empty" aria-label="제공 URL 없음">
       <span>제공 URL</span>
-      <strong>등록된 URL 없음</strong>
     </div>
   );
 }
