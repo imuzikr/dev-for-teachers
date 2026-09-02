@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
+import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
 import BookPersonalDashboard from "./BookPersonalDashboard";
+import BookProgressDrawer from "./BookProgressDrawer";
 import BookProjectPanel from "./BookProjectPanel";
+import { bookDetailSections } from "./bookProjectItems";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
+const PROGRESS_COLLAPSED_KEY = "book_progress_drawer_collapsed";
 
 export default function BookWorkspace({
   header,
@@ -27,11 +31,18 @@ export default function BookWorkspace({
   onDelete,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
+  const [confirmations, setConfirmations] = useState([]);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [progressCollapsed, setProgressCollapsed] = useState(false);
   const showLibraryPanel = isTeacher;
+  const showProgressDrawer = isTeacher && hasClass;
+  const classId = project?.classId || activities[0]?.classId || null;
+  const projectId = project?.id || project?.classId || classId || "";
+  const sections = useMemo(() => bookDetailSections(project, activities), [activities, project]);
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
+    setProgressCollapsed(window.localStorage.getItem(PROGRESS_COLLAPSED_KEY) === "1");
   }, []);
 
   useEffect(() => {
@@ -51,15 +62,27 @@ export default function BookWorkspace({
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [activities, isTeacher, user?.uid]);
 
-  const progressByUser = useMemo(() => {
+  useEffect(() => {
+    if (!classId || !user?.uid) {
+      setConfirmations([]);
+      return;
+    }
+    return subscribeBookConfirmations({
+      classId,
+      authorId: isTeacher ? "" : user.uid,
+      callback: setConfirmations,
+    });
+  }, [classId, isTeacher, user?.uid]);
+
+  const confirmedItemsByUser = useMemo(() => {
     const progress = new Map(participants.map((participant) => [participant.uid, new Set()]));
-    activities.forEach((activity) => {
-      (entriesByActivity[activity.id] ?? []).forEach((entry) => {
-        if (progress.has(entry.authorId)) progress.get(entry.authorId).add(activity.id);
-      });
+    confirmations.forEach((confirmation) => {
+      if (progress.has(confirmation.authorId)) {
+        progress.get(confirmation.authorId).add(bookConfirmationKey(confirmation.itemKind, confirmation.itemId));
+      }
     });
     return progress;
-  }, [activities, entriesByActivity, participants]);
+  }, [confirmations, participants]);
 
   function toggleLibraryPanel() {
     setLibraryCollapsed((current) => {
@@ -71,8 +94,30 @@ export default function BookWorkspace({
     });
   }
 
+  function toggleProgressDrawer() {
+    setProgressCollapsed((current) => {
+      const next = !current;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(PROGRESS_COLLAPSED_KEY, next ? "1" : "0");
+      }
+      return next;
+    });
+  }
+
+  async function confirmBookItem(item) {
+    await saveBookConfirmation({
+      classId,
+      projectId,
+      itemKind: item.kind,
+      itemId: item.id,
+      itemTitle: item.title,
+      stepId: item.stepId,
+      user,
+    });
+  }
+
   return (
-    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
+    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${showProgressDrawer ? " has-progress-drawer" : ""}${showProgressDrawer && progressCollapsed ? " is-progress-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
       {showLibraryPanel && (
       <aside className={`book-library-side${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
         <button
@@ -121,14 +166,25 @@ export default function BookWorkspace({
         <BookPersonalDashboard
           participants={participants}
           activities={activities}
+          sections={sections}
           project={project}
           entriesByActivity={entriesByActivity}
-          progressByUser={progressByUser}
+          progressByUser={confirmedItemsByUser}
           user={user}
           isTeacher={isTeacher}
           onToggleActivityLock={onToggleActivityLock}
+          onConfirmItem={confirmBookItem}
         />
       </section>
+      {showProgressDrawer && (
+        <BookProgressDrawer
+          sections={sections}
+          participants={participants}
+          confirmationsByUser={confirmedItemsByUser}
+          collapsed={progressCollapsed}
+          onToggle={toggleProgressDrawer}
+        />
+      )}
     </div>
   );
 }

@@ -487,6 +487,88 @@ service cloud.firestore {
              && request.resource.data.createdBy == uid()
              && request.resource.data.updatedAt == request.time;
     }
+    function validBookResource(resourceId) {
+      return request.resource.data.keys().hasOnly([
+               'resourceId', 'classId', 'projectId', 'projectVersion',
+               'stepId', 'stepOrder', 'resourceOrder',
+               'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+             ])
+             && request.resource.data.resourceId == resourceId
+             && request.resource.data.classId is string
+             && request.resource.data.classId.size() > 0
+             && request.resource.data.projectId == request.resource.data.classId
+             && request.resource.data.projectVersion is string
+             && request.resource.data.projectVersion.size() > 0
+             && request.resource.data.stepId is string
+             && request.resource.data.stepId.size() <= 120
+             && request.resource.data.stepOrder is int
+             && request.resource.data.resourceOrder is int
+             && request.resource.data.title is string
+             && request.resource.data.title.size() > 0
+             && request.resource.data.title.size() <= 120
+             && request.resource.data.content is string
+             && request.resource.data.content.size() <= 5000
+             && request.resource.data.url is string
+             && request.resource.data.url.size() <= 1000
+             && request.resource.data.createdBy == uid()
+             && request.resource.data.createdAt == request.time
+             && request.resource.data.updatedAt == request.time;
+    }
+    function validBookConfirmation() {
+      return request.resource.data.keys().hasOnly([
+               'classId', 'projectId', 'itemKind', 'itemId', 'itemTitle',
+               'stepId', 'authorId', 'authorName', 'confirmed',
+               'createdAt', 'updatedAt'
+             ])
+             && request.resource.data.classId is string
+             && request.resource.data.classId.size() > 0
+             && request.resource.data.projectId is string
+             && request.resource.data.projectId.size() > 0
+             && request.resource.data.itemKind in ['activity', 'resource']
+             && request.resource.data.itemId is string
+             && request.resource.data.itemId.size() > 0
+             && request.resource.data.itemTitle is string
+             && request.resource.data.itemTitle.size() <= 120
+             && request.resource.data.stepId is string
+             && request.resource.data.stepId.size() <= 120
+             && request.resource.data.authorId == uid()
+             && request.resource.data.authorName is string
+             && request.resource.data.authorName.size() > 0
+             && request.resource.data.authorName.size() <= 80
+             && request.resource.data.confirmed == true
+             && request.resource.data.createdAt == request.time
+             && request.resource.data.updatedAt == request.time;
+    }
+    function validBookConfirmationId(confirmationId) {
+      return confirmationId == request.resource.data.classId + '|' +
+             request.resource.data.projectId + '|' +
+             request.resource.data.itemKind + '|' +
+             request.resource.data.itemId + '|' +
+             request.resource.data.authorId;
+    }
+    function keepsBookConfirmationOwner() {
+      return resource.data.authorId == uid()
+             && resource.data.classId == request.resource.data.classId
+             && resource.data.projectId == request.resource.data.projectId
+             && resource.data.itemKind == request.resource.data.itemKind
+             && resource.data.itemId == request.resource.data.itemId;
+    }
+    function canConfirmBookItem() {
+      return (
+               request.resource.data.itemKind == 'resource'
+               && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
+               && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+               && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+             )
+             || (
+               request.resource.data.itemKind == 'activity'
+               &&
+               exists(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId))
+               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.get('locked', false) != true
+             );
+    }
 
     match /bookProjects/{classId} {
       allow read: if signedIn() && (
@@ -495,6 +577,21 @@ service cloud.firestore {
       allow create, update: if (isAdmin() || ownsClassEditable(classId))
                             && validBookProject(classId);
       allow delete: if isAdmin() || ownsClassEditable(classId);
+    }
+
+    match /bookResources/{resourceId} {
+      allow read: if signedIn() && (
+        isAdmin()
+        || ownsClass(resource.data.classId)
+        || isClassMember(resource.data.classId)
+      );
+      allow create: if (isAdmin() || ownsClassEditable(request.resource.data.classId))
+                    && validBookResource(resourceId);
+      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+                    && request.resource.data.classId == resource.data.classId
+                    && request.resource.data.projectId == resource.data.projectId
+                    && validBookResource(resourceId);
+      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
     }
 
     match /bookActivities/{aId} {
@@ -526,6 +623,26 @@ service cloud.firestore {
           allow read, delete: if isAdmin() || ownsBookActivityEditable(aId);
         }
       }
+    }
+
+    match /bookConfirmations/{confirmationId} {
+      allow read: if signedIn() && (
+        isAdmin()
+        || ownsClass(resource.data.classId)
+        || resource.data.authorId == uid()
+      );
+      allow create: if signedIn()
+                    && validBookConfirmation()
+                    && validBookConfirmationId(confirmationId)
+                    && isClassMember(request.resource.data.classId)
+                    && canConfirmBookItem();
+      allow update: if signedIn()
+                    && validBookConfirmation()
+                    && validBookConfirmationId(confirmationId)
+                    && keepsBookConfirmationOwner()
+                    && isClassMember(request.resource.data.classId)
+                    && canConfirmBookItem();
+      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
     }
 
     // ── 컬렉션 그룹 쿼리 규칙 ─────────────────────────────────

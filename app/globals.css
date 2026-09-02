@@ -8445,6 +8445,204 @@ pre code {
   flex: 0 0 auto;
 }
 
+.book-progress-drawer {
+  min-width: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 18px 14px;
+  border-left: 1px solid var(--border);
+  background: var(--sage-card, var(--primary-light));
+}
+
+.book-progress-drawer.is-collapsed {
+  overflow: hidden;
+  padding: 10px 8px;
+}
+
+.book-progress-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.book-progress-toggle:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.book-progress-toggle span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.book-progress-drawer.is-collapsed .book-progress-toggle {
+  min-height: calc(100dvh - 20px);
+  flex-direction: column;
+  margin-bottom: 0;
+  padding: 10px 4px;
+}
+
+.book-progress-drawer.is-collapsed .book-progress-toggle strong {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+}
+
+.book-progress-drawer.is-collapsed .book-progress-content {
+  display: none;
+}
+
+.book-progress-content {
+  min-width: 0;
+}
+
+.book-progress-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.book-progress-head span {
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.book-progress-head h2 {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.book-progress-head > strong {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font-size: 12px;
+}
+
+.book-progress-empty {
+  margin: 0;
+  padding: 20px 10px;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.book-progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.book-progress-step {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.book-progress-step > header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.book-progress-step > header span {
+  color: var(--primary-dark);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.book-progress-step > header strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-progress-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.book-progress-item {
+  min-width: 0;
+  min-height: 74px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.book-progress-item span,
+.book-progress-item em {
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.book-progress-item strong {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-progress-item em {
+  margin-top: auto;
+}
+
+.book-progress-item.is-some {
+  border-color: rgba(205, 232, 91, 0.88);
+  background: rgba(205, 232, 91, 0.22);
+}
+
+.book-progress-item.is-many {
+  border-color: rgba(60, 113, 65, 0.42);
+  background: rgba(60, 113, 65, 0.16);
+}
+
+.book-progress-item.is-all {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--color-white);
+}
+
 .books-content-head {
   flex: 0 0 auto;
   padding: 24px 28px 0;
@@ -9370,6 +9568,10 @@ pre code {
 .book-personal-activity-card.is-locked {
   background: var(--soft-bg);
 }
+.book-personal-activity-card.is-confirmed {
+  border-color: rgba(60, 113, 65, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(60, 113, 65, 0.08);
+}
 .book-personal-instruction {
   min-height: 64px;
   margin: 0;
@@ -9409,12 +9611,13 @@ pre code {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
 }
 .book-personal-copy-btn {
-  width: 32px;
-  min-height: 32px;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9444,7 +9647,12 @@ pre code {
   white-space: pre-wrap;
 }
 .book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.book-personal-activity-card footer button { min-height: 44px; }
+.book-personal-activity-card footer button { min-width: 0; min-height: 44px; flex: 1; padding: 7px 10px; }
+.book-personal-confirm.is-confirmed {
+  border-color: rgba(60, 113, 65, 0.48);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
 
 @media (max-width: 640px) {
   .book-personal-detail-head { grid-template-columns: 1fr; gap: 12px; }
