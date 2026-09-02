@@ -128,6 +128,12 @@ describe("책방 활동·자료 확인 규칙", () => {
 
     const studentDb = asStudent(env, "stu1").firestore();
     await assertSucceeds(getDoc(doc(studentDb, "bookConfirmations", confirmationId("resource", "res1", "stu1"))));
+    await assertSucceeds(getDocs(query(
+      collection(studentDb, "bookConfirmations"),
+      where("classId", "==", "cA"),
+      where("authorId", "==", "stu1")
+    )));
+    await assertFails(getDocs(query(collection(studentDb, "bookConfirmations"), where("classId", "==", "cA"))));
     await assertFails(getDoc(doc(studentDb, "bookConfirmations", confirmationId("resource", "res1", "stu2"))));
   });
 });

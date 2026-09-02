@@ -628,8 +628,9 @@ service cloud.firestore {
     match /bookConfirmations/{confirmationId} {
       allow read: if signedIn() && (
         isAdmin()
-        || ownsClass(resource.data.classId)
-        || resource.data.authorId == uid()
+        || classOwnerUid(resource.data.classId) == uid()
+        || (resource.data.authorId == uid()
+            && isClassMember(resource.data.classId))
       );
       allow create: if signedIn()
                     && validBookConfirmation()

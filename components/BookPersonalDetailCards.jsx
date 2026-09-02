@@ -42,7 +42,7 @@ function ConfirmButton({ confirmed, disabled, failed, pending, onClick }) {
       disabled={disabled || confirmed || pending}
       onClick={onClick}
     >
-      {pending ? "확인 중" : confirmed ? "확인됨" : failed ? "다시 확인" : "확인"}
+      {pending ? "확인 중" : confirmed ? "확인됨" : failed ? "재시도" : "확인"}
     </button>
   );
 }
