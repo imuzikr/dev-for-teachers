@@ -275,7 +275,7 @@
 }
 
 .book-step-flow-body .book-step-item-edit > header {
-  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 36px;
   gap: 5px 8px;
 }
 

@@ -6,10 +6,11 @@ import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems 
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [draggingKey, setDraggingKey] = useState(null);
 
   useEffect(() => {
     if (editing) return;
@@ -28,6 +29,31 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
     const items = stepPreviewItems(step);
     const index = items.findIndex((item) => item.kind === kind && item.id === itemId);
     if (index >= 0) setPreview({ stepId: step.id, index });
+  }
+
+  function itemKey(kind, id) {
+    return `${kind}:${id}`;
+  }
+
+  function orderFromItems(items) {
+    return items.map((item) => ({ kind: item.kind, id: item.id }));
+  }
+
+  function moveStepItem(step, fromKey, toKey) {
+    if (!onSave || fromKey === toKey) return;
+    const items = stepPreviewItems(step);
+    const fromIndex = items.findIndex((item) => itemKey(item.kind, item.id) === fromKey);
+    const toIndex = items.findIndex((item) => itemKey(item.kind, item.id) === toKey);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const nextItems = [...items];
+    const [moved] = nextItems.splice(fromIndex, 1);
+    nextItems.splice(toIndex, 0, moved);
+    const nextSteps = (project.steps ?? []).map((candidate) => (
+      candidate.id === step.id
+        ? { ...candidate, itemOrder: orderFromItems(nextItems) }
+        : candidate
+    ));
+    onSave({ title: project.title, steps: nextSteps });
   }
 
   if (editing) {
@@ -50,31 +76,36 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   const previewItem = previewItems[preview?.index] ?? null;
 
   function renderStepContent(step) {
+    const items = stepPreviewItems(step);
     return (
       <div className="book-step-content">
-        <ProjectSection title="활동" empty="등록된 활동이 없습니다.">
-          {step.activities.map((activity) => (
+        <ProjectSection title="활동과 자료" empty="등록된 활동과 자료가 없습니다.">
+          {items.map((entry) => (
             <ProjectDisplayItem
-              key={activity.id}
-              item={activity}
-              kind="activity"
-              onOpen={() => openPreview(step, "activity", activity.id)}
-              onPreview={() => openPreview(step, "activity", activity.id)}
+              key={`${entry.kind}:${entry.id}`}
+              item={entry.source}
+              kind={entry.kind}
+              onOpen={entry.kind === "activity" ? () => onOpen(entry.source) : () => openPreview(step, entry.kind, entry.id)}
+              onPreview={() => openPreview(step, entry.kind, entry.id)}
               onEdit={onEdit ? () => onEdit(false, step.id) : null}
-              onDelete={onDelete ? () => onDelete({ kind: "activity", item: activity, stepId: step.id }) : null}
-            />
-          ))}
-        </ProjectSection>
-        <ProjectSection title="자료" empty="등록된 자료가 없습니다.">
-          {step.resources.map((resource) => (
-            <ProjectDisplayItem
-              key={resource.id}
-              item={resource}
-              kind="resource"
-              onOpen={() => openPreview(step, "resource", resource.id)}
-              onPreview={() => openPreview(step, "resource", resource.id)}
-              onEdit={onEdit ? () => onEdit(false, step.id) : null}
-              onDelete={onDelete ? () => onDelete({ kind: "resource", item: resource, stepId: step.id }) : null}
+              onDelete={onDelete ? () => onDelete({ kind: entry.kind, item: entry.source, stepId: step.id }) : null}
+              onToggleLock={entry.kind === "activity" && onToggleActivityLock ? (locked) => onToggleActivityLock(entry.source, locked) : null}
+              dragging={draggingKey === itemKey(entry.kind, entry.id)}
+              dragProps={onEdit ? {
+                onDragStart: (event) => {
+                  const key = itemKey(entry.kind, entry.id);
+                  event.dataTransfer.setData("text/plain", key);
+                  event.dataTransfer.effectAllowed = "move";
+                  setDraggingKey(key);
+                },
+                onDragEnd: () => setDraggingKey(null),
+                onDragOver: (event) => event.preventDefault(),
+                onDrop: (event) => {
+                  event.preventDefault();
+                  moveStepItem(step, event.dataTransfer.getData("text/plain"), itemKey(entry.kind, entry.id));
+                  setDraggingKey(null);
+                },
+              } : null}
             />
           ))}
         </ProjectSection>

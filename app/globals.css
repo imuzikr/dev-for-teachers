@@ -8774,9 +8774,35 @@ pre code {
   font-weight: 700;
 }
 .book-step-item-edit > header .btn-ghost {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   padding: 0;
+}
+.book-step-drag-handle-wrap {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+.book-step-drag-handle {
+  width: 16px;
+  height: 22px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle, var(--text-sub) 1.3px, transparent 1.6px) 2px 3px / 6px 6px,
+    radial-gradient(circle, var(--text-sub) 1.3px, transparent 1.6px) 8px 3px / 6px 6px;
+  cursor: grab;
+  opacity: 0.72;
+}
+.book-step-drag-handle:active {
+  cursor: grabbing;
+}
+.book-step-item-edit.is-dragging,
+.book-project-detail-item.is-dragging {
+  opacity: 0.58;
+  border-color: var(--primary);
 }
 .book-step-item-fields {
   display: flex;
@@ -8864,13 +8890,22 @@ pre code {
 }
 
 .book-project-detail-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px;
+  padding: 31px 10px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+}
+.book-project-detail-item.is-draggable {
+  padding-left: 30px;
+}
+.book-project-detail-item > .book-step-drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
 }
 
 .book-project-detail-copy {
@@ -8878,15 +8913,13 @@ pre code {
 }
 
 .book-project-detail-headline {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  align-items: start;
-  gap: 6px;
+  gap: 5px;
 }
 
 .book-project-detail-headline > strong {
-  grid-row: 2;
   min-width: 0;
   color: var(--text);
   font-size: 12px;
@@ -8894,6 +8927,18 @@ pre code {
   text-overflow: ellipsis;
   white-space: nowrap;
   word-break: keep-all;
+}
+.book-project-lock-state {
+  width: max-content;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--danger);
+  background: var(--soft-bg);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .book-project-detail-copy p {
@@ -8945,38 +8990,44 @@ pre code {
 }
 
 .book-project-detail-actions {
-  grid-row: 1;
+  position: absolute;
+  top: 7px;
+  right: 7px;
   display: inline-flex;
   flex: 0 0 auto;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
-  gap: 4px;
+  gap: 3px;
 }
 
 .book-project-detail-actions .btn-ghost,
 .book-project-detail-actions a.btn-ghost {
-  width: 28px;
-  min-height: 28px;
+  width: 22px;
+  min-height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--primary-dark);
   text-decoration: none;
 }
+.book-project-detail-actions svg {
+  width: 12px;
+  height: 12px;
+}
 
 .book-project-detail-actions .book-project-icon-action {
-  width: 28px;
-  min-height: 28px;
+  width: 22px;
+  min-height: 22px;
   padding: 0;
 }
 .book-project-copy-action {
-  flex: 0 0 28px;
-  width: 28px;
-  min-height: 28px;
+  flex: 0 0 22px;
+  width: 22px;
+  min-height: 22px;
   display: inline-grid;
   place-items: center;
   padding: 0;
@@ -9304,6 +9355,10 @@ pre code {
 }
 .book-personal-activity-card header > em { color: var(--text-sub); font-size: 12px; font-style: normal; white-space: nowrap; }
 .book-personal-activity-card header > em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-activity-card header > em.is-locked { color: var(--danger); font-weight: 800; }
+.book-personal-activity-card.is-locked {
+  background: var(--soft-bg);
+}
 .book-personal-instruction {
   min-height: 64px;
   margin: 0;
@@ -9338,6 +9393,16 @@ pre code {
 }
 .book-personal-response textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-light); }
 .book-personal-response textarea[readonly] { background: var(--bg); }
+.book-personal-copy-btn {
+  width: 32px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--primary-dark);
+}
 .book-personal-resource-body {
   display: flex;
   flex: 1;
@@ -10371,6 +10436,10 @@ pre code {
   transition: border-color 0.15s, background 0.15s;
 }
 .paratext-card:hover { border-color: var(--primary); }
+.paratext-student-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
 /* 다 쓴 항목은 테두리로만 표시 — 글을 읽는 데 방해가 되지 않게 */
 .paratext-card.done { border-color: #8cc79f; }
 /* 아직 시작조차 안 한 항목 — 배경으로만 구분(테두리는 hover와 겹쳐 혼동될 수 있어) */

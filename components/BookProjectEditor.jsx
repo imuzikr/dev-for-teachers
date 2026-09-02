@@ -6,11 +6,47 @@ import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
 
 function newStep(index) {
-  return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [] };
+  return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [], itemOrder: [] };
 }
 
 function newItem() {
-  return { id: crypto.randomUUID(), title: "", topic: "", content: "", url: "" };
+  return { id: crypto.randomUUID(), title: "", topic: "", content: "", url: "", bookUrl: "" };
+}
+
+function orderKey(kind, id) {
+  return `${kind}:${id}`;
+}
+
+function orderEntry(kind, id) {
+  return { kind, id };
+}
+
+function defaultOrder(step) {
+  return [
+    ...(step.activities ?? []).map((item) => orderEntry("activity", item.id)),
+    ...(step.resources ?? []).map((item) => orderEntry("resource", item.id)),
+  ];
+}
+
+function normalizedOrder(step) {
+  const valid = new Set(defaultOrder(step).map((item) => orderKey(item.kind, item.id)));
+  const seen = new Set();
+  const ordered = (step.itemOrder ?? [])
+    .filter((item) => {
+      const key = orderKey(item.kind, item.id);
+      if (!valid.has(key) || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((item) => orderEntry(item.kind, item.id));
+  return [
+    ...ordered,
+    ...defaultOrder(step).filter((item) => !seen.has(orderKey(item.kind, item.id))),
+  ];
+}
+
+function collectionKey(kind) {
+  return kind === "resource" ? "resources" : "activities";
 }
 
 function initialDraft(project, appendStep, initialOpenStepId) {
@@ -18,6 +54,7 @@ function initialDraft(project, appendStep, initialOpenStepId) {
     ...step,
     activities: (step.activities ?? []).map((activity) => ({ ...activity })),
     resources: (step.resources ?? []).map((resource) => ({ ...resource })),
+    itemOrder: normalizedOrder(step),
   }));
   const steps = appendStep ? [...existingSteps, newStep(existingSteps.length)] : existingSteps;
   const selectedStepId = appendStep
@@ -72,21 +109,45 @@ export default function BookProjectEditor({
   function addItem(stepId, key) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
-    updateStep(stepId, { [key]: [...step[key], newItem()] });
+    const item = newItem();
+    const kind = key === "resources" ? "resource" : "activity";
+    updateStep(stepId, {
+      [key]: [...step[key], item],
+      itemOrder: [...normalizedOrder(step), orderEntry(kind, item.id)],
+    });
   }
 
-  function updateItem(stepId, key, itemId, patch) {
+  function updateItem(stepId, kind, itemId, patch) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
+    const key = collectionKey(kind);
     updateStep(stepId, {
       [key]: step[key].map((item) => item.id === itemId ? { ...item, ...patch } : item),
     });
   }
 
-  function removeItem(stepId, key, itemId) {
+  function removeItem(stepId, kind, itemId) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
-    updateStep(stepId, { [key]: step[key].filter((item) => item.id !== itemId) });
+    const key = collectionKey(kind);
+    updateStep(stepId, {
+      [key]: step[key].filter((item) => item.id !== itemId),
+      itemOrder: normalizedOrder(step).filter((item) => item.kind !== kind || item.id !== itemId),
+    });
+  }
+
+  function moveItem(stepId, fromKey, toKey) {
+    if (fromKey === toKey) return;
+    const step = steps.find((item) => item.id === stepId);
+    if (!step) return;
+    const currentOrder = normalizedOrder(step);
+    const fromIndex = currentOrder.findIndex((item) => orderKey(item.kind, item.id) === fromKey);
+    const toIndex = currentOrder.findIndex((item) => orderKey(item.kind, item.id) === toKey);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const nextOrder = [...currentOrder];
+    const [moved] = nextOrder.splice(fromIndex, 1);
+    nextOrder.splice(toIndex, 0, moved);
+    updateStep(stepId, { itemOrder: nextOrder });
   }
 
   function toggleStep(stepId) {
@@ -114,16 +175,12 @@ export default function BookProjectEditor({
             <IconTrash size={15} /> Step 삭제
           </button>
         </div>
-        {step.activities.length > 0 ? (
-          <BookProjectEditorItems label="활동" items={step.activities} onChange={(id, patch) => updateItem(step.id, "activities", id, patch)} onRemove={(id) => removeItem(step.id, "activities", id)} />
-        ) : (
-          <p className="book-step-empty">등록된 활동이 없습니다.</p>
-        )}
-        {step.resources.length > 0 ? (
-          <BookProjectEditorItems label="자료" items={step.resources} resource onChange={(id, patch) => updateItem(step.id, "resources", id, patch)} onRemove={(id) => removeItem(step.id, "resources", id)} />
-        ) : (
-          <p className="book-step-empty">등록된 자료가 없습니다.</p>
-        )}
+        <BookProjectEditorItems
+          step={step}
+          onChange={(kind, id, patch) => updateItem(step.id, kind, id, patch)}
+          onRemove={(kind, id) => removeItem(step.id, kind, id)}
+          onMove={(fromKey, toKey) => moveItem(step.id, fromKey, toKey)}
+        />
         <div className="book-step-add-actions">
           <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
           <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>

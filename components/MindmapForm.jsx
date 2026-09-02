@@ -137,6 +137,7 @@ export default function MindmapForm({ activity, user, onBack }) {
           <button
             type="button"
             className={`paratext-student-card mindmap-own-card${branches > 0 ? " done" : " none"}`}
+            disabled={locked}
             onClick={() => setOpen(true)}
           >
             <span className="paratext-student-head">
@@ -146,7 +147,7 @@ export default function MindmapForm({ activity, user, onBack }) {
             <span className="mindmap-own-topic">{map.nodes[0]?.text || activityText}</span>
             <span className="paratext-student-meta">
               {branches === 0
-                ? "아직 가지가 없어요 — 눌러서 시작하기"
+                ? locked ? "교사가 활동을 열면 시작할 수 있어요" : "아직 가지가 없어요 — 눌러서 시작하기"
                 : `가지 ${branches}개 · ${depth}단계`}
             </span>
           </button>

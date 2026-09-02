@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
-import { IconTrash } from "./StatusIcons";
+import { IconLock, IconTrash } from "./StatusIcons";
 
 function IconEdit({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 19.5h4l10-10a2.12 2.12 0 0 0-3-3l-10 10-1 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="m14 8 3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
-function IconCopy({ size = 16 }) {
+export function IconCopy({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
@@ -18,6 +18,10 @@ function IconOpen({ size = 16 }) {
 
 function IconExpand({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.4 4H4v4.4M15.6 4H20v4.4M20 15.6V20h-4.4M4 15.6V20h4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.2 9.2 4.6 4.6M14.8 9.2l4.6-4.6M14.8 14.8l4.6 4.6M9.2 14.8l-4.6 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+}
+
+function IconUnlock({ size = 16 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 10.4V8.7a4 4 0 0 1 7.65-1.62" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M6.65 10.35h10.7c.9 0 1.65.74 1.65 1.65v5.4c0 .9-.74 1.65-1.65 1.65H6.65C5.74 19.05 5 18.3 5 17.4V12c0-.9.74-1.65 1.65-1.65Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M12 13.35v2.75" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round"/><circle cx="12" cy="13.05" r=".72" fill="currentColor"/></svg>;
 }
 
 export function resourceHref(url) {
@@ -48,14 +52,19 @@ export function resourceLinkLabel(url) {
   }
 }
 
-export function stepPreviewItems(step) {
-  return [
+function orderKey(kind, id) {
+  return `${kind}:${id}`;
+}
+
+export function orderedStepItems(step) {
+  const baseItems = [
     ...(step.activities ?? []).map((item) => ({
       id: item.id,
       kind: "activity",
       label: "활동",
       title: item.title,
       content: item.title || "등록된 활동 내용이 없습니다.",
+      url: item.bookUrl || item.url || "",
       source: item,
     })),
     ...(step.resources ?? []).map((item) => ({
@@ -68,34 +77,86 @@ export function stepPreviewItems(step) {
       source: item,
     })),
   ];
+
+  const byKey = new Map(baseItems.map((item) => [orderKey(item.kind, item.id), item]));
+  const seen = new Set();
+  const ordered = (step.itemOrder ?? [])
+    .map((entry) => {
+      const kind = entry?.kind === "resource" ? "resource" : entry?.kind === "activity" ? "activity" : "";
+      const id = entry?.id;
+      if (!kind || !id) return null;
+      const key = orderKey(kind, id);
+      const item = byKey.get(key);
+      if (!item || seen.has(key)) return null;
+      seen.add(key);
+      return item;
+    })
+    .filter(Boolean);
+
+  return [...ordered, ...baseItems.filter((item) => !seen.has(orderKey(item.kind, item.id)))];
 }
 
-export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete }) {
+export function stepPreviewItems(step) {
+  return orderedStepItems(step);
+}
+
+export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
   const [copied, setCopied] = useState(false);
   const content = kind === "resource" ? item.content : "";
-  const linkHref = kind === "resource" ? resourceHref(item.url) : "";
-  const linkLabel = kind === "resource" ? resourceLinkLabel(item.url) : "";
+  const linkSource = kind === "activity" ? item.bookUrl || item.url : item.url;
+  const linkHref = resourceHref(linkSource);
+  const linkLabel = resourceLinkLabel(linkSource);
   const itemLabel = kind === "activity" ? "활동" : "자료";
+  const locked = kind === "activity" && item.locked;
 
   async function copyResource() {
-    const text = [item.content, item.url].filter(Boolean).join("\n");
+    const text = [item.title, item.content, linkSource].filter(Boolean).join("\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   }
 
   return (
-    <article className="book-project-detail-item">
+    <article
+      className={`book-project-detail-item${dragging ? " is-dragging" : ""}${dragProps ? " is-draggable" : ""}`}
+      onDragOver={dragProps?.onDragOver}
+      onDrop={dragProps?.onDrop}
+    >
+      {dragProps && (
+        <span
+          className="book-step-drag-handle"
+          role="button"
+          tabIndex={0}
+          aria-label={`${itemLabel} 순서 이동`}
+          draggable
+          onDragStart={dragProps.onDragStart}
+          onDragEnd={dragProps.onDragEnd}
+        />
+      )}
       <div className="book-project-detail-copy">
         <div className="book-project-detail-headline">
           <strong>{item.title}</strong>
+          {locked && <em className="book-project-lock-state">잠김</em>}
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
-            <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 열기`} aria-label={`${itemLabel} 열기`} onClick={onOpen}>
-              <IconOpen />
-            </button>
+            {onOpen && (
+              <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 열기`} aria-label={`${itemLabel} 열기`} onClick={onOpen}>
+                <IconOpen />
+              </button>
+            )}
             <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 확대`} aria-label={`${itemLabel} 확대`} onClick={onPreview}>
               <IconExpand />
             </button>
+            {kind === "activity" && onToggleLock && (
+              <button
+                type="button"
+                className="btn-ghost book-project-icon-action"
+                title={item.locked ? "활동 잠금 해제" : "활동 잠그기"}
+                aria-label={item.locked ? "활동 잠금 해제" : "활동 잠그기"}
+                onClick={() => onToggleLock(!item.locked)}
+              >
+                {item.locked ? <IconUnlock /> : <IconLock size={14} />}
+              </button>
+            )}
             {onEdit && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 수정`} aria-label={`${itemLabel} 수정`} onClick={onEdit}>
                 <IconEdit />
@@ -150,7 +211,7 @@ export function StepContentModal({ step, item, index, total, onMove, onOpenActiv
         </header>
         <div className="book-step-preview-body">
           <p>{item.content}</p>
-          {linkHref && <a className="btn-outline book-step-preview-link" href={linkHref} target="_blank" rel="noreferrer">자료 링크 열기</a>}
+          {linkHref && <a className="btn-outline book-step-preview-link" href={linkHref} target="_blank" rel="noreferrer">{item.kind === "activity" ? "활동 링크 열기" : "자료 링크 열기"}</a>}
         </div>
         <footer className="book-step-preview-footer">
           <span>{index + 1} / {total}</span>

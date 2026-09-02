@@ -23,6 +23,7 @@ export default function BookWorkspace({
   onSaveProject,
   onEditProject,
   onOpen,
+  onToggleActivityLock,
   onDelete,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
@@ -107,6 +108,7 @@ export default function BookWorkspace({
               onSave={onSaveProject}
               onEdit={onEditProject}
               onOpen={onOpen}
+              onToggleActivityLock={onToggleActivityLock}
               onDelete={onDelete}
             />
           )}

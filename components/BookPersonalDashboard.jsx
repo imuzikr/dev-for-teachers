@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { saveBookDashboardText } from "@/lib/store";
-import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import { IconCopy, orderedStepItems, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 
 function participantName(participant) {
   return participant.name || participant.realName || participant.displayName || "이름 미설정";
@@ -20,17 +20,24 @@ function dashboardText(entry) {
 
 function detailSections(project, activities) {
   if (!project?.steps?.length) {
-    return activities.length ? [{ id: "activities", title: "활동", activities, resources: [] }] : [];
+    return activities.length ? [{ id: "activities", title: "활동", activities, resources: [], items: activities.map((activity) => ({ id: activity.id, kind: "activity", label: "활동", title: activity.title, source: activity })) }] : [];
   }
 
   const activityIds = new Set(activities.map((activity) => activity.id));
   return project.steps
-    .map((step, index) => ({
-      id: step.id ?? `step-${index + 1}`,
-      title: step.title || `Step ${index + 1}`,
-      activities: (step.activities ?? []).filter((activity) => activityIds.has(activity.id)),
-      resources: step.resources ?? [],
-    }))
+    .map((step, index) => {
+      const items = orderedStepItems(step)
+        .filter((item) => item.kind === "resource" || activityIds.has(item.id));
+      const activitiesInStep = items.filter((item) => item.kind === "activity");
+      const resourcesInStep = items.filter((item) => item.kind === "resource");
+      return {
+        id: step.id ?? `step-${index + 1}`,
+        title: step.title || `Step ${index + 1}`,
+        activities: activitiesInStep,
+        resources: resourcesInStep,
+        items,
+      };
+    })
     .filter((section) => section.activities.length > 0 || section.resources.length > 0);
 }
 
@@ -40,6 +47,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
   const [savingId, setSavingId] = useState(null);
   const [savedId, setSavedId] = useState(null);
   const [failedId, setFailedId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   const selected = participants.find((participant) => participant.uid === selectedUid) ?? null;
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
   const sections = detailSections(project, activities);
@@ -66,6 +74,13 @@ export default function BookPersonalDashboard({ participants, activities, projec
     }
   }
 
+  async function copyResource(resource) {
+    const text = [resource.title, resource.content, resource.url].filter(Boolean).join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopiedId(resource.id);
+    window.setTimeout(() => setCopiedId(null), 1600);
+  }
+
   if (selected) {
     return (
       <section className="book-personal-dashboard book-personal-detail" aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
@@ -89,60 +104,82 @@ export default function BookPersonalDashboard({ participants, activities, projec
                   <small>{section.activities.length} 활동 · {section.resources.length} 자료</small>
                 </header>
                 <div className="book-personal-detail-list" aria-label={`${section.title} 활동과 자료`}>
-                  {section.activities.map((activity, index) => {
+                  {section.items.map((detailItem, index) => {
+                    if (detailItem.kind === "resource") {
+                      const resource = detailItem.source;
+                      const linkHref = resourceHref(resource.url);
+                      return (
+                        <article className="book-personal-activity-card book-personal-resource-card" key={`resource:${resource.id ?? `${section.id}-${index}`}`}>
+                          <header>
+                            <span className="book-personal-activity-order">R{index + 1}</span>
+                            <div className="book-personal-activity-copy">
+                              <span>자료 {index + 1}</span>
+                              <strong>{resource.title}</strong>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-ghost book-personal-copy-btn"
+                              title="자료 복사"
+                              aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"}
+                              onClick={() => copyResource(resource)}
+                            >
+                              <IconCopy size={13} />
+                            </button>
+                          </header>
+                          <div className="book-personal-resource-body">
+                            <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
+                            {linkHref && (
+                              <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
+                                <span>링크</span>
+                                <strong>{resourceLinkLabel(resource.url)}</strong>
+                              </a>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    }
+                    const activity = detailItem.source;
                     const completed = selectedProgress.has(activity.id);
-                    const entry = participantEntry(entriesByActivity, activity.id, selected.uid);
-                    const response = isTeacher ? dashboardText(entry) : drafts[activity.id] ?? "";
+                    const savedEntry = participantEntry(entriesByActivity, activity.id, selected.uid);
+                    const response = isTeacher ? dashboardText(savedEntry) : drafts[activity.id] ?? "";
+                    const locked = !!activity.locked;
+                    const activityHref = resourceHref(activity.bookUrl || activity.url);
                     return (
-                      <article className="book-personal-activity-card" key={activity.id}>
+                      <article className={`book-personal-activity-card${locked ? " is-locked" : ""}`} key={`activity:${activity.id}`}>
                         <header>
                           <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
                           <div className="book-personal-activity-copy">
                             <span>활동 {index + 1}</span>
                             <strong>{activity.title}</strong>
                           </div>
-                          <em className={completed ? "is-done" : ""}>{completed ? "작성함" : "시작 전"}</em>
+                          <em className={locked ? "is-locked" : completed ? "is-done" : ""}>{locked ? "잠김" : completed ? "작성함" : "시작 전"}</em>
                         </header>
+                        {activityHref && (
+                          <a className="book-project-resource-link" href={activityHref} target="_blank" rel="noreferrer">
+                            <span>링크</span>
+                            <strong>{resourceLinkLabel(activity.bookUrl || activity.url)}</strong>
+                          </a>
+                        )}
                         <label className="book-personal-response">
                           <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
                           <textarea
                             value={response}
-                            readOnly={isTeacher}
+                            readOnly={isTeacher || locked}
                             onChange={(event) => setDrafts((current) => ({ ...current, [activity.id]: event.target.value }))}
-                            placeholder={isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
+                            placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
                           />
                         </label>
-                        <footer>
-                          <button type="button" className="btn-outline" onClick={() => onOpen(activity)}>활동 열기</button>
-                          {!isTeacher && (
+                        {isTeacher ? (
+                          <footer>
+                            <button type="button" className="btn-outline" onClick={() => onOpen(activity)}>{locked ? "활동 열기" : "활동 보기"}</button>
+                          </footer>
+                        ) : !locked && (
+                          <footer>
                             <button type="button" className="btn-primary" disabled={savingId === activity.id} onClick={() => saveResponse(activity)}>
                               {savingId === activity.id ? "저장 중..." : savedId === activity.id ? "저장됨" : failedId === activity.id ? "다시 저장" : "답변 저장"}
                             </button>
-                          )}
-                        </footer>
-                      </article>
-                    );
-                  })}
-                  {section.resources.map((resource, index) => {
-                    const linkHref = resourceHref(resource.url);
-                    return (
-                      <article className="book-personal-activity-card book-personal-resource-card" key={resource.id ?? `${section.id}-resource-${index}`}>
-                        <header>
-                          <span className="book-personal-activity-order">R{index + 1}</span>
-                          <div className="book-personal-activity-copy">
-                            <span>자료 {index + 1}</span>
-                            <strong>{resource.title}</strong>
-                          </div>
-                        </header>
-                        <div className="book-personal-resource-body">
-                          <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
-                          {linkHref && (
-                            <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
-                              <span>링크</span>
-                              <strong>{resourceLinkLabel(resource.url)}</strong>
-                            </a>
-                          )}
-                        </div>
+                          </footer>
+                        )}
                       </article>
                     );
                   })}

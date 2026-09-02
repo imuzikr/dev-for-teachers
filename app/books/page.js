@@ -11,6 +11,7 @@ import {
   subscribeClasses,
   subscribeMyMemberships,
   subscribeUserDirectory,
+  updateBookActivity,
 } from "@/lib/store";
 import { isAdmin, isTeacher } from "@/lib/user";
 import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
@@ -203,6 +204,30 @@ function BooksPageInner() {
     }
   }
 
+  async function handleOpenActivity(activity) {
+    if (admin && activity.locked) {
+      try {
+        await updateBookActivity(activity.id, { locked: false });
+        setToast("활동을 열었어요.");
+      } catch (error) {
+        console.error("[책방] 활동 열기 실패:", error);
+        setToast("활동을 열지 못했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+    }
+    goToActivity(activity);
+  }
+
+  async function handleToggleActivityLock(activity, locked) {
+    try {
+      await updateBookActivity(activity.id, { locked });
+      setToast(locked ? "활동을 잠갔어요." : "활동을 열었어요.");
+    } catch (error) {
+      console.error("[책방] 활동 잠금 변경 실패:", error);
+      setToast("활동 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
+  }
+
   function openProjectEditor(appendStep = false, stepId = null) {
     setAppendProjectStep(appendStep);
     setProjectEditorStepId(stepId);
@@ -257,7 +282,8 @@ function BooksPageInner() {
           participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
           appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
           onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
-          onSaveProject={handleSaveProject} onOpenActivity={goToActivity} onDelete={setConfirmDelete}
+          onSaveProject={handleSaveProject} onOpenActivity={handleOpenActivity}
+          onToggleActivityLock={handleToggleActivityLock} onDelete={setConfirmDelete}
         />
       )}
 
