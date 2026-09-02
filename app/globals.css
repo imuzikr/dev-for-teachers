@@ -8412,6 +8412,10 @@ pre code {
   background: var(--bg);
 }
 
+.books-main--split .book-library-layout.is-student-main {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .book-library-side {
   min-width: 0;
   max-height: calc(100dvh - 180px);
@@ -8874,20 +8878,22 @@ pre code {
 }
 
 .book-project-detail-headline {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: start;
+  gap: 6px;
 }
 
 .book-project-detail-headline > strong {
+  grid-row: 2;
   min-width: 0;
-  flex: 1;
-  padding-top: 5px;
   color: var(--text);
   font-size: 12px;
-  overflow-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .book-project-detail-copy p {
@@ -8939,13 +8945,14 @@ pre code {
 }
 
 .book-project-detail-actions {
+  grid-row: 1;
   display: inline-flex;
   flex: 0 0 auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
+  justify-self: end;
   gap: 4px;
-  max-width: 156px;
 }
 
 .book-project-detail-actions .btn-ghost,
@@ -9189,7 +9196,10 @@ pre code {
 .book-personal-card-hint { margin: 0; color: var(--primary-dark); font-size: 11px; font-weight: 800; }
 .book-personal-empty { margin: 12px 0 0; color: var(--text-sub); font-size: 12px; }
 
-.book-personal-detail { min-height: 100%; }
+.book-personal-detail {
+  min-height: 100%;
+  overflow-y: auto;
+}
 .book-personal-detail-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -9203,20 +9213,71 @@ pre code {
 .book-personal-detail-head span { color: var(--primary-dark); font-size: 12px; font-weight: 800; }
 .book-personal-detail-head h2 { margin: 4px 0 0; color: var(--text); font-size: 24px; }
 .book-personal-detail-head p { margin: 5px 0 0; color: var(--text-sub); font-size: 13px; }
+.book-personal-detail-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.book-personal-step-section {
+  min-width: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.book-personal-step-section:last-child {
+  border-bottom: 0;
+}
+.book-personal-step-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.book-personal-step-head > span {
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+.book-personal-step-head > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.book-personal-step-head > small {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 .book-personal-detail-list {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(300px, 300px);
   gap: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 14px;
+  scroll-snap-type: x proximity;
 }
 .book-personal-activity-card {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
+  min-width: 300px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+  scroll-snap-align: start;
+}
+.book-personal-activity-card > header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
 }
 .book-personal-activity-order {
   width: 48px;
@@ -9231,29 +9292,83 @@ pre code {
 }
 .book-personal-activity-copy { min-width: 0; }
 .book-personal-activity-copy > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; }
-.book-personal-activity-card strong { display: block; margin-top: 5px; color: var(--text); font-size: 17px; }
-.book-personal-activity-card p { margin: 9px 0 0; color: var(--text-sub); font-size: 13px; line-height: 1.65; word-break: keep-all; }
-.book-personal-activity-card footer { min-width: 112px; display: flex; align-items: flex-end; flex-direction: column; gap: 10px; }
-.book-personal-activity-card footer em { color: var(--text-sub); font-size: 12px; font-style: normal; }
-.book-personal-activity-card footer em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-activity-card strong {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+.book-personal-activity-card header > em { color: var(--text-sub); font-size: 12px; font-style: normal; white-space: nowrap; }
+.book-personal-activity-card header > em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-instruction {
+  min-height: 64px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text-sub);
+  background: var(--primary-light);
+  font-size: 13px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+.book-personal-response {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+}
+.book-personal-response > span { color: var(--text); font-size: 12px; font-weight: 800; }
+.book-personal-response textarea {
+  width: 100%;
+  min-height: 150px;
+  flex: 1;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.book-personal-response textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-light); }
+.book-personal-response textarea[readonly] { background: var(--bg); }
+.book-personal-resource-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.book-personal-resource-body p {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  white-space: pre-wrap;
+}
+.book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .book-personal-activity-card footer button { min-height: 44px; }
 
 @media (max-width: 640px) {
   .book-personal-detail-head { grid-template-columns: 1fr; gap: 12px; }
   .book-personal-detail-head > button { width: max-content; }
+  .book-personal-step-head { grid-template-columns: 1fr; align-items: start; }
+  .book-personal-detail-list { grid-auto-columns: minmax(280px, 280px); }
   .book-personal-activity-card {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 12px;
+    min-width: 280px;
+    min-height: 400px;
     padding: 15px;
   }
+  .book-personal-activity-card > header { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .book-personal-activity-order { width: 40px; height: 40px; }
-  .book-personal-activity-card footer {
-    grid-column: 1 / -1;
-    width: 100%;
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between;
-  }
 }
 
 
@@ -10107,10 +10222,18 @@ pre code {
     overflow: visible;
   }
 
+  .books-main--split.books-main--student {
+    min-width: 0;
+  }
+
   .books-main--split .book-library-layout {
     grid-template-columns: 280px minmax(0, 1fr);
     height: 100%;
     min-height: 0;
+  }
+
+  .books-main--split .book-library-layout.is-student-main {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .books-main--split .book-library-side {

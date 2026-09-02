@@ -1,15 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { saveBookDashboardText } from "@/lib/store";
+import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 
 function participantName(participant) {
   return participant.name || participant.realName || participant.displayName || "이름 미설정";
 }
 
-export default function BookPersonalDashboard({ participants, activities, progressByUser, user, isTeacher, onOpen }) {
+function participantEntry(entriesByActivity, activityId, uid) {
+  return (entriesByActivity[activityId] ?? []).find((entry) => entry.authorId === uid) ?? null;
+}
+
+function dashboardText(entry) {
+  if (typeof entry?.dashboardText === "string") return entry.dashboardText;
+  if (typeof entry?.answers === "string") return entry.answers;
+  return entry?.answers?.dashboardText ?? "";
+}
+
+function detailSections(project, activities) {
+  if (!project?.steps?.length) {
+    return activities.length ? [{ id: "activities", title: "활동", activities, resources: [] }] : [];
+  }
+
+  const activityIds = new Set(activities.map((activity) => activity.id));
+  return project.steps
+    .map((step, index) => ({
+      id: step.id ?? `step-${index + 1}`,
+      title: step.title || `Step ${index + 1}`,
+      activities: (step.activities ?? []).filter((activity) => activityIds.has(activity.id)),
+      resources: step.resources ?? [],
+    }))
+    .filter((section) => section.activities.length > 0 || section.resources.length > 0);
+}
+
+export default function BookPersonalDashboard({ participants, activities, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onOpen, saveDashboardText = saveBookDashboardText }) {
   const [selectedUid, setSelectedUid] = useState(null);
+  const [drafts, setDrafts] = useState({});
+  const [savingId, setSavingId] = useState(null);
+  const [savedId, setSavedId] = useState(null);
+  const [failedId, setFailedId] = useState(null);
   const selected = participants.find((participant) => participant.uid === selectedUid) ?? null;
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
+  const sections = detailSections(project, activities);
+
+  useEffect(() => {
+    if (!selected) return;
+    setDrafts(Object.fromEntries(activities.map((activity) => [
+      activity.id,
+      dashboardText(participantEntry(entriesByActivity, activity.id, selected.uid)),
+    ])));
+  }, [activities, entriesByActivity, selected]);
+
+  async function saveResponse(activity) {
+    setSavingId(activity.id);
+    setSavedId(null);
+    setFailedId(null);
+    try {
+      await saveDashboardText(activity.id, user, drafts[activity.id] ?? "");
+      setSavedId(activity.id);
+    } catch {
+      setFailedId(activity.id);
+    } finally {
+      setSavingId(null);
+    }
+  }
 
   if (selected) {
     return (
@@ -22,27 +77,78 @@ export default function BookPersonalDashboard({ participants, activities, progre
             <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{activities.length} 완료</p>
           </div>
         </header>
-        {activities.length === 0 ? (
+        {sections.length === 0 ? (
           <div className="book-dashboard-empty">선생님이 활동을 준비하고 있습니다.</div>
         ) : (
-          <div className="book-personal-detail-list">
-            {activities.map((activity, index) => {
-              const completed = selectedProgress.has(activity.id);
-              return (
-                <article className="book-personal-activity-card" key={activity.id}>
-                  <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
-                  <div className="book-personal-activity-copy">
-                    <span>활동 {index + 1}</span>
-                    <strong>{activity.title}</strong>
-                    {activity.topic && <p>{activity.topic}</p>}
-                  </div>
-                  <footer>
-                    <em className={completed ? "is-done" : ""}>{completed ? "작성함" : "시작 전"}</em>
-                    <button type="button" className="btn-primary" onClick={() => onOpen(activity)}>{completed ? "다시 열기" : "활동 시작"}</button>
-                  </footer>
-                </article>
-              );
-            })}
+          <div className="book-personal-detail-steps" aria-label="프로젝트 활동과 자료 목록">
+            {sections.map((section, sectionIndex) => (
+              <section className="book-personal-step-section" key={section.id}>
+                <header className="book-personal-step-head">
+                  <span>STEP {sectionIndex + 1}</span>
+                  <strong>{section.title}</strong>
+                  <small>{section.activities.length} 활동 · {section.resources.length} 자료</small>
+                </header>
+                <div className="book-personal-detail-list" aria-label={`${section.title} 활동과 자료`}>
+                  {section.activities.map((activity, index) => {
+                    const completed = selectedProgress.has(activity.id);
+                    const entry = participantEntry(entriesByActivity, activity.id, selected.uid);
+                    const response = isTeacher ? dashboardText(entry) : drafts[activity.id] ?? "";
+                    return (
+                      <article className="book-personal-activity-card" key={activity.id}>
+                        <header>
+                          <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
+                          <div className="book-personal-activity-copy">
+                            <span>활동 {index + 1}</span>
+                            <strong>{activity.title}</strong>
+                          </div>
+                          <em className={completed ? "is-done" : ""}>{completed ? "작성함" : "시작 전"}</em>
+                        </header>
+                        <label className="book-personal-response">
+                          <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
+                          <textarea
+                            value={response}
+                            readOnly={isTeacher}
+                            onChange={(event) => setDrafts((current) => ({ ...current, [activity.id]: event.target.value }))}
+                            placeholder={isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
+                          />
+                        </label>
+                        <footer>
+                          <button type="button" className="btn-outline" onClick={() => onOpen(activity)}>활동 열기</button>
+                          {!isTeacher && (
+                            <button type="button" className="btn-primary" disabled={savingId === activity.id} onClick={() => saveResponse(activity)}>
+                              {savingId === activity.id ? "저장 중..." : savedId === activity.id ? "저장됨" : failedId === activity.id ? "다시 저장" : "답변 저장"}
+                            </button>
+                          )}
+                        </footer>
+                      </article>
+                    );
+                  })}
+                  {section.resources.map((resource, index) => {
+                    const linkHref = resourceHref(resource.url);
+                    return (
+                      <article className="book-personal-activity-card book-personal-resource-card" key={resource.id ?? `${section.id}-resource-${index}`}>
+                        <header>
+                          <span className="book-personal-activity-order">R{index + 1}</span>
+                          <div className="book-personal-activity-copy">
+                            <span>자료 {index + 1}</span>
+                            <strong>{resource.title}</strong>
+                          </div>
+                        </header>
+                        <div className="book-personal-resource-body">
+                          <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
+                          {linkHref && (
+                            <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
+                              <span>링크</span>
+                              <strong>{resourceLinkLabel(resource.url)}</strong>
+                            </a>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </section>

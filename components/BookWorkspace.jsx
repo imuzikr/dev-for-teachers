@@ -27,6 +27,7 @@ export default function BookWorkspace({
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const showLibraryPanel = isTeacher;
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
@@ -70,7 +71,8 @@ export default function BookWorkspace({
   }
 
   return (
-    <div className={`book-library-layout${libraryCollapsed ? " is-library-collapsed" : ""}`}>
+    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
+      {showLibraryPanel && (
       <aside className={`book-library-side${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
         <button
           type="button"
@@ -91,7 +93,7 @@ export default function BookWorkspace({
             </div>
           </div>
 
-          {!hasClass && !isTeacher ? (
+          {!hasClass ? (
             <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
           ) : (
             <BookProjectPanel
@@ -103,19 +105,22 @@ export default function BookWorkspace({
               saving={savingProject}
               participantCount={participants.length}
               onSave={onSaveProject}
-              onEdit={isTeacher ? onEditProject : null}
+              onEdit={onEditProject}
               onOpen={onOpen}
-              onDelete={isTeacher ? onDelete : null}
+              onDelete={onDelete}
             />
           )}
         </div>
       </aside>
+      )}
 
       <section className="book-library-main" aria-label="책방 메인 화면">
         {header}
         <BookPersonalDashboard
           participants={participants}
           activities={activities}
+          project={project}
+          entriesByActivity={entriesByActivity}
           progressByUser={progressByUser}
           user={user}
           isTeacher={isTeacher}

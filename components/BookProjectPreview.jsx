@@ -20,7 +20,7 @@ function IconExpand({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.4 4H4v4.4M15.6 4H20v4.4M20 15.6V20h-4.4M4 15.6V20h4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.2 9.2 4.6 4.6M14.8 9.2l4.6-4.6M14.8 14.8l4.6 4.6M9.2 14.8l-4.6 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
-function resourceHref(url) {
+export function resourceHref(url) {
   const trimmed = String(url ?? "").trim();
   if (!trimmed) return "";
   const candidate = /^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
@@ -34,7 +34,7 @@ function resourceHref(url) {
   }
 }
 
-function resourceLinkLabel(url) {
+export function resourceLinkLabel(url) {
   const href = resourceHref(url);
   if (!href) return "";
 

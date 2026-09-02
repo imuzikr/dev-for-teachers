@@ -14,7 +14,7 @@ export default function BooksHome(props) {
   } = props;
 
   return (
-    <main className="books-main books-main--split">
+    <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
       <BookWorkspace
         header={(
           <>
