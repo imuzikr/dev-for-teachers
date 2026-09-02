@@ -104,6 +104,34 @@ export default function BookWorkspace({
     });
   }
 
+  function rememberConfirmedItem(item) {
+    if (!user?.uid || !item?.id) return;
+    const confirmationKey = bookConfirmationKey(item.kind, item.id);
+    setConfirmations((current) => {
+      if (current.some((confirmation) => (
+        confirmation.authorId === user.uid
+        && bookConfirmationKey(confirmation.itemKind, confirmation.itemId) === confirmationKey
+      ))) {
+        return current;
+      }
+
+      return [
+        ...current,
+        {
+          classId,
+          projectId,
+          itemKind: item.kind,
+          itemId: item.id,
+          itemTitle: item.title || "",
+          stepId: item.stepId || "",
+          authorId: user.uid,
+          authorName: user.realName || user.displayName || "이름 미설정",
+          confirmed: true,
+        },
+      ];
+    });
+  }
+
   async function confirmBookItem(item) {
     await saveBookConfirmation({
       classId,
@@ -114,6 +142,7 @@ export default function BookWorkspace({
       stepId: item.stepId,
       user,
     });
+    rememberConfirmedItem(item);
   }
 
   return (

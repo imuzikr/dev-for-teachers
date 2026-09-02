@@ -474,7 +474,7 @@ service cloud.firestore {
     }
     function validBookProject(classId) {
       return request.resource.data.keys().hasOnly([
-               'classId', 'title', 'version', 'steps', 'createdBy', 'updatedAt'
+               'classId', 'title', 'version', 'steps', 'confirmableItemKeys', 'createdBy', 'updatedAt'
              ])
              && request.resource.data.classId == classId
              && request.resource.data.title is string
@@ -484,6 +484,8 @@ service cloud.firestore {
              && request.resource.data.version.size() > 0
              && request.resource.data.steps is list
              && request.resource.data.steps.size() <= 30
+             && request.resource.data.confirmableItemKeys is list
+             && request.resource.data.confirmableItemKeys.size() <= 300
              && request.resource.data.createdBy == uid()
              && request.resource.data.updatedAt == request.time;
     }
@@ -556,9 +558,18 @@ service cloud.firestore {
     function canConfirmBookItem() {
       return (
                request.resource.data.itemKind == 'resource'
-               && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
-               && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
-               && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+               && exists(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId))
+               && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.classId == request.resource.data.classId
+               && (
+                    (
+                      get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
+                      && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.confirmableItemKeys.hasAny(['resource:' + request.resource.data.itemId])
+                    )
+                    || (
+                      !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
+                      && request.resource.data.projectId == request.resource.data.classId
+                    )
+                  )
              )
              || (
                request.resource.data.itemKind == 'activity'

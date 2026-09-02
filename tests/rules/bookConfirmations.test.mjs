@@ -1,6 +1,6 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
 const confirmation = (uid, overrides = {}) => ({
@@ -41,6 +41,15 @@ describe("책방 활동·자료 확인 규칙", () => {
       });
       await setDoc(doc(db, "bookActivities", "locked1"), {
         classId: "cA", projectId: "cA", type: "book", title: "잠긴 활동", locked: true,
+      });
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "책방 프로젝트",
+        version: "v1",
+        steps: [],
+        confirmableItemKeys: ["resource:res1", "activity:act1", "activity:locked1"],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
       });
       await setDoc(doc(db, "bookResources", "res1"), {
         resourceId: "res1",
@@ -99,6 +108,23 @@ describe("책방 활동·자료 확인 규칙", () => {
       doc(db, "bookConfirmations", confirmationId("resource", "missing", "stu1")),
       confirmation("stu1", { itemId: "missing", itemTitle: "없는 자료" })
     ));
+  });
+
+  it("기존 프로젝트 자료는 별도 자료 문서가 없어도 확인할 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "기존 책방 프로젝트",
+        version: "legacy",
+        steps: [],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+      await deleteDoc(doc(db, "bookResources", "res1"));
+    });
+
+    const db = asStudent(env, "stu1").firestore();
+    await assertSucceeds(setDoc(doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")), confirmation("stu1")));
   });
 
   it("활동 id를 자료 확인으로 속일 수 없다", async () => {
