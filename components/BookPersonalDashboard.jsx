@@ -126,14 +126,17 @@ export default function BookPersonalDashboard({ participants, activities, projec
                               <IconCopy size={13} />
                             </button>
                           </header>
-                          <div className="book-personal-resource-body">
-                            <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
+                          <div className="book-personal-card-body">
                             {linkHref && (
                               <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
-                                <span>링크</span>
+                                <span>제공 URL</span>
                                 <strong>{resourceLinkLabel(resource.url)}</strong>
                               </a>
                             )}
+                            <div className="book-personal-response book-personal-resource-body">
+                              <span>자료 내용</span>
+                              <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
+                            </div>
                           </div>
                         </article>
                       );
@@ -154,21 +157,23 @@ export default function BookPersonalDashboard({ participants, activities, projec
                           </div>
                           <em className={locked ? "is-locked" : completed ? "is-done" : ""}>{locked ? "잠김" : completed ? "작성함" : "시작 전"}</em>
                         </header>
-                        {activityHref && (
-                          <a className="book-project-resource-link" href={activityHref} target="_blank" rel="noreferrer">
-                            <span>링크</span>
-                            <strong>{resourceLinkLabel(activity.bookUrl || activity.url)}</strong>
-                          </a>
-                        )}
-                        <label className="book-personal-response">
-                          <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-                          <textarea
-                            value={response}
-                            readOnly={isTeacher || locked}
-                            onChange={(event) => setDrafts((current) => ({ ...current, [activity.id]: event.target.value }))}
-                            placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
-                          />
-                        </label>
+                        <div className="book-personal-card-body">
+                          {activityHref && (
+                            <a className="book-project-resource-link" href={activityHref} target="_blank" rel="noreferrer">
+                              <span>제공 URL</span>
+                              <strong>{resourceLinkLabel(activity.bookUrl || activity.url)}</strong>
+                            </a>
+                          )}
+                          <label className="book-personal-response">
+                            <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
+                            <textarea
+                              value={response}
+                              readOnly={isTeacher || locked}
+                              onChange={(event) => setDrafts((current) => ({ ...current, [activity.id]: event.target.value }))}
+                              placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
+                            />
+                          </label>
+                        </div>
                         {isTeacher ? (
                           <footer>
                             <button

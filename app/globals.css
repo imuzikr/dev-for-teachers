@@ -9314,7 +9314,7 @@ pre code {
 }
 .book-personal-activity-card {
   min-width: 300px;
-  min-height: 420px;
+  height: 420px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -9322,6 +9322,7 @@ pre code {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card-bg);
+  overflow: hidden;
   scroll-snap-align: start;
 }
 .book-personal-activity-card > header {
@@ -9375,13 +9376,14 @@ pre code {
   flex: 1;
   flex-direction: column;
   gap: 7px;
+  min-height: 0;
 }
 .book-personal-response > span { color: var(--text); font-size: 12px; font-weight: 800; }
 .book-personal-response textarea {
   width: 100%;
   min-height: 150px;
   flex: 1;
-  resize: vertical;
+  resize: none;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -9393,6 +9395,13 @@ pre code {
 }
 .book-personal-response textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-light); }
 .book-personal-response textarea[readonly] { background: var(--bg); }
+.book-personal-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
 .book-personal-copy-btn {
   width: 32px;
   min-height: 32px;
@@ -9407,14 +9416,19 @@ pre code {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
+  min-height: 0;
 }
 .book-personal-resource-body p {
+  flex: 1;
   margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--text-sub);
   font-size: 13px;
   line-height: 1.65;
+  overflow: auto;
   overflow-wrap: break-word;
   word-break: keep-all;
   white-space: pre-wrap;
@@ -9429,7 +9443,7 @@ pre code {
   .book-personal-detail-list { grid-auto-columns: minmax(280px, 280px); }
   .book-personal-activity-card {
     min-width: 280px;
-    min-height: 400px;
+    height: 400px;
     padding: 15px;
   }
   .book-personal-activity-card > header { grid-template-columns: 40px minmax(0, 1fr) auto; }
