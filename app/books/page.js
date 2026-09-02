@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   deleteBookActivity,
   saveBookProject,
@@ -20,19 +19,11 @@ import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
 import Toast from "@/components/Toast";
-import MindmapBoard from "@/components/MindmapBoard";
-import MindmapForm from "@/components/MindmapForm";
 import BooksHome from "@/components/BooksHome";
 import ProjectItemDeleteModal from "@/components/ProjectItemDeleteModal";
 
-const SUPPORTED_ACTIVITY_TYPES = new Set(["mindmap"]);
-
 export default function BooksPage() {
-  return (
-    <Suspense fallback={null}>
-      <BooksPageInner />
-    </Suspense>
-  );
+  return <BooksPageInner />;
 }
 
 function BooksPageInner() {
@@ -40,12 +31,6 @@ function BooksPageInner() {
   useRequireAuth();
   const admin = user ? isTeacher(user) : false;
   const superAdmin = user ? isAdmin(user) : false;
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const openActivityId = searchParams.get("activity");
-
-  function goToGrid() { router.push("/books"); }
-  function goToActivity(activity) { router.push(`/books?activity=${activity.id}`); }
 
   const [classes, setClasses] = useState([]);
   const [memberships, setMemberships] = useState([]);
@@ -146,10 +131,9 @@ function BooksPageInner() {
 
   const visibleActivities = useMemo(
     () => {
-      const supported = activities.filter((activity) => SUPPORTED_ACTIVITY_TYPES.has(activity.type));
-      if (!project) return supported;
+      if (!project) return activities.filter((activity) => activity.type === "book");
 
-      const activityById = new Map(supported.map((activity) => [activity.id, activity]));
+      const activityById = new Map(activities.map((activity) => [activity.id, activity]));
       return (project.steps ?? [])
         .flatMap((step) => step.activities ?? [])
         .map((projectActivity) => activityById.get(projectActivity.id))
@@ -172,13 +156,6 @@ function BooksPageInner() {
       })),
     };
   }, [project, visibleActivities]);
-  const activeActivity = openActivityId
-    ? visibleActivities.find((a) => a.id === openActivityId) ?? null
-    : null;
-  const activeClassId = activeActivity?.classId ?? classId;
-  const activeClassName = classes.find((c) => c.id === activeClassId)?.name ?? "";
-  const isMindmap = activeActivity?.type === "mindmap";
-
   const participants = useMemo(() => {
     if (admin) return roster;
     if (!user) return [];
@@ -205,17 +182,18 @@ function BooksPageInner() {
   }
 
   async function handleOpenActivity(activity) {
-    if (admin && activity.locked) {
-      try {
-        await updateBookActivity(activity.id, { locked: false });
-        setToast("활동을 열었어요.");
-      } catch (error) {
-        console.error("[책방] 활동 열기 실패:", error);
-        setToast("활동을 열지 못했어요. 잠시 후 다시 시도해 주세요.");
-        return;
-      }
+    if (!admin) return;
+    if (!activity.locked) {
+      setToast("이미 열려 있는 활동입니다.");
+      return;
     }
-    goToActivity(activity);
+    try {
+      await updateBookActivity(activity.id, { locked: false });
+      setToast("활동을 열었어요.");
+    } catch (error) {
+      console.error("[책방] 활동 열기 실패:", error);
+      setToast("활동을 열지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   async function handleToggleActivityLock(activity, locked) {
@@ -246,7 +224,6 @@ function BooksPageInner() {
     try {
       if (target.kind === "activity") await deleteBookActivity(target.item.id);
       await saveBookProject(user, { classId, title: project.title, steps: nextSteps });
-      if (openActivityId === target.item.id) goToGrid();
       setToast(`${target.kind === "activity" ? "활동" : "자료"}을 삭제했어요.`);
     } catch (error) {
       console.error("[책방] 프로젝트 항목 삭제 실패:", error);
@@ -255,37 +232,18 @@ function BooksPageInner() {
   }
 
   return (
-    <div className={`board-shell${isMindmap ? "" : " books-board-shell"}`}>
-      {isMindmap && <TopNav active="books" />}
-
-      {isMindmap && admin ? (
-        <MindmapBoard
-          activity={activeActivity}
-          className={activeClassName}
-          classId={activeClassId}
-          user={user}
-          roster={roster}
-          onBack={goToGrid}
-        />
-      ) : isMindmap ? (
-        <MindmapForm
-          activity={activeActivity}
-          user={user}
-          onBack={goToGrid}
-        />
-      ) : (
-        <BooksHome
-          topNav={<TopNav active="books" />}
-          admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
-          myClasses={myClasses} myClassesAll={myClassesAll} membershipIds={membershipIds} roster={roster}
-          project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
-          participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
-          appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
-          onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
-          onSaveProject={handleSaveProject} onOpenActivity={handleOpenActivity}
-          onToggleActivityLock={handleToggleActivityLock} onDelete={setConfirmDelete}
-        />
-      )}
+    <div className="board-shell books-board-shell">
+      <BooksHome
+        topNav={<TopNav active="books" />}
+        admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
+        myClasses={myClasses} myClassesAll={myClassesAll} membershipIds={membershipIds} roster={roster}
+        project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
+        participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
+        appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
+        onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
+        onSaveProject={handleSaveProject} onOpenActivity={handleOpenActivity}
+        onToggleActivityLock={handleToggleActivityLock} onDelete={setConfirmDelete}
+      />
 
       <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />
 

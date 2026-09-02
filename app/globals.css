@@ -8548,153 +8548,102 @@ pre code {
   word-break: keep-all;
 }
 
-.book-progress-pipeline {
+.book-progress-head small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.book-progress-roster {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
 }
 
-.book-progress-lane {
-  position: relative;
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 6px;
-  padding: 0 0 18px;
-}
-
-.book-progress-lane:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 21px;
-  top: 48px;
-  bottom: 0;
-  width: 2px;
-  border-radius: 999px;
-  background: linear-gradient(to bottom, rgba(60, 113, 65, 0.38), rgba(60, 113, 65, 0.08));
-}
-
-.book-progress-lane-label {
-  position: relative;
-  z-index: 1;
-  min-height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border: 1px solid rgba(60, 113, 65, 0.24);
+.book-progress-student {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--card-bg);
-  text-align: center;
+  background: rgba(255, 255, 255, 0.62);
 }
 
-.book-progress-lane-label span {
-  color: var(--primary-dark);
-  font-size: 10px;
-  font-weight: 900;
-  white-space: nowrap;
+.book-progress-student-head {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
 }
 
-.book-progress-lane-label strong {
-  width: 100%;
-  padding: 0 4px;
+.book-progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--student-color);
+}
+
+.book-progress-student-head strong {
+  min-width: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 14px;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.book-progress-lane-label em {
+.book-progress-student-head em {
   color: var(--text-sub);
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.book-progress-segments {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(10, minmax(16px, 1fr));
+.book-progress-student-bar {
+  height: 5px;
+  margin: 8px 0 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(31, 46, 37, 0.08);
+}
+
+.book-progress-student-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--student-color);
+  transition: width 0.18s ease;
+}
+
+.book-progress-student-cells {
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  align-content: start;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.book-progress-segment {
-  position: relative;
-  min-width: 0;
-  height: 34px;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--card-bg);
-  color: var(--text);
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+.book-progress-student-cell {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border: 1px solid rgba(60, 113, 65, 0.12);
+  border-radius: 4px;
+  background: rgba(31, 46, 37, 0.06);
 }
 
-.book-progress-segment::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: var(--progress-ratio, 0%);
-  background: rgba(60, 113, 65, 0.2);
-  transition: height 0.18s ease;
+.book-progress-student-cell.is-step-start {
+  margin-left: 8px;
 }
 
-.book-progress-segment span,
-.book-progress-segment em {
-  position: relative;
-  z-index: 1;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.book-progress-segment span {
-  align-self: end;
-}
-
-.book-progress-segment em {
-  align-self: start;
-  color: var(--text-sub);
-  font-size: 9px;
-}
-
-.book-progress-segment.is-some {
-  border-color: rgba(205, 232, 91, 0.88);
-  background: rgba(205, 232, 91, 0.12);
-}
-
-.book-progress-segment.is-some::before {
-  background: rgba(205, 232, 91, 0.7);
-}
-
-.book-progress-segment.is-many {
-  border-color: rgba(60, 113, 65, 0.42);
-  background: rgba(60, 113, 65, 0.12);
-}
-
-.book-progress-segment.is-many::before,
-.book-progress-segment.is-all::before {
-  background: var(--primary);
-}
-
-.book-progress-segment.is-all {
-  border-color: var(--primary);
-  color: var(--color-white);
-}
-
-.book-progress-segment.is-all em {
-  color: rgba(255, 255, 255, 0.78);
+.book-progress-student-cell.is-filled {
+  border-color: var(--student-color);
+  background: var(--student-color);
 }
 
 .books-content-head {
@@ -9627,9 +9576,10 @@ pre code {
   box-shadow: inset 0 0 0 1px rgba(60, 113, 65, 0.08);
 }
 .book-personal-instruction {
-  min-height: 64px;
+  height: 68px;
   margin: 0;
   padding: 12px;
+  overflow: auto;
   border-radius: 8px;
   color: var(--text-sub);
   background: var(--primary-light);

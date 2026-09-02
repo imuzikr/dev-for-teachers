@@ -123,6 +123,7 @@ export function BookPersonalActivityCard({
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
+        <p className="book-personal-instruction">{activity.content || "활동 안내사항"}</p>
         <label className="book-personal-response">
           <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
           <textarea

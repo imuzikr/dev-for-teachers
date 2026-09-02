@@ -63,7 +63,7 @@ export function orderedStepItems(step) {
       kind: "activity",
       label: "활동",
       title: item.title,
-      content: item.title || "등록된 활동 내용이 없습니다.",
+      content: item.content || "등록된 활동 안내사항이 없습니다.",
       url: item.bookUrl || item.url || "",
       source: item,
     })),
@@ -102,7 +102,7 @@ export function stepPreviewItems(step) {
 
 export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
   const [copied, setCopied] = useState(false);
-  const content = kind === "resource" ? item.content : "";
+  const content = item.content || "";
   const linkSource = kind === "activity" ? item.bookUrl || item.url : item.url;
   const linkHref = resourceHref(linkSource);
   const linkLabel = resourceLinkLabel(linkSource);

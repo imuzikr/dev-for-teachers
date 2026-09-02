@@ -59,7 +59,7 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 value={source.title}
                 onChange={(event) => {
                   const title = event.target.value;
-                  onChange(entry.kind, source.id, resource ? { title } : { title, topic: title });
+                  onChange(entry.kind, source.id, { title });
                 }}
                 placeholder={resource ? "자료 제목" : "활동 제목"}
                 aria-label={`${label} ${index + 1} 제목`}
@@ -67,15 +67,13 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">
-              {resource && (
-                <textarea
-                  value={source.content || ""}
-                  onChange={(event) => onChange(entry.kind, source.id, { content: event.target.value })}
-                  placeholder="자료 내용"
-                  aria-label={`자료 ${index + 1} 내용`}
-                  rows={4}
-                />
-              )}
+              <textarea
+                value={source.content || ""}
+                onChange={(event) => onChange(entry.kind, source.id, { content: event.target.value })}
+                placeholder={resource ? "자료 내용" : "활동 안내사항"}
+                aria-label={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
+                rows={4}
+              />
               <input
                 value={resource ? source.url || "" : source.bookUrl || source.url || ""}
                 onChange={(event) => {

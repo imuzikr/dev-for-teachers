@@ -42,7 +42,7 @@ Java가 설치되어 있어야 합니다(에뮬레이터 요구사항). 운영 �
 | `questionSignals.test.mjs` | 손들기 (`classes/{cId}/questionSignals`) |
 | `studyCards.test.mjs` | 공부방 보드·카드 (잠금·선생님 보드 분기 포함) |
 | `seatGroups.test.mjs` | 자리표·반 기본 모둠 (교사 전용 자산) |
-| `bookEntries.test.mjs` | 개인 활동 제출물 (곁텍스트·RAFT·KWLS·마인드맵 공용) |
+| `bookEntries.test.mjs` | 개인 활동 제출물 (곁텍스트·RAFT·KWLS·책방 활동 공용) |
 
 ## 테스트를 쓸 때 주의할 점
 

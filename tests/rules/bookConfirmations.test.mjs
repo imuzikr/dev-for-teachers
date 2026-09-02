@@ -37,10 +37,10 @@ describe("책방 활동·자료 확인 규칙", () => {
       await setDoc(doc(db, "memberships", "stu1_cA"), { uid: "stu1", classId: "cA" });
       await setDoc(doc(db, "memberships", "stu2_cA"), { uid: "stu2", classId: "cA" });
       await setDoc(doc(db, "bookActivities", "act1"), {
-        classId: "cA", projectId: "cA", type: "mindmap", title: "열린 활동", locked: false,
+        classId: "cA", projectId: "cA", type: "book", title: "열린 활동", locked: false,
       });
       await setDoc(doc(db, "bookActivities", "locked1"), {
-        classId: "cA", projectId: "cA", type: "mindmap", title: "잠긴 활동", locked: true,
+        classId: "cA", projectId: "cA", type: "book", title: "잠긴 활동", locked: true,
       });
       await setDoc(doc(db, "bookResources", "res1"), {
         resourceId: "res1",

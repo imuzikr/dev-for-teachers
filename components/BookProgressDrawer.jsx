@@ -2,87 +2,111 @@
 
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 
-function drawerItemState(confirmedCount, totalCount) {
-  if (totalCount > 0 && confirmedCount === totalCount) return "is-all";
-  if (confirmedCount >= Math.ceil(totalCount / 2) && confirmedCount > 0) return "is-many";
-  if (confirmedCount > 0) return "is-some";
-  return "is-none";
+const STUDENT_PROGRESS_COLORS = [
+  "#bb6d52",
+  "#b89a2d",
+  "#9ca83a",
+  "#5f9e64",
+  "#279779",
+  "#2c96a5",
+  "#347fa8",
+  "#6d62af",
+  "#9b65aa",
+  "#b75c7c",
+];
+
+function progressItems(sections) {
+  return sections.flatMap((section, sectionIndex) => (
+    section.items.map((item, itemIndex) => ({
+      ...item,
+      sectionId: section.id,
+      sectionTitle: section.title,
+      sectionIndex,
+      itemIndex,
+      key: bookConfirmationKey(item.kind, item.id),
+    }))
+  ));
 }
 
-function confirmationRatio(confirmedCount, totalCount) {
-  if (totalCount <= 0) return "0%";
-  return `${Math.round((confirmedCount / totalCount) * 100)}%`;
-}
-
-function confirmedStudents(participants, confirmationsByUser, item) {
-  const key = bookConfirmationKey(item.kind, item.id);
-  return participants.filter((participant) => confirmationsByUser.get(participant.uid)?.has(key));
+function studentLabel(participant) {
+  const name = participant.name || participant.realName || participant.displayName || "이름 미설정";
+  return participant.studentId ? `${participant.studentId} ${name}` : name;
 }
 
 export default function BookProgressDrawer({ sections, participants, confirmationsByUser, collapsed, onToggle }) {
-  const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
+  const items = progressItems(sections);
+  const totalItems = items.length;
   const totalChecks = totalItems * participants.length;
-  const confirmedChecks = sections.reduce((sum, section) => (
-    sum + section.items.reduce((itemSum, item) => (
-      itemSum + confirmedStudents(participants, confirmationsByUser, item).length
-    ), 0)
-  ), 0);
+  const confirmedChecks = participants.reduce((sum, participant) => {
+    const confirmed = confirmationsByUser.get(participant.uid) ?? new Set();
+    return sum + items.filter((item) => confirmed.has(item.key)).length;
+  }, 0);
 
   return (
-    <aside className={`book-progress-drawer${collapsed ? " is-collapsed" : ""}`} aria-label="학생 확인 진척도">
+    <aside className={`book-progress-drawer${collapsed ? " is-collapsed" : ""}`} aria-label="학생별 확인 진척도">
       <button
         type="button"
         className="book-progress-toggle"
         onClick={onToggle}
         aria-expanded={!collapsed}
-        title={collapsed ? "진척도 펼치기" : "진척도 접기"}
+        title={collapsed ? "진행 패널 펼치기" : "진행 패널 접기"}
       >
         <span aria-hidden="true">{collapsed ? "«" : "»"}</span>
-        <strong>{collapsed ? "진척도" : "접기"}</strong>
+        <strong>{collapsed ? "진행" : "접기"}</strong>
       </button>
 
       <div className="book-progress-content" aria-hidden={collapsed ? "true" : undefined}>
         <header className="book-progress-head">
           <div>
-            <span>학생 확인</span>
-            <h2>진척도</h2>
+            <span>학생별 진행</span>
+            <h2>전체 {confirmedChecks} / {totalChecks || 0}</h2>
+            <small>참여 {participants.length}명 기준</small>
           </div>
-          <strong>{totalChecks ? Math.round((confirmedChecks / totalChecks) * 100) : 0}%</strong>
         </header>
 
-        {sections.length === 0 ? (
+        {totalItems === 0 ? (
           <p className="book-progress-empty">표시할 활동과 자료가 없습니다.</p>
+        ) : participants.length === 0 ? (
+          <p className="book-progress-empty">표시할 학생이 없습니다.</p>
         ) : (
-          <div className="book-progress-pipeline">
-            {sections.map((section, sectionIndex) => (
-              <section className="book-progress-lane" key={section.id}>
-                <div className="book-progress-lane-label">
-                  <span>STEP {sectionIndex + 1}</span>
-                  <strong>{section.title}</strong>
-                  <em>{section.items.length}개</em>
-                </div>
-                <ol className="book-progress-segments" aria-label={`${section.title} 확인 상태바`}>
-                  {section.items.map((item, itemIndex) => {
-                    const students = confirmedStudents(participants, confirmationsByUser, item);
-                    const state = drawerItemState(students.length, participants.length);
-                    const studentNames = students.map((student) => student.name || student.realName || student.displayName).filter(Boolean).join(", ");
-                    const itemLabel = `${section.title} ${item.kind === "activity" ? "활동" : "자료"} ${itemIndex + 1}: ${item.title}`;
-                    return (
-                      <li
-                        className={`book-progress-segment ${state}`}
-                        key={`${item.kind}:${item.id}`}
-                        style={{ "--progress-ratio": confirmationRatio(students.length, participants.length) }}
-                        title={`${itemLabel}\n${students.length}/${participants.length} 확인${studentNames ? `\n${studentNames}` : ""}`}
-                        aria-label={`${itemLabel}, ${students.length}/${participants.length} 확인`}
-                      >
-                        <span>{item.kind === "activity" ? "A" : "R"}</span>
-                        <em>{itemIndex + 1}</em>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </section>
-            ))}
+          <div className="book-progress-roster">
+            {participants.map((participant, participantIndex) => {
+              const confirmed = confirmationsByUser.get(participant.uid) ?? new Set();
+              const confirmedCount = items.filter((item) => confirmed.has(item.key)).length;
+              const ratio = totalItems ? Math.round((confirmedCount / totalItems) * 100) : 0;
+              const color = STUDENT_PROGRESS_COLORS[participantIndex % STUDENT_PROGRESS_COLORS.length];
+
+              return (
+                <article
+                  className="book-progress-student"
+                  key={participant.uid}
+                  style={{ "--student-color": color }}
+                >
+                  <header className="book-progress-student-head">
+                    <span className="book-progress-dot" aria-hidden="true" />
+                    <strong>{studentLabel(participant)}</strong>
+                    <em>{confirmedCount}/{totalItems}칸</em>
+                  </header>
+                  <div className="book-progress-student-bar" aria-hidden="true">
+                    <span style={{ width: `${ratio}%` }} />
+                  </div>
+                  <ol className="book-progress-student-cells" aria-label={`${studentLabel(participant)} 확인 상태`}>
+                    {items.map((item) => {
+                      const checked = confirmed.has(item.key);
+                      const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}`;
+                      return (
+                        <li
+                          className={`book-progress-student-cell${checked ? " is-filled" : ""}${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
+                          key={`${participant.uid}:${item.kind}:${item.id}`}
+                          title={`${title}\n${checked ? "확인함" : "미확인"}`}
+                          aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}
+                        />
+                      );
+                    })}
+                  </ol>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
