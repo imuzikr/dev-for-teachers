@@ -34,12 +34,14 @@ export default function BookPersonalDetail({
     ])));
   }, [activities, entriesByActivity, selected.uid]);
 
-  async function saveResponse(activity) {
+  async function saveResponse(detailItem) {
+    const activity = detailItem.source;
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
     try {
       await saveDashboardText(activity.id, user, drafts[activity.id] ?? "");
+      await onConfirmItem?.(detailItem);
       setSavedId(activity.id);
     } catch {
       setFailedId(activity.id);
