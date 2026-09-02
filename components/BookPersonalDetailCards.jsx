@@ -34,7 +34,7 @@ function detailUrlSlot(href, label) {
   );
 }
 
-function ConfirmButton({ confirmed, disabled, failed, pending, onClick }) {
+function ConfirmButton({ confirmed, disabled, pending, onClick }) {
   return (
     <button
       type="button"
@@ -42,7 +42,7 @@ function ConfirmButton({ confirmed, disabled, failed, pending, onClick }) {
       disabled={disabled || confirmed || pending}
       onClick={onClick}
     >
-      {pending ? "확인 중" : confirmed ? "확인됨" : failed ? "재시도" : "확인"}
+      {pending ? "확인 중" : confirmed ? "확인됨" : "확인"}
     </button>
   );
 }
@@ -84,7 +84,7 @@ export function BookPersonalResourceCard({
       </div>
       {!isTeacher && (
         <footer>
-          <ConfirmButton confirmed={confirmed} disabled={!onConfirm} failed={confirmState.failedKey === confirmationKey} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
+          <ConfirmButton confirmed={confirmed} disabled={!onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
       )}
     </article>
@@ -147,7 +147,7 @@ export function BookPersonalActivityCard({
               {saveState.savingId === activity.id ? "저장 중..." : saveState.savedId === activity.id ? "저장됨" : saveState.failedId === activity.id ? "다시 저장" : "답변 저장"}
             </button>
           )}
-          <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} failed={confirmState.failedKey === confirmationKey} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
+          <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
       )}
     </article>

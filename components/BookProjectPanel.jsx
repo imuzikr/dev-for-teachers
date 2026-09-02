@@ -11,13 +11,19 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   const [activeStepId, setActiveStepId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [draggingKey, setDraggingKey] = useState(null);
+  const projectKey = project?.id || project?.classId || "";
+  const stepIdentity = (project?.steps ?? []).map((step) => step.id).join("|");
 
   useEffect(() => {
     if (editing) return;
-    const firstStepId = project?.steps?.[0]?.id ?? null;
-    setViewOpenIds(new Set(firstStepId ? [firstStepId] : []));
-    setActiveStepId(firstStepId);
-  }, [editing, project]);
+    const stepIds = stepIdentity ? stepIdentity.split("|") : [];
+    const firstStepId = stepIds[0] ?? null;
+    setViewOpenIds((current) => {
+      const preserved = stepIds.filter((stepId) => current.has(stepId));
+      return new Set(preserved.length ? preserved : firstStepId ? [firstStepId] : []);
+    });
+    setActiveStepId((current) => stepIds.includes(current) ? current : firstStepId);
+  }, [editing, projectKey, stepIdentity]);
 
   function toggleStep(stepId) {
     const open = !viewOpenIds.has(stepId);
