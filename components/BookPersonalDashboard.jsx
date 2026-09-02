@@ -41,6 +41,24 @@ function detailSections(project, activities) {
     .filter((section) => section.activities.length > 0 || section.resources.length > 0);
 }
 
+function DetailUrlSlot({ href, label }) {
+  if (href) {
+    return (
+      <a className="book-project-resource-link" href={href} target="_blank" rel="noreferrer">
+        <span>제공 URL</span>
+        <strong>{label}</strong>
+      </a>
+    );
+  }
+
+  return (
+    <div className="book-project-resource-link book-project-resource-link--empty" aria-label="제공 URL 없음">
+      <span>제공 URL</span>
+      <strong>등록된 URL 없음</strong>
+    </div>
+  );
+}
+
 export default function BookPersonalDashboard({ participants, activities, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, saveDashboardText = saveBookDashboardText }) {
   const [selectedUid, setSelectedUid] = useState(null);
   const [drafts, setDrafts] = useState({});
@@ -108,6 +126,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
                     if (detailItem.kind === "resource") {
                       const resource = detailItem.source;
                       const linkHref = resourceHref(resource.url);
+                      const linkLabel = resourceLinkLabel(resource.url);
                       return (
                         <article className="book-personal-activity-card book-personal-resource-card" key={`resource:${resource.id ?? `${section.id}-${index}`}`}>
                           <header>
@@ -127,12 +146,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
                             </button>
                           </header>
                           <div className="book-personal-card-body">
-                            {linkHref && (
-                              <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
-                                <span>제공 URL</span>
-                                <strong>{resourceLinkLabel(resource.url)}</strong>
-                              </a>
-                            )}
+                            <DetailUrlSlot href={linkHref} label={linkLabel} />
                             <div className="book-personal-response book-personal-resource-body">
                               <span>자료 내용</span>
                               <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
@@ -147,6 +161,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
                     const response = isTeacher ? dashboardText(savedEntry) : drafts[activity.id] ?? "";
                     const locked = !!activity.locked;
                     const activityHref = resourceHref(activity.bookUrl || activity.url);
+                    const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
                     return (
                       <article className={`book-personal-activity-card${locked ? " is-locked" : ""}`} key={`activity:${activity.id}`}>
                         <header>
@@ -158,12 +173,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
                           <em className={locked ? "is-locked" : completed ? "is-done" : ""}>{locked ? "잠김" : completed ? "작성함" : "시작 전"}</em>
                         </header>
                         <div className="book-personal-card-body">
-                          {activityHref && (
-                            <a className="book-project-resource-link" href={activityHref} target="_blank" rel="noreferrer">
-                              <span>제공 URL</span>
-                              <strong>{resourceLinkLabel(activity.bookUrl || activity.url)}</strong>
-                            </a>
-                          )}
+                          <DetailUrlSlot href={activityHref} label={activityLinkLabel} />
                           <label className="book-personal-response">
                             <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
                             <textarea

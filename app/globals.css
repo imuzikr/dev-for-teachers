@@ -8989,6 +8989,20 @@ pre code {
   white-space: nowrap;
 }
 
+.book-project-resource-link--empty {
+  color: var(--text-sub);
+  cursor: default;
+}
+
+.book-project-resource-link--empty:hover {
+  border-color: var(--border);
+  background: var(--soft-bg);
+}
+
+.book-project-resource-link--empty strong {
+  color: var(--text-sub);
+}
+
 .book-project-detail-actions {
   position: absolute;
   top: 7px;
