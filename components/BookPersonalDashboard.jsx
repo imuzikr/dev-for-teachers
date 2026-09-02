@@ -41,7 +41,7 @@ function detailSections(project, activities) {
     .filter((section) => section.activities.length > 0 || section.resources.length > 0);
 }
 
-export default function BookPersonalDashboard({ participants, activities, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onOpen, saveDashboardText = saveBookDashboardText }) {
+export default function BookPersonalDashboard({ participants, activities, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, saveDashboardText = saveBookDashboardText }) {
   const [selectedUid, setSelectedUid] = useState(null);
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
@@ -171,7 +171,14 @@ export default function BookPersonalDashboard({ participants, activities, projec
                         </label>
                         {isTeacher ? (
                           <footer>
-                            <button type="button" className="btn-outline" onClick={() => onOpen(activity)}>{locked ? "활동 열기" : "활동 보기"}</button>
+                            <button
+                              type="button"
+                              className={locked ? "btn-primary" : "btn-outline"}
+                              disabled={!onToggleActivityLock}
+                              onClick={() => onToggleActivityLock(activity, !locked)}
+                            >
+                              {locked ? "활동 열기" : "활동 잠그기"}
+                            </button>
                           </footer>
                         ) : !locked && (
                           <footer>
@@ -224,7 +231,7 @@ export default function BookPersonalDashboard({ participants, activities, projec
                   <div className="book-personal-progress" aria-label={`활동 ${completed.size}개 완료`}>
                     <span style={{ width: `${activities.length ? (completed.size / activities.length) * 100 : 0}%` }} />
                   </div>
-                  <p className="book-personal-card-hint">{isTeacher ? "학생 활동 보기" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
+                  <p className="book-personal-card-hint">{isTeacher ? "학생 진행 현황" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
                 </button>
               </article>
             );

@@ -126,7 +126,7 @@ export default function BookWorkspace({
           progressByUser={progressByUser}
           user={user}
           isTeacher={isTeacher}
-          onOpen={onOpen}
+          onToggleActivityLock={onToggleActivityLock}
         />
       </section>
     </div>
