@@ -63,8 +63,9 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
             </summary>
             <div className="book-project-flow-items">
               {section.items.map((item, itemIndex) => {
-                const locked = item.source?.locked === true;
-                const Tag = isTeacher && onToggleItemLock ? "button" : "span";
+                const isActivity = item.kind === "activity";
+                const locked = isActivity && item.source?.locked === true;
+                const Tag = isActivity && isTeacher && onToggleItemLock ? "button" : "span";
                 return (
                   <Tag
                     type={Tag === "button" ? "button" : undefined}
@@ -74,11 +75,13 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
                     aria-label={Tag === "button" ? `${item.title} ${locked ? "잠금 해제" : "잠그기"}` : undefined}
                     onClick={Tag === "button" ? () => onToggleItemLock(item, !locked) : undefined}
                   >
-                    <b>{item.kind === "activity" ? "A" : "R"}{itemIndex + 1}</b>
+                    <b>{isActivity ? "A" : "R"}{itemIndex + 1}</b>
                     <em>{item.title}</em>
-                    <i aria-label={locked ? "잠김" : "열림"}>
-                      {locked ? <IconLock size={15} /> : <IconUnlock size={15} />}
-                    </i>
+                    {isActivity && (
+                      <i aria-label={locked ? "잠김" : "열림"}>
+                        {locked ? <IconLock size={15} /> : <IconUnlock size={15} />}
+                      </i>
+                    )}
                   </Tag>
                 );
               })}

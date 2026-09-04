@@ -8401,6 +8401,7 @@ pre code {
   background: var(--card-bg);
   border-radius: var(--radius);
   overflow: hidden;
+  transition: grid-template-columns 0.22s ease;
 }
 
 .books-main--split .book-library-layout {
@@ -8412,8 +8413,24 @@ pre code {
   background: var(--bg);
 }
 
+.books-main--split .book-library-layout.has-progress-drawer {
+  grid-template-columns: clamp(300px, 27vw, 360px) minmax(0, 1fr) clamp(280px, 22vw, 340px);
+}
+
 .books-main--split .book-library-layout.is-library-collapsed {
   grid-template-columns: 48px minmax(0, 1fr);
+}
+
+.books-main--split .book-library-layout.has-progress-drawer.is-library-collapsed {
+  grid-template-columns: 48px minmax(0, 1fr) clamp(280px, 22vw, 340px);
+}
+
+.books-main--split .book-library-layout.has-progress-drawer.is-progress-collapsed {
+  grid-template-columns: clamp(300px, 27vw, 360px) minmax(0, 1fr) 48px;
+}
+
+.books-main--split .book-library-layout.has-progress-drawer.is-library-collapsed.is-progress-collapsed {
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
 }
 
 .books-main--split .book-library-layout.is-student-main {
@@ -8429,6 +8446,7 @@ pre code {
   padding: 16px;
   background: var(--sage-card, var(--primary-light));
   border-right: 1px solid var(--border);
+  transition: padding 0.22s ease;
 }
 
 .books-main--split .book-library-side {
@@ -8441,7 +8459,6 @@ pre code {
   overflow: hidden;
   scrollbar-gutter: auto;
   padding: 10px 6px;
-  background: var(--sidebar-bg);
 }
 
 .book-library-collapse {
@@ -8486,16 +8503,23 @@ pre code {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--sidebar-active);
+  color: var(--primary-dark);
   box-shadow: none;
 }
 
 .book-library-side.is-collapsed .book-library-collapse:hover {
-  background: var(--dark);
+  background: var(--primary-light);
 }
 
 .book-library-side.is-collapsed .book-library-content {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px);
+}
+
+.book-library-content {
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
 }
 
 .book-library-main {
@@ -8512,6 +8536,7 @@ pre code {
 }
 
 .book-progress-drawer {
+  position: relative;
   min-width: 0;
   height: 100dvh;
   overflow-y: auto;
@@ -8519,28 +8544,35 @@ pre code {
   padding: 18px 14px;
   border-left: 1px solid var(--border);
   background: var(--sage-card, var(--primary-light));
+  transition: padding 0.22s ease;
 }
 
 .book-progress-drawer.is-collapsed {
   overflow: hidden;
-  padding: 10px 8px;
+  padding: 10px 6px;
 }
 
 .book-progress-toggle {
-  width: 100%;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 12px;
+  position: absolute;
+  top: 18px;
+  left: 14px;
+  z-index: 2;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 50%;
   background: var(--card-bg);
   color: var(--primary-dark);
   font: inherit;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: var(--shadow-soft);
 }
 
 .book-progress-toggle:hover {
@@ -8549,29 +8581,32 @@ pre code {
 }
 
 .book-progress-toggle span {
-  font-size: 18px;
   line-height: 1;
 }
 
 .book-progress-drawer.is-collapsed .book-progress-toggle {
-  min-height: calc(100dvh - 20px);
-  flex-direction: column;
-  margin-bottom: 0;
-  padding: 10px 4px;
-}
-
-.book-progress-drawer.is-collapsed .book-progress-toggle strong {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  white-space: nowrap;
+  position: static;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .book-progress-drawer.is-collapsed .book-progress-content {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
 }
 
 .book-progress-content {
   min-width: 0;
+  padding-top: 42px;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
 }
 
 .book-progress-head {
@@ -9619,6 +9654,10 @@ button.book-project-flow-pill:focus-visible {
 
 .book-project-flow-pill--resource {
   background: var(--soft-bg);
+}
+
+.book-project-flow-pill--resource i {
+  display: none;
 }
 
 .book-project-flow-pill.is-locked {
@@ -10817,8 +10856,24 @@ button.book-project-flow-pill:focus-visible {
     min-height: 0;
   }
 
+  .books-main--split .book-library-layout.has-progress-drawer {
+    grid-template-columns: 280px minmax(0, 1fr) 280px;
+  }
+
   .books-main--split .book-library-layout.is-library-collapsed {
     grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .books-main--split .book-library-layout.has-progress-drawer.is-library-collapsed {
+    grid-template-columns: 48px minmax(0, 1fr) 280px;
+  }
+
+  .books-main--split .book-library-layout.has-progress-drawer.is-progress-collapsed {
+    grid-template-columns: 280px minmax(0, 1fr) 48px;
+  }
+
+  .books-main--split .book-library-layout.has-progress-drawer.is-library-collapsed.is-progress-collapsed {
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
   }
 
   .books-main--split .book-library-layout.is-student-main {
@@ -10831,6 +10886,10 @@ button.book-project-flow-pill:focus-visible {
     padding: 12px;
     border-right: 1px solid var(--border);
     border-bottom: 0;
+  }
+
+  .books-main--split .book-library-side.is-collapsed {
+    padding: 10px 6px;
   }
 
   .books-main--split .book-library-main {

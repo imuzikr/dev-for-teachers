@@ -49,10 +49,10 @@ export default function BookProgressDrawer({ sections, participants, confirmatio
         className="book-progress-toggle"
         onClick={onToggle}
         aria-expanded={!collapsed}
+        aria-label={collapsed ? "진행 패널 펼치기" : "진행 패널 접기"}
         title={collapsed ? "진행 패널 펼치기" : "진행 패널 접기"}
       >
         <span aria-hidden="true">{collapsed ? "«" : "»"}</span>
-        <strong>{collapsed ? "진행" : "접기"}</strong>
       </button>
 
       <div className="book-progress-content" aria-hidden={collapsed ? "true" : undefined}>
