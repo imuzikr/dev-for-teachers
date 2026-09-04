@@ -9629,6 +9629,21 @@ pre code {
   border-radius: 8px;
   color: var(--primary-dark);
 }
+.book-personal-resource-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 2px 0;
+  color: var(--text-sub);
+}
+.book-personal-resource-content p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
 .book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .book-personal-activity-card footer button { min-width: 0; min-height: 44px; flex: 1; padding: 7px 10px; }
 .book-personal-confirm.is-confirmed {
