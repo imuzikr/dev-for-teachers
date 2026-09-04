@@ -9597,7 +9597,7 @@ pre code {
 .book-personal-response > span { color: var(--text); font-size: 12px; font-weight: 800; }
 .book-personal-response textarea {
   width: 100%;
-  min-height: 150px;
+  min-height: 104px;
   flex: 1;
   resize: none;
   padding: 12px;
@@ -9633,8 +9633,18 @@ pre code {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 4px 2px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--text-sub);
+}
+.book-personal-resource-content > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
 }
 .book-personal-resource-content p {
   margin: 0;
