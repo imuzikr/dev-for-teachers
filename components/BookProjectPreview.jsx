@@ -135,8 +135,8 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       )}
       <div className="book-project-detail-copy">
         <div className="book-project-detail-headline">
-          <strong>{item.title}</strong>
           {locked && <em className="book-project-lock-state">잠김</em>}
+          <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
             {onOpen && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 열기`} aria-label={`${itemLabel} 열기`} onClick={onOpen}>

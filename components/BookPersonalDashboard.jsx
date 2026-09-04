@@ -5,6 +5,57 @@ import BookPersonalDetail from "./BookPersonalDetail";
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
+function ProjectFlowOverview({ project, sections, itemCount }) {
+  if (sections.length === 0) return null;
+
+  const activityCount = sections.reduce((total, section) => total + section.activities.length, 0);
+  const resourceCount = sections.reduce((total, section) => total + section.resources.length, 0);
+
+  return (
+    <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
+      <header>
+        <div>
+          <span>전체 프로젝트 구성</span>
+          <strong>{project?.title || "프로젝트 흐름"}</strong>
+        </div>
+        <div className="book-project-flow-summary" aria-label={`${sections.length}개 Step, 전체 ${itemCount}개 항목, ${activityCount}개 활동, ${resourceCount}개 자료`}>
+          <span>{sections.length} Steps</span>
+          <span>{itemCount} 항목</span>
+          <span>{activityCount} 활동</span>
+          <span>{resourceCount} 자료</span>
+        </div>
+      </header>
+      <div className="book-project-flow-track">
+        {sections.map((section, stepIndex) => (
+          <article className="book-project-flow-step" key={section.id}>
+            <div className="book-project-flow-step-head">
+              <span>STEP {stepIndex + 1}</span>
+              <strong>{section.title}</strong>
+              <small>{section.activities.length} 활동 · {section.resources.length} 자료</small>
+            </div>
+            <div className="book-project-flow-items">
+              {section.items.map((item, itemIndex) => {
+                const locked = item.kind === "activity" && item.source?.locked;
+                return (
+                  <span
+                    className={`book-project-flow-pill book-project-flow-pill--${item.kind}${locked ? " is-locked" : ""}`}
+                    key={`${item.kind}:${item.id}`}
+                    title={item.title}
+                  >
+                    <b>{item.kind === "activity" ? "A" : "R"}{itemIndex + 1}</b>
+                    <em>{item.title}</em>
+                    {locked && <i>잠김</i>}
+                  </span>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onConfirmItem, saveDashboardText }) {
   const [selectedUid, setSelectedUid] = useState(null);
   const selected = participants.find((participant) => participant.uid === selectedUid) ?? null;
@@ -33,6 +84,8 @@ export default function BookPersonalDashboard({ participants, activities, sectio
 
   return (
     <section className="book-personal-dashboard" aria-label="참여자 개인 카드">
+      <ProjectFlowOverview project={project} sections={sections} itemCount={itemCount} />
+
       <div className="book-dashboard-head">
         <div>
           <h2>개인 카드</h2>
