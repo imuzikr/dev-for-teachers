@@ -77,10 +77,6 @@ export function BookPersonalResourceCard({
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(linkHref, linkLabel)}
-        <div className="book-personal-response book-personal-resource-body">
-          <span>자료 내용</span>
-          <p>{resource.content || "등록된 자료 설명이 없습니다."}</p>
-        </div>
       </div>
       {!isTeacher && (
         <footer>
