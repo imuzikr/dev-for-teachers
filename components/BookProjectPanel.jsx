@@ -6,7 +6,7 @@ import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems 
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -95,7 +95,11 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
               onPreview={() => openPreview(step, entry.kind, entry.id)}
               onEdit={onEdit ? () => onEdit(false, step.id) : null}
               onDelete={onDelete ? () => onDelete({ kind: entry.kind, item: entry.source, stepId: step.id }) : null}
-              onToggleLock={entry.kind === "activity" && onToggleActivityLock ? (locked) => onToggleActivityLock(entry.source, locked) : null}
+              onToggleLock={onToggleProjectItemLock
+                ? (locked) => onToggleProjectItemLock(entry, locked)
+                : entry.kind === "activity" && onToggleActivityLock
+                  ? (locked) => onToggleActivityLock(entry.source, locked)
+                  : null}
               dragging={draggingKey === itemKey(entry.kind, entry.id)}
               dragProps={onEdit ? {
                 onDragStart: (event) => {

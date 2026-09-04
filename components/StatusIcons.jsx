@@ -356,6 +356,17 @@ export function IconLock({ size = 20, className = "" }) {
   );
 }
 
+export function IconUnlock({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
+      <path d="M8 10.4V8.7a4 4 0 0 1 7.65-1.62" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M6.65 10.35h10.7c.9 0 1.65.74 1.65 1.65v5.4c0 .9-.74 1.65-1.65 1.65H6.65C5.74 19.05 5 18.3 5 17.4V12c0-.9.74-1.65 1.65-1.65Z" fill="#e6f1ea" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/>
+      <path d="M12 13.35v2.75" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round"/>
+      <circle cx="12" cy="13.05" r=".72" fill="currentColor"/>
+    </svg>
+  );
+}
+
 export function IconPeople({ size = 20, className = "" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">

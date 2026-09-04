@@ -47,7 +47,7 @@ describe("책방 활동·자료 확인 규칙", () => {
         title: "책방 프로젝트",
         version: "v1",
         steps: [],
-        confirmableItemKeys: ["resource:res1", "activity:act1", "activity:locked1"],
+        confirmableItemKeys: ["resource:res1", "resource:lockedRes1", "activity:act1", "activity:locked1"],
         createdBy: "teacherA",
         updatedAt: new Date(),
       });
@@ -62,6 +62,23 @@ describe("책방 활동·자료 확인 규칙", () => {
         title: "자료",
         content: "자료 내용",
         url: "",
+        locked: false,
+        createdBy: "teacherA",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(db, "bookResources", "lockedRes1"), {
+        resourceId: "lockedRes1",
+        classId: "cA",
+        projectId: "cA",
+        projectVersion: "v1",
+        stepId: "step1",
+        stepOrder: 0,
+        resourceOrder: 1,
+        title: "잠긴 자료",
+        content: "잠긴 자료 내용",
+        url: "",
+        locked: true,
         createdBy: "teacherA",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -83,6 +100,14 @@ describe("책방 활동·자료 확인 규칙", () => {
     await assertFails(setDoc(
       doc(db, "bookConfirmations", confirmationId("activity", "locked1", "stu1")),
       confirmation("stu1", { itemKind: "activity", itemId: "locked1", itemTitle: "잠긴 활동" })
+    ));
+  });
+
+  it("학생은 잠긴 자료를 확인할 수 없다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "lockedRes1", "stu1")),
+      confirmation("stu1", { itemId: "lockedRes1", itemTitle: "잠긴 자료" })
     ));
   });
 
@@ -125,6 +150,25 @@ describe("책방 활동·자료 확인 규칙", () => {
 
     const db = asStudent(env, "stu1").firestore();
     await assertSucceeds(setDoc(doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")), confirmation("stu1")));
+  });
+
+  it("기존 프로젝트 경로에서도 잠긴 자료는 확인할 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "기존 책방 프로젝트",
+        version: "legacy",
+        steps: [],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+    });
+
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "lockedRes1", "stu1")),
+      confirmation("stu1", { itemId: "lockedRes1", itemTitle: "잠긴 자료" })
+    ));
   });
 
   it("활동 id를 자료 확인으로 속일 수 없다", async () => {

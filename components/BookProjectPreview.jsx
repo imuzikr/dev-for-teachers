@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
-import { IconLock, IconTrash } from "./StatusIcons";
+import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
 
 function IconEdit({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 19.5h4l10-10a2.12 2.12 0 0 0-3-3l-10 10-1 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="m14 8 3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
@@ -18,10 +18,6 @@ function IconOpen({ size = 16 }) {
 
 function IconExpand({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.4 4H4v4.4M15.6 4H20v4.4M20 15.6V20h-4.4M4 15.6V20h4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.2 9.2 4.6 4.6M14.8 9.2l4.6-4.6M14.8 14.8l4.6 4.6M9.2 14.8l-4.6 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
-}
-
-function IconUnlock({ size = 16 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 10.4V8.7a4 4 0 0 1 7.65-1.62" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M6.65 10.35h10.7c.9 0 1.65.74 1.65 1.65v5.4c0 .9-.74 1.65-1.65 1.65H6.65C5.74 19.05 5 18.3 5 17.4V12c0-.9.74-1.65 1.65-1.65Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M12 13.35v2.75" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round"/><circle cx="12" cy="13.05" r=".72" fill="currentColor"/></svg>;
 }
 
 export function resourceHref(url) {
@@ -107,7 +103,7 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
   const linkHref = resourceHref(linkSource);
   const linkLabel = resourceLinkLabel(linkSource);
   const itemLabel = kind === "activity" ? "활동" : "자료";
-  const locked = kind === "activity" && item.locked;
+  const locked = item.locked === true;
 
   async function copyResource() {
     const text = [item.title, item.content, linkSource].filter(Boolean).join("\n");
@@ -135,7 +131,7 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
       )}
       <div className="book-project-detail-copy">
         <div className="book-project-detail-headline">
-          {locked && <em className="book-project-lock-state">잠김</em>}
+          {locked && <em className="book-project-lock-state"><IconLock size={12} /></em>}
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
             {onOpen && (
@@ -146,15 +142,15 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
             <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 확대`} aria-label={`${itemLabel} 확대`} onClick={onPreview}>
               <IconExpand />
             </button>
-            {kind === "activity" && onToggleLock && (
+            {onToggleLock && (
               <button
                 type="button"
                 className="btn-ghost book-project-icon-action"
-                title={item.locked ? "활동 잠금 해제" : "활동 잠그기"}
-                aria-label={item.locked ? "활동 잠금 해제" : "활동 잠그기"}
-                onClick={() => onToggleLock(!item.locked)}
+                title={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
+                aria-label={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
+                onClick={() => onToggleLock(!locked)}
               >
-                {item.locked ? <IconUnlock /> : <IconLock size={14} />}
+                {locked ? <IconUnlock /> : <IconLock size={14} />}
               </button>
             )}
             {onEdit && (

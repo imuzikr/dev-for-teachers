@@ -2,6 +2,7 @@
 
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import { IconLock } from "./StatusIcons";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
   return (entriesByActivity[activityId] ?? []).find((entry) => entry.authorId === uid) ?? null;
@@ -62,29 +63,36 @@ export function BookPersonalResourceCard({
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
   const confirmed = selectedProgress.has(confirmationKey);
+  const locked = resource.locked === true;
 
   return (
-    <article className={`book-personal-activity-card book-personal-resource-card${confirmed ? " is-confirmed" : ""}`}>
+    <article className={`book-personal-activity-card book-personal-resource-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
           <span>자료 {index + 1}</span>
           <strong>{resource.title}</strong>
         </div>
-        <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} onClick={() => onCopy(resource)}>
+        <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
           <IconCopy size={13} />
         </button>
       </header>
       <div className="book-personal-card-body">
-        {detailUrlSlot(linkHref, linkLabel)}
-        <div className="book-personal-resource-content" aria-label="자료 내용">
-          <span>자료 내용</span>
-          <p>{resource.content || ""}</p>
-        </div>
+        {locked ? (
+          <p className="book-personal-instruction">교사가 자료를 열면 확인할 수 있습니다.</p>
+        ) : (
+          <>
+            {detailUrlSlot(linkHref, linkLabel)}
+            <div className="book-personal-resource-content" aria-label="자료 내용">
+              <span>자료 내용</span>
+              <p>{resource.content || ""}</p>
+            </div>
+          </>
+        )}
       </div>
       {!isTeacher && (
         <footer>
-          <ConfirmButton confirmed={confirmed} disabled={!onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
+          <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
       )}
     </article>
@@ -119,7 +127,7 @@ export function BookPersonalActivityCard({
           <span>활동 {index + 1}</span>
           <strong>{activity.title}</strong>
         </div>
-        <em className={locked ? "is-locked" : confirmed ? "is-done" : ""}>{locked ? "잠김" : confirmed ? "확인함" : "미확인"}</em>
+        <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인함" : "미확인"}</em>
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}

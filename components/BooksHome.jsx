@@ -10,7 +10,7 @@ export default function BooksHome(props) {
     topNav, admin, user, classId, classes, currentClass, myClasses, myClassesAll, membershipIds, roster,
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
-    onEditProject, onSaveProject, onOpenActivity, onToggleActivityLock, onDelete,
+    onEditProject, onSaveProject, onOpenActivity, onToggleActivityLock, onToggleProjectItemLock, onDelete,
   } = props;
 
   return (
@@ -73,6 +73,7 @@ export default function BooksHome(props) {
         onEditProject={onEditProject}
         onOpen={onOpenActivity}
         onToggleActivityLock={onToggleActivityLock}
+        onToggleProjectItemLock={onToggleProjectItemLock}
         onDelete={onDelete}
       />
     </main>

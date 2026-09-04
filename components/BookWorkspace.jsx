@@ -28,6 +28,7 @@ export default function BookWorkspace({
   onEditProject,
   onOpen,
   onToggleActivityLock,
+  onToggleProjectItemLock,
   onDelete,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
@@ -154,10 +155,10 @@ export default function BookWorkspace({
           className="book-library-collapse"
           onClick={toggleLibraryPanel}
           aria-expanded={!libraryCollapsed}
+          aria-label={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
           title={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
         >
-          <span aria-hidden="true">{libraryCollapsed ? "»" : "«"}</span>
-          <strong>{libraryCollapsed ? "책방 흐름" : "패널 접기"}</strong>
+          <span aria-hidden="true">»</span>
         </button>
 
         <div className="book-library-content" aria-hidden={libraryCollapsed ? "true" : undefined}>
@@ -183,6 +184,7 @@ export default function BookWorkspace({
               onEdit={onEditProject}
               onOpen={onOpen}
               onToggleActivityLock={onToggleActivityLock}
+              onToggleProjectItemLock={onToggleProjectItemLock}
               onDelete={onDelete}
             />
           )}
@@ -202,6 +204,7 @@ export default function BookWorkspace({
           user={user}
           isTeacher={isTeacher}
           onToggleActivityLock={onToggleActivityLock}
+          onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
         />
       </section>

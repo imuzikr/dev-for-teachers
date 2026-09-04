@@ -8412,11 +8412,16 @@ pre code {
   background: var(--bg);
 }
 
+.books-main--split .book-library-layout.is-library-collapsed {
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+
 .books-main--split .book-library-layout.is-student-main {
   grid-template-columns: minmax(0, 1fr);
 }
 
 .book-library-side {
+  position: relative;
   min-width: 0;
   max-height: calc(100dvh - 180px);
   overflow-y: auto;
@@ -8430,6 +8435,67 @@ pre code {
   height: 100dvh;
   max-height: none;
   padding: 18px;
+}
+
+.book-library-side.is-collapsed {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  padding: 10px 6px;
+  background: var(--sidebar-bg);
+}
+
+.book-library-collapse {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  z-index: 2;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: var(--shadow-soft);
+}
+
+.book-library-collapse:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.book-library-collapse:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.book-library-side.is-collapsed .book-library-collapse {
+  position: static;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sidebar-active);
+  box-shadow: none;
+}
+
+.book-library-side.is-collapsed .book-library-collapse:hover {
+  background: var(--dark);
+}
+
+.book-library-side.is-collapsed .book-library-content {
+  display: none;
 }
 
 .book-library-main {
@@ -9131,15 +9197,16 @@ pre code {
 }
 .book-project-lock-state {
   width: max-content;
-  padding: 2px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--danger);
   background: var(--soft-bg);
-  font-size: 10px;
   font-style: normal;
-  font-weight: 800;
-  line-height: 1.25;
+  line-height: 1;
 }
 
 .book-project-detail-copy p {
@@ -9377,8 +9444,7 @@ pre code {
   margin-bottom: 12px;
 }
 
-.book-project-flow-overview > header span,
-.book-project-flow-step-head > span {
+.book-project-flow-overview > header span {
   color: var(--primary-dark);
   font-size: 11px;
   font-weight: 900;
@@ -9411,86 +9477,144 @@ pre code {
 
 .book-project-flow-track {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .book-project-flow-step {
-  display: grid;
-  grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-  padding: 10px 0;
-}
-
-.book-project-flow-step + .book-project-flow-step {
-  border-top: 1px solid rgba(217, 225, 212, 0.72);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--soft-bg);
 }
 
 .book-project-flow-step-head {
+  min-height: 58px;
   min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
 }
 
-.book-project-flow-step-head > strong {
-  display: block;
-  margin-top: 4px;
+.book-project-flow-step-head::-webkit-details-marker {
+  display: none;
+}
+
+.book-project-flow-step-head > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.book-project-flow-step-head > span > small {
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.book-project-flow-step-head > span > strong {
+  min-width: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.book-project-flow-step-head > small {
-  display: block;
-  margin-top: 3px;
+.book-project-flow-step-head > em {
   color: var(--text-sub);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.book-project-flow-step-head > b {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--primary-dark);
+  background: var(--card-bg);
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.book-project-flow-step[open] .book-project-flow-step-head > b {
+  transform: rotate(45deg);
 }
 
 .book-project-flow-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 9px;
   min-width: 0;
+  padding: 0 12px 12px;
 }
 
 .book-project-flow-pill {
   min-width: 0;
-  max-width: 190px;
+  max-width: 270px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 8px;
-  border: 1px solid rgba(60, 113, 65, 0.18);
-  border-radius: 999px;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--card-bg);
   color: var(--text);
-  font-size: 11px;
-  line-height: 1.15;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+button.book-project-flow-pill {
+  cursor: pointer;
+}
+
+button.book-project-flow-pill:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-soft);
+}
+
+button.book-project-flow-pill:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .book-project-flow-pill b {
   color: var(--primary-dark);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .book-project-flow-pill em {
   min-width: 0;
   overflow: hidden;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .book-project-flow-pill i {
   flex: 0 0 auto;
-  color: var(--danger);
-  font-size: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--primary-dark);
   font-style: normal;
-  font-weight: 900;
+  line-height: 1;
 }
 
 .book-project-flow-pill--resource {
@@ -9498,7 +9622,12 @@ pre code {
 }
 
 .book-project-flow-pill.is-locked {
-  border-color: rgba(167, 59, 47, 0.22);
+  border-color: var(--danger);
+  color: var(--text);
+}
+
+.book-project-flow-pill.is-locked i {
+  color: var(--danger);
 }
 
 .book-dashboard-head > span {
@@ -10686,6 +10815,10 @@ pre code {
     grid-template-columns: 280px minmax(0, 1fr);
     height: 100%;
     min-height: 0;
+  }
+
+  .books-main--split .book-library-layout.is-library-collapsed {
+    grid-template-columns: 48px minmax(0, 1fr);
   }
 
   .books-main--split .book-library-layout.is-student-main {

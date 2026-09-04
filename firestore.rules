@@ -493,7 +493,7 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
                'resourceId', 'classId', 'projectId', 'projectVersion',
                'stepId', 'stepOrder', 'resourceOrder',
-               'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+               'title', 'content', 'url', 'locked', 'createdBy', 'createdAt', 'updatedAt'
              ])
              && request.resource.data.resourceId == resourceId
              && request.resource.data.classId is string
@@ -512,6 +512,7 @@ service cloud.firestore {
              && request.resource.data.content.size() <= 5000
              && request.resource.data.url is string
              && request.resource.data.url.size() <= 1000
+             && request.resource.data.locked is bool
              && request.resource.data.createdBy == uid()
              && request.resource.data.createdAt == request.time
              && request.resource.data.updatedAt == request.time;
@@ -564,10 +565,22 @@ service cloud.firestore {
                     (
                       get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
                       && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.confirmableItemKeys.hasAny(['resource:' + request.resource.data.itemId])
+                      && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
+                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.get('locked', false) != true
                     )
                     || (
                       !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
                       && request.resource.data.projectId == request.resource.data.classId
+                      && (
+                           !exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
+                           || (
+                                get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+                                && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+                                && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.get('locked', false) != true
+                              )
+                         )
                     )
                   )
              )

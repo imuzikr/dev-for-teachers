@@ -206,6 +206,34 @@ function BooksPageInner() {
     }
   }
 
+  async function handleToggleProjectItemLock(item, locked) {
+    const source = item?.source ?? item;
+    if (!source?.id) return;
+
+    if (item?.kind === "activity") {
+      await handleToggleActivityLock(source, locked);
+      return;
+    }
+
+    const currentProject = displayedProject ?? project;
+    if (!currentProject) return;
+
+    const nextSteps = (currentProject.steps ?? []).map((step) => ({
+      ...step,
+      resources: (step.resources ?? []).map((resource) => (
+        resource.id === source.id ? { ...resource, locked } : resource
+      )),
+    }));
+
+    try {
+      await saveBookProject(user, { classId, title: currentProject.title, steps: nextSteps });
+      setToast(locked ? "자료를 잠갔어요." : "자료를 열었어요.");
+    } catch (error) {
+      console.error("[책방] 자료 잠금 변경 실패:", error);
+      setToast("자료 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
+  }
+
   function openProjectEditor(appendStep = false, stepId = null) {
     setAppendProjectStep(appendStep);
     setProjectEditorStepId(stepId);
@@ -242,7 +270,7 @@ function BooksPageInner() {
         appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
         onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
         onSaveProject={handleSaveProject} onOpenActivity={handleOpenActivity}
-        onToggleActivityLock={handleToggleActivityLock} onDelete={setConfirmDelete}
+        onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={setConfirmDelete}
       />
 
       <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />
