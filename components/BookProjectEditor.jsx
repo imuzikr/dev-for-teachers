@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BookProjectEditorItems from "./BookProjectEditorItems";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
@@ -77,6 +77,7 @@ export default function BookProjectEditor({
   saving,
   participantCount,
   onSave,
+  onDraftChange,
 }) {
   const [draft] = useState(() => initialDraft(project, appendStep, initialOpenStepId));
   const [title, setTitle] = useState(draft.title);
@@ -197,7 +198,11 @@ export default function BookProjectEditor({
     );
   }
 
-  const draftProject = { ...project, title, steps };
+  const draftProject = useMemo(() => ({ ...project, title, steps }), [project, steps, title]);
+
+  useEffect(() => {
+    onDraftChange?.(draftProject);
+  }, [draftProject, onDraftChange]);
 
   return (
     <div className="book-project-editor">

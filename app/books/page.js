@@ -151,7 +151,7 @@ function BooksPageInner() {
       steps: (project.steps ?? []).map((step) => ({
         ...step,
         activities: (step.activities ?? [])
-          .map((activity) => activityById.get(activity.id))
+          .map((activity) => activityById.get(activity.id) ?? activity)
           .filter(Boolean),
       })),
     };

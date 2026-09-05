@@ -9,6 +9,10 @@ import { bookDetailSections } from "./bookProjectItems";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 
+function projectStepActivities(project) {
+  return (project?.steps ?? []).flatMap((step) => step.activities ?? []);
+}
+
 export default function BookWorkspace({
   header,
   activities,
@@ -32,14 +36,29 @@ export default function BookWorkspace({
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [draftProject, setDraftProject] = useState(null);
   const showLibraryPanel = isTeacher;
   const classId = project?.classId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
-  const sections = useMemo(() => bookDetailSections(project, activities), [activities, project]);
+  const previewProject = editingProject && draftProject ? draftProject : project;
+  const previewActivities = useMemo(() => {
+    const projectActivities = projectStepActivities(previewProject);
+    if (projectActivities.length === 0) return activities;
+    const projectActivityIds = new Set(projectActivities.map((activity) => activity.id));
+    return [
+      ...activities.filter((activity) => !projectActivityIds.has(activity.id)),
+      ...projectActivities,
+    ];
+  }, [activities, previewProject]);
+  const sections = useMemo(() => bookDetailSections(previewProject, previewActivities), [previewActivities, previewProject]);
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
   }, []);
+
+  useEffect(() => {
+    if (!editingProject) setDraftProject(null);
+  }, [editingProject]);
 
   useEffect(() => {
     if (!user?.uid || activities.length === 0) {
@@ -171,6 +190,7 @@ export default function BookWorkspace({
               onToggleActivityLock={onToggleActivityLock}
               onToggleProjectItemLock={onToggleProjectItemLock}
               onDelete={onDelete}
+              onDraftChange={setDraftProject}
             />
           )}
         </div>
@@ -181,9 +201,9 @@ export default function BookWorkspace({
         {header}
         <BookPersonalDashboard
           participants={participants}
-          activities={activities}
+          activities={previewActivities}
           sections={sections}
-          project={project}
+          project={previewProject}
           entriesByActivity={entriesByActivity}
           progressByUser={confirmedItemsByUser}
           user={user}

@@ -6,7 +6,7 @@ import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems 
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -71,6 +71,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
         saving={saving}
         participantCount={participantCount}
         onSave={onSave}
+        onDraftChange={onDraftChange}
       />
     );
   }

@@ -20,22 +20,20 @@ export function bookDetailSections(project, activities) {
   }
 
   const activityIds = new Set(activities.map((activity) => activity.id));
-  return project.steps
-    .map((step, index) => {
-      const stepId = step.id ?? `step-${index + 1}`;
-      const stepTitle = step.title || `Step ${index + 1}`;
-      const items = orderedStepItems(step)
-        .filter((item) => item.kind === "resource" || activityIds.has(item.id))
-        .map((item) => ({ ...item, stepId, stepTitle }));
-      return {
-        id: stepId,
-        title: stepTitle,
-        activities: items.filter((item) => item.kind === "activity"),
-        resources: items.filter((item) => item.kind === "resource"),
-        items,
-      };
-    })
-    .filter((section) => section.activities.length > 0 || section.resources.length > 0);
+  return project.steps.map((step, index) => {
+    const stepId = step.id ?? `step-${index + 1}`;
+    const stepTitle = step.title || `Step ${index + 1}`;
+    const items = orderedStepItems(step)
+      .filter((item) => item.kind === "resource" || activityIds.has(item.id))
+      .map((item) => ({ ...item, stepId, stepTitle }));
+    return {
+      id: stepId,
+      title: stepTitle,
+      activities: items.filter((item) => item.kind === "activity"),
+      resources: items.filter((item) => item.kind === "resource"),
+      items,
+    };
+  });
 }
 
 export function bookProjectItemCount(sections) {
