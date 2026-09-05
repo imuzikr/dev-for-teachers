@@ -158,7 +158,7 @@ export default function BookWorkspace({
           aria-label={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
           title={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
         >
-          <span aria-hidden="true">»</span>
+          <span aria-hidden="true">{libraryCollapsed ? "»" : "«"}</span>
         </button>
 
         <div className="book-library-content" aria-hidden={libraryCollapsed ? "true" : undefined}>
