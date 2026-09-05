@@ -9644,48 +9644,52 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-progress-groups {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px;
   width: 100%;
   margin: 12px 0;
 }
 
 .book-personal-progress-cells {
-  --personal-cell-bg: rgba(47, 111, 62, 0.14);
-  --personal-cell-border: rgba(47, 111, 62, 0.34);
-  --personal-cell-fill: #2f6f3e;
   display: flex;
-  flex: var(--progress-item-count, 1) 1 0;
   flex-wrap: nowrap;
-  gap: 4px;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
   min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.book-personal-progress-cells.step-2 {
-  --personal-cell-bg: rgba(232, 143, 57, 0.14);
-  --personal-cell-border: rgba(232, 143, 57, 0.34);
-  --personal-cell-fill: #e88f39;
-}
-
-.book-personal-progress-cells.step-3 {
-  --personal-cell-bg: rgba(126, 87, 194, 0.14);
-  --personal-cell-border: rgba(126, 87, 194, 0.34);
-  --personal-cell-fill: #7e57c2;
-}
-
 .book-personal-progress-cell,
 .book-personal-progress-empty {
+  --personal-cell-bg: rgba(47, 111, 62, 0.14);
+  --personal-cell-border: rgba(47, 111, 62, 0.34);
+  --personal-cell-fill: #2f6f3e;
   height: 6px;
   min-width: 0;
   flex: 1 1 0;
   border: 1px solid var(--personal-cell-border);
   border-radius: 3px;
   background: var(--personal-cell-bg);
+}
+
+.book-personal-progress-cell.step-2,
+.book-personal-progress-empty.step-2 {
+  --personal-cell-bg: rgba(232, 143, 57, 0.14);
+  --personal-cell-border: rgba(232, 143, 57, 0.34);
+  --personal-cell-fill: #e88f39;
+}
+
+.book-personal-progress-cell.step-3,
+.book-personal-progress-empty.step-3 {
+  --personal-cell-bg: rgba(126, 87, 194, 0.14);
+  --personal-cell-border: rgba(126, 87, 194, 0.34);
+  --personal-cell-fill: #7e57c2;
+}
+
+.book-personal-progress-cell.is-step-start,
+.book-personal-progress-empty.is-step-start {
+  margin-left: 4px;
 }
 
 .book-personal-progress-empty {

@@ -50,33 +50,56 @@ export function ClassAverageProgress({ sections, participants, progressByUser, i
 }
 
 export function PersonalProgressGroups({ groups, completed, participantLabel }) {
+  const cells = groups.flatMap(({ section, stepIndex, items: groupItems }) => {
+    const stepClass = `step-${Math.min(stepIndex + 1, 3)}`;
+    if (groupItems.length === 0) {
+      return [{
+        key: `empty:${section.id}`,
+        stepClass,
+        stepIndex,
+        section,
+        firstInStep: true,
+        empty: true,
+      }];
+    }
+
+    return groupItems.map((item, itemIndex) => ({
+      key: `${item.kind}:${item.id}`,
+      stepClass,
+      stepIndex,
+      section,
+      item,
+      firstInStep: itemIndex === 0,
+      empty: false,
+    }));
+  });
+
   return (
     <div className="book-personal-progress-groups" aria-label={`${participantLabel} 확인 상태`}>
-      {groups.map(({ section, stepIndex, items: groupItems }) => (
-        <ol
-          className={`book-personal-progress-cells step-${Math.min(stepIndex + 1, 3)}${groupItems.length === 0 ? " is-empty" : ""}`}
-          key={section.id}
-          aria-label={`STEP ${stepIndex + 1} ${section.title} 확인 상태`}
-          style={{ "--progress-item-count": groupItems.length || 1 }}
-        >
-          {groupItems.length === 0 ? (
-            <li className="book-personal-progress-empty" aria-label={`STEP ${stepIndex + 1} ${section.title}: 항목 없음`} />
-          ) : (
-            groupItems.map((item) => {
-              const checked = completed.has(item.key);
-              const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}`;
-              return (
-                <li
-                  className={`book-personal-progress-cell${checked ? " is-filled" : ""}`}
-                  key={`${item.kind}:${item.id}`}
-                  title={`${title}\n${checked ? "확인함" : "미확인"}`}
-                  aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}
-                />
-              );
-            })
-          )}
-        </ol>
-      ))}
+      <ol className="book-personal-progress-cells">
+        {cells.map((cell, cellIndex) => {
+          if (cell.empty) {
+            return (
+              <li
+                className={`book-personal-progress-empty ${cell.stepClass}${cell.firstInStep && cellIndex > 0 ? " is-step-start" : ""}`}
+                key={cell.key}
+                aria-label={`STEP ${cell.stepIndex + 1} ${cell.section.title}: 항목 없음`}
+              />
+            );
+          }
+
+          const checked = completed.has(cell.item.key);
+          const title = `${cell.item.sectionTitle} ${cell.item.kind === "activity" ? "활동" : "자료"} ${cell.item.itemIndex + 1}: ${cell.item.title}`;
+          return (
+            <li
+              className={`book-personal-progress-cell ${cell.stepClass}${checked ? " is-filled" : ""}${cell.firstInStep && cellIndex > 0 ? " is-step-start" : ""}`}
+              key={cell.key}
+              title={`${title}\n${checked ? "확인함" : "미확인"}`}
+              aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}
+            />
+          );
+        })}
+      </ol>
     </div>
   );
 }
