@@ -18,6 +18,7 @@ export default function BookPersonalDetail({
   onToggleActivityLock,
   onConfirmItem,
   saveDashboardText = saveBookDashboardText,
+  backLabel = "← 개인 카드",
 }) {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
@@ -73,7 +74,7 @@ export default function BookPersonalDetail({
   return (
     <section className="book-personal-dashboard book-personal-detail" aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
       <header className="book-personal-detail-head">
-        <button type="button" className="btn-outline" onClick={onBack}>← 개인 카드</button>
+        <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
         <div>
           <span>{isTeacher ? "참여자 활동" : "나의 개발자실"}</span>
           <h2>{participantName(selected)} 활동 대시보드</h2>

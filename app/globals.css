@@ -9384,10 +9384,6 @@ pre code {
   border-bottom: 1px solid var(--border);
 }
 
-.book-project-flow-overview--student {
-  padding-top: 0;
-}
-
 .book-project-flow-overview > header {
   display: flex;
   align-items: flex-end;
@@ -9586,14 +9582,6 @@ button.book-project-flow-pill:focus-visible {
   color: var(--danger);
 }
 
-.book-project-active-step {
-  min-width: 0;
-}
-
-.book-project-active-step-list {
-  grid-auto-columns: minmax(300px, 300px);
-}
-
 .book-dashboard-head > span {
   padding: 4px 10px;
   border-radius: 999px;
@@ -9607,6 +9595,76 @@ button.book-project-flow-pill:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
+}
+
+.book-student-step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.book-student-step-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+}
+
+.book-student-step-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 22px rgba(31, 46, 37, 0.08);
+}
+
+.book-student-step-card-trigger {
+  width: 100%;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.book-student-step-card-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+
+.book-student-step-card-trigger > header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.book-student-step-card-trigger header > span {
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.book-student-step-card-trigger header > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-student-step-card-trigger header > em {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .book-personal-card {

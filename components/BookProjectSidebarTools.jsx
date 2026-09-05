@@ -16,6 +16,7 @@ export default function BookProjectSidebarTools({
   openStepIds,
   onPickStep,
   renderStepContent,
+  stepIndexById = null,
 }) {
   const steps = project?.steps ?? [];
   if (!project || steps.length === 0) return null;
@@ -51,6 +52,7 @@ export default function BookProjectSidebarTools({
           <small>{editing ? "펼쳐 수정" : "펼쳐 보기"}</small>
         </div>
         {steps.map((step, index) => {
+          const displayIndex = stepIndexById?.get(step.id) ?? index;
           const open = openStepIds?.has(step.id) ?? false;
           const active = activeStepId === step.id;
           const panelId = `book-step-flow-${step.id}`;
@@ -63,8 +65,8 @@ export default function BookProjectSidebarTools({
               aria-expanded={expandable ? open : undefined}
               aria-controls={expandable ? panelId : undefined}
             >
-              <span>{stepLabel(index)}</span>
-              <strong>{step.title || stepLabel(index)}</strong>
+              <span>{stepLabel(displayIndex)}</span>
+              <strong>{step.title || stepLabel(displayIndex)}</strong>
               <small>{step.activities?.length ?? 0} 활동 · {step.resources?.length ?? 0} 자료</small>
               {expandable && <i aria-hidden="true">{open ? "−" : "+"}</i>}
             </button>
