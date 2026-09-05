@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BookPersonalDetail from "./BookPersonalDetail";
-import { progressItems, STUDENT_PROGRESS_COLORS } from "./BookProgressDrawer";
+import { progressItems, STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 import { IconLock, IconUnlock } from "./StatusIcons";
@@ -88,6 +88,32 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
   );
 }
 
+function ClassAverageProgress({ items, participants, progressByUser }) {
+  if (items.length === 0 || participants.length === 0) return null;
+
+  return (
+    <ol className="book-dashboard-average-progress" aria-label={`전체 평균 확인 상태: ${items.length}개 항목, ${participants.length}명 기준`}>
+      {items.map((item) => {
+        const completedCount = participants.reduce((total, participant) => {
+          const completed = progressByUser.get(participant.uid);
+          return total + (completed?.has(item.key) ? 1 : 0);
+        }, 0);
+        const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${completedCount}/${participants.length} 확인`;
+        return (
+          <li
+            className={`book-dashboard-average-cell${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
+            key={`${item.kind}:${item.id}`}
+            title={title}
+            aria-label={title}
+          >
+            <span style={{ width: `${(completedCount / participants.length) * 100}%` }} />
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, saveDashboardText }) {
   const [selectedUid, setSelectedUid] = useState(null);
   const selected = participants.find((participant) => participant.uid === selectedUid) ?? null;
@@ -137,10 +163,17 @@ export default function BookPersonalDashboard({ participants, activities, sectio
       />
 
       <div className="book-dashboard-head">
-        <div>
+        <div className="book-dashboard-head-copy">
           <h2>개인 카드</h2>
           <p>{isTeacher ? "참여자의 활동 진행 상황" : "나의 개발자실 활동 공간"}</p>
         </div>
+        {isTeacher && (
+          <ClassAverageProgress
+            items={cardProgressItems}
+            participants={participants}
+            progressByUser={progressByUser}
+          />
+        )}
         <span>{participants.length}명</span>
       </div>
 
