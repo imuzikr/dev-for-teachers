@@ -10,7 +10,6 @@ import { setSelectedClassId } from "@/lib/classroom";
 import ClassManagerModal from "./ClassManagerModal";
 import LessonManagerModal from "./LessonManagerModal";
 import LessonMode from "./LessonMode";
-import StudyAttendanceModal from "./StudyAttendanceModal";
 
 export default function BookClassroomTools({
   user,
@@ -23,7 +22,6 @@ export default function BookClassroomTools({
   onToast,
 }) {
   const [classManagerOpen, setClassManagerOpen] = useState(false);
-  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [lessonPicker, setLessonPicker] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
@@ -69,14 +67,9 @@ export default function BookClassroomTools({
     <>
       <div className="books-classroom-tools">
         {isTeacher && currentClass && !currentClass.archived && (
-          <>
-            <button className="btn-ghost" onClick={() => setLessonPicker(true)}>
-              수업 준비
-            </button>
-            <button className="btn-ghost" onClick={() => setAttendanceOpen(true)}>
-              출석부 보기
-            </button>
-          </>
+          <button className="btn-ghost" onClick={() => setLessonPicker(true)}>
+            수업 준비
+          </button>
         )}
         {isTeacher && (
           <button className="btn-ghost" onClick={() => setClassManagerOpen(true)}>
@@ -84,15 +77,6 @@ export default function BookClassroomTools({
           </button>
         )}
       </div>
-
-      {isTeacher && attendanceOpen && currentClass && (
-        <StudyAttendanceModal
-          isTeacher
-          records={attendanceRecords}
-          roster={roster}
-          onClose={() => setAttendanceOpen(false)}
-        />
-      )}
 
       {classManagerOpen && (
         <ClassManagerModal

@@ -8365,6 +8365,20 @@ pre code {
   gap: 8px;
   flex-wrap: wrap;
 }
+.books-head-main .class-select,
+.books-classroom-tools .btn-ghost {
+  width: 104px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
 .books-head-main h1 {
   display: inline-flex;
   align-items: center;
