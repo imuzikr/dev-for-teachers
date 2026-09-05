@@ -2,7 +2,7 @@
 
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 
-const STUDENT_PROGRESS_COLORS = [
+export const STUDENT_PROGRESS_COLORS = [
   "#bb6d52",
   "#b89a2d",
   "#9ca83a",
@@ -15,7 +15,7 @@ const STUDENT_PROGRESS_COLORS = [
   "#b75c7c",
 ];
 
-function progressItems(sections) {
+export function progressItems(sections) {
   return sections.flatMap((section, sectionIndex) => (
     section.items.map((item, itemIndex) => ({
       ...item,

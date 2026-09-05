@@ -75,7 +75,7 @@ export default function BookPersonalDetail({
       <header className="book-personal-detail-head">
         <button type="button" className="btn-outline" onClick={onBack}>← 개인 카드</button>
         <div>
-          <span>{isTeacher ? "참여자 활동" : "나의 책방"}</span>
+          <span>{isTeacher ? "참여자 활동" : "나의 개발자실"}</span>
           <h2>{participantName(selected)} 활동 대시보드</h2>
           <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{itemCount} 확인</p>
         </div>

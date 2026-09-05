@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import BookPersonalDetail from "./BookPersonalDetail";
+import { progressItems, STUDENT_PROGRESS_COLORS } from "./BookProgressDrawer";
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 import { IconLock, IconUnlock } from "./StatusIcons";
 
 function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggleItemLock }) {
-  if (sections.length === 0) return null;
-
   const activityCount = sections.reduce((total, section) => total + section.activities.length, 0);
   const resourceCount = sections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = sections.map((section) => section.id).join("|");
@@ -30,6 +29,8 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
       return next;
     });
   }
+
+  if (sections.length === 0) return null;
 
   return (
     <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
@@ -99,23 +100,35 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
   const sections = preparedSections ?? bookDetailSections(project, activities);
   const itemCount = bookProjectItemCount(sections);
+  const cardProgressItems = progressItems(sections);
 
   if (selected) {
     return (
-      <BookPersonalDetail
-        selected={selected}
-        sections={sections}
-        activities={activities}
-        entriesByActivity={entriesByActivity}
-        selectedProgress={selectedProgress}
-        itemCount={itemCount}
-        user={user}
-        isTeacher={isTeacher}
-        onBack={() => setSelectedUid(null)}
-        onToggleActivityLock={onToggleActivityLock}
-        onConfirmItem={onConfirmItem}
-        saveDashboardText={saveDashboardText}
-      />
+      <>
+        {isTeacher && (
+          <ProjectFlowOverview
+            project={project}
+            sections={sections}
+            itemCount={itemCount}
+            isTeacher={isTeacher}
+            onToggleItemLock={onToggleProjectItemLock}
+          />
+        )}
+        <BookPersonalDetail
+          selected={selected}
+          sections={sections}
+          activities={activities}
+          entriesByActivity={entriesByActivity}
+          selectedProgress={selectedProgress}
+          itemCount={itemCount}
+          user={user}
+          isTeacher={isTeacher}
+          onBack={() => setSelectedUid(null)}
+          onToggleActivityLock={onToggleActivityLock}
+          onConfirmItem={onConfirmItem}
+          saveDashboardText={saveDashboardText}
+        />
+      </>
     );
   }
 
@@ -132,7 +145,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
       <div className="book-dashboard-head">
         <div>
           <h2>개인 카드</h2>
-          <p>{isTeacher ? "참여자의 활동 진행 상황" : "나의 책방 활동 공간"}</p>
+          <p>{isTeacher ? "참여자의 활동 진행 상황" : "나의 개발자실 활동 공간"}</p>
         </div>
         <span>{participants.length}명</span>
       </div>
@@ -141,12 +154,17 @@ export default function BookPersonalDashboard({ participants, activities, sectio
         <div className="book-dashboard-empty">참여자가 들어오면 개인 카드가 여기에 만들어집니다.</div>
       ) : (
         <div className="book-personal-grid">
-          {participants.map((participant) => {
+          {participants.map((participant, participantIndex) => {
             const completed = progressByUser.get(participant.uid) ?? new Set();
             const isOwn = !isTeacher && participant.uid === user?.uid;
             const canOpen = isTeacher || isOwn;
+            const studentColor = STUDENT_PROGRESS_COLORS[participantIndex % STUDENT_PROGRESS_COLORS.length];
             return (
-              <article className={`book-personal-card${canOpen ? " is-openable" : ""}`} key={participant.uid}>
+              <article
+                className={`book-personal-card${canOpen ? " is-openable" : ""}`}
+                key={participant.uid}
+                style={{ "--student-color": studentColor }}
+              >
                 <button type="button" className="book-personal-card-trigger" disabled={!canOpen} onClick={() => setSelectedUid(participant.uid)} aria-label={canOpen ? `${participantName(participant)} 개인 카드 열기` : undefined}>
                   <header>
                     <span className="book-personal-avatar" aria-hidden="true">{participant.emoji || "·"}</span>
@@ -156,9 +174,26 @@ export default function BookPersonalDashboard({ participants, activities, sectio
                     </span>
                     <em>{completed.size}/{itemCount}</em>
                   </header>
-                  <div className="book-personal-progress" aria-label={`활동과 자료 ${completed.size}개 확인`}>
-                    <span style={{ width: `${itemCount ? (completed.size / itemCount) * 100 : 0}%` }} />
-                  </div>
+                  {cardProgressItems.length > 0 ? (
+                    <ol className="book-personal-progress-cells" aria-label={`${participantName(participant)} 확인 상태`}>
+                      {cardProgressItems.map((item) => {
+                        const checked = completed.has(item.key);
+                        const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}`;
+                        return (
+                          <li
+                            className={`book-personal-progress-cell${checked ? " is-filled" : ""}${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
+                            key={`${participant.uid}:${item.kind}:${item.id}`}
+                            title={`${title}\n${checked ? "확인함" : "미확인"}`}
+                            aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}
+                          />
+                        );
+                      })}
+                    </ol>
+                  ) : (
+                    <div className="book-personal-progress" aria-label={`활동과 자료 ${completed.size}개 확인`}>
+                      <span style={{ width: `${itemCount ? (completed.size / itemCount) * 100 : 0}%` }} />
+                    </div>
+                  )}
                   <p className="book-personal-card-hint">{isTeacher ? "학생 진행 현황" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
                 </button>
               </article>

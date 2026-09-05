@@ -25,7 +25,7 @@ export default function BookProjectSidebarTools({
   const expandable = typeof renderStepContent === "function";
 
   return (
-    <div className="book-side-tools" aria-label="책방 프로젝트 흐름">
+    <div className="book-side-tools" aria-label="개발자실 프로젝트 흐름">
       <div className="book-side-summary">
         <span>
           <strong>{steps.length}</strong>

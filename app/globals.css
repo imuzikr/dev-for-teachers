@@ -9214,13 +9214,14 @@ pre code {
   word-break: keep-all;
 }
 .book-project-lock-state {
-  width: max-content;
+  width: 22px;
+  min-height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 7px;
   color: var(--danger);
   background: var(--soft-bg);
   font-style: normal;
@@ -9298,8 +9299,22 @@ pre code {
   gap: 3px;
 }
 
+.book-project-detail-lock-actions {
+  position: absolute;
+  top: 7px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.book-project-detail-item.is-draggable .book-project-detail-lock-actions {
+  left: 36px;
+}
+
 .book-project-detail-actions .btn-ghost,
-.book-project-detail-actions a.btn-ghost {
+.book-project-detail-actions a.btn-ghost,
+.book-project-detail-lock-actions .btn-ghost {
   width: 22px;
   min-height: 22px;
   display: inline-flex;
@@ -9310,12 +9325,14 @@ pre code {
   color: var(--primary-dark);
   text-decoration: none;
 }
-.book-project-detail-actions svg {
+.book-project-detail-actions svg,
+.book-project-detail-lock-actions svg {
   width: 12px;
   height: 12px;
 }
 
-.book-project-detail-actions .book-project-icon-action {
+.book-project-detail-actions .book-project-icon-action,
+.book-project-detail-lock-actions .book-project-icon-action {
   width: 22px;
   min-height: 22px;
   padding: 0;
@@ -9741,7 +9758,34 @@ button.book-project-flow-pill:focus-visible {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--primary);
+  background: var(--student-color, var(--primary));
+}
+
+.book-personal-progress-cells {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.book-personal-progress-cell {
+  height: 6px;
+  flex: 1 1 14px;
+  min-width: 10px;
+  border: 1px solid rgba(60, 113, 65, 0.12);
+  border-radius: 999px;
+  background: rgba(31, 46, 37, 0.06);
+}
+
+.book-personal-progress-cell.is-step-start {
+  margin-left: 7px;
+}
+
+.book-personal-progress-cell.is-filled {
+  border-color: var(--student-color, var(--primary));
+  background: var(--student-color, var(--primary));
 }
 
 .book-personal-card-hint { margin: 0; color: var(--primary-dark); font-size: 11px; font-weight: 800; }

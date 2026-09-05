@@ -3,7 +3,7 @@
 import { setSelectedClassId } from "@/lib/classroom";
 import BookClassroomTools from "./BookClassroomTools";
 import BookWorkspace from "./BookWorkspace";
-import { IconBook } from "./StatusIcons";
+import { IconDeveloperRoom } from "./IconDeveloperRoom";
 
 export default function BooksHome(props) {
   const {
@@ -22,7 +22,7 @@ export default function BooksHome(props) {
             <div className="books-content-head">
               <div className="books-head">
                 <div className="books-head-main">
-                  <h1><IconBook size={26} /> 책방</h1>
+                  <h1><IconDeveloperRoom size={26} /> 개발자실</h1>
                   {admin && myClasses.length > 0 && (
                     <select className="class-select" value={classId ?? ""} onChange={(event) => {
                       onSelectTeacherClass(event.target.value);
@@ -54,7 +54,7 @@ export default function BooksHome(props) {
                 )}
               </div>
 
-              <p className="books-intro">책을 읽으며 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
+              <p className="books-intro">개발 활동에서 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
             </div>
           </>
         )}

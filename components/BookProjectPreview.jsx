@@ -130,8 +130,24 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
         />
       )}
       <div className="book-project-detail-copy">
+        {(onToggleLock || locked) && (
+          <div className="book-project-detail-lock-actions" aria-label={`${itemLabel} 잠금`}>
+            {onToggleLock ? (
+              <button
+                type="button"
+                className="btn-ghost book-project-icon-action"
+                title={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
+                aria-label={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
+                onClick={() => onToggleLock(!locked)}
+              >
+                {locked ? <IconUnlock size={12} /> : <IconLock size={12} />}
+              </button>
+            ) : (
+              <em className="book-project-lock-state"><IconLock size={12} /></em>
+            )}
+          </div>
+        )}
         <div className="book-project-detail-headline">
-          {locked && <em className="book-project-lock-state"><IconLock size={12} /></em>}
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
             {onOpen && (
@@ -142,17 +158,6 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
             <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 확대`} aria-label={`${itemLabel} 확대`} onClick={onPreview}>
               <IconExpand />
             </button>
-            {onToggleLock && (
-              <button
-                type="button"
-                className="btn-ghost book-project-icon-action"
-                title={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
-                aria-label={locked ? `${itemLabel} 잠금 해제` : `${itemLabel} 잠그기`}
-                onClick={() => onToggleLock(!locked)}
-              >
-                {locked ? <IconUnlock /> : <IconLock size={14} />}
-              </button>
-            )}
             {onEdit && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 수정`} aria-label={`${itemLabel} 수정`} onClick={onEdit}>
                 <IconEdit />

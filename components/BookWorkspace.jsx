@@ -155,8 +155,8 @@ export default function BookWorkspace({
           className="book-library-collapse"
           onClick={toggleLibraryPanel}
           aria-expanded={!libraryCollapsed}
-          aria-label={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
-          title={libraryCollapsed ? "책방 패널 펼치기" : "책방 패널 접기"}
+          aria-label={libraryCollapsed ? "개발자실 패널 펼치기" : "개발자실 패널 접기"}
+          title={libraryCollapsed ? "개발자실 패널 펼치기" : "개발자실 패널 접기"}
         >
           <span aria-hidden="true">{libraryCollapsed ? "»" : "«"}</span>
         </button>
@@ -165,7 +165,7 @@ export default function BookWorkspace({
           <div className="book-library-title">
             <div>
               <h2>{editingProject ? "프로젝트 구성" : "프로젝트"}</h2>
-              <p>{editingProject ? "Step별 활동과 자료를 준비하세요." : "선생님이 준비한 책방 흐름"}</p>
+              <p>{editingProject ? "Step별 활동과 자료를 준비하세요." : "선생님이 준비한 개발자실 흐름"}</p>
             </div>
           </div>
 
@@ -192,7 +192,7 @@ export default function BookWorkspace({
       </aside>
       )}
 
-      <section className="book-library-main" aria-label="책방 메인 화면">
+      <section className="book-library-main" aria-label="개발자실 메인 화면">
         {header}
         <BookPersonalDashboard
           participants={participants}

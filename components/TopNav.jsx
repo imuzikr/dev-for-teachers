@@ -26,7 +26,8 @@ import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
 import PresentationOverlay from "./PresentationOverlay";
 import QuestionSignalButton from "./QuestionSignalButton";
-import { IconLogo, IconBook, IconLogout, IconPeople } from "./StatusIcons";
+import { IconDeveloperRoom } from "./IconDeveloperRoom";
+import { IconLogo, IconLogout, IconPeople } from "./StatusIcons";
 
 export default function TopNav({ active }) {
   const router = useRouter();
@@ -162,9 +163,9 @@ export default function TopNav({ active }) {
           <button
             className={`btn-ghost ${active === "books" ? "nav-active" : ""}`}
             onClick={() => go("/books")}
-            title="책방"
+            title="개발자실"
           >
-            <IconBook size={20} /> <span className="nav-label">책방</span>
+            <IconDeveloperRoom size={20} /> <span className="nav-label">개발자실</span>
           </button>
           {isStrictAdmin && (
             <button
