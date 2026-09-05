@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BookPersonalActivityCard, BookPersonalResourceCard } from "./BookPersonalDetailCards";
 import { IconLock, IconUnlock } from "./StatusIcons";
 
 function OverviewHeader({ project, sections, itemCount, activityCount, resourceCount }) {
@@ -38,6 +39,7 @@ export default function BookProjectFlowOverview({
   const resourceCount = visibleSections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = visibleSections.map((section) => section.id).join("|");
   const [openStepId, setOpenStepId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     setOpenStepId((current) => {
@@ -51,7 +53,17 @@ export default function BookProjectFlowOverview({
     setOpenStepId((current) => (open ? stepId : current === stepId ? null : current));
   }
 
+  async function copyResource(resource) {
+    const text = [resource.title, resource.content, resource.url].filter(Boolean).join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopiedId(resource.id);
+    window.setTimeout(() => setCopiedId(null), 1600);
+  }
+
   if (visibleSections.length === 0) return null;
+  const detailSelectedProgress = new Set();
+  const detailSaveState = { savingId: null, savedId: null, failedId: null };
+  const detailConfirmState = { pendingKey: null, failedKey: null };
 
   return (
     <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
@@ -62,6 +74,59 @@ export default function BookProjectFlowOverview({
         activityCount={activityCount}
         resourceCount={resourceCount}
       />
+      {selectedIndex >= 0 ? (
+        <div className="book-project-flow-selected">
+          {visibleEntries.map(({ section, stepIndex }) => (
+            <section className="book-personal-step-section" key={section.id}>
+              <header className="book-personal-step-head">
+                <span>STEP {stepIndex + 1}</span>
+                <strong>{section.title}</strong>
+                <small>{section.activities.length} 활동 · {section.resources.length} 자료</small>
+              </header>
+              {section.items.length > 0 ? (
+                <div className="book-personal-detail-list book-project-flow-detail-list" aria-label={`${section.title} 활동과 자료`}>
+                  {section.items.map((detailItem, index) => (
+                    detailItem.kind === "resource" ? (
+                      <BookPersonalResourceCard
+                        key={`resource:${detailItem.id ?? `${section.id}-${index}`}`}
+                        detailItem={detailItem}
+                        index={index}
+                        isTeacher={isTeacher}
+                        selectedProgress={detailSelectedProgress}
+                        copiedId={copiedId}
+                        confirmState={detailConfirmState}
+                        onCopy={copyResource}
+                        onConfirm={null}
+                      />
+                    ) : (
+                      <BookPersonalActivityCard
+                        key={`activity:${detailItem.id}`}
+                        detailItem={detailItem}
+                        index={index}
+                        response=""
+                        isTeacher={isTeacher}
+                        selectedProgress={detailSelectedProgress}
+                        saveState={detailSaveState}
+                        confirmState={detailConfirmState}
+                        onDraftChange={() => {}}
+                        onSave={() => {}}
+                        onToggleActivityLock={onToggleItemLock ? (activity, locked) => onToggleItemLock({
+                          kind: "activity",
+                          id: activity.id,
+                          source: activity,
+                        }, locked) : null}
+                        onConfirm={null}
+                      />
+                    )
+                  ))}
+                </div>
+              ) : (
+                <div className="book-dashboard-empty">이 Step에는 아직 활동이나 자료가 없습니다.</div>
+              )}
+            </section>
+          ))}
+        </div>
+      ) : (
       <div className="book-project-flow-track">
         {visibleEntries.map(({ section, stepIndex }) => (
           <details
@@ -79,34 +144,35 @@ export default function BookProjectFlowOverview({
               <b aria-hidden="true">+</b>
             </summary>
             <div className="book-project-flow-items">
-              {section.items.map((item, itemIndex) => {
-                const isActivity = item.kind === "activity";
-                const locked = isActivity && item.source?.locked === true;
-                const Tag = isActivity && isTeacher && onToggleItemLock ? "button" : "span";
+                  {section.items.map((item, itemIndex) => {
+                    const isActivity = item.kind === "activity";
+                    const locked = isActivity && item.source?.locked === true;
+                    const Tag = isActivity && isTeacher && onToggleItemLock ? "button" : "span";
 
-                return (
-                  <Tag
-                    type={Tag === "button" ? "button" : undefined}
-                    className={`book-project-flow-pill book-project-flow-pill--${item.kind}${locked ? " is-locked" : ""}`}
-                    key={`${item.kind}:${item.id}`}
-                    title={item.title}
-                    aria-label={Tag === "button" ? `${item.title} ${locked ? "잠금 해제" : "잠그기"}` : undefined}
-                    onClick={Tag === "button" ? () => onToggleItemLock(item, !locked) : undefined}
-                  >
-                    <b>{isActivity ? "A" : "R"}{itemIndex + 1}</b>
-                    <em>{item.title}</em>
-                    {isActivity && (
-                      <i aria-label={locked ? "잠김" : "열림"}>
-                        {locked ? <IconLock size={15} /> : <IconUnlock size={15} />}
-                      </i>
-                    )}
-                  </Tag>
-                );
-              })}
+                    return (
+                      <Tag
+                        type={Tag === "button" ? "button" : undefined}
+                        className={`book-project-flow-pill book-project-flow-pill--${item.kind}${locked ? " is-locked" : ""}`}
+                        key={`${item.kind}:${item.id}`}
+                        title={item.title}
+                        aria-label={Tag === "button" ? `${item.title} ${locked ? "잠금 해제" : "잠그기"}` : undefined}
+                        onClick={Tag === "button" ? () => onToggleItemLock(item, !locked) : undefined}
+                      >
+                        <b>{isActivity ? "A" : "R"}{itemIndex + 1}</b>
+                        <em>{item.title}</em>
+                        {isActivity && (
+                          <i aria-label={locked ? "잠김" : "열림"}>
+                            {locked ? <IconLock size={15} /> : <IconUnlock size={15} />}
+                          </i>
+                        )}
+                      </Tag>
+                    );
+                  })}
             </div>
           </details>
         ))}
       </div>
+      )}
     </section>
   );
 }

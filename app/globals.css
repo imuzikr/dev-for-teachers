@@ -8401,6 +8401,11 @@ pre code {
   gap: 6px;
   min-width: 0;
 }
+
+.books-step-tabs--teacher {
+  width: 100%;
+  margin: 12px 0 0;
+}
 .books-step-tabs button {
   min-height: 32px;
   padding: 0 11px;
@@ -8569,6 +8574,11 @@ pre code {
 
 .book-library-main > .topbar {
   flex: 0 0 auto;
+}
+
+.book-library-layout.is-library-collapsed .books-content-head,
+.book-library-layout.is-library-collapsed .book-personal-dashboard {
+  padding-left: 36px;
 }
 
 .books-content-head {
@@ -9426,6 +9436,14 @@ pre code {
 .book-project-flow-track {
   display: grid;
   gap: 12px;
+}
+
+.book-project-flow-selected {
+  min-width: 0;
+}
+
+.book-project-flow-detail-list {
+  grid-auto-columns: minmax(300px, 330px);
 }
 
 .book-project-flow-step {

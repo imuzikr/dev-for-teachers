@@ -65,7 +65,7 @@ export default function BooksHome(props) {
                       {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
                     </select>
                   ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
-                  {stepTabs.length > 0 && (
+                  {!admin && stepTabs.length > 0 && (
                     <div className="books-step-tabs" aria-label="프로젝트 Step 선택">
                       {stepTabs.map((step) => {
                         const stepId = step.id;
@@ -100,6 +100,24 @@ export default function BooksHome(props) {
                   </button>
                 )}
               </div>
+              {admin && stepTabs.length > 0 && (
+                <div className="books-step-tabs books-step-tabs--teacher" aria-label="프로젝트 Step 선택">
+                  {stepTabs.map((step) => {
+                    const stepId = step.id;
+                    return (
+                      <button
+                        type="button"
+                        className={activeStepId === stepId ? "is-active" : ""}
+                        key={stepId}
+                        aria-pressed={activeStepId === stepId}
+                        onClick={() => setSelectedStepId(stepId)}
+                      >
+                        STEP {step.index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               <p className="books-intro">개발 활동에서 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
             </div>
