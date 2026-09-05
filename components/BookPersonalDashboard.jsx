@@ -88,29 +88,40 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
   );
 }
 
-function ClassAverageProgress({ items, participants, progressByUser }) {
-  if (items.length === 0 || participants.length === 0) return null;
+function ClassAverageProgress({ sections, items, participants, progressByUser }) {
+  const stepGroups = sections.slice(0, 3).map((section, stepIndex) => ({
+    section,
+    stepIndex,
+    items: items.filter((item) => item.sectionId === section.id).slice(0, 7),
+  }));
+  const visibleItemCount = stepGroups.reduce((total, group) => total + group.items.length, 0);
+
+  if (visibleItemCount === 0 || participants.length === 0) return null;
 
   return (
-    <ol className="book-dashboard-average-progress" aria-label={`전체 평균 확인 상태: ${items.length}개 항목, ${participants.length}명 기준`}>
-      {items.map((item) => {
-        const completedCount = participants.reduce((total, participant) => {
-          const completed = progressByUser.get(participant.uid);
-          return total + (completed?.has(item.key) ? 1 : 0);
-        }, 0);
-        const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${completedCount}/${participants.length} 확인`;
-        return (
-          <li
-            className={`book-dashboard-average-cell${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
-            key={`${item.kind}:${item.id}`}
-            title={title}
-            aria-label={title}
-          >
-            <span style={{ width: `${(completedCount / participants.length) * 100}%` }} />
-          </li>
-        );
-      })}
-    </ol>
+    <div className="book-dashboard-average-progress" aria-label={`전체 평균 확인 상태: ${visibleItemCount}개 항목, ${participants.length}명 기준`}>
+      {stepGroups.map(({ section, stepIndex, items: groupItems }) => (
+        <ol className="book-dashboard-average-step" key={section.id} aria-label={`STEP ${stepIndex + 1} ${section.title} 평균 확인 상태`}>
+          {groupItems.map((item) => {
+            const completedCount = participants.reduce((total, participant) => {
+              const completed = progressByUser.get(participant.uid);
+              return total + (completed?.has(item.key) ? 1 : 0);
+            }, 0);
+            const title = `STEP ${stepIndex + 1} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${completedCount}/${participants.length} 확인`;
+            return (
+              <li
+                className="book-dashboard-average-cell"
+                key={`${item.kind}:${item.id}`}
+                title={title}
+                aria-label={title}
+              >
+                <span style={{ width: `${(completedCount / participants.length) * 100}%` }} />
+              </li>
+            );
+          })}
+        </ol>
+      ))}
+    </div>
   );
 }
 
@@ -169,6 +180,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
         </div>
         {isTeacher && (
           <ClassAverageProgress
+            sections={sections}
             items={cardProgressItems}
             participants={participants}
             progressByUser={progressByUser}
