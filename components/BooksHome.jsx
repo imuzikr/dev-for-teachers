@@ -41,6 +41,10 @@ export default function BooksHome(props) {
   const activeStepId = admin && !selectedStepId
     ? stepTabs[0]?.id ?? null
     : selectedStepId;
+  const activeStep = (displayedProject?.steps ?? []).find((step, index) => (step.id ?? `step-${index + 1}`) === activeStepId) ?? null;
+  const activeStepActivityCount = activeStep?.activities?.length ?? 0;
+  const activeStepResourceCount = activeStep?.resources?.length ?? 0;
+  const activeStepItemCount = activeStepActivityCount + activeStepResourceCount;
 
   return (
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
@@ -101,25 +105,35 @@ export default function BooksHome(props) {
                 )}
               </div>
               {admin && stepTabs.length > 0 && (
-                <div className="books-step-tabs books-step-tabs--teacher" aria-label="프로젝트 Step 선택">
-                  {stepTabs.map((step) => {
-                    const stepId = step.id;
-                    return (
-                      <button
-                        type="button"
-                        className={activeStepId === stepId ? "is-active" : ""}
-                        key={stepId}
-                        aria-pressed={activeStepId === stepId}
-                        onClick={() => setSelectedStepId(stepId)}
-                      >
-                        STEP {step.index + 1}
-                      </button>
-                    );
-                  })}
+                <div className="books-step-switcher-row">
+                  <div className="books-step-tabs books-step-tabs--teacher" aria-label="프로젝트 Step 선택">
+                    {stepTabs.map((step) => {
+                      const stepId = step.id;
+                      return (
+                        <button
+                          type="button"
+                          className={activeStepId === stepId ? "is-active" : ""}
+                          key={stepId}
+                          aria-pressed={activeStepId === stepId}
+                          onClick={() => setSelectedStepId(stepId)}
+                        >
+                          STEP {step.index + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {activeStep && (
+                    <div className="books-step-summary-pills" aria-label={`선택된 Step 전체 ${activeStepItemCount}개 항목, ${activeStepActivityCount}개 활동, ${activeStepResourceCount}개 자료`}>
+                      <span>1 STEPS</span>
+                      <span>{activeStepItemCount} 항목</span>
+                      <span>{activeStepActivityCount} 활동</span>
+                      <span>{activeStepResourceCount} 자료</span>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <p className="books-intro">개발 활동에서 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>
+              {!admin && <p className="books-intro">개발 활동에서 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>}
             </div>
           </>
         )}

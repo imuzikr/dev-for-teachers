@@ -34,7 +34,6 @@ export default function BookProjectFlowOverview({
     ? [{ section: sections[selectedIndex], stepIndex: selectedIndex }]
     : sections.map((section, stepIndex) => ({ section, stepIndex }));
   const visibleSections = visibleEntries.map((entry) => entry.section);
-  const visibleItemCount = visibleSections.reduce((total, section) => total + section.items.length, 0);
   const activityCount = visibleSections.reduce((total, section) => total + section.activities.length, 0);
   const resourceCount = visibleSections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = visibleSections.map((section) => section.id).join("|");
@@ -67,22 +66,10 @@ export default function BookProjectFlowOverview({
 
   return (
     <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
-      <OverviewHeader
-        project={project}
-        sections={visibleSections}
-        itemCount={selectedIndex >= 0 ? visibleItemCount : itemCount}
-        activityCount={activityCount}
-        resourceCount={resourceCount}
-      />
       {selectedIndex >= 0 ? (
         <div className="book-project-flow-selected">
-          {visibleEntries.map(({ section, stepIndex }) => (
+          {visibleEntries.map(({ section }) => (
             <section className="book-personal-step-section" key={section.id}>
-              <header className="book-personal-step-head">
-                <span>STEP {stepIndex + 1}</span>
-                <strong>{section.title}</strong>
-                <small>{section.activities.length} 활동 · {section.resources.length} 자료</small>
-              </header>
               {section.items.length > 0 ? (
                 <div className="book-personal-detail-list book-project-flow-detail-list" aria-label={`${section.title} 활동과 자료`}>
                   {section.items.map((detailItem, index) => (
@@ -127,23 +114,31 @@ export default function BookProjectFlowOverview({
           ))}
         </div>
       ) : (
-      <div className="book-project-flow-track">
-        {visibleEntries.map(({ section, stepIndex }) => (
-          <details
-            className="book-project-flow-step"
-            key={section.id}
-            open={openStepId === section.id}
-            onToggle={(event) => setStepOpen(section.id, event.currentTarget.open)}
-          >
-            <summary className="book-project-flow-step-head">
-              <span>
-                <small>STEP {stepIndex + 1}</small>
-                <strong>{section.title}</strong>
-              </span>
-              <em>{section.activities.length} 활동 · {section.resources.length} 자료</em>
-              <b aria-hidden="true">+</b>
-            </summary>
-            <div className="book-project-flow-items">
+        <>
+          <OverviewHeader
+            project={project}
+            sections={visibleSections}
+            itemCount={itemCount}
+            activityCount={activityCount}
+            resourceCount={resourceCount}
+          />
+          <div className="book-project-flow-track">
+            {visibleEntries.map(({ section, stepIndex }) => (
+              <details
+                className="book-project-flow-step"
+                key={section.id}
+                open={openStepId === section.id}
+                onToggle={(event) => setStepOpen(section.id, event.currentTarget.open)}
+              >
+                <summary className="book-project-flow-step-head">
+                  <span>
+                    <small>STEP {stepIndex + 1}</small>
+                    <strong>{section.title}</strong>
+                  </span>
+                  <em>{section.activities.length} 활동 · {section.resources.length} 자료</em>
+                  <b aria-hidden="true">+</b>
+                </summary>
+                <div className="book-project-flow-items">
                   {section.items.map((item, itemIndex) => {
                     const isActivity = item.kind === "activity";
                     const locked = isActivity && item.source?.locked === true;
@@ -168,10 +163,11 @@ export default function BookProjectFlowOverview({
                       </Tag>
                     );
                   })}
-            </div>
-          </details>
-        ))}
-      </div>
+                </div>
+              </details>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
