@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { setSelectedClassId } from "@/lib/classroom";
 import BookClassroomTools from "./BookClassroomTools";
 import BookWorkspace from "./BookWorkspace";
@@ -12,6 +13,26 @@ export default function BooksHome(props) {
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     onEditProject, onSaveProject, onOpenActivity, onToggleActivityLock, onToggleProjectItemLock, onDelete,
   } = props;
+  const studentSteps = useMemo(() => (
+    !admin
+      ? (displayedProject?.steps ?? []).slice(0, 3).map((step, index) => ({
+        id: step.id ?? `step-${index + 1}`,
+        index,
+      }))
+      : []
+  ), [admin, displayedProject]);
+  const [studentActiveStepId, setStudentActiveStepId] = useState(null);
+
+  useEffect(() => {
+    if (admin || studentSteps.length === 0) {
+      setStudentActiveStepId(null);
+      return;
+    }
+
+    setStudentActiveStepId((current) => (
+      current && studentSteps.some((step) => step.id === current) ? current : studentSteps[0].id
+    ));
+  }, [admin, studentSteps]);
 
   return (
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
@@ -36,6 +57,24 @@ export default function BooksHome(props) {
                       {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
                     </select>
                   ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
+                  {!admin && studentSteps.length > 0 && (
+                    <div className="books-step-tabs" aria-label="프로젝트 Step 선택">
+                      {studentSteps.map((step) => {
+                        const stepId = step.id;
+                        return (
+                          <button
+                            type="button"
+                            className={studentActiveStepId === stepId ? "is-active" : ""}
+                            key={stepId}
+                            aria-pressed={studentActiveStepId === stepId}
+                            onClick={() => setStudentActiveStepId(stepId)}
+                          >
+                            STEP {step.index + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <BookClassroomTools
                     user={user}
                     isTeacher={admin}
@@ -75,6 +114,7 @@ export default function BooksHome(props) {
         onToggleActivityLock={onToggleActivityLock}
         onToggleProjectItemLock={onToggleProjectItemLock}
         onDelete={onDelete}
+        studentActiveStepId={studentActiveStepId}
       />
     </main>
   );

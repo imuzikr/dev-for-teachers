@@ -32,6 +32,7 @@ export default function BookWorkspace({
   onToggleActivityLock,
   onToggleProjectItemLock,
   onDelete,
+  studentActiveStepId,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
@@ -211,6 +212,7 @@ export default function BookWorkspace({
           onToggleActivityLock={onToggleActivityLock}
           onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
+          studentActiveStepId={studentActiveStepId}
         />
       </section>
     </div>
