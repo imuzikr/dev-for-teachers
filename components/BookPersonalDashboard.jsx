@@ -11,23 +11,17 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
   const activityCount = sections.reduce((total, section) => total + section.activities.length, 0);
   const resourceCount = sections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = sections.map((section) => section.id).join("|");
-  const [openStepIds, setOpenStepIds] = useState(() => new Set(sections.map((section) => section.id)));
+  const [openStepId, setOpenStepId] = useState(() => sections[0]?.id ?? null);
 
   useEffect(() => {
-    setOpenStepIds((current) => {
+    setOpenStepId((current) => {
       const ids = sections.map((section) => section.id);
-      const preserved = ids.filter((id) => current.has(id));
-      return new Set(preserved.length ? preserved : ids);
+      return current && ids.includes(current) ? current : ids[0] ?? null;
     });
   }, [sectionIdentity]);
 
   function setStepOpen(stepId, open) {
-    setOpenStepIds((current) => {
-      const next = new Set(current);
-      if (open) next.add(stepId);
-      else next.delete(stepId);
-      return next;
-    });
+    setOpenStepId((current) => (open ? stepId : current === stepId ? null : current));
   }
 
   if (sections.length === 0) return null;
@@ -51,7 +45,7 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
           <details
             className="book-project-flow-step"
             key={section.id}
-            open={openStepIds.has(section.id)}
+            open={openStepId === section.id}
             onToggle={(event) => setStepOpen(section.id, event.currentTarget.open)}
           >
             <summary className="book-project-flow-step-head">
