@@ -8604,9 +8604,9 @@ pre code {
 }
 
 .book-dashboard-average-step {
-  --average-cell-bg: rgba(117, 177, 126, 0.16);
-  --average-cell-border: rgba(117, 177, 126, 0.34);
-  --average-cell-fill: rgba(117, 177, 126, 0.58);
+  --average-cell-bg: rgba(47, 111, 62, 0.14);
+  --average-cell-border: rgba(47, 111, 62, 0.34);
+  --average-cell-fill: #2f6f3e;
   flex: 0 0 auto;
   min-height: 12px;
   display: flex;
@@ -8617,15 +8617,15 @@ pre code {
 }
 
 .book-dashboard-average-step:nth-child(2) {
-  --average-cell-bg: rgba(246, 188, 123, 0.16);
-  --average-cell-border: rgba(229, 169, 102, 0.34);
-  --average-cell-fill: rgba(242, 165, 83, 0.58);
+  --average-cell-bg: rgba(232, 143, 57, 0.14);
+  --average-cell-border: rgba(232, 143, 57, 0.34);
+  --average-cell-fill: #e88f39;
 }
 
 .book-dashboard-average-step:nth-child(3) {
-  --average-cell-bg: rgba(184, 155, 226, 0.16);
-  --average-cell-border: rgba(184, 155, 226, 0.34);
-  --average-cell-fill: rgba(184, 155, 226, 0.58);
+  --average-cell-bg: rgba(126, 87, 194, 0.14);
+  --average-cell-border: rgba(126, 87, 194, 0.34);
+  --average-cell-fill: #7e57c2;
 }
 
 .book-dashboard-average-cell {
@@ -8634,7 +8634,7 @@ pre code {
   width: clamp(34px, 3.2vw, 58px);
   overflow: hidden;
   border: 1px solid var(--average-cell-border);
-  border-radius: 999px;
+  border-radius: 4px;
   background: var(--average-cell-bg);
 }
 
@@ -8649,7 +8649,7 @@ pre code {
   height: 10px;
   width: clamp(34px, 3.2vw, 58px);
   border: 1px dashed var(--average-cell-border);
-  border-radius: 999px;
+  border-radius: 4px;
   background: var(--average-cell-bg);
 }
 
@@ -9645,44 +9645,46 @@ button.book-project-flow-pill:focus-visible {
 
 .book-personal-progress-groups {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 4px 8px;
+  gap: 4px;
+  width: 100%;
   margin: 12px 0;
 }
 
 .book-personal-progress-cells {
-  --personal-cell-bg: rgba(117, 177, 126, 0.16);
-  --personal-cell-border: rgba(117, 177, 126, 0.34);
-  --personal-cell-fill: rgba(117, 177, 126, 0.72);
+  --personal-cell-bg: rgba(47, 111, 62, 0.14);
+  --personal-cell-border: rgba(47, 111, 62, 0.34);
+  --personal-cell-fill: #2f6f3e;
   display: flex;
-  flex: 0 0 auto;
+  flex: var(--progress-item-count, 1) 1 0;
   flex-wrap: nowrap;
   gap: 4px;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .book-personal-progress-cells.step-2 {
-  --personal-cell-bg: rgba(246, 188, 123, 0.16);
-  --personal-cell-border: rgba(229, 169, 102, 0.34);
-  --personal-cell-fill: rgba(242, 165, 83, 0.72);
+  --personal-cell-bg: rgba(232, 143, 57, 0.14);
+  --personal-cell-border: rgba(232, 143, 57, 0.34);
+  --personal-cell-fill: #e88f39;
 }
 
 .book-personal-progress-cells.step-3 {
-  --personal-cell-bg: rgba(184, 155, 226, 0.16);
-  --personal-cell-border: rgba(184, 155, 226, 0.34);
-  --personal-cell-fill: rgba(184, 155, 226, 0.72);
+  --personal-cell-bg: rgba(126, 87, 194, 0.14);
+  --personal-cell-border: rgba(126, 87, 194, 0.34);
+  --personal-cell-fill: #7e57c2;
 }
 
 .book-personal-progress-cell,
 .book-personal-progress-empty {
   height: 6px;
-  width: 30px;
-  flex: 0 0 30px;
+  min-width: 0;
+  flex: 1 1 0;
   border: 1px solid var(--personal-cell-border);
-  border-radius: 999px;
+  border-radius: 3px;
   background: var(--personal-cell-bg);
 }
 

@@ -57,6 +57,7 @@ export function PersonalProgressGroups({ groups, completed, participantLabel }) 
           className={`book-personal-progress-cells step-${Math.min(stepIndex + 1, 3)}${groupItems.length === 0 ? " is-empty" : ""}`}
           key={section.id}
           aria-label={`STEP ${stepIndex + 1} ${section.title} 확인 상태`}
+          style={{ "--progress-item-count": groupItems.length || 1 }}
         >
           {groupItems.length === 0 ? (
             <li className="book-personal-progress-empty" aria-label={`STEP ${stepIndex + 1} ${section.title}: 항목 없음`} />
