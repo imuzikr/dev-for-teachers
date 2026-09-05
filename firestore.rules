@@ -66,10 +66,10 @@ service cloud.firestore {
              && existsAfter(adminPath())
              && getAfter(adminPath()).data.uid == uid();
     }
-    // 운영 기능 접근 관문 — 관리자 계정만 허용.
-    // 함수 이름은 기존 규칙 호출부 호환을 위해 유지합니다.
+    // 운영 기능 접근 관문 — 최고 관리자와 승인된 교사를 허용합니다.
+    // 반 단위 쓰기는 ownsClassEditable()에서 소유권과 보관 상태를 다시 좁힙니다.
     function isTeacher() {
-      return isAdmin();
+      return isAdmin() || userRole() == 'teacher';
     }
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
