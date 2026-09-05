@@ -24,7 +24,7 @@
 
 .book-library-side.is-collapsed {
   overflow: hidden;
-  padding: 10px 8px;
+  padding: 18px 8px 8px;
 }
 
 .book-library-content {
@@ -71,20 +71,30 @@
 }
 
 .book-library-side.is-collapsed .book-library-collapse {
-  min-height: calc(100dvh - 204px);
-  flex-direction: column;
+  position: static;
+  left: auto;
+  right: auto;
+  width: 30px;
+  min-width: 30px;
+  height: 34px;
+  min-height: 34px;
+  display: inline-grid;
+  place-items: center;
+  flex-direction: row;
   margin-bottom: 0;
-  padding: 10px 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .books-main--split .book-library-side.is-collapsed .book-library-collapse {
-  min-height: calc(100dvh - 20px);
+  min-height: 34px;
 }
 
 .book-library-side.is-collapsed .book-library-collapse strong {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  white-space: nowrap;
+  display: none;
 }
 
 .book-side-tools {
@@ -356,31 +366,41 @@
   .book-library-side.is-collapsed {
     align-self: start;
     max-height: none;
-    padding: 8px;
+    padding: 18px 8px 8px;
   }
 
   .books-main--split .book-library-side.is-collapsed {
     align-self: stretch;
     height: 100dvh;
-    padding: 8px;
+    padding: 18px 8px 8px;
   }
 
   .book-library-side.is-collapsed .book-library-collapse {
-    min-height: 44px;
+    position: static;
+    left: auto;
+    right: auto;
+    width: 30px;
+    min-width: 30px;
+    height: 34px;
+    min-height: 34px;
+    display: inline-grid;
+    place-items: center;
     flex-direction: row;
+    margin-bottom: 0;
+    padding: 0;
   }
 
   .books-main--split .book-library-side.is-collapsed .book-library-collapse {
-    min-height: calc(100dvh - 16px);
-    flex-direction: column;
+    min-height: 34px;
+    flex-direction: row;
   }
 
   .book-library-side.is-collapsed .book-library-collapse strong {
-    writing-mode: horizontal-tb;
+    display: none;
   }
 
   .books-main--split .book-library-side.is-collapsed .book-library-collapse strong {
-    writing-mode: vertical-rl;
+    display: none;
   }
 
   .book-side-summary {
