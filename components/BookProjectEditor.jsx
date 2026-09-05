@@ -61,7 +61,7 @@ function initialDraft(project, appendStep, initialOpenStepId) {
     ? steps.at(-1)?.id
     : steps.some((step) => step.id === initialOpenStepId)
       ? initialOpenStepId
-      : steps[0]?.id;
+      : null;
   return {
     title: project?.title ?? "",
     steps,
@@ -92,7 +92,7 @@ export default function BookProjectEditor({
   function addStep() {
     const step = newStep(steps.length);
     setSteps((current) => [...current, step]);
-    setOpenIds((current) => new Set(current).add(step.id));
+    setOpenIds(new Set([step.id]));
     setActiveStepId(step.id);
   }
 
@@ -104,7 +104,7 @@ export default function BookProjectEditor({
       next.delete(stepId);
       return next;
     });
-    setActiveStepId((current) => current === stepId ? nextSteps[0]?.id ?? null : current);
+    setActiveStepId((current) => current === stepId ? null : current);
   }
 
   function addItem(stepId, key) {

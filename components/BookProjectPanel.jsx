@@ -17,12 +17,11 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   useEffect(() => {
     if (editing) return;
     const stepIds = stepIdentity ? stepIdentity.split("|") : [];
-    const firstStepId = stepIds[0] ?? null;
     setViewOpenIds((current) => {
       const preserved = stepIds.filter((stepId) => current.has(stepId));
-      return new Set(preserved.length ? preserved : firstStepId ? [firstStepId] : []);
+      return new Set(preserved);
     });
-    setActiveStepId((current) => stepIds.includes(current) ? current : firstStepId);
+    setActiveStepId((current) => stepIds.includes(current) ? current : null);
   }, [editing, projectKey, stepIdentity]);
 
   function toggleStep(stepId) {

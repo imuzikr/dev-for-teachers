@@ -11,12 +11,12 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
   const activityCount = sections.reduce((total, section) => total + section.activities.length, 0);
   const resourceCount = sections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = sections.map((section) => section.id).join("|");
-  const [openStepId, setOpenStepId] = useState(() => sections[0]?.id ?? null);
+  const [openStepId, setOpenStepId] = useState(null);
 
   useEffect(() => {
     setOpenStepId((current) => {
       const ids = sections.map((section) => section.id);
-      return current && ids.includes(current) ? current : ids[0] ?? null;
+      return current && ids.includes(current) ? current : null;
     });
   }, [sectionIdentity]);
 
@@ -88,37 +88,42 @@ function ProjectFlowOverview({ project, sections, itemCount, isTeacher, onToggle
   );
 }
 
-function ClassAverageProgress({ sections, items, participants, progressByUser }) {
+function ClassAverageProgress({ sections, items, participants, progressByUser, isTeacher }) {
   const stepGroups = sections.slice(0, 3).map((section, stepIndex) => ({
     section,
     stepIndex,
     items: items.filter((item) => item.sectionId === section.id).slice(0, 7),
   }));
   const visibleItemCount = stepGroups.reduce((total, group) => total + group.items.length, 0);
+  const label = isTeacher ? "전체 평균 확인 상태" : "나의 전체 확인 상태";
 
-  if (visibleItemCount === 0 || participants.length === 0) return null;
+  if (stepGroups.length === 0 || participants.length === 0) return null;
 
   return (
-    <div className="book-dashboard-average-progress" aria-label={`전체 평균 확인 상태: ${visibleItemCount}개 항목, ${participants.length}명 기준`}>
+    <div className="book-dashboard-average-progress" aria-label={`${label}: ${visibleItemCount}개 항목, ${participants.length}명 기준`}>
       {stepGroups.map(({ section, stepIndex, items: groupItems }) => (
-        <ol className="book-dashboard-average-step" key={section.id} aria-label={`STEP ${stepIndex + 1} ${section.title} 평균 확인 상태`}>
-          {groupItems.map((item) => {
-            const completedCount = participants.reduce((total, participant) => {
-              const completed = progressByUser.get(participant.uid);
-              return total + (completed?.has(item.key) ? 1 : 0);
-            }, 0);
-            const title = `STEP ${stepIndex + 1} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${completedCount}/${participants.length} 확인`;
-            return (
-              <li
-                className="book-dashboard-average-cell"
-                key={`${item.kind}:${item.id}`}
-                title={title}
-                aria-label={title}
-              >
-                <span style={{ width: `${(completedCount / participants.length) * 100}%` }} />
-              </li>
-            );
-          })}
+        <ol className={`book-dashboard-average-step${groupItems.length === 0 ? " is-empty" : ""}`} key={section.id} aria-label={`STEP ${stepIndex + 1} ${section.title} ${isTeacher ? "평균" : "나의"} 확인 상태`}>
+          {groupItems.length === 0 ? (
+            <li className="book-dashboard-average-empty" aria-label={`STEP ${stepIndex + 1} ${section.title}: 항목 없음`} />
+          ) : (
+            groupItems.map((item) => {
+              const completedCount = participants.reduce((total, participant) => {
+                const completed = progressByUser.get(participant.uid);
+                return total + (completed?.has(item.key) ? 1 : 0);
+              }, 0);
+              const title = `STEP ${stepIndex + 1} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${completedCount}/${participants.length} 확인`;
+              return (
+                <li
+                  className="book-dashboard-average-cell"
+                  key={`${item.kind}:${item.id}`}
+                  title={title}
+                  aria-label={title}
+                >
+                  <span style={{ width: `${(completedCount / participants.length) * 100}%` }} />
+                </li>
+              );
+            })
+          )}
         </ol>
       ))}
     </div>
@@ -178,14 +183,13 @@ export default function BookPersonalDashboard({ participants, activities, sectio
           <h2>개인 카드</h2>
           <p>{isTeacher ? "참여자의 활동 진행 상황" : "나의 개발자실 활동 공간"}</p>
         </div>
-        {isTeacher && (
-          <ClassAverageProgress
-            sections={sections}
-            items={cardProgressItems}
-            participants={participants}
-            progressByUser={progressByUser}
-          />
-        )}
+        <ClassAverageProgress
+          sections={sections}
+          items={cardProgressItems}
+          participants={participants}
+          progressByUser={progressByUser}
+          isTeacher={isTeacher}
+        />
         <span>{participants.length}명</span>
       </div>
 
@@ -220,7 +224,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
                         const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}`;
                         return (
                           <li
-                            className={`book-personal-progress-cell${checked ? " is-filled" : ""}${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
+                            className={`book-personal-progress-cell step-${Math.min(item.sectionIndex + 1, 3)}${checked ? " is-filled" : ""}${item.itemIndex === 0 && item.sectionIndex > 0 ? " is-step-start" : ""}`}
                             key={`${participant.uid}:${item.kind}:${item.id}`}
                             title={`${title}\n${checked ? "확인함" : "미확인"}`}
                             aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}

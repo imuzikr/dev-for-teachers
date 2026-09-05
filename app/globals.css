@@ -8607,12 +8607,17 @@ pre code {
   --average-cell-border: rgba(117, 177, 126, 0.34);
   --average-cell-fill: rgba(117, 177, 126, 0.58);
   min-width: 0;
+  min-height: 12px;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   align-items: center;
   gap: 4px;
   padding: 0;
   list-style: none;
+}
+
+.book-dashboard-average-step.is-empty {
+  grid-template-columns: 1fr;
 }
 
 .book-dashboard-average-step:nth-child(2) {
@@ -8642,6 +8647,14 @@ pre code {
   height: 100%;
   border-radius: inherit;
   background: var(--average-cell-fill);
+}
+
+.book-dashboard-average-empty {
+  height: 10px;
+  min-width: 12px;
+  border: 1px dashed var(--average-cell-border);
+  border-radius: 999px;
+  background: var(--average-cell-bg);
 }
 
 .book-add-icon {
@@ -9644,12 +9657,27 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-progress-cell {
+  --personal-cell-bg: rgba(117, 177, 126, 0.16);
+  --personal-cell-border: rgba(117, 177, 126, 0.34);
+  --personal-cell-fill: rgba(117, 177, 126, 0.72);
   height: 6px;
   flex: 1 1 14px;
   min-width: 10px;
-  border: 1px solid rgba(60, 113, 65, 0.12);
+  border: 1px solid var(--personal-cell-border);
   border-radius: 999px;
-  background: rgba(31, 46, 37, 0.06);
+  background: var(--personal-cell-bg);
+}
+
+.book-personal-progress-cell.step-2 {
+  --personal-cell-bg: rgba(246, 188, 123, 0.16);
+  --personal-cell-border: rgba(229, 169, 102, 0.34);
+  --personal-cell-fill: rgba(242, 165, 83, 0.72);
+}
+
+.book-personal-progress-cell.step-3 {
+  --personal-cell-bg: rgba(184, 155, 226, 0.16);
+  --personal-cell-border: rgba(184, 155, 226, 0.34);
+  --personal-cell-fill: rgba(184, 155, 226, 0.72);
 }
 
 .book-personal-progress-cell.is-step-start {
@@ -9657,8 +9685,8 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-progress-cell.is-filled {
-  border-color: var(--student-color, var(--primary));
-  background: var(--student-color, var(--primary));
+  border-color: var(--personal-cell-fill);
+  background: var(--personal-cell-fill);
 }
 
 .book-personal-card-hint { margin: 0; color: var(--primary-dark); font-size: 11px; font-weight: 800; }
