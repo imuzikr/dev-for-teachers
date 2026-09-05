@@ -8506,10 +8506,8 @@ pre code {
 
 .book-library-side.is-collapsed .book-library-collapse,
 .book-progress-drawer.is-collapsed .book-progress-toggle {
-  position: absolute;
+  position: fixed;
   top: 18px;
-  left: 9px;
-  right: auto;
   width: 30px;
   min-width: 30px;
   height: 34px;
@@ -8519,6 +8517,16 @@ pre code {
   background: transparent;
   color: var(--primary-dark);
   box-shadow: none;
+}
+
+.book-library-side.is-collapsed .book-library-collapse {
+  left: 9px;
+  right: auto;
+}
+
+.book-progress-drawer.is-collapsed .book-progress-toggle {
+  left: auto;
+  right: 9px;
 }
 
 .book-library-side.is-collapsed .book-library-collapse:hover,
