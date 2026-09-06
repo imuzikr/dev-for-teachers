@@ -65,25 +65,39 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 placeholder={resource ? "자료 제목" : "활동 제목"}
                 aria-label={`${label} ${index + 1} 제목`}
               />
-              {!resource && (
-                <button
-                  type="button"
-                  className={`book-answer-toggle${source.requiresAnswer !== false ? " is-on" : ""}`}
-                  aria-pressed={source.requiresAnswer !== false}
-                  title={source.requiresAnswer !== false ? "학생 답변이 필요한 활동입니다" : "학생 답변 없이 확인만 하는 활동입니다"}
-                  onClick={() => onChange(entry.kind, source.id, { requiresAnswer: source.requiresAnswer === false })}
-                >
-                  <span aria-hidden="true">{source.requiresAnswer !== false ? "✓" : "–"}</span>
-                  {source.requiresAnswer !== false ? "답변 필요" : "답변 없음"}
-                </button>
-              )}
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
+            {!resource && (
+              <div className="book-answer-setting" role="group" aria-label={`${label} ${index + 1} 학생 답변 설정`}>
+                <div className="book-answer-setting-copy">
+                  <strong>학생 답변</strong>
+                  <span>{source.requiresAnswer !== false ? "입력 칸을 보여줍니다" : "확인 버튼만 보여줍니다"}</span>
+                </div>
+                <div className="book-answer-segment">
+                  <button
+                    type="button"
+                    className={source.requiresAnswer !== false ? "is-selected" : ""}
+                    aria-pressed={source.requiresAnswer !== false}
+                    onClick={() => onChange(entry.kind, source.id, { requiresAnswer: true })}
+                  >
+                    답변 받기
+                  </button>
+                  <button
+                    type="button"
+                    className={source.requiresAnswer === false ? "is-selected" : ""}
+                    aria-pressed={source.requiresAnswer === false}
+                    onClick={() => onChange(entry.kind, source.id, { requiresAnswer: false })}
+                  >
+                    확인만
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="book-step-item-fields">
               <BasicFormatEditor
                 value={source.content || ""}
                 onChange={(content) => onChange(entry.kind, source.id, { content })}
-                placeholder={resource ? "자료 내용" : "활동 안내사항"}
+                placeholder={resource ? "" : "활동 안내사항"}
                 ariaLabel={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
               />
               <input

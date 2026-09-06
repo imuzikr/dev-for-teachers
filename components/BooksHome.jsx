@@ -11,7 +11,7 @@ export default function BooksHome(props) {
     topNav, admin, user, classId, classes, currentClass, myClasses, myClassesAll, membershipIds, roster,
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
-    onEditProject, onSaveProject, onOpenActivity, onToggleActivityLock, onToggleProjectItemLock, onDelete,
+    onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
   } = props;
   const stepTabs = useMemo(() => (
     (displayedProject?.steps ?? []).map((step, index) => ({
@@ -139,7 +139,6 @@ export default function BooksHome(props) {
         savingProject={savingProject}
         onSaveProject={onSaveProject}
         onEditProject={onEditProject}
-        onOpen={onOpenActivity}
         onToggleActivityLock={onToggleActivityLock}
         onToggleProjectItemLock={onToggleProjectItemLock}
         onDelete={onDelete}

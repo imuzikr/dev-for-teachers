@@ -18,7 +18,7 @@ function presentationContent(item) {
   const source = item?.source ?? item ?? {};
   const content = source.content ?? item?.content ?? "";
   if (item?.kind === "resource" || item?.itemKind === "resource") {
-    return content || "등록된 자료 내용이 없습니다.";
+    return content || "등록된 내용이 없습니다.";
   }
   return content || "활동 안내사항";
 }
@@ -116,7 +116,7 @@ export default function BookPresentationModal({
             <div className="book-presentation-url is-empty">제공 URL 없음</div>
           )}
           <article className={`book-presentation-content book-presentation-content--${kind}`}>
-            <span>{kind === "resource" ? "자료 내용" : "활동 안내사항"}</span>
+            {kind === "activity" && <span>활동 안내사항</span>}
             <RichTextDisplay className="book-presentation-rich" html={content} />
           </article>
         </div>

@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import BookProjectEditor from "./BookProjectEditor";
-import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems } from "./BookProjectPreview";
+import BookProjectItemEditModal from "./BookProjectItemEditModal";
+import { ProjectDisplayItem, ProjectSection, stepPreviewItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
   const [draggingKey, setDraggingKey] = useState(null);
   const stepIdentity = (project?.steps ?? []).map((step) => step.id).join("|");
 
@@ -37,14 +38,12 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
     setActiveStepId(open ? stepId : null);
   }
 
-  function openPreview(step, kind, itemId) {
-    const items = stepPreviewItems(step);
-    const index = items.findIndex((item) => item.kind === kind && item.id === itemId);
-    if (index >= 0) setPreview({ stepId: step.id, index });
-  }
-
   function itemKey(kind, id) {
     return `${kind}:${id}`;
+  }
+
+  function collectionKey(kind) {
+    return kind === "resource" ? "resources" : "activities";
   }
 
   function orderFromItems(items) {
@@ -68,6 +67,23 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
     onSave({ title: project.title, steps: nextSteps });
   }
 
+  async function saveProjectItem(stepId, kind, itemId, patch) {
+    if (!onSave) return;
+    const key = collectionKey(kind);
+    const nextSteps = (project.steps ?? []).map((step) => (
+      step.id === stepId
+        ? {
+            ...step,
+            [key]: (step[key] ?? []).map((item) => (
+              item.id === itemId ? { ...item, ...patch } : item
+            )),
+          }
+        : step
+    ));
+    const saved = await onSave({ title: project.title, steps: nextSteps });
+    if (saved !== false) setEditingItem(null);
+  }
+
   if (editing) {
     return (
       <BookProjectEditor
@@ -84,9 +100,9 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
 
   if (!project) return <div className="book-library-empty">오른쪽 위의 프로젝트 만들기 버튼으로 수업 흐름을 준비하세요.</div>;
 
-  const previewStep = (project.steps ?? []).find((step) => step.id === preview?.stepId);
-  const previewItems = previewStep ? stepPreviewItems(previewStep) : [];
-  const previewItem = previewItems[preview?.index] ?? null;
+  const editingStep = (project.steps ?? []).find((step) => step.id === editingItem?.stepId);
+  const editingItems = editingStep ? stepPreviewItems(editingStep) : [];
+  const activeEditingItem = editingItems.find((item) => item.kind === editingItem?.kind && item.id === editingItem?.itemId) ?? null;
   const stepIndexById = new Map((project.steps ?? []).map((step, index) => [step.id, index]));
 
   function renderStepContent(step) {
@@ -99,8 +115,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
               key={`${entry.kind}:${entry.id}`}
               item={entry.source}
               kind={entry.kind}
-              onOpen={entry.kind === "activity" ? () => onOpen(entry.source) : () => openPreview(step, entry.kind, entry.id)}
-              onPreview={() => openPreview(step, entry.kind, entry.id)}
+              onPreview={() => setEditingItem({ stepId: step.id, kind: entry.kind, itemId: entry.id })}
               onEdit={onEdit ? () => onEdit(false, step.id) : null}
               onDelete={onDelete ? () => onDelete({ kind: entry.kind, item: entry.source, stepId: step.id }) : null}
               onToggleLock={onToggleProjectItemLock
@@ -159,21 +174,14 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
         </button>
       )}
     </div>
-    {previewItem && (
-      <StepContentModal
-        step={previewStep}
-        item={previewItem}
-        index={preview.index}
-        total={previewItems.length}
-        onMove={(offset) => setPreview((current) => ({
-          ...current,
-          index: (current.index + offset + previewItems.length) % previewItems.length,
-        }))}
-        onOpenActivity={previewItem.kind === "activity" ? () => {
-          setPreview(null);
-          onOpen(previewItem.source);
-        } : null}
-        onClose={() => setPreview(null)}
+    {activeEditingItem && (
+      <BookProjectItemEditModal
+        step={editingStep}
+        item={activeEditingItem.source}
+        kind={activeEditingItem.kind}
+        saving={saving}
+        onSave={(patch) => saveProjectItem(editingStep.id, activeEditingItem.kind, activeEditingItem.id, patch)}
+        onClose={() => setEditingItem(null)}
       />
     )}
     </>

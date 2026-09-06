@@ -32,7 +32,6 @@ export default function BookWorkspace({
   savingProject,
   onSaveProject,
   onEditProject,
-  onOpen,
   onToggleActivityLock,
   onToggleProjectItemLock,
   onDelete,
@@ -213,7 +212,6 @@ export default function BookWorkspace({
               participantCount={participants.length}
               onSave={onSaveProject}
               onEdit={onEditProject}
-              onOpen={onOpen}
               onToggleActivityLock={onToggleActivityLock}
               onToggleProjectItemLock={onToggleProjectItemLock}
               onDelete={onDelete}

@@ -85,8 +85,7 @@ export function BookPersonalResourceCard({
         ) : (
           <>
             {detailUrlSlot(linkHref, linkLabel)}
-            <div className="book-personal-resource-content" aria-label="자료 내용">
-              <span>자료 내용</span>
+            <div className="book-personal-resource-content" aria-label="자료 본문">
               <RichTextDisplay className="book-personal-resource-content-text" html={resource.content} />
             </div>
           </>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { backdropClose } from "@/lib/modal";
 import { stripHtml } from "@/lib/html";
 import RichTextDisplay from "./RichTextDisplay";
 import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
@@ -12,10 +11,6 @@ function IconEdit({ size = 16 }) {
 
 export function IconCopy({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
-}
-
-function IconOpen({ size = 16 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 7H6.8A2.8 2.8 0 0 0 4 9.8v7.4A2.8 2.8 0 0 0 6.8 20h7.4a2.8 2.8 0 0 0 2.8-2.8V16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M12.5 4H20v7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M10.5 13.5 19.4 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
 function IconExpand({ size = 16 }) {
@@ -70,7 +65,7 @@ export function orderedStepItems(step) {
       kind: "resource",
       label: "자료",
       title: item.title,
-      content: item.content || "등록된 자료 내용이 없습니다.",
+      content: item.content || "등록된 내용이 없습니다.",
       url: item.url || "",
       source: item,
     })),
@@ -98,7 +93,7 @@ export function stepPreviewItems(step) {
   return orderedStepItems(step);
 }
 
-export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
+export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
   const [copied, setCopied] = useState(false);
   const content = item.content || "";
   const linkSource = kind === "activity" ? item.bookUrl || item.url : item.url;
@@ -152,14 +147,11 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
         <div className="book-project-detail-headline">
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
-            {onOpen && (
-              <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 열기`} aria-label={`${itemLabel} 열기`} onClick={onOpen}>
-                <IconOpen />
+            {onPreview && (
+              <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 크게 편집`} aria-label={`${itemLabel} 크게 편집`} onClick={onPreview}>
+                <IconExpand />
               </button>
             )}
-            <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 확대`} aria-label={`${itemLabel} 확대`} onClick={onPreview}>
-              <IconExpand />
-            </button>
             {onEdit && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 수정`} aria-label={`${itemLabel} 수정`} onClick={onEdit}>
                 <IconEdit />
@@ -196,35 +188,5 @@ export function ProjectSection({ title, empty, children }) {
       <h3>{title}</h3>
       {items.length > 0 ? children : <p>{empty}</p>}
     </section>
-  );
-}
-
-export function StepContentModal({ step, item, index, total, onMove, onOpenActivity, onClose }) {
-  const linkHref = item.url ? resourceHref(item.url) : "";
-
-  return (
-    <div className="modal-backdrop" {...backdropClose(onClose)}>
-      <section className="modal book-step-preview-modal" role="dialog" aria-modal="true" aria-labelledby="book-step-preview-title" onClick={(event) => event.stopPropagation()}>
-        <header className="modal-head">
-          <div>
-            <span>{step.title} · {item.label}</span>
-            <h3 id="book-step-preview-title">{item.title}</h3>
-          </div>
-          <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
-        </header>
-        <div className="book-step-preview-body">
-          <RichTextDisplay className="book-step-preview-text" html={item.content} />
-          {linkHref && <a className="btn-outline book-step-preview-link" href={linkHref} target="_blank" rel="noreferrer">{item.kind === "activity" ? "활동 링크 열기" : "자료 링크 열기"}</a>}
-        </div>
-        <footer className="book-step-preview-footer">
-          <span>{index + 1} / {total}</span>
-          <div>
-            <button type="button" className="btn-outline" disabled={total < 2} onClick={() => onMove(-1)}>이전</button>
-            <button type="button" className="btn-outline" disabled={total < 2} onClick={() => onMove(1)}>다음</button>
-            {onOpenActivity && <button type="button" className="btn-primary" onClick={onOpenActivity}>활동 열기</button>}
-          </div>
-        </footer>
-      </section>
-    </div>
   );
 }
