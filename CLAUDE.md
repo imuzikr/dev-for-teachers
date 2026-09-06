@@ -69,9 +69,9 @@ Firebase 미설정 시 자동으로 **데모 모드**로 동작 (새로고침 �
   - 문서 ID = 작성자 uid → 보드당 카드 1개 보장. 전체 조회는 `collectionGroup("cards")` 사용
   - (데모 모드 mock은 평면 배열 `mock.studyCards`로 흉내 — Firebase는 서브컬렉션)
 - `kwl` — KWL 기록 (classId, userId, date, K, W, L) — append 모델 (저장마다 새 문서)
-- `users` — 사용자 프로필 (uid, email, displayName(익명), realName, studentId, role)
-  - **식별 정보(실명·이메일·학번)는 여기에만** 저장. 게시물·카드엔 익명 정보만 넣음.
-  - 읽기 규칙: 본인+교사. 교사 화면은 `subscribeUserDirectory`로 uid→실명/학번 조회.
+- `users` — 사용자 프로필 (uid, schoolName, realName, role, requestedRole)
+  - **프로필 정보(학교 이름·성명)는 여기에만** 저장. 게시물·카드엔 세션 또는 게시물 표시용 익명 이름과 아이콘만 넣음.
+  - 읽기 규칙: 본인+교사. 교사 화면은 `subscribeUserDirectory`로 uid→학교 이름/성명 조회.
 
 ## 주의 사항
 

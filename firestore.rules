@@ -37,13 +37,10 @@ service cloud.firestore {
       return isGuestTeacher()
              && userId == uid()
              && request.resource.data.keys().hasOnly([
-                  'email', 'realName', 'displayName', 'emoji', 'role',
-                  'requestedRole', 'studentId', 'schoolName', 'createdAt'
+                  'realName', 'role', 'requestedRole', 'schoolName', 'createdAt'
                 ])
              && request.resource.data.role == 'student'
-             && request.resource.data.email == ''
              && request.resource.data.realName is string
-             && request.resource.data.displayName is string
              && request.resource.data.schoolName is string
              && request.resource.data.createdAt == request.time;
     }
@@ -73,6 +70,11 @@ service cloud.firestore {
     }
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    function writesProfileOnly(keys, removableKeys) {
+      return request.resource.data.diff(resource.data).addedKeys().hasOnly(keys)
+             && request.resource.data.diff(resource.data).changedKeys().hasOnly(keys)
+             && request.resource.data.diff(resource.data).removedKeys().hasOnly(removableKeys);
     }
 
     match /system/{docId} {
@@ -147,7 +149,7 @@ service cloud.firestore {
     }
 
     // ── 사용자 프로필 ─────────────────────────────────────────
-    // 실명·이메일 등 식별 정보(PII)가 여기에만 있으므로, 읽기는 본인+교사로 제한.
+    // 학교 이름·성명 프로필 정보가 여기에만 있으므로, 읽기는 본인+교사로 제한.
     // (질문 게시판은 전체 공유라 교사가 타 반 학생 실명도 확인해야 하므로 교사 전체 허용)
     match /users/{userId} {
       allow read: if signedIn() && (userId == uid() || isTeacher());
@@ -159,8 +161,8 @@ service cloud.firestore {
       // 쓰기 범위 — '누가' 뿐 아니라 '어떤 필드를' 쓰는지까지 제한합니다.
       //  · 최고 관리자: 전체. 역할 부여와 부트스트랩 자가 치유(lib/auth.js가
       //      초기 관리자 문서에 role='admin'을 맞추는 것)가 여기에 해당합니다.
-      //  · 본인: 이메일·아바타·알림토큰·신청 표시만. 닉네임·실명·학번·역할 불가.
-      //  · 교사: 학생 관리에 실제로 쓰는 필드만(StudentEditModal의 프로필 수정,
+      //  · 본인: 학교 이름·성명·알림토큰·신청 표시만. 닉네임·이메일·학번·역할 불가.
+      //  · 교사: 학생 관리에 실제로 쓰는 필드만(StudentEditModal의 학교·성명 수정,
       //      탈퇴 신청 거절). role은 목록에 없어 교사가 역할을 건드릴 수 없습니다.
       //      대상도 학생(또는 본인)으로 좁혀, 다른 교사의 프로필은 못 고칩니다.
       //      선생님 신청 승인·거절(requestedRole)은 최고 관리자 전용 화면이라
@@ -170,12 +172,17 @@ service cloud.firestore {
         || (userId == uid() && isAdminAfterWrite()
             && request.resource.data.role == 'admin')
         || (userId == uid()
-            && changedOnly(['email','emoji','fcmTokens','requestedRole',
-                            'withdrawRequested','withdrawRequestedAt']))
+            && writesProfileOnly(
+              ['schoolName','realName','fcmTokens','requestedRole',
+               'withdrawRequested','withdrawRequestedAt'],
+              ['email','displayName','emoji','studentId']
+            ))
         || (isTeacher()
             && (userId == uid() || resource.data.get('role', 'student') == 'student')
-            && changedOnly(['displayName','emoji','realName','email','studentId',
-                            'withdrawRequested','withdrawRequestedAt']))
+            && writesProfileOnly(
+              ['schoolName','realName','withdrawRequested','withdrawRequestedAt'],
+              ['displayName','emoji','email','studentId']
+            ))
       );
       allow delete: if isAdmin();
 

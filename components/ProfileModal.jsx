@@ -3,44 +3,39 @@
 // =============================================================
 // 내 프로필 모달 — 상단바 프로필 메뉴에서 열림
 // -------------------------------------------------------------
-// · 학생: 기본 아바타(이모지)만 직접 수정. 실명·학번·닉네임은 읽기 전용
-//   (실명·학번은 선생님만 수정 — 서버 규칙에서도 강제).
-// · 교사: 실명만 수정(화면 표시는 항상 '선생님'·🧑‍🏫 고정).
 // =============================================================
 import { backdropClose } from "@/lib/modal";
 import { useState } from "react";
 import { updateMyProfile, requestWithdrawal, dismissWithdrawalRequest } from "@/lib/store";
-import { isTeacher, isAdmin } from "@/lib/user";
+import { isAdmin, isTeacher } from "@/lib/user";
 import { isFirebaseConfigured } from "@/lib/firebase";
-import { ANIMALS } from "./StudentEditModal";
 import ConfirmModal from "./ConfirmModal";
 
 export default function ProfileModal({ user, onClose }) {
   const teacherRole = isTeacher(user);
   const adminRole = isAdmin(user);
-  const [emoji, setEmoji] = useState(user.emoji || "🙂");
+  const [schoolName, setSchoolName] = useState(user.schoolName || "");
   const [realName, setRealName] = useState(user.realName || "");
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [withdrawRequested, setWithdrawRequested] = useState(!!user.withdrawRequested);
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [withdrawBusy, setWithdrawBusy] = useState(false);
-  // 신청 승인권자 — 학생은 선생님이, 선생님은 최고 관리자가 확인합니다.
   const approverWord = teacherRole ? "최고 관리자" : "선생님";
 
-  const dirty = teacherRole
-    ? realName.trim() !== (user.realName || "")
-    : emoji !== (user.emoji || "🙂");
+  const dirty =
+    schoolName.trim() !== (user.schoolName || "")
+    || realName.trim() !== (user.realName || "");
+  const canSave = dirty && schoolName.trim() && realName.trim() && !saving;
 
   async function handleSave() {
-    if (!dirty || saving) return;
+    if (!canSave) return;
     setSaving(true);
     try {
-      await updateMyProfile(
-        user.uid,
-        teacherRole ? { realName: realName.trim() } : { emoji }
-      );
+      await updateMyProfile(user.uid, {
+        schoolName: schoolName.trim(),
+        realName: realName.trim(),
+      });
       setSaved(true);
       setTimeout(onClose, 700);
     } finally {
@@ -83,85 +78,29 @@ export default function ProfileModal({ user, onClose }) {
 
         <h2 className="student-edit-title">내 프로필</h2>
 
-        <div className="student-edit-emoji-row">
-          <div className="student-edit-emoji-wrap">
-            {teacherRole ? (
-              <div className="student-edit-emoji-btn readonly">🧑‍🏫</div>
-            ) : (
-              <button
-                type="button"
-                className="student-edit-emoji-btn"
-                onClick={() => setPickerOpen((v) => !v)}
-                title="기본 아바타 변경"
-              >
-                {emoji}
-              </button>
-            )}
-            {pickerOpen && !teacherRole && (
-              <div className="emoji-picker" role="listbox" aria-label="아바타 선택">
-                {ANIMALS.map((a) => (
-                  <button
-                    key={a.emoji}
-                    type="button"
-                    role="option"
-                    aria-selected={emoji === a.emoji}
-                    className={`emoji-pick-btn${emoji === a.emoji ? " active" : ""}`}
-                    title={a.name}
-                    onClick={() => {
-                      setEmoji(a.emoji);
-                      setPickerOpen(false);
-                    }}
-                  >
-                    {a.emoji}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {!teacherRole && <p className="student-edit-emoji-hint">클릭해서 변경</p>}
-        </div>
-
         <div className="student-edit-fields">
           <div className="student-edit-field">
-            <span>실명</span>
-            {teacherRole ? (
-              <input
-                type="text"
-                value={realName}
-                onChange={(e) => setRealName(e.target.value)}
-                placeholder="실명"
-                maxLength={30}
-              />
-            ) : (
-              <div className="student-edit-value">{user.realName || "—"}</div>
-            )}
+            <span>학교 이름</span>
+            <input
+              type="text"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              placeholder="학교 이름"
+              maxLength={40}
+              autoFocus
+            />
           </div>
-          {!teacherRole && (
-            <>
-              <div className="student-edit-field">
-                <span>학번</span>
-                <div className="student-edit-value">{user.studentId || "—"}</div>
-              </div>
-              <div className="student-edit-field">
-                <span>닉네임</span>
-                <div className="student-edit-value">
-                  {user.displayName || "—"}
-                </div>
-              </div>
-            </>
-          )}
           <div className="student-edit-field">
-            <span>이메일</span>
-            <div className="student-edit-value">{user.email || "—"}</div>
+            <span>성명</span>
+            <input
+              type="text"
+              value={realName}
+              onChange={(e) => setRealName(e.target.value)}
+              placeholder="성명"
+              maxLength={30}
+            />
           </div>
         </div>
-
-        {!teacherRole && (
-          <p className="profile-modal-hint">
-            실명·학번은 선생님만 수정할 수 있어요. 게시물과 채팅에는 실명 대신
-            익명 닉네임만 표시됩니다.
-          </p>
-        )}
 
         <div className="student-edit-actions">
           <button type="button" className="btn-ghost" onClick={onClose}>
@@ -171,7 +110,7 @@ export default function ProfileModal({ user, onClose }) {
             type="button"
             className="btn-primary"
             onClick={handleSave}
-            disabled={!dirty || saving}
+            disabled={!canSave}
           >
             {saved ? "저장했어요 ✓" : saving ? "저장 중…" : "저장"}
           </button>

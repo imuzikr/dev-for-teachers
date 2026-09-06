@@ -120,13 +120,11 @@ function BooksPageInner() {
         const d = dir.get(uid) ?? {};
         return {
           uid,
-          name: d.realName || d.studentId || "이름 미설정",
-          studentId: d.studentId || null,
-          emoji: d.emoji || "🙂",
+          name: d.realName || "이름 미설정",
           schoolName: d.schoolName || "",
         };
       })
-      .sort((a, b) => (a.studentId || a.name).localeCompare(b.studentId || b.name, "ko"));
+      .sort((a, b) => a.name.localeCompare(b.name, "ko"));
   }, [memberUids, directory]);
 
   const visibleActivities = useMemo(

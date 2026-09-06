@@ -6,64 +6,35 @@ import { updateStudentProfile, deleteStudent } from "@/lib/store";
 import ConfirmModal from "./ConfirmModal";
 import { IconTrash } from "./StatusIcons";
 
-export const ANIMALS = [
-  { name: "달팽이", emoji: "🐌" },
-  { name: "돌고래", emoji: "🐬" },
-  { name: "판다", emoji: "🐼" },
-  { name: "나무늘보", emoji: "🦥" },
-  { name: "고슴도치", emoji: "🦔" },
-  { name: "수달", emoji: "🦦" },
-  { name: "펭귄", emoji: "🐧" },
-  { name: "부엉이", emoji: "🦉" },
-  { name: "다람쥐", emoji: "🐿️" },
-  { name: "고래", emoji: "🐋" },
-  { name: "여우", emoji: "🦊" },
-  { name: "거북이", emoji: "🐢" },
-  { name: "문어", emoji: "🐙" },
-  { name: "코알라", emoji: "🐨" },
-  { name: "토끼", emoji: "🐰" },
-  { name: "햄스터", emoji: "🐹" },
-];
-
 export default function StudentEditModal({ student, onClose }) {
   const isTeacherTarget = student.role === "teacher" || student.role === "admin";
   const roleWord = isTeacherTarget ? "선생님" : "학생";
   const [editing, setEditing] = useState(false);
-  const [emoji, setEmoji] = useState(student.emoji);
-  const [name, setName] = useState(student.name);
+  const [schoolName, setSchoolName] = useState(student.schoolName ?? "");
   const [realName, setRealName] = useState(student.realName ?? "");
-  const [studentId, setStudentId] = useState(student.studentId ?? "");
-  const [email, setEmail] = useState(student.email ?? "");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const canSave = schoolName.trim() && realName.trim() && !saving;
 
   function handleStartEdit() {
     setEditing(true);
   }
 
   function handleCancelEdit() {
-    setEmoji(student.emoji);
-    setName(student.name);
+    setSchoolName(student.schoolName ?? "");
     setRealName(student.realName ?? "");
-    setStudentId(student.studentId ?? "");
-    setEmail(student.email ?? "");
-    setPickerOpen(false);
     setEditing(false);
   }
 
   async function handleSave() {
-    if (!name.trim() || saving) return;
+    if (!canSave) return;
     setSaving(true);
     try {
       await updateStudentProfile(student.id, {
-        name: name.trim(),
-        emoji,
+        schoolName: schoolName.trim(),
         realName: realName.trim(),
-        studentId: studentId.trim(),
-        email: email.trim(),
       });
       onClose();
     } finally {
@@ -114,102 +85,34 @@ export default function StudentEditModal({ student, onClose }) {
             {editing ? "프로필 편집" : "프로필"}
           </h2>
 
-          <div className="student-edit-emoji-row">
-            <div className="student-edit-emoji-wrap">
-              {editing ? (
-                <button
-                  type="button"
-                  className="student-edit-emoji-btn"
-                  onClick={() => setPickerOpen((v) => !v)}
-                  title="이모지 변경"
-                >
-                  {emoji}
-                </button>
-              ) : (
-                <div className="student-edit-emoji-btn readonly">{emoji}</div>
-              )}
-              {pickerOpen && editing && (
-                <div className="emoji-picker" role="listbox" aria-label="이모지 선택">
-                  {ANIMALS.map((a) => (
-                    <button
-                      key={a.emoji}
-                      type="button"
-                      role="option"
-                      aria-selected={emoji === a.emoji}
-                      className={`emoji-pick-btn${emoji === a.emoji ? " active" : ""}`}
-                      title={a.name}
-                      onClick={() => {
-                        setEmoji(a.emoji);
-                        setPickerOpen(false);
-                      }}
-                    >
-                      {a.emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {editing && <p className="student-edit-emoji-hint">클릭해서 변경</p>}
-          </div>
-
           <div className="student-edit-fields">
             <div className="student-edit-field">
-              <span>닉네임</span>
+              <span>학교 이름</span>
               {editing ? (
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="익명 닉네임"
-                  maxLength={30}
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  placeholder="학교 이름"
+                  maxLength={40}
                   autoFocus
                 />
               ) : (
-                <div className="student-edit-value">{name || "—"}</div>
+                <div className="student-edit-value">{schoolName || "—"}</div>
               )}
             </div>
             <div className="student-edit-field">
-              <span>실명</span>
+              <span>성명</span>
               {editing ? (
                 <input
                   type="text"
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
-                  placeholder="실명 (선택)"
+                  placeholder="성명"
                   maxLength={30}
                 />
               ) : (
                 <div className="student-edit-value">{realName || "—"}</div>
-              )}
-            </div>
-            {!isTeacherTarget && (
-              <div className="student-edit-field">
-                <span>학번</span>
-                {editing ? (
-                  <input
-                    type="text"
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
-                    placeholder="학번 (예: 30105)"
-                    maxLength={20}
-                  />
-                ) : (
-                  <div className="student-edit-value">{studentId || "—"}</div>
-                )}
-              </div>
-            )}
-            <div className="student-edit-field">
-              <span>이메일</span>
-              {editing ? (
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="구글 계정 이메일 (선택)"
-                  maxLength={100}
-                />
-              ) : (
-                <div className="student-edit-value">{email || "—"}</div>
               )}
             </div>
           </div>
@@ -227,7 +130,7 @@ export default function StudentEditModal({ student, onClose }) {
                 type="button"
                 className="btn-primary"
                 onClick={handleSave}
-                disabled={!name.trim() || saving}
+                disabled={!canSave}
               >
                 {saving ? "저장 중…" : "저장"}
               </button>
@@ -266,7 +169,7 @@ export default function StudentEditModal({ student, onClose }) {
       {confirmDelete && (
         <ConfirmModal
           title={`${roleWord} 탈퇴 처리`}
-          preview={`${emoji} ${isTeacherTarget ? realName || "선생님" : name}`}
+          preview={realName || roleWord}
           description={`이 ${roleWord}의 모든 게시물·활동 데이터와 프로필이\n영구 삭제됩니다. 복구할 수 없습니다.`}
           confirmLabel={deleting ? "처리 중…" : "탈퇴 처리"}
           danger

@@ -9841,8 +9841,8 @@ button.book-project-flow-pill:focus-visible {
 
 .book-personal-detail {
   min-height: 100%;
-  overflow-y: auto;
 }
+.book-personal-selected-view { min-height: 0; }
 .book-personal-detail-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -9997,6 +9997,19 @@ button.book-project-flow-pill:focus-visible {
   font-size: 13px;
   line-height: 1.65;
 }
+.book-personal-response-text {
+  min-height: 142px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
 .book-personal-response textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-light); }
 .book-personal-response textarea[readonly] { background: var(--bg); }
 .book-personal-card-body {
@@ -10048,6 +10061,16 @@ button.book-project-flow-pill:focus-visible {
   border-color: rgba(60, 113, 65, 0.48);
   background: var(--primary-light);
   color: var(--primary-dark);
+}
+.book-personal-detail--teacher .book-personal-detail-list {
+  align-items: stretch;
+}
+.book-personal-detail--teacher .book-personal-activity-card {
+  height: auto;
+  min-height: 420px;
+}
+.book-personal-detail--teacher .book-personal-response {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 640px) {

@@ -1,7 +1,7 @@
 // =============================================================
 // 사용자 프로필 — users/{uid}
 //
-// 실명·이메일·학번이 여기에만 있는 단일 출처라, '누가' 쓰는지뿐 아니라
+// 학교 이름·성명이 여기에만 있는 단일 출처라, '누가' 쓰는지뿐 아니라
 // '어떤 필드를' 쓰는지까지 좁혀야 합니다. 특히 role은 클라이언트가 절대
 // 쓸 수 없어야 합니다 — 역할 부여는 서버 함수(setUserRole)만 합니다.
 // =============================================================
@@ -26,14 +26,13 @@ describe("사용자 프로필 규칙", () => {
     await env.clearFirestore();
     await seed(env, async (db) => {
       await setDoc(doc(db, "users", "stu1"), {
-        uid: "stu1", role: "student", realName: "학생A", studentId: "30101",
-        displayName: "다급한 달팽이", emoji: "🐌", email: "stu1@hansung.hs.kr",
+        uid: "stu1", role: "student", realName: "학생A", schoolName: "한성고",
       });
       await setDoc(doc(db, "users", "teacherA"), {
-        uid: "teacherA", role: "teacher", realName: "김선생", displayName: "선생님", emoji: "🧑‍🏫",
+        uid: "teacherA", role: "teacher", realName: "김선생", schoolName: "한성고",
       });
       await setDoc(doc(db, "users", "teacherB"), {
-        uid: "teacherB", role: "teacher", realName: "박선생", displayName: "선생님", emoji: "🧑‍🏫",
+        uid: "teacherB", role: "teacher", realName: "박선생", schoolName: "한성고",
       });
       await setDoc(doc(db, "users", "rootAdmin"), { uid: "rootAdmin", role: "student" });
       await setDoc(doc(db, "system", "admin"), { uid: "rootAdmin", createdAt: new Date() });
@@ -41,9 +40,11 @@ describe("사용자 프로필 규칙", () => {
   });
 
   describe("학생 본인", () => {
-    it("아바타·이메일은 스스로 바꿀 수 있다", async () => {
+    it("학교 이름과 성명은 스스로 바꿀 수 있다", async () => {
       const db = asStudent(env, "stu1").firestore();
-      await assertSucceeds(updateDoc(doc(db, "users", "stu1"), { emoji: "🐧" }));
+      await assertSucceeds(
+        updateDoc(doc(db, "users", "stu1"), { schoolName: "새학교", realName: "홍길동" })
+      );
     });
 
     it("탈퇴 신청을 남길 수 있다", async () => {
@@ -59,11 +60,12 @@ describe("사용자 프로필 규칙", () => {
       await assertFails(updateDoc(doc(db, "users", "stu1"), { role: "teacher" }));
     });
 
-    it("자기 실명·학번·닉네임은 바꿀 수 없다 (교사만 수정)", async () => {
+    it("학번·닉네임·이메일·아바타는 프로필에 새로 저장할 수 없다", async () => {
       const db = asStudent(env, "stu1").firestore();
-      await assertFails(updateDoc(doc(db, "users", "stu1"), { realName: "가짜이름" }));
       await assertFails(updateDoc(doc(db, "users", "stu1"), { studentId: "99999" }));
       await assertFails(updateDoc(doc(db, "users", "stu1"), { displayName: "내맘대로" }));
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { email: "stu1@example.test" }));
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { emoji: "🐧" }));
     });
 
     it("남의 프로필은 건드릴 수 없다", async () => {
@@ -79,14 +81,21 @@ describe("사용자 프로필 규칙", () => {
   });
 
   describe("교사", () => {
-    it("학생의 실명·학번을 고칠 수 있다 (학생 정보 수정 화면)", async () => {
+    it("학생의 학교 이름과 성명을 고칠 수 있다", async () => {
       const db = asTeacher(env, "teacherA").firestore();
       await assertSucceeds(
         updateDoc(doc(db, "users", "stu1"), {
-          displayName: "느긋한 판다", emoji: "🐼", realName: "홍길동",
-          email: "stu1@hansung.hs.kr", studentId: "30102",
+          schoolName: "새학교", realName: "홍길동",
         })
       );
+    });
+
+    it("학생의 학번·닉네임·이메일·아바타는 새로 저장할 수 없다", async () => {
+      const db = asTeacher(env, "teacherA").firestore();
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { studentId: "30102" }));
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { displayName: "느긋한 판다" }));
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { email: "stu1@example.test" }));
+      await assertFails(updateDoc(doc(db, "users", "stu1"), { emoji: "🐼" }));
     });
 
     it("학생의 탈퇴 신청을 거절(해제)할 수 있다", async () => {
@@ -94,7 +103,7 @@ describe("사용자 프로필 규칙", () => {
       await assertSucceeds(updateDoc(doc(db, "users", "stu1"), { withdrawRequested: false }));
     });
 
-    it("본인 실명은 스스로 고칠 수 있다", async () => {
+    it("본인 성명은 스스로 고칠 수 있다", async () => {
       const db = asTeacher(env, "teacherA").firestore();
       await assertSucceeds(updateDoc(doc(db, "users", "teacherA"), { realName: "김선생님" }));
     });
@@ -240,7 +249,7 @@ describe("사용자 프로필 규칙", () => {
       const db = asRegisteredAdmin(env).firestore();
       await assertSucceeds(
         updateDoc(doc(db, "users", "rootAdmin"), {
-          role: "admin", displayName: "선생님", emoji: "🧑‍🏫",
+          role: "admin",
         })
       );
     });
@@ -249,7 +258,7 @@ describe("사용자 프로필 규칙", () => {
       const db = asRegisteredAdmin(env).firestore();
       await assertSucceeds(
         updateDoc(doc(db, "users", "stu1"), {
-          requestedRole: null, displayName: "선생님", emoji: "🧑‍🏫",
+          requestedRole: null,
         })
       );
     });

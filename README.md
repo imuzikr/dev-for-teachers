@@ -53,11 +53,11 @@ firebase deploy --only firestore
 
 ## Firestore 데이터 구조
 
-식별 정보(실명·이메일·학번)는 `users/{uid}`에만 저장하고, 게시물·카드에는
-익명 정보(닉네임·이모지)만 넣습니다.
+프로필 정보(학교 이름·성명)는 `users/{uid}`에만 저장하고, 게시물·카드에는
+세션 또는 게시물 표시용 익명 이름과 아이콘만 넣습니다.
 
 ```
-users/{uid}          프로필 (email, realName, displayName, role, requestedRole ...)
+users/{uid}          프로필 (schoolName, realName, role, requestedRole ...)
 classes              반 / memberships 소속
 studyBoards          이전 공부방 데이터 (삭제 작업에서만 정리)
   └ cards            이전 공부방 카드

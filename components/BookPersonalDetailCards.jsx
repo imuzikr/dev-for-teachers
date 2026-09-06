@@ -132,21 +132,27 @@ export function BookPersonalActivityCard({
         <p className="book-personal-instruction">{activity.content || "활동 안내사항"}</p>
         <label className="book-personal-response">
           <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-          <textarea
-            value={response}
-            readOnly={isTeacher || locked}
-            onChange={(event) => onDraftChange((current) => ({ ...current, [activity.id]: event.target.value }))}
-            placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : isTeacher ? "아직 입력한 내용이 없습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
-          />
+          {isTeacher ? (
+            <div className="book-personal-response-text">
+              {response || "아직 입력한 내용이 없습니다."}
+            </div>
+          ) : (
+            <textarea
+              value={response}
+              readOnly={locked}
+              onChange={(event) => onDraftChange((current) => ({ ...current, [activity.id]: event.target.value }))}
+              placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
+            />
+          )}
         </label>
       </div>
-      {isTeacher ? (
+      {isTeacher && onToggleActivityLock ? (
         <footer>
           <button type="button" className={locked ? "btn-primary" : "btn-outline"} disabled={!onToggleActivityLock} onClick={() => onToggleActivityLock(activity, !locked)}>
             {locked ? "활동 열기" : "활동 잠그기"}
           </button>
         </footer>
-      ) : (
+      ) : !isTeacher ? (
         <footer>
           <button
             type="button"
@@ -157,7 +163,7 @@ export function BookPersonalActivityCard({
             {saveState.savingId === activity.id ? "확인 중" : confirmed || saveState.savedId === activity.id ? "확인됨" : saveState.failedId === activity.id ? "다시 확인" : "확인"}
           </button>
         </footer>
-      )}
+      ) : null}
     </article>
   );
 }

@@ -28,7 +28,7 @@ function errorText(err) {
 }
 
 function userLabel(u) {
-  return u.realName || u.displayName || u.email || u.uid;
+  return u.realName || u.uid;
 }
 
 export default function RoleManagerModal({ directory, onClose }) {
@@ -72,7 +72,6 @@ export default function RoleManagerModal({ directory, onClose }) {
     [directory]
   );
 
-  // 검색 필터 — 실명/닉네임/이메일/UID 부분일치
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     const base = [...directory].sort((a, b) =>
@@ -80,7 +79,7 @@ export default function RoleManagerModal({ directory, onClose }) {
     );
     const filtered = q
       ? base.filter((u) =>
-          [u.realName, u.displayName, u.email, u.uid]
+          [u.schoolName, u.realName, u.uid]
             .filter(Boolean)
             .some((v) => v.toLowerCase().includes(q))
         )
@@ -158,8 +157,8 @@ export default function RoleManagerModal({ directory, onClose }) {
               {pending.map((u) => (
                 <li key={u.uid} className="role-pending-item">
                   <span className="role-pending-user">
-                    {u.emoji ?? "🙂"} <strong>{userLabel(u)}</strong>
-                    {u.email && <small>{u.email}</small>}
+                    <strong>{userLabel(u)}</strong>
+                    {u.schoolName && <small>{u.schoolName}</small>}
                   </span>
                   <span className="role-pending-actions">
                     <button type="button" className="btn-ghost" onClick={() => handleReject(u)} disabled={submitting}>
@@ -183,8 +182,8 @@ export default function RoleManagerModal({ directory, onClose }) {
               {withdrawPending.map((u) => (
                 <li key={u.uid} className="role-pending-item">
                   <span className="role-pending-user">
-                    🧑‍🏫 <strong>{userLabel(u)}</strong>
-                    {u.email && <small>{u.email}</small>}
+                    <strong>{userLabel(u)}</strong>
+                    {u.schoolName && <small>{u.schoolName}</small>}
                   </span>
                   <span className="role-pending-actions">
                     <button type="button" className="btn-ghost" onClick={() => handleRejectWithdraw(u)} disabled={submitting}>
@@ -208,8 +207,8 @@ export default function RoleManagerModal({ directory, onClose }) {
               {teachers.map((u) => (
                 <li key={u.uid} className="role-pending-item">
                   <span className="role-pending-user">
-                    🧑‍🏫 <strong>{userLabel(u)}</strong>
-                    {u.email && <small>{u.email}</small>}
+                    <strong>{userLabel(u)}</strong>
+                    {u.schoolName && <small>{u.schoolName}</small>}
                   </span>
                   <span className="role-pending-actions">
                     <button type="button" className="btn-ghost" onClick={() => handleDemote(u)} disabled={submitting}>
@@ -244,7 +243,7 @@ export default function RoleManagerModal({ directory, onClose }) {
                 setMessage(null);
               }}
               onClick={() => setListOpen(true)}
-              placeholder="클릭 후 실명·닉네임·이메일로 검색"
+              placeholder="클릭 후 학교 이름·성명으로 검색"
             />
             {listOpen && matches.length > 0 && (
               <ul className="role-combo-list">
@@ -252,10 +251,10 @@ export default function RoleManagerModal({ directory, onClose }) {
                   <li key={u.uid}>
                     <button type="button" onClick={() => pickUser(u)}>
                       <span className="role-combo-name">
-                        {u.emoji ?? "🙂"} {userLabel(u)}
+                        {userLabel(u)}
                       </span>
                       <span className="role-combo-meta">
-                        {u.email ? `${u.email} · ` : ""}
+                        {u.schoolName ? `${u.schoolName} · ` : ""}
                         {ROLE_LABELS[u.role] ?? u.role}
                       </span>
                     </button>
@@ -268,7 +267,7 @@ export default function RoleManagerModal({ directory, onClose }) {
 
         {selected && (
           <div className="role-manager-match found">
-            {selected.emoji ?? "🙂"} <strong>{userLabel(selected)}</strong>
+            <strong>{userLabel(selected)}</strong>
             <span className="role-manager-current"> · 현재 {ROLE_LABELS[selected.role] ?? selected.role}</span>
           </div>
         )}
@@ -304,7 +303,7 @@ export default function RoleManagerModal({ directory, onClose }) {
       {confirmDelete && (
         <ConfirmModal
           title="선생님 탈퇴 처리"
-          preview={`🧑‍🏫 ${userLabel(confirmDelete)}`}
+          preview={userLabel(confirmDelete)}
           description={"이 선생님 계정의 모든 게시물·활동·프로필이\n영구 삭제됩니다. 복구할 수 없습니다."}
           confirmLabel="탈퇴 처리"
           danger

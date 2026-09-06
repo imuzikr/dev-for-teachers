@@ -72,7 +72,7 @@ export default function BookPersonalDetail({
   }
 
   return (
-    <section className="book-personal-dashboard book-personal-detail" aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
+    <section className={`book-personal-dashboard book-personal-detail${isTeacher ? " book-personal-detail--teacher" : ""}`} aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
       <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
         <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
         <div>

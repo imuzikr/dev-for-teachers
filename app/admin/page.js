@@ -16,7 +16,7 @@ import {
 } from "@/lib/store";
 
 function userName(user) {
-  return user.realName || user.displayName || "이름 미설정";
+  return user.realName || "이름 미설정";
 }
 
 function deleteErrorText(error) {
@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
       .filter((entry) => entry.uid !== user?.uid)
       .filter((entry) => {
         if (!term) return true;
-        return [entry.schoolName, entry.realName, entry.displayName, entry.email, entry.uid]
+        return [entry.schoolName, entry.realName, entry.uid]
           .filter(Boolean)
           .some((value) => String(value).toLocaleLowerCase("ko").includes(term));
       })
@@ -123,7 +123,7 @@ export default function AdminDashboardPage() {
                     <span className="avatar avatar-sm"><IconStudent size={19} /></span>
                     <span className="student-main">
                       <strong>{userName(entry)}</strong>
-                      <small>{entry.schoolName || entry.email || "학교 미입력"}</small>
+                      <small>{entry.schoolName || "학교 미입력"}</small>
                     </span>
                   </button>
                   <button

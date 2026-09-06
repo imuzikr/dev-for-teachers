@@ -13,7 +13,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   const sections = preparedSections ?? bookDetailSections(project, activities);
   const itemCount = bookProjectItemCount(sections);
   const cardProgressGroups = progressStepGroups(sections);
-  const activeStudentSection = !isTeacher && selectedStepId
+  const activeStepSection = selectedStepId
     ? sections.find((section) => section.id === selectedStepId) ?? null
     : null;
   const ownParticipant = participants.find((participant) => participant.uid === user?.uid) ?? (
@@ -29,26 +29,16 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   );
   const selected = isTeacher
     ? participants.find((participant) => participant.uid === selectedUid) ?? null
-    : activeStudentSection ? ownParticipant : null;
+    : activeStepSection ? ownParticipant : null;
   const ownProgress = ownParticipant ? progressByUser.get(ownParticipant.uid) ?? new Set() : new Set();
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
   const visibleParticipantCount = isTeacher ? participants.length : ownParticipant ? 1 : participants.length;
 
   if (selected) {
-    const visibleSections = isTeacher ? sections : [activeStudentSection];
+    const visibleSections = activeStepSection ? [activeStepSection] : sections;
 
     return (
-      <>
-        {isTeacher && (
-          <BookProjectFlowOverview
-            project={project}
-            sections={sections}
-            itemCount={itemCount}
-            isTeacher={isTeacher}
-            onToggleItemLock={onToggleProjectItemLock}
-            selectedStepId={selectedStepId}
-          />
-        )}
+      <div className="book-personal-selected-view">
         <BookPersonalDetail
           selected={selected}
           sections={visibleSections}
@@ -66,11 +56,11 @@ export default function BookPersonalDashboard({ participants, activities, sectio
             }
           }}
           backLabel={isTeacher ? "← 개인 카드" : "← STEP 카드"}
-          onToggleActivityLock={onToggleActivityLock}
+          onToggleActivityLock={isTeacher ? null : onToggleActivityLock}
           onConfirmItem={onConfirmItem}
           saveDashboardText={saveDashboardText}
         />
-      </>
+      </div>
     );
   }
 
