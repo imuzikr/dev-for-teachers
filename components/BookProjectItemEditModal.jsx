@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import BasicFormatEditor from "./BasicFormatEditor";
 
 export default function BookProjectItemEditModal({ step, item, kind, saving, onSave, onClose }) {
   const itemLabel = kind === "resource" ? "자료" : "활동";
+  const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState(item?.title ?? "");
   const [content, setContent] = useState(item?.content ?? "");
   const [url, setUrl] = useState(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
   const [requiresAnswer, setRequiresAnswer] = useState(item?.requiresAnswer !== false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setTitle(item?.title ?? "");
@@ -18,7 +24,7 @@ export default function BookProjectItemEditModal({ step, item, kind, saving, onS
     setRequiresAnswer(item?.requiresAnswer !== false);
   }, [item?.id, item?.title, item?.content, item?.url, item?.bookUrl, item?.requiresAnswer, kind]);
 
-  if (!item) return null;
+  if (!item || !mounted) return null;
 
   async function save() {
     const trimmedTitle = title.trim();
@@ -33,8 +39,8 @@ export default function BookProjectItemEditModal({ step, item, kind, saving, onS
     });
   }
 
-  return (
-    <div className="modal-backdrop" {...backdropClose(onClose)}>
+  return createPortal(
+    <div className="modal-backdrop book-item-edit-backdrop" {...backdropClose(onClose)}>
       <section className="modal book-item-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-item-edit-title" onClick={(event) => event.stopPropagation()}>
         <header className="modal-head">
           <div>
@@ -93,6 +99,7 @@ export default function BookProjectItemEditModal({ step, item, kind, saving, onS
           </button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

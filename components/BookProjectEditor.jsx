@@ -10,7 +10,7 @@ function newStep(index) {
 }
 
 function newItem(kind = "activity") {
-  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "", ...(kind === "activity" ? { requiresAnswer: true } : {}) };
+  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "", ...(kind === "activity" ? { requiresAnswer: false } : {}) };
 }
 
 function orderKey(kind, id) {

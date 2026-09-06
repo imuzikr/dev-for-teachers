@@ -9850,6 +9850,11 @@ pre code {
   background: var(--bg);
 }
 
+.book-item-edit-backdrop,
+.book-personal-expand-backdrop {
+  z-index: 3200;
+}
+
 .book-item-edit-modal .modal-head {
   margin-bottom: 18px;
   padding-bottom: 16px;
@@ -10866,9 +10871,20 @@ button.book-project-flow-pill:focus-visible {
   white-space: inherit;
   font-weight: 900;
 }
-.book-personal-activity-card header > em { color: var(--text-sub); font-size: 12px; font-style: normal; white-space: nowrap; }
-.book-personal-activity-card header > em.is-done { color: var(--primary-dark); font-weight: 800; }
-.book-personal-activity-card header > em.is-locked { color: var(--danger); font-weight: 800; }
+.book-personal-card-head-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.book-personal-card-head-actions > em {
+  color: var(--text-sub);
+  font-size: 12px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.book-personal-card-head-actions > em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-card-head-actions > em.is-locked { color: var(--danger); font-weight: 800; }
 .book-personal-activity-card.is-locked {
   background: var(--soft-bg);
 }
@@ -10960,6 +10976,17 @@ button.book-project-flow-pill:focus-visible {
   border-radius: 8px;
   color: var(--primary-dark);
 }
+.book-personal-expand-btn {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--primary-dark);
+}
 .book-personal-resource-content {
   flex: 1;
   min-height: 0;
@@ -10969,6 +10996,15 @@ button.book-project-flow-pill:focus-visible {
   border-radius: 8px;
   background: var(--bg);
   color: var(--text-sub);
+}
+.book-personal-resource-card .book-personal-card-body,
+.book-personal-resource-card .book-personal-resource-content {
+  flex: 0 0 auto;
+}
+.book-personal-resource-card .book-personal-resource-content {
+  height: auto;
+  min-height: 56px;
+  max-height: 180px;
 }
 .book-personal-resource-content-text {
   margin: 0;
@@ -11002,8 +11038,107 @@ button.book-project-flow-pill:focus-visible {
   height: auto;
   min-height: 420px;
 }
+.book-personal-detail--teacher .book-personal-activity-card.does-not-require-answer {
+  min-height: 0;
+}
 .book-personal-detail--teacher .book-personal-response {
   flex: 0 0 auto;
+}
+
+.book-personal-expand-modal {
+  width: min(94vw, 1040px);
+  max-width: none;
+  max-height: min(90dvh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.book-personal-expand-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 8px 12px;
+  align-items: start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.book-personal-expand-head span,
+.book-personal-expand-head h3 {
+  grid-column: 1;
+}
+
+.book-personal-expand-head span {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.book-personal-expand-head h3 {
+  margin: 0;
+  color: var(--dark);
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1.22;
+  word-break: keep-all;
+}
+
+.book-personal-expand-head .btn-close {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.book-personal-expand-body {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  padding: 22px 2px 2px;
+}
+
+.book-personal-expand-content,
+.book-personal-expand-locked,
+.book-personal-expand-response {
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.book-personal-expand-content,
+.book-personal-expand-locked {
+  min-height: 260px;
+  padding: 24px;
+  color: var(--text);
+  --rich-text-small-size: 17px;
+  --rich-text-normal-size: 22px;
+  --rich-text-large-size: 28px;
+  font-size: 22px;
+  line-height: 1.8;
+  word-break: keep-all;
+}
+
+.book-personal-expand-response {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+}
+
+.book-personal-expand-response span {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.book-personal-expand-response p {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: keep-all;
 }
 
 .book-presentation-backdrop {

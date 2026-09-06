@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import RichTextDisplay from "./RichTextDisplay";
 import { IconLock } from "./StatusIcons";
 
@@ -49,6 +51,14 @@ function ConfirmButton({ confirmed, disabled, pending, onClick }) {
   );
 }
 
+function IconExpand({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8 4H4v4M4 4l6 6M16 4h4v4M20 4l-6 6M8 20H4v-4M4 20l6-6M16 20h4v-4M20 20l-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function BookPersonalResourceCard({
   detailItem,
   index,
@@ -60,6 +70,7 @@ export function BookPersonalResourceCard({
   onConfirm,
   onPresent,
 }) {
+  const [expanded, setExpanded] = useState(false);
   const resource = detailItem.source;
   const linkHref = resourceHref(resource.url);
   const linkLabel = resourceLinkLabel(resource.url);
@@ -68,16 +79,21 @@ export function BookPersonalResourceCard({
   const locked = resource.locked === true;
 
   return (
-    <article className={`book-personal-activity-card book-personal-resource-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article className={`book-personal-activity-card book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
           <span>자료 {index + 1}</span>
           <strong>{resource.title}</strong>
         </div>
-        <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
-          <IconCopy size={13} />
-        </button>
+        <div className="book-personal-card-head-actions">
+          <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
+            <IconCopy size={13} />
+          </button>
+          <button type="button" className="btn-ghost book-personal-expand-btn" title="자료 확대" aria-label="자료 확대" onClick={() => setExpanded(true)}>
+            <IconExpand />
+          </button>
+        </div>
       </header>
       <div className="book-personal-card-body">
         {locked ? (
@@ -102,6 +118,15 @@ export function BookPersonalResourceCard({
           <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
       )}
+      {expanded && (
+        <BookPersonalItemViewModal
+          detailItem={detailItem}
+          index={index}
+          response=""
+          isTeacher={isTeacher}
+          onClose={() => setExpanded(false)}
+        />
+      )}
     </article>
   );
 }
@@ -118,6 +143,7 @@ export function BookPersonalActivityCard({
   onToggleActivityLock,
   onPresent,
 }) {
+  const [expanded, setExpanded] = useState(false);
   const activity = detailItem.source;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey);
@@ -134,7 +160,12 @@ export function BookPersonalActivityCard({
           <span>활동 {index + 1}</span>
           <strong>{activity.title}</strong>
         </div>
-        <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인함" : "미확인"}</em>
+        <div className="book-personal-card-head-actions">
+          <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인함" : "미확인"}</em>
+          <button type="button" className="btn-ghost book-personal-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
+            <IconExpand />
+          </button>
+        </div>
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
@@ -182,6 +213,15 @@ export function BookPersonalActivityCard({
           </button>
         </footer>
       ) : null}
+      {expanded && (
+        <BookPersonalItemViewModal
+          detailItem={detailItem}
+          index={index}
+          response={response}
+          isTeacher={isTeacher}
+          onClose={() => setExpanded(false)}
+        />
+      )}
     </article>
   );
 }
