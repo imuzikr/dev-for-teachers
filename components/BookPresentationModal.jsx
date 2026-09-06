@@ -124,7 +124,8 @@ export default function BookPresentationModal({
             )}
             {onClose && (
               <button type="button" className="btn-ghost book-presentation-close" onClick={onClose} aria-label="발표 종료">
-                발표 종료
+                <span className="book-presentation-close-mark" aria-hidden="true" />
+                <span>발표 종료</span>
               </button>
             )}
           </footer>
