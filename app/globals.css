@@ -10107,7 +10107,7 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-presentation-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 16px;
   padding: 24px 28px 18px;
@@ -10206,6 +10206,19 @@ button.book-project-flow-pill:focus-visible {
   gap: 10px;
   padding: 0 28px 24px;
 }
+.book-presentation-foot.has-exit {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(120px, auto);
+}
+.book-presentation-foot.is-exit-only {
+  display: flex;
+  justify-content: flex-end;
+}
+.book-presentation-foot .book-presentation-close {
+  min-height: 48px;
+  padding: 8px 18px;
+  border-color: rgba(172, 78, 60, 0.35);
+  color: #7f2d20;
+}
 .book-presentation-foot button {
   min-height: 48px;
 }
@@ -10283,6 +10296,9 @@ button.book-project-flow-pill:focus-visible {
   .book-presentation-content p { font-size: 18px; line-height: 1.75; }
   .book-presentation-foot {
     padding: 0 18px 18px;
+    grid-template-columns: 1fr;
+  }
+  .book-presentation-foot.has-exit {
     grid-template-columns: 1fr;
   }
 }

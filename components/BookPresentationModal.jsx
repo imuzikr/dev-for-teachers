@@ -98,11 +98,6 @@ export default function BookPresentationModal({
             <b>{presentationKindLabel(kind)}</b>
             {positionLabel && <strong>{positionLabel}</strong>}
           </div>
-          {onClose && (
-            <button type="button" className="btn-ghost book-presentation-close" onClick={onClose} aria-label="발표 모드 닫기">
-              닫기
-            </button>
-          )}
         </header>
 
         <div className="book-presentation-body">
@@ -119,10 +114,19 @@ export default function BookPresentationModal({
           </article>
         </div>
 
-        {canNavigate && (
-          <footer className="book-presentation-foot">
-            <button type="button" className="btn-outline" onClick={onPrevious}>이전</button>
-            <button type="button" className="btn-primary" onClick={onNext}>다음</button>
+        {(canNavigate || onClose) && (
+          <footer className={`book-presentation-foot${onClose ? " has-exit" : ""}${!canNavigate ? " is-exit-only" : ""}`}>
+            {canNavigate && (
+              <>
+                <button type="button" className="btn-outline" onClick={onPrevious}>이전</button>
+                <button type="button" className="btn-primary" onClick={onNext}>다음</button>
+              </>
+            )}
+            {onClose && (
+              <button type="button" className="btn-ghost book-presentation-close" onClick={onClose} aria-label="발표 종료">
+                발표 종료
+              </button>
+            )}
           </footer>
         )}
       </section>
