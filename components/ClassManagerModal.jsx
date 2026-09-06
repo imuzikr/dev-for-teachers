@@ -221,6 +221,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
                   onToggleJoinAccess={handleToggleJoinAccess}
                   onRefreshJoinCode={handleRefreshJoinCode}
                   onSaveJoinCode={handleSaveJoinCode}
+                  onToast={onToast}
                   onArchive={handleArchive}
                 />
               ))}

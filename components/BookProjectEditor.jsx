@@ -9,8 +9,8 @@ function newStep(index) {
   return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [], itemOrder: [] };
 }
 
-function newItem() {
-  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "" };
+function newItem(kind = "activity") {
+  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "", ...(kind === "activity" ? { requiresAnswer: true } : {}) };
 }
 
 function orderKey(kind, id) {
@@ -110,8 +110,8 @@ export default function BookProjectEditor({
   function addItem(stepId, key) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
-    const item = newItem();
     const kind = key === "resources" ? "resource" : "activity";
+    const item = newItem(kind);
     updateStep(stepId, {
       [key]: [...step[key], item],
       itemOrder: [...normalizedOrder(step), orderEntry(kind, item.id)],

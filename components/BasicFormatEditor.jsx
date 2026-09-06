@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sanitizeHtml } from "@/lib/html";
 
 const SIZE_CLASSES = {
@@ -51,6 +51,18 @@ function removeEmptySizeClasses(root) {
   });
 }
 
+function removeSizeClasses(root) {
+  if (!root) return;
+  root.querySelectorAll("*").forEach((el) => {
+    Object.values(SIZE_CLASSES).forEach((className) => el.classList.remove(className));
+  });
+}
+
+function detectWholeTextSize(html = "") {
+  const found = Object.entries(SIZE_CLASSES).find(([, className]) => html.includes(className));
+  return found?.[0] ?? "normal";
+}
+
 export default function BasicFormatEditor({
   value = "",
   onChange,
@@ -60,6 +72,7 @@ export default function BasicFormatEditor({
 }) {
   const areaRef = useRef(null);
   const lastHtmlRef = useRef("");
+  const [activeSize, setActiveSize] = useState(() => detectWholeTextSize(value));
 
   useEffect(() => {
     const nextHtml = sanitizeHtml(value || "");
@@ -67,6 +80,7 @@ export default function BasicFormatEditor({
     if (!area || nextHtml === lastHtmlRef.current || area.innerHTML === nextHtml) return;
     area.innerHTML = nextHtml;
     lastHtmlRef.current = nextHtml;
+    setActiveSize(detectWholeTextSize(nextHtml));
   }, [value]);
 
   function emitChange() {
@@ -77,6 +91,7 @@ export default function BasicFormatEditor({
     const nextHtml = sanitizeHtml(area.innerHTML);
     if (area.innerHTML !== nextHtml) area.innerHTML = nextHtml;
     lastHtmlRef.current = nextHtml;
+    setActiveSize(detectWholeTextSize(nextHtml));
     onChange?.(nextHtml);
   }
 
@@ -89,9 +104,15 @@ export default function BasicFormatEditor({
 
   function applySize(size) {
     if (disabled) return;
-    areaRef.current?.focus();
-    const commandSize = size === "small" ? "2" : size === "large" ? "5" : "3";
-    document.execCommand("fontSize", false, commandSize);
+    const area = areaRef.current;
+    if (!area) return;
+    area.focus();
+    normalizeEditorHtml(area);
+    removeSizeClasses(area);
+    const className = SIZE_CLASSES[size] ?? SIZE_CLASSES.normal;
+    const html = area.innerHTML.trim() ? area.innerHTML : "<br>";
+    area.innerHTML = `<div class="${className}">${html}</div>`;
+    setActiveSize(size);
     emitChange();
   }
 
@@ -126,13 +147,13 @@ export default function BasicFormatEditor({
           <IconListNumbered />
         </button>
         <span className="basic-format-divider" aria-hidden="true" />
-        <button type="button" title="작은 글자" aria-label="작은 글자" className="basic-format-size basic-format-size--small" onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("small")} disabled={disabled}>
+        <button type="button" title="작은 글자" aria-label="작은 글자" className={`basic-format-size basic-format-size--small${activeSize === "small" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("small")} disabled={disabled}>
           작게
         </button>
-        <button type="button" title="보통 글자" aria-label="보통 글자" className="basic-format-size" onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("normal")} disabled={disabled}>
+        <button type="button" title="보통 글자" aria-label="보통 글자" className={`basic-format-size${activeSize === "normal" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("normal")} disabled={disabled}>
           보통
         </button>
-        <button type="button" title="큰 글자" aria-label="큰 글자" className="basic-format-size basic-format-size--large" onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("large")} disabled={disabled}>
+        <button type="button" title="큰 글자" aria-label="큰 글자" className={`basic-format-size basic-format-size--large${activeSize === "large" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("large")} disabled={disabled}>
           크게
         </button>
       </div>

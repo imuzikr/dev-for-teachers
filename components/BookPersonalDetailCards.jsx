@@ -125,9 +125,10 @@ export function BookPersonalActivityCard({
   const locked = !!activity.locked;
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
+  const requiresAnswer = activity.requiresAnswer !== false;
 
   return (
-    <article className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">
@@ -139,21 +140,23 @@ export function BookPersonalActivityCard({
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
         <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />
-        <label className="book-personal-response">
-          <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-          {isTeacher ? (
-            <div className="book-personal-response-text">
-              {response || "아직 입력한 내용이 없습니다."}
-            </div>
-          ) : (
-            <textarea
-              value={response}
-              readOnly={locked}
-              onChange={(event) => onDraftChange((current) => ({ ...current, [activity.id]: event.target.value }))}
-              placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
-            />
-          )}
-        </label>
+        {requiresAnswer && (
+          <label className="book-personal-response">
+            <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
+            {isTeacher ? (
+              <div className="book-personal-response-text">
+                {response || "아직 입력한 내용이 없습니다."}
+              </div>
+            ) : (
+              <textarea
+                value={response}
+                readOnly={locked}
+                onChange={(event) => onDraftChange((current) => ({ ...current, [activity.id]: event.target.value }))}
+                placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
+              />
+            )}
+          </label>
+        )}
       </div>
       {isTeacher && (onToggleActivityLock || onPresent) ? (
         <footer className="book-personal-card-actions">

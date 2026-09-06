@@ -65,6 +65,18 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 placeholder={resource ? "자료 제목" : "활동 제목"}
                 aria-label={`${label} ${index + 1} 제목`}
               />
+              {!resource && (
+                <button
+                  type="button"
+                  className={`book-answer-toggle${source.requiresAnswer !== false ? " is-on" : ""}`}
+                  aria-pressed={source.requiresAnswer !== false}
+                  title={source.requiresAnswer !== false ? "학생 답변이 필요한 활동입니다" : "학생 답변 없이 확인만 하는 활동입니다"}
+                  onClick={() => onChange(entry.kind, source.id, { requiresAnswer: source.requiresAnswer === false })}
+                >
+                  <span aria-hidden="true">{source.requiresAnswer !== false ? "✓" : "–"}</span>
+                  {source.requiresAnswer !== false ? "답변 필요" : "답변 없음"}
+                </button>
+              )}
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">

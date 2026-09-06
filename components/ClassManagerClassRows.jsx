@@ -15,6 +15,7 @@ export function ActiveClassRow({
   onToggleJoinAccess,
   onRefreshJoinCode,
   onSaveJoinCode,
+  onToast,
   onArchive,
 }) {
   return (
@@ -47,6 +48,7 @@ export function ActiveClassRow({
           onToggleJoinAccess={onToggleJoinAccess}
           onRefreshJoinCode={onRefreshJoinCode}
           onSaveJoinCode={onSaveJoinCode}
+          onToast={onToast}
         />
       </div>
       <div className="class-mgr-actions">
