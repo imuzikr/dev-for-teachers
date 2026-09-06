@@ -93,6 +93,15 @@ service cloud.firestore {
     function classOwnerUid(cId) {
       return get(/databases/$(database)/documents/classes/$(cId)).data.createdBy;
     }
+    function classExists(cId) {
+      return exists(/databases/$(database)/documents/classes/$(cId));
+    }
+    function classPurpose(cId) {
+      return get(/databases/$(database)/documents/classes/$(cId)).data.get('purpose', 'training');
+    }
+    function isInternalClass(cId) {
+      return classPurpose(cId) == 'internal';
+    }
     function isClassArchived(cId) {
       return get(/databases/$(database)/documents/classes/$(cId)).data.get('archived', false) == true;
     }
@@ -110,6 +119,9 @@ service cloud.firestore {
     function isClassMember(cId) {
       return !isClassArchived(cId)
              && exists(/databases/$(database)/documents/memberships/$(uid() + '_' + cId));
+    }
+    function hasClassMembership(memberUid, cId) {
+      return exists(/databases/$(database)/documents/memberships/$(memberUid + '_' + cId));
     }
     function isClassJoinOpen(cId) {
       return exists(/databases/$(database)/documents/classes/$(cId))
@@ -134,6 +146,49 @@ service cloud.firestore {
              && (
                   request.resource.data.get('joinEnabled', false) == false
                   || request.resource.data.get('joinCode', '').matches('^[0-9]{6}$')
+                );
+    }
+    function validMembershipId(mId) {
+      return mId == (request.resource.data.uid + '_' + request.resource.data.classId);
+    }
+    function validCodeMembershipCreate(mId) {
+      return request.resource.data.uid == uid()
+             && validMembershipId(mId)
+             && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt', 'joinCode'])
+             && request.resource.data.joinCode is string
+             && request.resource.data.joinCode.matches('^[0-9]{6}$')
+             && isClassJoinOpen(request.resource.data.classId)
+             && request.resource.data.joinedAt == request.time;
+    }
+    function validInheritedMembershipCreate(mId) {
+      return request.resource.data.keys().hasOnly([
+               'uid', 'classId', 'joinedAt', 'joinCode', 'inheritedFromClassId'
+             ])
+             && request.resource.data.uid is string
+             && validMembershipId(mId)
+             && request.resource.data.joinCode == ''
+             && request.resource.data.inheritedFromClassId is string
+             && request.resource.data.classId != request.resource.data.inheritedFromClassId
+             && classExists(request.resource.data.classId)
+             && classExists(request.resource.data.inheritedFromClassId)
+             && !isClassArchived(request.resource.data.classId)
+             && !isClassArchived(request.resource.data.inheritedFromClassId)
+             && hasClassMembership(request.resource.data.uid, request.resource.data.inheritedFromClassId)
+             && isInternalClass(request.resource.data.classId)
+             && isInternalClass(request.resource.data.inheritedFromClassId)
+             && classOwnerUid(request.resource.data.classId)
+                  == classOwnerUid(request.resource.data.inheritedFromClassId)
+             && request.resource.data.joinedAt == request.time
+             && (
+                  isAdmin()
+                  || (
+                       ownsClassEditable(request.resource.data.classId)
+                       && ownsClass(request.resource.data.inheritedFromClassId)
+                     )
+                  || (
+                       request.resource.data.uid == uid()
+                       && isClassMember(request.resource.data.inheritedFromClassId)
+                     )
                 );
     }
 
@@ -370,13 +425,10 @@ service cloud.firestore {
         resource.data.uid == uid() || isAdmin() || ownsClass(resource.data.classId)
       );
       allow create: if signedIn()
-                    && request.resource.data.uid == uid()
-                    && mId == (uid() + '_' + request.resource.data.classId)
-                    && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt', 'joinCode'])
-                    && request.resource.data.joinCode is string
-                    && request.resource.data.joinCode.matches('^[0-9]{6}$')
-                    && isClassJoinOpen(request.resource.data.classId)
-                    && request.resource.data.joinedAt == request.time;
+                    && (
+                         validCodeMembershipCreate(mId)
+                         || validInheritedMembershipCreate(mId)
+                       );
       // 학생 본인의 직접 '반 나가기'는 허용하지 않습니다. 소속 변경은
       // 담당 교사/관리자가 관리합니다.
       allow delete: if signedIn() && (

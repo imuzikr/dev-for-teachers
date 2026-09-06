@@ -19,7 +19,12 @@ import {
   reportPresence,
   PRESENCE_BEAT_MS,
 } from "@/lib/store";
-import { getSelectedClassId } from "@/lib/classroom";
+import {
+  getSelectedClassId,
+  getSelectedClassPurpose,
+  setSelectedClassPurpose,
+} from "@/lib/classroom";
+import { getClassPurpose, getClassPurposeLabel, getNextClassPurpose } from "@/lib/classPurpose";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import UserProfile from "./UserProfile";
 import RoleSwitcher from "./RoleSwitcher";
@@ -39,6 +44,7 @@ export default function TopNav({ active }) {
   const [classes, setClasses] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [sessionClassId, setSessionClassId] = useState(null);
+  const [classPurpose, setClassPurpose] = useState(getSelectedClassPurpose);
 
   // 관리자만 사용자 디렉터리를 구독(역할 관리·승인 대기 표시용)
   useEffect(() => {
@@ -70,12 +76,23 @@ export default function TopNav({ active }) {
     return () => window.removeEventListener("class-change", sync);
   }, []);
 
+  useEffect(() => {
+    function syncPurpose() { setClassPurpose(getSelectedClassPurpose()); }
+    syncPurpose();
+    window.addEventListener("class-purpose-change", syncPurpose);
+    return () => window.removeEventListener("class-purpose-change", syncPurpose);
+  }, []);
+
   const membershipIds = memberships.map((m) => m.classId);
   const activeClassId =
     sessionClassId && membershipIds.includes(sessionClassId)
       ? sessionClassId
       : membershipIds[0] ?? null;
-  const teacherClasses = classes.filter((item) => item.createdBy === user?.uid && !item.archived);
+  const teacherClasses = classes.filter((item) => (
+    item.createdBy === user?.uid
+    && !item.archived
+    && getClassPurpose(item) === classPurpose
+  ));
   const signalClassId = admin
     ? teacherClasses.some((item) => item.id === sessionClassId)
       ? sessionClassId
@@ -138,6 +155,18 @@ export default function TopNav({ active }) {
     router.push(path);
   }
 
+  function handleBooksNav() {
+    if (admin && active === "books") {
+      setSelectedClassPurpose(getNextClassPurpose(classPurpose));
+      return;
+    }
+    router.push("/books");
+  }
+
+  const booksNavLabel = admin && active === "books"
+    ? getClassPurposeLabel(classPurpose)
+    : "개발자실";
+
   async function handleLogout() {
     if (isFirebaseConfigured) {
       try {
@@ -161,11 +190,14 @@ export default function TopNav({ active }) {
         <nav className="topnav-menu">
 
           <button
-            className={`btn-ghost ${active === "books" ? "nav-active" : ""}`}
-            onClick={() => go("/books")}
-            title="개발자실"
+            className={`btn-ghost topnav-mode-toggle ${active === "books" ? "nav-active" : ""}`}
+            onClick={handleBooksNav}
+            title={admin && active === "books"
+              ? `${getClassPurposeLabel(getNextClassPurpose(classPurpose))}으로 전환`
+              : "개발자실"}
           >
-            <IconDeveloperRoom size={20} /> <span className="nav-label">개발자실</span>
+            <IconDeveloperRoom size={20} />
+            <span className="nav-label">{booksNavLabel}</span>
           </button>
           {isStrictAdmin && (
             <button

@@ -1,7 +1,7 @@
 import { after, before, beforeEach, describe, it } from "node:test";
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { asStudent, makeEnv, seed } from "./helpers.mjs";
+import { asStudent, asTeacher, makeEnv, seed } from "./helpers.mjs";
 
 describe("자동 반 참여 규칙", () => {
   let env;
@@ -34,6 +34,33 @@ describe("자동 반 참여 규칙", () => {
         archived: true,
         joinEnabled: true,
         joinCode: "333333",
+      });
+      await setDoc(doc(db, "classes", "internalSource"), {
+        createdBy: "admin",
+        archived: false,
+        joinEnabled: true,
+        joinCode: "444444",
+        purpose: "internal",
+      });
+      await setDoc(doc(db, "classes", "internalNext"), {
+        createdBy: "admin",
+        archived: false,
+        joinEnabled: true,
+        joinCode: "555555",
+        purpose: "internal",
+      });
+      await setDoc(doc(db, "classes", "otherTeacherInternal"), {
+        createdBy: "otherTeacher",
+        archived: false,
+        joinEnabled: true,
+        joinCode: "666666",
+        purpose: "internal",
+      });
+      await setDoc(doc(db, "memberships", "studentA_internalSource"), {
+        uid: "studentA",
+        classId: "internalSource",
+        joinCode: "444444",
+        joinedAt: new Date("2026-09-01T00:00:00.000Z"),
       });
     });
   });
@@ -106,6 +133,35 @@ describe("자동 반 참여 규칙", () => {
       joinCode: "111111",
       joinedAt: serverTimestamp(),
       code: "OLD-CODE",
+    }));
+  });
+
+  it("교사는 같은 소유자의 교내용 차시에 기존 학생 소속을 이어 붙일 수 있다", async () => {
+    const db = asTeacher(env, "admin").firestore();
+    await assertSucceeds(setDoc(doc(db, "memberships", "studentA_internalNext"), {
+      uid: "studentA",
+      classId: "internalNext",
+      joinCode: "",
+      inheritedFromClassId: "internalSource",
+      joinedAt: serverTimestamp(),
+    }));
+  });
+
+  it("학생은 이미 속한 교내용 차시에서 같은 교사의 다른 교내용 차시로만 이어질 수 있다", async () => {
+    const db = asStudent(env, "studentA").firestore();
+    await assertSucceeds(setDoc(doc(db, "memberships", "studentA_internalNext"), {
+      uid: "studentA",
+      classId: "internalNext",
+      joinCode: "",
+      inheritedFromClassId: "internalSource",
+      joinedAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(db, "memberships", "studentA_otherTeacherInternal"), {
+      uid: "studentA",
+      classId: "otherTeacherInternal",
+      joinCode: "",
+      inheritedFromClassId: "internalSource",
+      joinedAt: serverTimestamp(),
     }));
   });
 });

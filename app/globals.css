@@ -1958,6 +1958,23 @@ body:has(.modal-backdrop) .landing {
 .modal.modal-class-manager {
   max-width: 760px;
 }
+.modal-class-manager .modal-head h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.class-mgr-purpose-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 900;
+}
 .class-mgr-create {
   display: flex;
   gap: 8px;
@@ -1969,6 +1986,12 @@ body:has(.modal-backdrop) .landing {
 .class-mgr-create .btn-primary {
   flex-shrink: 0;
   white-space: nowrap;
+}
+.class-mgr-mode-note {
+  margin: 8px 2px 0;
+  color: var(--text-sub);
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 .class-mgr-section {
   margin-top: 18px;
@@ -5380,6 +5403,11 @@ pre code {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.topnav-mode-toggle {
+  min-width: 90px;
+  justify-content: center;
 }
 
 .btn-ghost.nav-active {

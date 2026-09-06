@@ -7,6 +7,7 @@ import {
 } from "@/lib/store";
 import { getCurrentUser } from "@/lib/user";
 import { setSelectedClassId } from "@/lib/classroom";
+import { CLASS_PURPOSE_INTERNAL, normalizeClassPurpose } from "@/lib/classPurpose";
 import ClassManagerModal from "./ClassManagerModal";
 import LessonManagerModal from "./LessonManagerModal";
 import LessonMode from "./LessonMode";
@@ -17,6 +18,8 @@ export default function BookClassroomTools({
   classId,
   currentClass,
   classes,
+  allClasses,
+  classPurpose,
   roster,
   onSelectClass,
   onToast,
@@ -26,6 +29,7 @@ export default function BookClassroomTools({
   const [lessonPicker, setLessonPicker] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
   const [teaching, setTeaching] = useState(null);
+  const unitLabel = normalizeClassPurpose(classPurpose) === CLASS_PURPOSE_INTERNAL ? "차시" : "반";
 
   useEffect(() => {
     if (!isTeacher || !classId || !user?.uid) {
@@ -73,7 +77,7 @@ export default function BookClassroomTools({
         )}
         {isTeacher && (
           <button className="btn-ghost" onClick={() => setClassManagerOpen(true)}>
-            반 관리하기
+            {unitLabel} 관리하기
           </button>
         )}
       </div>
@@ -81,6 +85,8 @@ export default function BookClassroomTools({
       {classManagerOpen && (
         <ClassManagerModal
           classes={classes}
+          allClasses={allClasses ?? classes}
+          classPurpose={classPurpose}
           user={getCurrentUser()}
           onClose={() => setClassManagerOpen(false)}
           onCreated={selectClass}

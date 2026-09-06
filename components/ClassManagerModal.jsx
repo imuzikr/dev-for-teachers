@@ -17,10 +17,25 @@ import {
   unarchiveClass,
   updateClassJoinAccess,
 } from "@/lib/store";
+import {
+  CLASS_PURPOSE_INTERNAL,
+  getClassPurpose,
+  getClassPurposeLabel,
+  normalizeClassPurpose,
+} from "@/lib/classPurpose";
 import ConfirmModal from "./ConfirmModal";
 import { ActiveClassRow, ArchivedClassRow } from "./ClassManagerClassRows";
 
-export default function ClassManagerModal({ classes, user, onClose, onCreated, onViewClass, onToast }) {
+export default function ClassManagerModal({
+  classes,
+  allClasses = classes,
+  classPurpose = "training",
+  user,
+  onClose,
+  onCreated,
+  onViewClass,
+  onToast,
+}) {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [renamingId, setRenamingId] = useState(null);
@@ -31,6 +46,10 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
 
   const active = classes.filter((c) => !c.archived);
   const archived = classes.filter((c) => c.archived);
+  const allActive = allClasses.filter((c) => !c.archived);
+  const normalizedPurpose = normalizeClassPurpose(classPurpose);
+  const purposeLabel = getClassPurposeLabel(normalizedPurpose);
+  const unitLabel = normalizedPurpose === CLASS_PURPOSE_INTERNAL ? "차시" : "반";
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -39,11 +58,19 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     setCreating(true);
     setError("");
     try {
-      const created = await addClass(user, name);
+      const copyFromClassIds = normalizedPurpose === CLASS_PURPOSE_INTERNAL
+        ? allActive
+          .filter((classItem) => (
+            classItem.createdBy === user?.uid
+            && getClassPurpose(classItem) === CLASS_PURPOSE_INTERNAL
+          ))
+          .map((classItem) => classItem.id)
+        : [];
+      const created = await addClass(user, name, { purpose: normalizedPurpose, copyFromClassIds });
       setNewName("");
       onCreated?.(created.id);
     } catch {
-      setError("반을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+      setError(`${unitLabel}을 만들지 못했어요. 잠시 후 다시 시도해 주세요.`);
     } finally {
       setCreating(false);
     }
@@ -70,9 +97,9 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     setError("");
     try {
       await archiveClass(c.id);
-      onToast?.(`'${c.name}' 반을 보관했어요. 학생은 더 이상 접근할 수 없어요.`);
+      onToast?.(`'${c.name}' ${unitLabel}을 보관했어요. 학생은 더 이상 접근할 수 없어요.`);
     } catch {
-      setError("반을 보관하지 못했어요.");
+      setError(`${unitLabel}을 보관하지 못했어요.`);
     } finally {
       setBusyId(null);
     }
@@ -84,9 +111,9 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     setError("");
     try {
       await unarchiveClass(c.id);
-      onToast?.(`'${c.name}' 반을 복원했어요.`);
+      onToast?.(`'${c.name}' ${unitLabel}을 복원했어요.`);
     } catch {
-      setError("반을 복원하지 못했어요.");
+      setError(`${unitLabel}을 복원하지 못했어요.`);
     } finally {
       setBusyId(null);
     }
@@ -103,7 +130,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
         joinEnabled: nextEnabled,
         joinCode: nextEnabled ? nextCode : c.joinCode,
       });
-      onToast?.(`'${c.name}' 반 가입을 ${nextEnabled ? "허용" : "차단"}했어요.`);
+      onToast?.(`'${c.name}' ${unitLabel} 가입을 ${nextEnabled ? "허용" : "차단"}했어요.`);
     } catch {
       setError("가입 상태를 바꾸지 못했어요.");
     } finally {
@@ -120,7 +147,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
         joinEnabled: true,
         joinCode: createUniqueClassJoinCode(c.id),
       });
-      onToast?.(`'${c.name}' 반 참여 코드를 새로 만들었어요.`);
+      onToast?.(`'${c.name}' ${unitLabel} 참여 코드를 새로 만들었어요.`);
     } catch {
       setError("참여 코드를 새로 만들지 못했어요.");
     } finally {
@@ -135,15 +162,15 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
       setError("참여 코드는 숫자 6자리로 입력해 주세요.");
       return;
     }
-    if (active.some((item) => item.id !== c.id && normalizeClassJoinCode(item.joinCode) === joinCode)) {
-      setError("이미 다른 반에서 사용 중인 참여 코드입니다.");
+    if (allActive.some((item) => item.id !== c.id && normalizeClassJoinCode(item.joinCode) === joinCode)) {
+      setError("이미 다른 반/차시에서 사용 중인 참여 코드입니다.");
       return;
     }
     setBusyId(c.id);
     setError("");
     try {
       await updateClassJoinAccess(c.id, { joinEnabled: true, joinCode });
-      onToast?.(`'${c.name}' 반 참여 코드를 ${joinCode}로 저장했어요.`);
+      onToast?.(`'${c.name}' ${unitLabel} 참여 코드를 ${joinCode}로 저장했어요.`);
     } catch {
       setError("참여 코드를 저장하지 못했어요.");
     } finally {
@@ -154,7 +181,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
   function createUniqueClassJoinCode(exceptId) {
     for (let count = 0; count < 12; count += 1) {
       const joinCode = createClassJoinCode();
-      if (!active.some((item) => item.id !== exceptId && normalizeClassJoinCode(item.joinCode) === joinCode)) {
+      if (!allActive.some((item) => item.id !== exceptId && normalizeClassJoinCode(item.joinCode) === joinCode)) {
         return joinCode;
       }
     }
@@ -169,9 +196,9 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     setError("");
     try {
       await deleteClass(id);
-      onToast?.(`'${name}' 반을 완전히 삭제했어요.`);
+      onToast?.(`'${name}' ${unitLabel}을 완전히 삭제했어요.`);
     } catch {
-      setError("반을 삭제하지 못했어요.");
+      setError(`${unitLabel}을 삭제하지 못했어요.`);
     } finally {
       setBusyId(null);
     }
@@ -181,7 +208,7 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     <div className="modal-backdrop" {...backdropClose(onClose)}>
       <div className="modal modal-class-manager" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>🗂 반 관리하기</h3>
+          <h3>{unitLabel} 관리하기 <span className="class-mgr-purpose-badge">{purposeLabel}</span></h3>
           <button className="btn-close" onClick={onClose} aria-label="닫기">
             ×
           </button>
@@ -190,21 +217,28 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
         <form className="class-mgr-create" onSubmit={handleCreate}>
           <input
             type="text"
-            placeholder="새 반 이름 (예: 3학년 3반, 수요일 코딩반)"
+            placeholder={normalizedPurpose === CLASS_PURPOSE_INTERNAL
+              ? "새 차시 이름 (예: 2차시 자료 조사)"
+              : "새 반 이름 (예: 3학년 3반, 수요일 코딩반)"}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
           <button type="submit" className="btn-primary" disabled={creating}>
-            {creating ? "만드는 중…" : "➕ 반 만들기"}
+            {creating ? "만드는 중..." : `${purposeLabel} ${unitLabel} 만들기`}
           </button>
         </form>
+        {normalizedPurpose === CLASS_PURPOSE_INTERNAL && (
+          <p className="class-mgr-mode-note">
+            교내용 차시는 같은 선생님이 만든 기존 교내용 차시의 참여자를 새 차시에도 자동으로 이어 붙입니다.
+          </p>
+        )}
 
         {error && <p className="form-error">{error}</p>}
 
         <div className="class-mgr-section">
-          <div className="class-mgr-section-title">운영 중인 반 ({active.length})</div>
+          <div className="class-mgr-section-title">운영 중인 {unitLabel} ({active.length})</div>
           {active.length === 0 ? (
-            <p className="empty-note">아직 만든 반이 없어요.</p>
+            <p className="empty-note">아직 만든 {unitLabel}이 없어요.</p>
           ) : (
             <ul className="class-mgr-list">
               {active.map((c) => (
@@ -230,9 +264,9 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
         </div>
 
         <div className="class-mgr-section">
-          <div className="class-mgr-section-title">보관된 반 ({archived.length})</div>
+          <div className="class-mgr-section-title">보관된 {unitLabel} ({archived.length})</div>
           {archived.length === 0 ? (
-            <p className="empty-note">보관된 반이 없어요.</p>
+            <p className="empty-note">보관된 {unitLabel}이 없어요.</p>
           ) : (
             <ul className="class-mgr-list">
               {archived.map((c) => (
@@ -252,8 +286,8 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
 
       {confirmDelete && (
         <ConfirmModal
-          title={`'${confirmDelete.name}' 반을 완전히 삭제할까요?`}
-          description="보드·카드 등 이 반의 모든 데이터가 영구히 사라지고 되돌릴 수 없어요."
+          title={`'${confirmDelete.name}' ${unitLabel}을 완전히 삭제할까요?`}
+          description={`보드·카드 등 이 ${unitLabel}의 모든 데이터가 영구히 사라지고 되돌릴 수 없어요.`}
           confirmLabel="삭제"
           danger
           onConfirm={handleDelete}

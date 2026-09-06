@@ -15,7 +15,12 @@ import {
   updateBookActivity,
 } from "@/lib/store";
 import { isAdmin, isTeacher } from "@/lib/user";
-import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
+import {
+  getSelectedClassId,
+  getSelectedClassPurpose,
+  setSelectedClassId,
+} from "@/lib/classroom";
+import { getClassPurpose } from "@/lib/classPurpose";
 import { useAutomaticClassMembership } from "@/lib/useAutomaticClassMembership";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
@@ -38,6 +43,7 @@ function BooksPageInner() {
   const [classes, setClasses] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [localSelectedId, setLocalSelectedId] = useState(null);
+  const [classPurpose, setClassPurpose] = useState(getSelectedClassPurpose);
   const [teacherClassId, setTeacherClassId] = useState(null);
   const [directory, setDirectory] = useState([]);
   const [memberUids, setMemberUids] = useState([]);
@@ -61,6 +67,15 @@ function BooksPageInner() {
     return () => window.removeEventListener("class-change", sync);
   }, []);
 
+  useEffect(() => {
+    function syncPurpose() {
+      setClassPurpose(getSelectedClassPurpose());
+    }
+    syncPurpose();
+    window.addEventListener("class-purpose-change", syncPurpose);
+    return () => window.removeEventListener("class-purpose-change", syncPurpose);
+  }, []);
+
   useEffect(() => subscribeClasses(setClasses), []);
 
   useEffect(() => {
@@ -81,9 +96,13 @@ function BooksPageInner() {
     return subscribeUserDirectory(setDirectory);
   }, [admin]);
 
-  const myClassesAll = useMemo(
+  const ownedClassesAll = useMemo(
     () => (superAdmin ? classes : classes.filter((c) => c.createdBy === user?.uid)),
     [classes, superAdmin, user?.uid]
+  );
+  const myClassesAll = useMemo(
+    () => ownedClassesAll.filter((c) => getClassPurpose(c) === classPurpose),
+    [ownedClassesAll, classPurpose]
   );
   const myClasses = useMemo(() => myClassesAll.filter((c) => !c.archived), [myClassesAll]);
   const membershipIds = useMemo(() => memberships.map((m) => m.classId), [memberships]);
@@ -94,7 +113,12 @@ function BooksPageInner() {
       : membershipIds[0] ?? null;
 
   useEffect(() => {
-    if (!admin || myClasses.length === 0) return;
+    if (!admin) return;
+    if (myClasses.length === 0) {
+      if (teacherClassId) setTeacherClassId(null);
+      if (localSelectedId) setSelectedClassId(null);
+      return;
+    }
     if (teacherClassId && myClasses.some((c) => c.id === teacherClassId)) return;
     const remembered =
       localSelectedId && myClasses.some((c) => c.id === localSelectedId)
@@ -285,7 +309,8 @@ function BooksPageInner() {
       <BooksHome
         topNav={<TopNav active="books" />}
         admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
-        myClasses={myClasses} myClassesAll={myClassesAll} membershipIds={membershipIds} roster={roster}
+        classPurpose={classPurpose} myClasses={myClasses} myClassesAll={myClassesAll}
+        allTeacherClasses={ownedClassesAll} membershipIds={membershipIds} roster={roster}
         project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
         appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}

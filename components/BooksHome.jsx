@@ -8,7 +8,8 @@ import { IconDeveloperRoom } from "./IconDeveloperRoom";
 
 export default function BooksHome(props) {
   const {
-    topNav, admin, user, classId, classes, currentClass, myClasses, myClassesAll, membershipIds, roster,
+    topNav, admin, user, classId, classes, currentClass, classPurpose,
+    myClasses, myClassesAll, allTeacherClasses, membershipIds, roster,
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
@@ -89,6 +90,8 @@ export default function BooksHome(props) {
                     classId={classId}
                     currentClass={currentClass}
                     classes={myClassesAll}
+                    allClasses={allTeacherClasses ?? myClassesAll}
+                    classPurpose={classPurpose}
                     roster={roster}
                     onSelectClass={onSelectTeacherClass}
                     onToast={onToast}
