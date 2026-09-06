@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
@@ -84,6 +85,7 @@ export default function BookProjectEditor({
   const [steps, setSteps] = useState(draft.steps);
   const [openIds, setOpenIds] = useState(draft.openIds);
   const [activeStepId, setActiveStepId] = useState(draft.selectedStepId ?? null);
+  const [addingItem, setAddingItem] = useState(null);
 
   function updateStep(stepId, patch) {
     setSteps((current) => current.map((step) => step.id === stepId ? { ...step, ...patch } : step));
@@ -107,15 +109,26 @@ export default function BookProjectEditor({
     setActiveStepId((current) => current === stepId ? null : current);
   }
 
-  function addItem(stepId, key) {
+  function addItem(stepId, key, patch = null) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
     const kind = key === "resources" ? "resource" : "activity";
-    const item = newItem(kind);
+    const item = { ...newItem(kind), ...(patch ?? {}) };
     updateStep(stepId, {
       [key]: [...step[key], item],
       itemOrder: [...normalizedOrder(step), orderEntry(kind, item.id)],
     });
+  }
+
+  function openAddItemModal(stepId, kind) {
+    setAddingItem({ stepId, kind });
+  }
+
+  async function saveAddedItem(patch) {
+    if (!addingItem) return false;
+    addItem(addingItem.stepId, addingItem.kind === "resource" ? "resources" : "activities", patch);
+    setAddingItem(null);
+    return true;
   }
 
   function updateItem(stepId, kind, itemId, patch) {
@@ -191,8 +204,8 @@ export default function BookProjectEditor({
           onMove={(fromKey, toKey) => moveItem(step.id, fromKey, toKey)}
         />
         <div className="book-step-add-actions">
-          <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "activities")}>+ 활동 추가</button>
-          <button type="button" className="btn-ghost" onClick={() => addItem(step.id, "resources")}>+ 자료 추가</button>
+          <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "activity")}>+ 활동 추가</button>
+          <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "resource")}>+ 자료 추가</button>
         </div>
         <button
           type="button"
@@ -207,37 +220,51 @@ export default function BookProjectEditor({
   }
 
   const draftProject = useMemo(() => ({ ...project, title, steps }), [project, steps, title]);
+  const addingStep = addingItem ? steps.find((step) => step.id === addingItem.stepId) ?? null : null;
 
   useEffect(() => {
     onDraftChange?.(draftProject);
   }, [draftProject, onDraftChange]);
 
   return (
-    <div className="book-project-editor">
-      <BookProjectSidebarTools
-        project={draftProject}
-        participantCount={participantCount}
-        activeStepId={activeStepId}
-        editing
-        openStepIds={openIds}
-        onPickStep={toggleStep}
-        renderStepContent={renderStepEditor}
-      />
-      <button
-        type="button"
-        className="btn-primary book-project-save"
-        disabled={saving || !title.trim() || steps.length === 0}
-        onClick={() => onSave({ title: title.trim(), steps })}
-      >
-        {saving ? "저장 중..." : "프로젝트 저장"}
-      </button>
-      <label className="book-project-title-field">
-        <span>프로젝트 이름</span>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
-      </label>
-      <button type="button" className="btn-outline book-step-add" onClick={addStep}>
-        <IconAddFeature size={17} /> Step 추가
-      </button>
-    </div>
+    <>
+      <div className="book-project-editor">
+        <BookProjectSidebarTools
+          project={draftProject}
+          participantCount={participantCount}
+          activeStepId={activeStepId}
+          editing
+          openStepIds={openIds}
+          onPickStep={toggleStep}
+          renderStepContent={renderStepEditor}
+        />
+        <button
+          type="button"
+          className="btn-primary book-project-save"
+          disabled={saving || !title.trim() || steps.length === 0}
+          onClick={() => onSave({ title: title.trim(), steps })}
+        >
+          {saving ? "저장 중..." : "프로젝트 저장"}
+        </button>
+        <label className="book-project-title-field">
+          <span>프로젝트 이름</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
+        </label>
+        <button type="button" className="btn-outline book-step-add" onClick={addStep}>
+          <IconAddFeature size={17} /> Step 추가
+        </button>
+      </div>
+      {addingItem && addingStep && (
+        <BookProjectItemEditModal
+          project={draftProject}
+          step={addingStep}
+          item={null}
+          kind={addingItem.kind}
+          saving={saving}
+          onSave={saveAddedItem}
+          onClose={() => setAddingItem(null)}
+        />
+      )}
+    </>
   );
 }

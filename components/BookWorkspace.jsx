@@ -30,11 +30,15 @@ export default function BookWorkspace({
   appendProjectStep,
   projectEditorStepId,
   savingProject,
+  exportingProject,
+  exportTargets = [],
   onSaveProject,
   onEditProject,
   onToggleActivityLock,
   onToggleProjectItemLock,
   onDelete,
+  onExportProjectItem,
+  loadProject,
   selectedStepId,
   onSelectStep,
   onToast,
@@ -209,13 +213,18 @@ export default function BookWorkspace({
               appendStep={appendProjectStep}
               initialOpenStepId={projectEditorStepId}
               saving={savingProject}
+              exporting={exportingProject}
               participantCount={participants.length}
+              currentClassId={classId}
+              exportTargets={exportTargets}
+              loadProject={loadProject}
               onSave={onSaveProject}
               onEdit={onEditProject}
               onToggleActivityLock={onToggleActivityLock}
               onToggleProjectItemLock={onToggleProjectItemLock}
               onDelete={onDelete}
               onDraftChange={setDraftProject}
+              onExportProjectItem={onExportProjectItem}
             />
           )}
         </div>

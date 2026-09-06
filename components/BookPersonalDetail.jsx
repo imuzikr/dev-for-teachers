@@ -36,17 +36,21 @@ export default function BookPersonalDetail({
     ])));
   }, [activities, entriesByActivity, selected.uid]);
 
-  async function saveResponse(detailItem) {
+  async function saveResponse(detailItem, nextText = null) {
     const activity = detailItem.source;
+    const answerText = nextText ?? drafts[activity.id] ?? "";
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
     try {
-      await saveDashboardText(activity.id, user, drafts[activity.id] ?? "");
+      await saveDashboardText(activity.id, user, answerText);
       await onConfirmItem?.(detailItem);
+      setDrafts((current) => ({ ...current, [activity.id]: answerText }));
       setSavedId(activity.id);
+      return true;
     } catch {
       setFailedId(activity.id);
+      return false;
     } finally {
       setSavingId(null);
     }
@@ -123,7 +127,6 @@ export default function BookPersonalDetail({
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
                         saveState={{ savingId, savedId, failedId }}
-                        onDraftChange={setDrafts}
                         onSave={saveResponse}
                         onToggleActivityLock={onToggleActivityLock}
                       />

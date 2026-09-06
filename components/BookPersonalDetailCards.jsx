@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
+import { backdropClose } from "@/lib/modal";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import RichTextDisplay from "./RichTextDisplay";
@@ -56,6 +58,52 @@ function IconExpand({ size = 14 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M8 4H4v4M4 4l6 6M16 4h4v4M20 4l-6 6M8 20H4v-4M4 20l6-6M16 20h4v-4M20 20l-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+function StudentAnswerEditModal({ activity, response, saving, failed, onSave, onClose }) {
+  const [draft, setDraft] = useState(response ?? "");
+
+  useEffect(() => {
+    setDraft(response ?? "");
+  }, [response, activity.id]);
+
+  if (typeof document === "undefined") return null;
+
+  async function save() {
+    const saved = await onSave(draft);
+    if (saved !== false) onClose();
+  }
+
+  return createPortal(
+    <div className="modal-backdrop book-answer-edit-backdrop" {...backdropClose(onClose)}>
+      <section className="modal book-answer-edit-modal" role="dialog" aria-modal="true" aria-labelledby={`book-answer-edit-${activity.id}`} onClick={(event) => event.stopPropagation()}>
+        <header className="book-answer-edit-head">
+          <div>
+            <span>나의 답변 작성</span>
+            <h3 id={`book-answer-edit-${activity.id}`}>{activity.title}</h3>
+          </div>
+          <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
+        </header>
+        <label className="book-answer-edit-body">
+          <span>답변 내용</span>
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="선생님이 안내한 내용을 여기에 입력하세요."
+            autoFocus
+          />
+        </label>
+        {failed && <p className="book-answer-edit-error">저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>}
+        <footer className="book-answer-edit-footer">
+          <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
+          <button type="button" className="btn-primary" disabled={saving} onClick={save}>
+            {saving ? "저장 중..." : "저장"}
+          </button>
+        </footer>
+      </section>
+    </div>,
+    document.body
   );
 }
 
@@ -138,12 +186,12 @@ export function BookPersonalActivityCard({
   isTeacher,
   selectedProgress,
   saveState,
-  onDraftChange,
   onSave,
   onToggleActivityLock,
   onPresent,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [editingAnswer, setEditingAnswer] = useState(false);
   const activity = detailItem.source;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey);
@@ -151,9 +199,10 @@ export function BookPersonalActivityCard({
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const requiresAnswer = activity.requiresAnswer !== false;
+  const usesAnswerModal = requiresAnswer && !isTeacher;
 
   return (
-    <article className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}`}>
+    <article className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}${usesAnswerModal ? " uses-answer-modal" : ""}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">
@@ -170,23 +219,6 @@ export function BookPersonalActivityCard({
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
         <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />
-        {requiresAnswer && (
-          <label className="book-personal-response">
-            <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-            {isTeacher ? (
-              <div className="book-personal-response-text">
-                {response || "아직 입력한 내용이 없습니다."}
-              </div>
-            ) : (
-              <textarea
-                value={response}
-                readOnly={locked}
-                onChange={(event) => onDraftChange((current) => ({ ...current, [activity.id]: event.target.value }))}
-                placeholder={locked ? "교사가 활동을 열면 입력할 수 있습니다." : "선생님이 안내한 내용을 여기에 입력하세요."}
-              />
-            )}
-          </label>
-        )}
       </div>
       {isTeacher && (onToggleActivityLock || onPresent) ? (
         <footer className="book-personal-card-actions">
@@ -203,14 +235,25 @@ export function BookPersonalActivityCard({
         </footer>
       ) : !isTeacher ? (
         <footer>
-          <button
-            type="button"
-            className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
-            disabled={locked || saveState.savingId === activity.id || !onSave}
-            onClick={() => onSave(detailItem)}
-          >
-            {saveState.savingId === activity.id ? "확인 중" : confirmed || saveState.savedId === activity.id ? "확인됨" : saveState.failedId === activity.id ? "다시 확인" : "확인"}
-          </button>
+          {requiresAnswer ? (
+            <button
+              type="button"
+              className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
+              disabled={locked || saveState.savingId === activity.id || !onSave}
+              onClick={() => setEditingAnswer(true)}
+            >
+              작성
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
+              disabled={locked || saveState.savingId === activity.id || !onSave}
+              onClick={() => onSave(detailItem)}
+            >
+              {saveState.savingId === activity.id ? "확인 중" : confirmed || saveState.savedId === activity.id ? "확인됨" : saveState.failedId === activity.id ? "다시 확인" : "확인"}
+            </button>
+          )}
         </footer>
       ) : null}
       {expanded && (
@@ -220,6 +263,16 @@ export function BookPersonalActivityCard({
           response={response}
           isTeacher={isTeacher}
           onClose={() => setExpanded(false)}
+        />
+      )}
+      {editingAnswer && (
+        <StudentAnswerEditModal
+          activity={activity}
+          response={response}
+          saving={saveState.savingId === activity.id}
+          failed={saveState.failedId === activity.id}
+          onSave={(nextResponse) => onSave(detailItem, nextResponse)}
+          onClose={() => setEditingAnswer(false)}
         />
       )}
     </article>

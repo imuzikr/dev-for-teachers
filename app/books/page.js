@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   deleteBookActivity,
   classAcceptsJoin,
+  getBookProject,
   joinClassByCode,
   saveBookProject,
   subscribeBookActivities,
@@ -21,6 +22,11 @@ import {
   setSelectedClassId,
 } from "@/lib/classroom";
 import { getClassPurpose } from "@/lib/classPurpose";
+import {
+  appendClonedBookProjectItem,
+  appendClonedBookProjectStep,
+  appendClonedBookProjectSteps,
+} from "@/lib/bookProjectExport";
 import { useAutomaticClassMembership } from "@/lib/useAutomaticClassMembership";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
@@ -54,6 +60,7 @@ function BooksPageInner() {
   const [appendProjectStep, setAppendProjectStep] = useState(false);
   const [projectEditorStepId, setProjectEditorStepId] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
+  const [exportingProject, setExportingProject] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
   const [joiningClass, setJoiningClass] = useState(false);
@@ -273,6 +280,45 @@ function BooksPageInner() {
     }
   }
 
+  async function handleExportProjectItem(request) {
+    const sourceProject = displayedProject ?? project;
+    if (!user || !sourceProject || !request?.targetClassId) return false;
+    const sourceStep = (sourceProject.steps ?? []).find((step) => step.id === request.sourceStepId) ?? null;
+    if (request.scope !== "project" && !sourceStep) return false;
+
+    setExportingProject(true);
+    try {
+      const targetProject = await getBookProject(request.targetClassId);
+      let draft;
+      if (request.scope === "project") {
+        draft = appendClonedBookProjectSteps(targetProject, sourceProject);
+      } else if (request.scope === "step") {
+        draft = appendClonedBookProjectStep(targetProject, sourceProject, sourceStep);
+      } else {
+        const sourceItems = request.sourceItemKind === "resource" ? sourceStep.resources ?? [] : sourceStep.activities ?? [];
+        const sourceItem = sourceItems.find((item) => item.id === request.sourceItemId);
+        if (!sourceItem) return false;
+        draft = appendClonedBookProjectItem(
+          targetProject,
+          sourceProject,
+          sourceStep,
+          request.sourceItemKind,
+          sourceItem,
+          request.targetStepId
+        );
+      }
+      await saveBookProject(user, { classId: request.targetClassId, ...draft });
+      setToast("목적 클래스에 내보냈어요.");
+      return true;
+    } catch (error) {
+      console.error("[책방] 프로젝트 항목 내보내기 실패:", error);
+      setToast("내보내지 못했어요. 목적 클래스를 다시 확인해 주세요.");
+      return false;
+    } finally {
+      setExportingProject(false);
+    }
+  }
+
   async function handleJoinClass(code) {
     if (!user?.uid || joiningClass) return;
     setJoiningClass(true);
@@ -314,9 +360,12 @@ function BooksPageInner() {
         project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
         appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
+        exportingProject={exportingProject}
         onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
         onSaveProject={handleSaveProject}
         onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={setConfirmDelete}
+        onExportProjectItem={handleExportProjectItem}
+        loadProject={getBookProject}
       />
 
       <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />

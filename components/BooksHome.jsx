@@ -12,7 +12,8 @@ export default function BooksHome(props) {
     myClasses, myClassesAll, allTeacherClasses, membershipIds, roster,
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
-    onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
+    exportingProject, onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
+    onExportProjectItem, loadProject,
   } = props;
   const stepTabs = useMemo(() => (
     (displayedProject?.steps ?? []).map((step, index) => ({
@@ -20,6 +21,10 @@ export default function BooksHome(props) {
       index,
     }))
   ), [displayedProject]);
+  const exportTargets = useMemo(
+    () => (allTeacherClasses ?? myClassesAll).filter((classItem) => !classItem.archived),
+    [allTeacherClasses, myClassesAll]
+  );
   const [selectedStepId, setSelectedStepId] = useState(null);
 
   useEffect(() => {
@@ -140,11 +145,15 @@ export default function BooksHome(props) {
         appendProjectStep={appendProjectStep}
         projectEditorStepId={projectEditorStepId}
         savingProject={savingProject}
+        exportingProject={exportingProject}
+        exportTargets={exportTargets}
         onSaveProject={onSaveProject}
         onEditProject={onEditProject}
         onToggleActivityLock={onToggleActivityLock}
         onToggleProjectItemLock={onToggleProjectItemLock}
         onDelete={onDelete}
+        onExportProjectItem={onExportProjectItem}
+        loadProject={loadProject}
         selectedStepId={activeStepId}
         onSelectStep={setSelectedStepId}
         onToast={onToast}

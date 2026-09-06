@@ -101,6 +101,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
   const linkLabel = resourceLinkLabel(linkSource);
   const itemLabel = kind === "activity" ? "활동" : "자료";
   const locked = item.locked === true;
+  const compactResource = kind === "resource";
 
   async function copyResource() {
     const text = [item.title, stripHtml(item.content || ""), linkSource].filter(Boolean).join("\n");
@@ -111,7 +112,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
 
   return (
     <article
-      className={`book-project-detail-item${dragging ? " is-dragging" : ""}${dragProps ? " is-draggable" : ""}`}
+      className={`book-project-detail-item book-project-detail-item--${kind}${dragging ? " is-dragging" : ""}${dragProps ? " is-draggable" : ""}`}
       onDragOver={dragProps?.onDragOver}
       onDrop={dragProps?.onDrop}
     >
@@ -145,6 +146,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
           </div>
         )}
         <div className="book-project-detail-headline">
+          <span className="book-project-detail-kind">{itemLabel}</span>
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
             {onPreview && (
@@ -169,7 +171,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
             )}
           </div>
         </div>
-        {content && <RichTextDisplay className="book-project-detail-text" html={content} />}
+        {!compactResource && content && <RichTextDisplay className="book-project-detail-text" html={content} />}
         {linkHref && (
           <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
             <span>링크</span>

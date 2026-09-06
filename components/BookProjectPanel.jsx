@@ -7,7 +7,7 @@ import { ProjectDisplayItem, ProjectSection, stepPreviewItems } from "./BookProj
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, exporting, participantCount = 0, currentClassId = "", exportTargets = [], loadProject, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange, onExportProjectItem }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
@@ -82,6 +82,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
     ));
     const saved = await onSave({ title: project.title, steps: nextSteps });
     if (saved !== false) setEditingItem(null);
+    return saved;
   }
 
   if (editing) {
@@ -174,16 +175,27 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
         </button>
       )}
     </div>
-    {activeEditingItem && (
-      <BookProjectItemEditModal
-        step={editingStep}
-        item={activeEditingItem.source}
-        kind={activeEditingItem.kind}
-        saving={saving}
-        onSave={(patch) => saveProjectItem(editingStep.id, activeEditingItem.kind, activeEditingItem.id, patch)}
-        onClose={() => setEditingItem(null)}
-      />
-    )}
+	    {activeEditingItem && (
+	      <BookProjectItemEditModal
+	        project={project}
+	        step={editingStep}
+	        item={activeEditingItem.source}
+	        kind={activeEditingItem.kind}
+	        saving={saving}
+	        exporting={exporting}
+	        currentClassId={currentClassId}
+	        exportTargets={exportTargets}
+	        loadProject={loadProject}
+	        onSave={(patch) => saveProjectItem(editingStep.id, activeEditingItem.kind, activeEditingItem.id, patch)}
+	        onExport={(request) => onExportProjectItem?.({
+	          ...request,
+	          sourceStepId: editingStep.id,
+	          sourceItemKind: activeEditingItem.kind,
+	          sourceItemId: activeEditingItem.id,
+	        })}
+	        onClose={() => setEditingItem(null)}
+	      />
+	    )}
     </>
   );
 }

@@ -55,6 +55,17 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                   onDragEnd={() => setDraggingKey(null)}
                 />
                 {label} {index + 1}
+                {!resource && (
+                  <label className="book-step-answer-check" title="학생 답변 받기">
+                    <input
+                      type="checkbox"
+                      checked={source.requiresAnswer !== false}
+                      onChange={(event) => onChange(entry.kind, source.id, { requiresAnswer: event.target.checked })}
+                      aria-label={`${label} ${index + 1} 학생 답변 받기`}
+                    />
+                    <span>답변</span>
+                  </label>
+                )}
               </span>
               <input
                 value={source.title}
@@ -67,32 +78,6 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
               />
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
-            {!resource && (
-              <div className="book-answer-setting" role="group" aria-label={`${label} ${index + 1} 학생 답변 설정`}>
-                <div className="book-answer-setting-copy">
-                  <strong>학생 답변</strong>
-                  <span>{source.requiresAnswer !== false ? "입력 칸을 보여줍니다" : "확인 버튼만 보여줍니다"}</span>
-                </div>
-                <div className="book-answer-segment">
-                  <button
-                    type="button"
-                    className={source.requiresAnswer !== false ? "is-selected" : ""}
-                    aria-pressed={source.requiresAnswer !== false}
-                    onClick={() => onChange(entry.kind, source.id, { requiresAnswer: true })}
-                  >
-                    답변 받기
-                  </button>
-                  <button
-                    type="button"
-                    className={source.requiresAnswer === false ? "is-selected" : ""}
-                    aria-pressed={source.requiresAnswer === false}
-                    onClick={() => onChange(entry.kind, source.id, { requiresAnswer: false })}
-                  >
-                    확인만
-                  </button>
-                </div>
-              </div>
-            )}
             <div className="book-step-item-fields">
               <BasicFormatEditor
                 value={source.content || ""}
