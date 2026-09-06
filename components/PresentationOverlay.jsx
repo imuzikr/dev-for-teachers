@@ -100,6 +100,7 @@ function PresentationOverlayBody({ broadcast }) {
       <BookPresentationModal
         item={bookPresentationItemFromBroadcast(broadcast)}
         positionLabel={typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
+        fullScreen
       />
     );
   }

@@ -10209,6 +10209,32 @@ button.book-project-flow-pill:focus-visible {
 .book-presentation-foot button {
   min-height: 48px;
 }
+.book-presentation-backdrop.is-fullscreen {
+  padding: 0;
+  background: var(--bg);
+  backdrop-filter: none;
+}
+.book-presentation-backdrop.is-fullscreen .book-presentation-modal {
+  width: 100vw;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.book-presentation-backdrop.is-fullscreen .book-presentation-head {
+  padding: 32px clamp(24px, 5vw, 72px) 22px;
+}
+.book-presentation-backdrop.is-fullscreen .book-presentation-body {
+  padding: 28px clamp(24px, 5vw, 72px) 48px;
+}
+.book-presentation-backdrop.is-fullscreen .book-presentation-content {
+  flex: 1;
+  min-height: 0;
+}
+.book-presentation-backdrop.is-fullscreen .book-presentation-content p {
+  font-size: clamp(24px, 2vw, 34px);
+}
 
 @media (max-width: 640px) {
   .book-project-flow-overview > header {

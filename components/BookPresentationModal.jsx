@@ -76,6 +76,7 @@ export default function BookPresentationModal({
   onNext,
   onClose,
   audienceLabel = "선생님이 화면을 보여주고 있어요",
+  fullScreen = false,
 }) {
   const kind = item?.kind === "resource" || item?.itemKind === "resource" ? "resource" : "activity";
   const title = presentationTitle({ ...item, kind });
@@ -85,7 +86,7 @@ export default function BookPresentationModal({
   const canNavigate = Boolean(onPrevious && onNext);
 
   return (
-    <div className="book-presentation-backdrop" role="alertdialog" aria-modal="true" aria-label={`${title} 발표 모드`}>
+    <div className={`book-presentation-backdrop${fullScreen ? " is-fullscreen" : ""}`} role="alertdialog" aria-modal="true" aria-label={`${title} 발표 모드`}>
       <section className="book-presentation-modal">
         <header className="book-presentation-head">
           <div>
