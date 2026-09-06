@@ -16,6 +16,7 @@ export default function BookProjectSidebarTools({
   openStepIds,
   onPickStep,
   renderStepContent,
+  renderStepAction,
   stepIndexById = null,
 }) {
   const steps = project?.steps ?? [];
@@ -77,8 +78,13 @@ export default function BookProjectSidebarTools({
           }
 
           return (
-            <article className={`book-step-flow-item${open ? " is-open" : ""}`} key={step.id}>
+            <article className={`book-step-flow-item${open ? " is-open" : ""}${renderStepAction ? " has-actions" : ""}`} key={step.id}>
               {trigger}
+              {renderStepAction && (
+                <div className="book-step-flow-actions">
+                  {renderStepAction(step, displayIndex)}
+                </div>
+              )}
               {open && (
                 <div className="book-step-flow-body" id={panelId}>
                   {renderStepContent(step)}

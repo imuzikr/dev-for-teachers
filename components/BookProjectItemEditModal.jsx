@@ -19,7 +19,6 @@ function ExportPanel({
   itemLabel,
   project,
   step,
-  kind,
   currentClassId,
   exportTargets,
   exporting,
@@ -197,59 +196,63 @@ export default function BookProjectItemEditModal({
           <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
         </header>
         <div className="book-item-edit-body">
-          <label className="book-item-edit-field">
-            <span>{itemLabel} 제목</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder={`${itemLabel} 제목`}
-              aria-label={`${itemLabel} 제목`}
-            />
-          </label>
-          <label className="book-item-edit-field">
-            <span>링크 URL</span>
-            <input
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder={`${itemLabel} 링크 URL (선택)`}
-              aria-label={`${itemLabel} 링크 URL`}
-              type="url"
-            />
-          </label>
-          {kind === "activity" && (
-            <div className="book-answer-setting book-answer-setting--modal" role="group" aria-label="학생 답변 설정">
-              <div className="book-answer-setting-copy">
-                <strong>학생 답변</strong>
-                <span>{requiresAnswer ? "입력 칸을 보여줍니다" : "확인 버튼만 보여줍니다"}</span>
-              </div>
-              <div className="book-answer-segment">
-                <button type="button" className={requiresAnswer ? "is-selected" : ""} aria-pressed={requiresAnswer} onClick={() => setRequiresAnswer(true)}>
-                  답변 받기
-                </button>
-                <button type="button" className={!requiresAnswer ? "is-selected" : ""} aria-pressed={!requiresAnswer} onClick={() => setRequiresAnswer(false)}>
-                  확인만
-                </button>
-              </div>
+          <div className="book-item-edit-top-grid">
+            <div className="book-item-edit-controls">
+              <label className="book-item-edit-field">
+                <span>{itemLabel} 제목</span>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder={`${itemLabel} 제목`}
+                  aria-label={`${itemLabel} 제목`}
+                />
+              </label>
+              <label className="book-item-edit-field">
+                <span>링크 URL</span>
+                <input
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                  placeholder={`${itemLabel} 링크 URL (선택)`}
+                  aria-label={`${itemLabel} 링크 URL`}
+                  type="url"
+                />
+              </label>
+              {kind === "activity" && (
+                <div className="book-answer-setting book-answer-setting--modal" role="group" aria-label="학생 답변 설정">
+                  <div className="book-answer-setting-copy">
+                    <strong>학생 답변</strong>
+                    <span>{requiresAnswer ? "입력 칸을 보여줍니다" : "확인 버튼만 보여줍니다"}</span>
+                  </div>
+                  <div className="book-answer-segment">
+                    <button type="button" className={requiresAnswer ? "is-selected" : ""} aria-pressed={requiresAnswer} onClick={() => setRequiresAnswer(true)}>
+                      답변 받기
+                    </button>
+                    <button type="button" className={!requiresAnswer ? "is-selected" : ""} aria-pressed={!requiresAnswer} onClick={() => setRequiresAnswer(false)}>
+                      확인만
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            {!isCreating && (
+              <ExportPanel
+                itemLabel={itemLabel}
+                project={project}
+                step={step}
+                currentClassId={currentClassId}
+                exportTargets={exportTargets}
+                exporting={exporting}
+                loadProject={loadProject}
+                onExport={onExport}
+              />
+            )}
+          </div>
           <BasicFormatEditor
             value={content}
             onChange={setContent}
             placeholder={kind === "activity" ? "활동 안내사항" : ""}
             ariaLabel={`${itemLabel} 내용`}
           />
-          {!isCreating && (
-            <ExportPanel
-              itemLabel={itemLabel}
-              project={project}
-              step={step}
-              currentClassId={currentClassId}
-              exportTargets={exportTargets}
-              exporting={exporting}
-              loadProject={loadProject}
-              onExport={onExport}
-            />
-          )}
         </div>
         <footer className="book-item-edit-footer">
           <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
