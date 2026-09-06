@@ -57,6 +57,7 @@ export function BookPersonalResourceCard({
   confirmState,
   onCopy,
   onConfirm,
+  onPresent,
 }) {
   const resource = detailItem.source;
   const linkHref = resourceHref(resource.url);
@@ -90,7 +91,13 @@ export function BookPersonalResourceCard({
           </>
         )}
       </div>
-      {!isTeacher && (
+      {isTeacher && onPresent ? (
+        <footer className="book-personal-card-actions">
+          <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
+            발표 모드
+          </button>
+        </footer>
+      ) : !isTeacher && (
         <footer>
           <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
@@ -109,6 +116,7 @@ export function BookPersonalActivityCard({
   onDraftChange,
   onSave,
   onToggleActivityLock,
+  onPresent,
 }) {
   const activity = detailItem.source;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
@@ -146,11 +154,18 @@ export function BookPersonalActivityCard({
           )}
         </label>
       </div>
-      {isTeacher && onToggleActivityLock ? (
-        <footer>
-          <button type="button" className={locked ? "btn-primary" : "btn-outline"} disabled={!onToggleActivityLock} onClick={() => onToggleActivityLock(activity, !locked)}>
-            {locked ? "활동 열기" : "활동 잠그기"}
-          </button>
+      {isTeacher && (onToggleActivityLock || onPresent) ? (
+        <footer className="book-personal-card-actions">
+          {onToggleActivityLock && (
+            <button type="button" className={locked ? "btn-primary" : "btn-outline"} onClick={() => onToggleActivityLock(activity, !locked)}>
+              {locked ? "활동 열기" : "활동 잠그기"}
+            </button>
+          )}
+          {onPresent && (
+            <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
+              발표 모드
+            </button>
+          )}
         </footer>
       ) : !isTeacher ? (
         <footer>

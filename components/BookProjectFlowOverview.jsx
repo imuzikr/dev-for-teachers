@@ -28,6 +28,7 @@ export default function BookProjectFlowOverview({
   isTeacher,
   onToggleItemLock,
   selectedStepId,
+  onPresentItem,
 }) {
   const selectedIndex = sections.findIndex((section) => section.id === selectedStepId);
   const visibleEntries = selectedIndex >= 0
@@ -84,6 +85,7 @@ export default function BookProjectFlowOverview({
                         confirmState={detailConfirmState}
                         onCopy={copyResource}
                         onConfirm={null}
+                        onPresent={onPresentItem}
                       />
                     ) : (
                       <BookPersonalActivityCard
@@ -103,6 +105,7 @@ export default function BookProjectFlowOverview({
                           source: activity,
                         }, locked) : null}
                         onConfirm={null}
+                        onPresent={onPresentItem}
                       />
                     )
                   ))}

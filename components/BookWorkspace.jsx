@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
 import BookPersonalDashboard from "./BookPersonalDashboard";
+import { useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
 import { bookDetailSections } from "./bookProjectItems";
 
@@ -53,6 +54,14 @@ export default function BookWorkspace({
     ];
   }, [activities, previewProject]);
   const sections = useMemo(() => bookDetailSections(previewProject, previewActivities), [previewActivities, previewProject]);
+  const bookPresentation = useBookPresentationMode({
+    isTeacher,
+    classId,
+    user,
+    projectId,
+    projectTitle: previewProject?.title ?? "",
+    sections,
+  });
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
@@ -214,9 +223,11 @@ export default function BookWorkspace({
           onToggleActivityLock={onToggleActivityLock}
           onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
+          onPresentItem={isTeacher ? bookPresentation.presentItem : null}
           selectedStepId={selectedStepId}
           onSelectStep={onSelectStep}
         />
+        {bookPresentation.modal}
       </section>
     </div>
   );

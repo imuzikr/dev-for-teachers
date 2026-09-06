@@ -10056,7 +10056,17 @@ button.book-project-flow-pill:focus-visible {
   word-break: keep-all;
 }
 .book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.book-personal-activity-card footer.book-personal-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.book-personal-resource-card footer.book-personal-card-actions {
+  grid-template-columns: 1fr;
+}
 .book-personal-activity-card footer button { min-width: 0; min-height: 44px; flex: 1; padding: 7px 10px; }
+.book-presentation-card-btn {
+  white-space: nowrap;
+}
 .book-personal-confirm.is-confirmed {
   border-color: rgba(60, 113, 65, 0.48);
   background: var(--primary-light);
@@ -10071,6 +10081,133 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-personal-detail--teacher .book-personal-response {
   flex: 0 0 auto;
+}
+
+.book-presentation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(31, 46, 37, 0.34);
+  backdrop-filter: blur(4px);
+}
+.book-presentation-modal {
+  width: min(1120px, calc(100vw - 40px));
+  max-height: min(86vh, 760px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: 0 18px 48px rgba(31, 46, 37, 0.18);
+}
+.book-presentation-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 16px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.book-presentation-head span {
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+.book-presentation-head h2 {
+  margin: 6px 0 0;
+  color: var(--dark);
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+.book-presentation-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.book-presentation-meta em,
+.book-presentation-meta b,
+.book-presentation-meta strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+.book-presentation-close {
+  min-height: 36px;
+  padding: 7px 14px;
+}
+.book-presentation-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+.book-presentation-url {
+  display: block;
+  overflow: hidden;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.book-presentation-url.is-empty {
+  color: var(--text-sub);
+  font-weight: 700;
+}
+.book-presentation-content {
+  min-height: 360px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg);
+}
+.book-presentation-content > span {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+.book-presentation-content p {
+  margin: 0;
+  color: var(--dark);
+  font-size: 24px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.book-presentation-foot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 28px 24px;
+}
+.book-presentation-foot button {
+  min-height: 48px;
 }
 
 @media (max-width: 640px) {
@@ -10098,6 +10235,30 @@ button.book-project-flow-pill:focus-visible {
   }
   .book-personal-activity-card > header { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .book-personal-activity-order { width: 40px; height: 40px; }
+  .book-personal-activity-card footer.book-personal-card-actions { grid-template-columns: 1fr; }
+  .book-presentation-backdrop { padding: 14px; }
+  .book-presentation-modal {
+    width: calc(100vw - 28px);
+    max-height: 88vh;
+    border-radius: 14px;
+  }
+  .book-presentation-head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px;
+  }
+  .book-presentation-head h2 { font-size: 25px; }
+  .book-presentation-meta { justify-content: flex-start; }
+  .book-presentation-body { padding: 18px; }
+  .book-presentation-content {
+    min-height: 260px;
+    padding: 16px;
+  }
+  .book-presentation-content p { font-size: 18px; line-height: 1.75; }
+  .book-presentation-foot {
+    padding: 0 18px 18px;
+    grid-template-columns: 1fr;
+  }
 }
 
 

@@ -8,9 +8,10 @@
 // =============================================================
 import { sanitizeHtml } from "@/lib/html";
 import { normalizeMindmap } from "@/lib/mindmap";
+import BookPresentationModal, { bookPresentationItemFromBroadcast } from "./BookPresentationModal";
 import MindmapCanvas from "./MindmapCanvas";
 
-const KNOWN_MODES = ["mindmap", "lesson", "carousel", "single"];
+const KNOWN_MODES = ["mindmap", "lesson", "carousel", "single", "bookItem"];
 
 export default function PresentationOverlay({ broadcast }) {
   // [버전이 어긋났을 때]
@@ -94,6 +95,15 @@ export default function PresentationOverlay({ broadcast }) {
 }
 
 function PresentationOverlayBody({ broadcast }) {
+  if (broadcast.mode === "bookItem") {
+    return (
+      <BookPresentationModal
+        item={bookPresentationItemFromBroadcast(broadcast)}
+        positionLabel={typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
+      />
+    );
+  }
+
   // 수업하기 — 선생님 화면 전체가 아니라 '슬라이드만' 화면 가득 띄웁니다.
   // (오른쪽 수업 메모는 교사 전용이라 방송에 담기지 않습니다)
   if (broadcast.mode === "lesson") {
