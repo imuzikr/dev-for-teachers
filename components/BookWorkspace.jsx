@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
+import BookHelpDrawer from "./BookHelpDrawer";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import { useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
 import { bookDetailSections } from "./bookProjectItems";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
+const HELP_DRAWER_COLLAPSED_KEY = "book_help_drawer_collapsed";
 
 function projectStepActivities(project) {
   return (project?.steps ?? []).flatMap((step) => step.activities ?? []);
@@ -21,6 +23,7 @@ export default function BookWorkspace({
   user,
   isTeacher,
   hasClass,
+  activeClassId,
   project,
   editingProject,
   projectEditorKey,
@@ -35,13 +38,15 @@ export default function BookWorkspace({
   onDelete,
   selectedStepId,
   onSelectStep,
+  onToast,
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [helpCollapsed, setHelpCollapsed] = useState(false);
   const [draftProject, setDraftProject] = useState(null);
   const showLibraryPanel = isTeacher;
-  const classId = project?.classId || activities[0]?.classId || null;
+  const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
   const previewProject = editingProject && draftProject ? draftProject : project;
   const previewActivities = useMemo(() => {
@@ -65,6 +70,7 @@ export default function BookWorkspace({
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
+    setHelpCollapsed(window.localStorage.getItem(HELP_DRAWER_COLLAPSED_KEY) === "1");
   }, []);
 
   useEffect(() => {
@@ -120,6 +126,16 @@ export default function BookWorkspace({
     });
   }
 
+  function toggleHelpDrawer() {
+    setHelpCollapsed((current) => {
+      const next = !current;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(HELP_DRAWER_COLLAPSED_KEY, next ? "1" : "0");
+      }
+      return next;
+    });
+  }
+
   function rememberConfirmedItem(item) {
     if (!user?.uid || !item?.id) return;
     const confirmationKey = bookConfirmationKey(item.kind, item.id);
@@ -162,7 +178,7 @@ export default function BookWorkspace({
   }
 
   return (
-    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
+    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
       {showLibraryPanel && (
       <aside className={`book-library-side${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
         <button
@@ -229,6 +245,14 @@ export default function BookWorkspace({
         />
         {bookPresentation.modal}
       </section>
+      <BookHelpDrawer
+        classId={classId}
+        user={user}
+        isTeacher={isTeacher}
+        collapsed={helpCollapsed}
+        onToggleCollapsed={toggleHelpDrawer}
+        onToast={onToast}
+      />
     </div>
   );
 }

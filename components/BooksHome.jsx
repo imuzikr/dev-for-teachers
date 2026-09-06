@@ -130,6 +130,7 @@ export default function BooksHome(props) {
         user={user}
         isTeacher={admin}
         hasClass={!!classId}
+        activeClassId={classId}
         project={displayedProject}
         editingProject={editingProject}
         projectEditorKey={projectEditorKey}
@@ -144,6 +145,7 @@ export default function BooksHome(props) {
         onDelete={onDelete}
         selectedStepId={activeStepId}
         onSelectStep={setSelectedStepId}
+        onToast={onToast}
       />
     </main>
   );

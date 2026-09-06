@@ -496,6 +496,38 @@ service cloud.firestore {
              && request.resource.data.createdBy == uid()
              && request.resource.data.updatedAt == request.time;
     }
+    function validBookHelpNote(classId) {
+      return request.resource.data.keys().hasOnly([
+               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+             ])
+             && request.resource.data.classId == classId
+             && request.resource.data.title is string
+             && request.resource.data.title.size() > 0
+             && request.resource.data.title.size() <= 120
+             && request.resource.data.content is string
+             && request.resource.data.content.size() <= 5000
+             && request.resource.data.url is string
+             && request.resource.data.url.size() <= 1000
+             && request.resource.data.createdBy == uid()
+             && request.resource.data.createdAt == request.time
+             && request.resource.data.updatedAt == request.time;
+    }
+    function validBookHelpNoteUpdate() {
+      return request.resource.data.keys().hasOnly([
+               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+             ])
+             && request.resource.data.classId == resource.data.classId
+             && request.resource.data.createdBy == resource.data.createdBy
+             && request.resource.data.createdAt == resource.data.createdAt
+             && request.resource.data.title is string
+             && request.resource.data.title.size() > 0
+             && request.resource.data.title.size() <= 120
+             && request.resource.data.content is string
+             && request.resource.data.content.size() <= 5000
+             && request.resource.data.url is string
+             && request.resource.data.url.size() <= 1000
+             && request.resource.data.updatedAt == request.time;
+    }
     function validBookResource(resourceId) {
       return request.resource.data.keys().hasOnly([
                'resourceId', 'classId', 'projectId', 'projectVersion',
@@ -622,6 +654,19 @@ service cloud.firestore {
                     && request.resource.data.classId == resource.data.classId
                     && request.resource.data.projectId == resource.data.projectId
                     && validBookResource(resourceId);
+      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+    }
+
+    match /bookHelpNotes/{noteId} {
+      allow read: if signedIn() && (
+        isAdmin()
+        || ownsClass(resource.data.classId)
+        || isClassMember(resource.data.classId)
+      );
+      allow create: if (isAdmin() || ownsClassEditable(request.resource.data.classId))
+                    && validBookHelpNote(request.resource.data.classId);
+      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+                    && validBookHelpNoteUpdate();
       allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
     }
 

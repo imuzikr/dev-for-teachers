@@ -8452,7 +8452,7 @@ pre code {
 /* ── 책방 작업 화면: 왼쪽 제시물, 오른쪽 개인 카드 ── */
 .book-library-layout {
   display: grid;
-  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr);
+  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr) minmax(280px, 320px);
   min-height: 520px;
   border: 1px solid var(--border);
   background: var(--card-bg);
@@ -8462,7 +8462,7 @@ pre code {
 }
 
 .books-main--split .book-library-layout {
-  grid-template-columns: clamp(300px, 27vw, 360px) minmax(0, 1fr);
+  grid-template-columns: clamp(300px, 27vw, 360px) minmax(0, 1fr) clamp(288px, 22vw, 340px);
   height: 100%;
   min-height: 0;
   border: 0;
@@ -8471,11 +8471,25 @@ pre code {
 }
 
 .books-main--split .book-library-layout.is-library-collapsed {
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr) clamp(288px, 22vw, 340px);
 }
 
 .books-main--split .book-library-layout.is-student-main {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) clamp(288px, 22vw, 340px);
+}
+
+.book-library-layout.is-help-collapsed,
+.books-main--split .book-library-layout.is-help-collapsed {
+  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr) 52px;
+}
+
+.books-main--split .book-library-layout.is-library-collapsed.is-help-collapsed {
+  grid-template-columns: 48px minmax(0, 1fr) 52px;
+}
+
+.book-library-layout.is-student-main.is-help-collapsed,
+.books-main--split .book-library-layout.is-student-main.is-help-collapsed {
+  grid-template-columns: minmax(0, 1fr) 52px;
 }
 
 .book-library-side {
@@ -9401,6 +9415,292 @@ pre code {
   min-width: 0;
   padding: 20px;
   background: var(--bg);
+}
+
+.book-help-drawer {
+  position: relative;
+  min-width: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 64px 16px 18px;
+  border-left: 1px solid var(--border);
+  background: var(--sage-card, var(--primary-light));
+}
+
+.book-help-drawer.is-collapsed {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  padding: 10px 6px;
+}
+
+.book-help-toggle {
+  position: absolute;
+  top: 18px;
+  left: 14px;
+  z-index: 2;
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: var(--shadow-soft);
+}
+
+.book-help-toggle:hover,
+.book-help-toggle:focus-visible {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  outline: 0;
+}
+
+.book-help-drawer.is-collapsed .book-help-toggle {
+  position: sticky;
+  top: 10px;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.book-help-content {
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.book-help-drawer.is-collapsed .book-help-content {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+}
+
+.book-help-rail-label {
+  position: absolute;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  writing-mode: vertical-rl;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.book-help-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.book-help-head span {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.book-help-head h2 {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.book-help-add {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.book-help-list {
+  display: grid;
+  gap: 10px;
+}
+
+.book-help-empty {
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(251, 250, 243, 0.68);
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.book-help-item,
+.book-help-editor {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(251, 250, 243, 0.78);
+  box-shadow: var(--shadow-soft);
+}
+
+.book-help-editor {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.book-help-item-button {
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.book-help-item-button:hover,
+.book-help-item-button:focus-visible {
+  background: var(--primary-light);
+  outline: 0;
+}
+
+.book-help-item-button[aria-expanded="true"] {
+  border-radius: 14px 14px 10px 10px;
+  background: var(--primary-light);
+}
+
+.book-help-item-button span {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg-deep);
+  color: var(--primary-dark);
+  font-weight: 900;
+}
+
+.book-help-item-button strong {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-help-detail {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.book-help-url {
+  overflow: hidden;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-help-detail p {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.book-help-link {
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.book-help-link:hover,
+.book-help-link:focus-visible {
+  text-decoration: underline;
+}
+
+.book-help-fields {
+  display: grid;
+  gap: 9px;
+}
+
+.book-help-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.book-help-fields input,
+.book-help-fields textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.book-help-fields input {
+  min-height: 40px;
+  padding: 0 11px;
+}
+
+.book-help-fields textarea {
+  min-height: 112px;
+  padding: 11px;
+  resize: vertical;
+}
+
+.book-help-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.book-help-actions button {
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.book-help-delete {
+  border-color: rgba(192, 74, 63, 0.34);
+  color: var(--danger);
 }
 
 .book-project-flow-overview {
@@ -11201,17 +11501,31 @@ button.book-project-flow-pill:focus-visible {
   }
 
   .books-main--split .book-library-layout {
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(420px, 1fr) 288px;
     height: 100%;
     min-height: 0;
   }
 
   .books-main--split .book-library-layout.is-library-collapsed {
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(420px, 1fr) 288px;
   }
 
   .books-main--split .book-library-layout.is-student-main {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 288px;
+  }
+
+  .book-library-layout.is-help-collapsed,
+  .books-main--split .book-library-layout.is-help-collapsed {
+    grid-template-columns: 280px minmax(420px, 1fr) 52px;
+  }
+
+  .books-main--split .book-library-layout.is-library-collapsed.is-help-collapsed {
+    grid-template-columns: 48px minmax(420px, 1fr) 52px;
+  }
+
+  .book-library-layout.is-student-main.is-help-collapsed,
+  .books-main--split .book-library-layout.is-student-main.is-help-collapsed {
+    grid-template-columns: minmax(0, 1fr) 52px;
   }
 
   .books-main--split .book-library-side {
@@ -11228,6 +11542,15 @@ button.book-project-flow-pill:focus-visible {
 
   .books-main--split .book-library-main {
     overflow: hidden;
+  }
+
+  .books-main--split .book-help-drawer {
+    height: 100dvh;
+    padding: 58px 12px 12px;
+  }
+
+  .books-main--split .book-help-drawer.is-collapsed {
+    padding: 10px 6px;
   }
 
   .books-main--split .books-content-head {
