@@ -69,7 +69,7 @@ export default function BookProjectSidebarTools({
               <span>{stepLabel(displayIndex)}</span>
               <strong>{step.title || stepLabel(displayIndex)}</strong>
               <small>{step.activities?.length ?? 0} 활동 · {step.resources?.length ?? 0} 자료</small>
-              {expandable && <i aria-hidden="true">{open ? "−" : "+"}</i>}
+              {expandable && <i className="book-step-toggle-action" aria-hidden="true">{open ? "−" : "+"}</i>}
             </button>
           );
 
