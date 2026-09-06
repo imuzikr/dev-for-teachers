@@ -8453,12 +8453,13 @@ pre code {
 .book-library-layout {
   display: grid;
   grid-template-columns: minmax(248px, 304px) minmax(0, 1fr) minmax(280px, 320px);
+  align-items: stretch;
   min-height: 520px;
   border: 1px solid var(--border);
   background: var(--card-bg);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: grid-template-columns 0.22s ease;
+  transition: grid-template-columns 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .books-main--split .book-library-layout {
@@ -8495,13 +8496,14 @@ pre code {
 .book-library-side {
   position: relative;
   min-width: 0;
+  min-height: 0;
   max-height: calc(100dvh - 180px);
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 62px 16px 16px;
   background: var(--sage-card, var(--primary-light));
   border-right: 1px solid var(--border);
-  transition: padding 0.22s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .books-main--split .book-library-side {
@@ -8585,11 +8587,18 @@ pre code {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-8px);
+  filter: blur(2px);
+  transform: translateX(-14px) scale(0.985);
+  transition: opacity 0.12s ease, transform 0.16s ease, filter 0.12s ease, visibility 0.16s ease;
 }
 
 .book-library-content {
-  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0) scale(1);
+  transform-origin: top left;
+  transition: opacity 0.18s ease 0.08s, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1) 0.08s, filter 0.18s ease 0.08s, visibility 0.18s ease;
+  will-change: opacity, transform, filter;
 }
 
 .book-library-main {
@@ -9420,12 +9429,19 @@ pre code {
 .book-help-drawer {
   position: relative;
   min-width: 0;
-  height: 100dvh;
+  min-height: 0;
+  height: auto;
+  max-height: calc(100dvh - 180px);
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 64px 16px 18px;
   border-left: 1px solid var(--border);
   background: var(--sage-card, var(--primary-light));
+}
+
+.books-main--split .book-help-drawer {
+  height: 100%;
+  max-height: none;
 }
 
 .book-help-drawer.is-collapsed {
@@ -9478,14 +9494,21 @@ pre code {
 }
 
 .book-help-content {
-  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0) scale(1);
+  transform-origin: top right;
+  transition: opacity 0.18s ease 0.08s, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1) 0.08s, filter 0.18s ease 0.08s, visibility 0.18s ease;
+  will-change: opacity, transform, filter;
 }
 
 .book-help-drawer.is-collapsed .book-help-content {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: translateX(8px);
+  filter: blur(2px);
+  transform: translateX(14px) scale(0.985);
+  transition: opacity 0.12s ease, transform 0.16s ease, filter 0.12s ease, visibility 0.16s ease;
 }
 
 .book-help-rail-label {
@@ -11545,7 +11568,8 @@ button.book-project-flow-pill:focus-visible {
   }
 
   .books-main--split .book-help-drawer {
-    height: 100dvh;
+    height: 100%;
+    max-height: none;
     padding: 58px 12px 12px;
   }
 

@@ -1,22 +1,33 @@
 .book-library-layout.is-library-collapsed {
-  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr);
 }
 
 .book-library-side {
-  transition: width 0.16s ease, padding 0.16s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .book-library-side.is-collapsed {
   overflow: hidden;
-  padding: 18px 8px 8px;
+  padding: 10px 6px;
 }
 
 .book-library-content {
   min-width: 0;
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0) scale(1);
+  transform-origin: top left;
+  transition: opacity 0.18s ease 0.08s, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1) 0.08s, filter 0.18s ease 0.08s, visibility 0.18s ease;
+  will-change: opacity, transform, filter;
 }
 
 .book-library-side.is-collapsed .book-library-content {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(2px);
+  transform: translateX(-14px) scale(0.985);
+  transition: opacity 0.12s ease, transform 0.16s ease, filter 0.12s ease, visibility 0.16s ease;
 }
 
 .book-library-side .book-library-empty {
@@ -327,20 +338,20 @@
   }
 
   .books-main--split .book-library-layout.is-library-collapsed {
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(420px, 1fr) 288px;
     min-height: 0;
   }
 
   .book-library-side.is-collapsed {
     align-self: start;
     max-height: none;
-    padding: 18px 8px 8px;
+    padding: 10px 6px;
   }
 
   .books-main--split .book-library-side.is-collapsed {
     align-self: stretch;
     height: 100dvh;
-    padding: 18px 8px 8px;
+    padding: 10px 6px;
   }
 
   .book-library-side.is-collapsed .book-library-collapse {
