@@ -6,39 +6,34 @@ import { ProjectDisplayItem, ProjectSection, StepContentModal, stepPreviewItems 
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature } from "./StatusIcons";
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange, selectedStepId }) {
+export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onOpen, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [draggingKey, setDraggingKey] = useState(null);
-  const projectKey = project?.id || project?.classId || "";
   const stepIdentity = (project?.steps ?? []).map((step) => step.id).join("|");
 
   useEffect(() => {
     if (editing) return;
     const stepIds = stepIdentity ? stepIdentity.split("|") : [];
-    if (selectedStepId && stepIds.includes(selectedStepId)) {
-      setViewOpenIds(new Set([selectedStepId]));
-      setActiveStepId(selectedStepId);
-      return;
-    }
-
     setViewOpenIds((current) => {
       const preserved = stepIds.filter((stepId) => current.has(stepId));
       return new Set(preserved);
     });
     setActiveStepId((current) => stepIds.includes(current) ? current : null);
-  }, [editing, projectKey, selectedStepId, stepIdentity]);
+  }, [editing, stepIdentity]);
 
   function toggleStep(stepId) {
-    if (selectedStepId) {
-      setViewOpenIds(new Set([stepId]));
-      setActiveStepId(stepId);
-      return;
-    }
-
     const open = !viewOpenIds.has(stepId);
-    setViewOpenIds(new Set(open ? [stepId] : []));
+    setViewOpenIds((current) => {
+      const next = new Set(current);
+      if (open) {
+        next.add(stepId);
+      } else {
+        next.delete(stepId);
+      }
+      return next;
+    });
     setActiveStepId(open ? stepId : null);
   }
 
@@ -78,7 +73,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
       <BookProjectEditor
         project={project}
         appendStep={appendStep}
-        initialOpenStepId={initialOpenStepId ?? selectedStepId}
+        initialOpenStepId={initialOpenStepId}
         saving={saving}
         participantCount={participantCount}
         onSave={onSave}
@@ -92,8 +87,6 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   const previewStep = (project.steps ?? []).find((step) => step.id === preview?.stepId);
   const previewItems = previewStep ? stepPreviewItems(previewStep) : [];
   const previewItem = previewItems[preview?.index] ?? null;
-  const selectedStep = (project.steps ?? []).find((step) => step.id === selectedStepId) ?? null;
-  const visibleProject = selectedStep ? { ...project, steps: [selectedStep] } : project;
   const stepIndexById = new Map((project.steps ?? []).map((step, index) => [step.id, index]));
 
   function renderStepContent(step) {
@@ -151,7 +144,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
         {onEdit && <button type="button" className="btn-ghost book-project-edit" onClick={() => onEdit(false)}>프로젝트 편집</button>}
       </header>
       <BookProjectSidebarTools
-        project={visibleProject}
+        project={project}
         participantCount={participantCount}
         activeStepId={activeStepId}
         editing={false}

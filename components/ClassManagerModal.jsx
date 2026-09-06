@@ -6,9 +6,19 @@
 // =============================================================
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
-import { addClass, renameClass, archiveClass, unarchiveClass, deleteClass } from "@/lib/store";
+import {
+  addClass,
+  archiveClass,
+  createClassJoinCode,
+  deleteClass,
+  isValidClassJoinCode,
+  normalizeClassJoinCode,
+  renameClass,
+  unarchiveClass,
+  updateClassJoinAccess,
+} from "@/lib/store";
 import ConfirmModal from "./ConfirmModal";
-import { IconPen, IconTrash } from "./StatusIcons";
+import { ActiveClassRow, ArchivedClassRow } from "./ClassManagerClassRows";
 
 export default function ClassManagerModal({ classes, user, onClose, onCreated, onViewClass, onToast }) {
   const [newName, setNewName] = useState("");
@@ -82,6 +92,75 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
     }
   }
 
+  async function handleToggleJoinAccess(c) {
+    if (busyId) return;
+    const nextEnabled = c.joinEnabled !== true;
+    const nextCode = isValidClassJoinCode(c.joinCode) ? c.joinCode : createUniqueClassJoinCode(c.id);
+    setBusyId(c.id);
+    setError("");
+    try {
+      await updateClassJoinAccess(c.id, {
+        joinEnabled: nextEnabled,
+        joinCode: nextEnabled ? nextCode : c.joinCode,
+      });
+      onToast?.(`'${c.name}' 반 가입을 ${nextEnabled ? "허용" : "차단"}했어요.`);
+    } catch {
+      setError("가입 상태를 바꾸지 못했어요.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleRefreshJoinCode(c) {
+    if (busyId) return;
+    setBusyId(c.id);
+    setError("");
+    try {
+      await updateClassJoinAccess(c.id, {
+        joinEnabled: true,
+        joinCode: createUniqueClassJoinCode(c.id),
+      });
+      onToast?.(`'${c.name}' 반 참여 코드를 새로 만들었어요.`);
+    } catch {
+      setError("참여 코드를 새로 만들지 못했어요.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleSaveJoinCode(c, value) {
+    if (busyId) return;
+    const joinCode = normalizeClassJoinCode(value);
+    if (!isValidClassJoinCode(joinCode)) {
+      setError("참여 코드는 숫자 6자리로 입력해 주세요.");
+      return;
+    }
+    if (active.some((item) => item.id !== c.id && normalizeClassJoinCode(item.joinCode) === joinCode)) {
+      setError("이미 다른 반에서 사용 중인 참여 코드입니다.");
+      return;
+    }
+    setBusyId(c.id);
+    setError("");
+    try {
+      await updateClassJoinAccess(c.id, { joinEnabled: true, joinCode });
+      onToast?.(`'${c.name}' 반 참여 코드를 ${joinCode}로 저장했어요.`);
+    } catch {
+      setError("참여 코드를 저장하지 못했어요.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function createUniqueClassJoinCode(exceptId) {
+    for (let count = 0; count < 12; count += 1) {
+      const joinCode = createClassJoinCode();
+      if (!active.some((item) => item.id !== exceptId && normalizeClassJoinCode(item.joinCode) === joinCode)) {
+        return joinCode;
+      }
+    }
+    return createClassJoinCode();
+  }
+
   async function handleDelete() {
     if (!confirmDelete) return;
     const { id, name } = confirmDelete;
@@ -129,43 +208,21 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
           ) : (
             <ul className="class-mgr-list">
               {active.map((c) => (
-                <li key={c.id} className="class-mgr-row">
-                  {renamingId === c.id ? (
-                    <input
-                      type="text"
-                      className="class-mgr-rename-input"
-                      value={renameDraft}
-                      autoFocus
-                      onChange={(e) => setRenameDraft(e.target.value)}
-                      onBlur={() => commitRename(c)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.preventDefault(); commitRename(c); }
-                        else if (e.key === "Escape") { e.preventDefault(); setRenamingId(null); }
-                      }}
-                    />
-                  ) : (
-                    <span className="class-mgr-name">{c.name}</span>
-                  )}
-                  <div className="class-mgr-actions">
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => startRename(c)}
-                      title="이름 수정"
-                    >
-                      <IconPen size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => handleArchive(c)}
-                      disabled={busyId === c.id}
-                      title="보관하면 학생 접근이 막히고 목록에서 숨겨져요"
-                    >
-                      📦 보관
-                    </button>
-                  </div>
-                </li>
+                <ActiveClassRow
+                  key={c.id}
+                  classItem={c}
+                  busy={busyId === c.id}
+                  renaming={renamingId === c.id}
+                  renameDraft={renameDraft}
+                  onRenameDraft={setRenameDraft}
+                  onStartRename={startRename}
+                  onCommitRename={commitRename}
+                  onCancelRename={() => setRenamingId(null)}
+                  onToggleJoinAccess={handleToggleJoinAccess}
+                  onRefreshJoinCode={handleRefreshJoinCode}
+                  onSaveJoinCode={handleSaveJoinCode}
+                  onArchive={handleArchive}
+                />
               ))}
             </ul>
           )}
@@ -178,37 +235,14 @@ export default function ClassManagerModal({ classes, user, onClose, onCreated, o
           ) : (
             <ul className="class-mgr-list">
               {archived.map((c) => (
-                <li key={c.id} className="class-mgr-row class-mgr-row--archived">
-                  <span className="class-mgr-name">{c.name}</span>
-                  <div className="class-mgr-actions">
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => onViewClass?.(c.id)}
-                      title="데이터를 보기 전용으로 확인합니다"
-                    >
-                      👁 보기
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => handleUnarchive(c)}
-                      disabled={busyId === c.id}
-                      title="다시 운영 중인 반으로 되돌립니다"
-                    >
-                      ♻️ 복원
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost class-mgr-delete"
-                      onClick={() => setConfirmDelete({ id: c.id, name: c.name })}
-                      disabled={busyId === c.id}
-                      title="완전히 삭제(되돌릴 수 없음)"
-                    >
-                      <IconTrash size={15} />
-                    </button>
-                  </div>
-                </li>
+                <ArchivedClassRow
+                  key={c.id}
+                  classItem={c}
+                  busy={busyId === c.id}
+                  onViewClass={onViewClass}
+                  onUnarchive={handleUnarchive}
+                  onDelete={setConfirmDelete}
+                />
               ))}
             </ul>
           )}

@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import RichTextDisplay from "./RichTextDisplay";
 
 function presentationKindLabel(kind) {
   return kind === "resource" ? "자료" : "활동";
@@ -84,6 +86,11 @@ export default function BookPresentationModal({
   const href = resourceHref(presentationUrl({ ...item, kind }));
   const linkLabel = resourceLinkLabel(href);
   const canNavigate = Boolean(onPrevious && onNext);
+  const bodyRef = useRef(null);
+
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [item?.id, kind]);
 
   return (
     <div className={`book-presentation-backdrop${fullScreen ? " is-fullscreen" : ""}`} role="alertdialog" aria-modal="true" aria-label={`${title} 발표 모드`}>
@@ -100,7 +107,7 @@ export default function BookPresentationModal({
           </div>
         </header>
 
-        <div className="book-presentation-body">
+        <div className="book-presentation-body" ref={bodyRef}>
           {href ? (
             <a className="book-presentation-url" href={href} target="_blank" rel="noopener noreferrer">
               {linkLabel || href}
@@ -110,7 +117,7 @@ export default function BookPresentationModal({
           )}
           <article className={`book-presentation-content book-presentation-content--${kind}`}>
             <span>{kind === "resource" ? "자료 내용" : "활동 안내사항"}</span>
-            <p>{content}</p>
+            <RichTextDisplay className="book-presentation-rich" html={content} />
           </article>
         </div>
 

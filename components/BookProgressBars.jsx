@@ -4,7 +4,7 @@ import { progressItems } from "./bookProgressItems";
 
 export function progressStepGroups(sections) {
   const items = progressItems(sections);
-  return sections.slice(0, 3).map((section, stepIndex) => ({
+  return sections.map((section, stepIndex) => ({
     section,
     stepIndex,
     items: items.filter((item) => item.sectionId === section.id).slice(0, 7),
@@ -51,7 +51,7 @@ export function ClassAverageProgress({ sections, participants, progressByUser, i
 
 export function PersonalProgressGroups({ groups, completed, participantLabel }) {
   const cells = groups.flatMap(({ section, stepIndex, items: groupItems }) => {
-    const stepClass = `step-${Math.min(stepIndex + 1, 3)}`;
+    const stepClass = `step-${(stepIndex % 3) + 1}`;
     if (groupItems.length === 0) {
       return [{
         key: `empty:${section.id}`,

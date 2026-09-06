@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { orderedStepItems } from "./BookProjectPreview";
+import BasicFormatEditor from "./BasicFormatEditor";
 import { IconTrash } from "./StatusIcons";
 
 function itemKey(kind, id) {
@@ -67,12 +68,11 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">
-              <textarea
+              <BasicFormatEditor
                 value={source.content || ""}
-                onChange={(event) => onChange(entry.kind, source.id, { content: event.target.value })}
+                onChange={(content) => onChange(entry.kind, source.id, { content })}
                 placeholder={resource ? "자료 내용" : "활동 안내사항"}
-                aria-label={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
-                rows={4}
+                ariaLabel={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
               />
               <input
                 value={resource ? source.url || "" : source.bookUrl || source.url || ""}

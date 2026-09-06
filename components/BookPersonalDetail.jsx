@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
+import { stripHtml } from "@/lib/html";
 import { saveBookDashboardText } from "@/lib/store";
 import { BookPersonalActivityCard, BookPersonalResourceCard, dashboardText, participantEntry, participantName } from "./BookPersonalDetailCards";
 
@@ -65,7 +66,7 @@ export default function BookPersonalDetail({
   }
 
   async function copyResource(resource) {
-    const text = [resource.title, resource.content, resource.url].filter(Boolean).join("\n");
+    const text = [resource.title, stripHtml(resource.content || ""), resource.url].filter(Boolean).join("\n");
     await navigator.clipboard.writeText(text);
     setCopiedId(resource.id);
     window.setTimeout(() => setCopiedId(null), 1600);

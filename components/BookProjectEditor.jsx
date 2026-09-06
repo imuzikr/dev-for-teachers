@@ -153,7 +153,15 @@ export default function BookProjectEditor({
 
   function toggleStep(stepId) {
     const open = !openIds.has(stepId);
-    setOpenIds(new Set(open ? [stepId] : []));
+    setOpenIds((current) => {
+      const next = new Set(current);
+      if (open) {
+        next.add(stepId);
+      } else {
+        next.delete(stepId);
+      }
+      return next;
+    });
     setActiveStepId(open ? stepId : null);
   }
 

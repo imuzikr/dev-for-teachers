@@ -2,6 +2,7 @@
 
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import RichTextDisplay from "./RichTextDisplay";
 import { IconLock } from "./StatusIcons";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
@@ -86,7 +87,7 @@ export function BookPersonalResourceCard({
             {detailUrlSlot(linkHref, linkLabel)}
             <div className="book-personal-resource-content" aria-label="자료 내용">
               <span>자료 내용</span>
-              <p>{resource.content || ""}</p>
+              <RichTextDisplay className="book-personal-resource-content-text" html={resource.content} />
             </div>
           </>
         )}
@@ -137,7 +138,7 @@ export function BookPersonalActivityCard({
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
-        <p className="book-personal-instruction">{activity.content || "활동 안내사항"}</p>
+        <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />
         <label className="book-personal-response">
           <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
           {isTeacher ? (

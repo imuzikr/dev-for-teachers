@@ -14,7 +14,7 @@ export default function BooksHome(props) {
     onEditProject, onSaveProject, onOpenActivity, onToggleActivityLock, onToggleProjectItemLock, onDelete,
   } = props;
   const stepTabs = useMemo(() => (
-    (displayedProject?.steps ?? []).slice(0, 3).map((step, index) => ({
+    (displayedProject?.steps ?? []).map((step, index) => ({
       id: step.id ?? `step-${index + 1}`,
       index,
     }))

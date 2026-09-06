@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
+import { stripHtml } from "@/lib/html";
+import RichTextDisplay from "./RichTextDisplay";
 import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
 
 function IconEdit({ size = 16 }) {
@@ -106,7 +108,7 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
   const locked = item.locked === true;
 
   async function copyResource() {
-    const text = [item.title, item.content, linkSource].filter(Boolean).join("\n");
+    const text = [item.title, stripHtml(item.content || ""), linkSource].filter(Boolean).join("\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -175,7 +177,7 @@ export function ProjectDisplayItem({ item, kind, onOpen, onPreview, onEdit, onDe
             )}
           </div>
         </div>
-        {content && <p>{content}</p>}
+        {content && <RichTextDisplay className="book-project-detail-text" html={content} />}
         {linkHref && (
           <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
             <span>링크</span>
@@ -211,7 +213,7 @@ export function StepContentModal({ step, item, index, total, onMove, onOpenActiv
           <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
         </header>
         <div className="book-step-preview-body">
-          <p>{item.content}</p>
+          <RichTextDisplay className="book-step-preview-text" html={item.content} />
           {linkHref && <a className="btn-outline book-step-preview-link" href={linkHref} target="_blank" rel="noreferrer">{item.kind === "activity" ? "활동 링크 열기" : "자료 링크 열기"}</a>}
         </div>
         <footer className="book-step-preview-footer">

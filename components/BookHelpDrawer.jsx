@@ -7,7 +7,9 @@ import {
   subscribeBookHelpNotes,
   updateBookHelpNote,
 } from "@/lib/bookHelpNotes";
+import BasicFormatEditor from "./BasicFormatEditor";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import RichTextDisplay from "./RichTextDisplay";
 
 const EMPTY_DRAFT = { title: "", content: "", url: "" };
 
@@ -33,12 +35,12 @@ function HelpNoteFields({ draft, onChange, disabled }) {
       </label>
       <label>
         <span>내용</span>
-        <textarea
+        <BasicFormatEditor
           value={draft.content}
           disabled={disabled}
-          onChange={(event) => onChange({ ...draft, content: event.target.value })}
+          onChange={(content) => onChange({ ...draft, content })}
           placeholder="학생들에게 보여줄 도움 내용을 입력하세요."
-          rows={5}
+          ariaLabel="도움 글 내용"
         />
       </label>
       <label>
@@ -208,7 +210,7 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
                     ) : (
                       <>
                         <div className="book-help-url">{resourceLinkLabel(href) || "URL 없음"}</div>
-                        <p>{note.content || "등록된 내용이 없습니다."}</p>
+                        <RichTextDisplay className="book-help-text" html={note.content} fallback="등록된 내용이 없습니다." />
                         {href && (
                           <a className="book-help-link" href={href} target="_blank" rel="noopener noreferrer">
                             링크 열기

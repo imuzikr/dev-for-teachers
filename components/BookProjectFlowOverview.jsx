@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { stripHtml } from "@/lib/html";
 import { BookPersonalActivityCard, BookPersonalResourceCard } from "./BookPersonalDetailCards";
 import { IconLock, IconUnlock } from "./StatusIcons";
 
@@ -54,7 +55,7 @@ export default function BookProjectFlowOverview({
   }
 
   async function copyResource(resource) {
-    const text = [resource.title, resource.content, resource.url].filter(Boolean).join("\n");
+    const text = [resource.title, stripHtml(resource.content || ""), resource.url].filter(Boolean).join("\n");
     await navigator.clipboard.writeText(text);
     setCopiedId(resource.id);
     window.setTimeout(() => setCopiedId(null), 1600);

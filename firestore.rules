@@ -111,6 +111,13 @@ service cloud.firestore {
       return !isClassArchived(cId)
              && exists(/databases/$(database)/documents/memberships/$(uid() + '_' + cId));
     }
+    function isClassJoinOpen(cId) {
+      return exists(/databases/$(database)/documents/classes/$(cId))
+             && !isClassArchived(cId)
+             && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinEnabled', false) == true
+             && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinCode', '') is string
+             && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinCode', '') == request.resource.data.joinCode;
+    }
 
     // ── 공부방 보드 헬퍼 ──────────────────────────────────────
     function studyBoardClassId(bId) {
@@ -346,9 +353,10 @@ service cloud.firestore {
       allow create: if signedIn()
                     && request.resource.data.uid == uid()
                     && mId == (uid() + '_' + request.resource.data.classId)
-                    && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt'])
-                    && exists(/databases/$(database)/documents/classes/$(request.resource.data.classId))
-                    && !isClassArchived(request.resource.data.classId)
+                    && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt', 'joinCode'])
+                    && request.resource.data.joinCode is string
+                    && request.resource.data.joinCode.matches('^[0-9]{6}$')
+                    && isClassJoinOpen(request.resource.data.classId)
                     && request.resource.data.joinedAt == request.time;
       // 학생 본인의 직접 '반 나가기'는 허용하지 않습니다. 소속 변경은
       // 담당 교사/관리자가 관리합니다.

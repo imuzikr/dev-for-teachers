@@ -218,7 +218,6 @@ export default function BookWorkspace({
               onToggleProjectItemLock={onToggleProjectItemLock}
               onDelete={onDelete}
               onDraftChange={setDraftProject}
-              selectedStepId={selectedStepId}
             />
           )}
         </div>

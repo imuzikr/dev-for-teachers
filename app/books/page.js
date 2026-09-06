@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   deleteBookActivity,
+  classAcceptsJoin,
+  joinClassByCode,
   saveBookProject,
   subscribeBookActivities,
   subscribeBookProject,
@@ -20,6 +22,7 @@ import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
 import Toast from "@/components/Toast";
 import BooksHome from "@/components/BooksHome";
+import ClassJoinPanel from "@/components/ClassJoinPanel";
 import ProjectItemDeleteModal from "@/components/ProjectItemDeleteModal";
 
 export default function BooksPage() {
@@ -47,6 +50,7 @@ function BooksPageInner() {
   const [savingProject, setSavingProject] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
+  const [joiningClass, setJoiningClass] = useState(false);
 
   useEffect(() => {
     function sync() {
@@ -83,6 +87,7 @@ function BooksPageInner() {
   );
   const myClasses = useMemo(() => myClassesAll.filter((c) => !c.archived), [myClassesAll]);
   const membershipIds = useMemo(() => memberships.map((m) => m.classId), [memberships]);
+  const joinableClasses = useMemo(() => classes.filter(classAcceptsJoin), [classes]);
   const studentClassId =
     localSelectedId && membershipIds.includes(localSelectedId)
       ? localSelectedId
@@ -255,6 +260,37 @@ function BooksPageInner() {
       console.error("[책방] 프로젝트 항목 삭제 실패:", error);
       setToast("삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
+  }
+
+  async function handleJoinClass(code) {
+    if (!user?.uid || joiningClass) return;
+    setJoiningClass(true);
+    try {
+      const joinedClass = await joinClassByCode(code, user);
+      setSelectedClassId(joinedClass.id);
+      setToast(`${joinedClass.name ?? "우리 반"}에 참여했어요.`);
+    } catch (error) {
+      console.error("[책방] 반 참여 실패:", error);
+      setToast("참여 코드를 확인하지 못했어요. 선생님이 알려 준 코드를 다시 입력해 주세요.");
+    } finally {
+      setJoiningClass(false);
+    }
+  }
+
+  if (!admin && user && !classId) {
+    return (
+      <div className="board-shell books-board-shell">
+        <main className="books-main books-main--join">
+          <TopNav active="books" />
+          <ClassJoinPanel
+            joinableCount={joinableClasses.length}
+            joining={joiningClass}
+            onJoin={handleJoinClass}
+          />
+        </main>
+        {toast && <Toast message={toast} onDone={() => setToast("")} />}
+      </div>
+    );
   }
 
   return (
