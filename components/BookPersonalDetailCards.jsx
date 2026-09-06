@@ -106,11 +106,9 @@ export function BookPersonalActivityCard({
   isTeacher,
   selectedProgress,
   saveState,
-  confirmState,
   onDraftChange,
   onSave,
   onToggleActivityLock,
-  onConfirm,
 }) {
   const activity = detailItem.source;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
@@ -150,12 +148,14 @@ export function BookPersonalActivityCard({
         </footer>
       ) : (
         <footer>
-          {!locked && (
-            <button type="button" className="btn-primary" disabled={saveState.savingId === activity.id} onClick={() => onSave(detailItem)}>
-              {saveState.savingId === activity.id ? "저장 중..." : saveState.savedId === activity.id ? "저장됨" : saveState.failedId === activity.id ? "다시 저장" : "답변 저장"}
-            </button>
-          )}
-          <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
+          <button
+            type="button"
+            className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
+            disabled={locked || saveState.savingId === activity.id || !onSave}
+            onClick={() => onSave(detailItem)}
+          >
+            {saveState.savingId === activity.id ? "확인 중" : confirmed || saveState.savedId === activity.id ? "확인됨" : saveState.failedId === activity.id ? "다시 확인" : "확인"}
+          </button>
         </footer>
       )}
     </article>

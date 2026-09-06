@@ -41,10 +41,6 @@ export default function BooksHome(props) {
   const activeStepId = admin && !selectedStepId
     ? stepTabs[0]?.id ?? null
     : selectedStepId;
-  const activeStep = (displayedProject?.steps ?? []).find((step, index) => (step.id ?? `step-${index + 1}`) === activeStepId) ?? null;
-  const activeStepActivityCount = activeStep?.activities?.length ?? 0;
-  const activeStepResourceCount = activeStep?.resources?.length ?? 0;
-  const activeStepItemCount = activeStepActivityCount + activeStepResourceCount;
 
   return (
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
@@ -122,14 +118,6 @@ export default function BooksHome(props) {
                       );
                     })}
                   </div>
-                  {activeStep && (
-                    <div className="books-step-summary-pills" aria-label={`선택된 Step 전체 ${activeStepItemCount}개 항목, ${activeStepActivityCount}개 활동, ${activeStepResourceCount}개 자료`}>
-                      <span>1 STEPS</span>
-                      <span>{activeStepItemCount} 항목</span>
-                      <span>{activeStepActivityCount} 활동</span>
-                      <span>{activeStepResourceCount} 자료</span>
-                    </div>
-                  )}
                 </div>
               )}
 

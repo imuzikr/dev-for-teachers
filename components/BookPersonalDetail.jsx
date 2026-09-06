@@ -73,12 +73,18 @@ export default function BookPersonalDetail({
 
   return (
     <section className="book-personal-dashboard book-personal-detail" aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
-      <header className="book-personal-detail-head">
+      <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
         <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
         <div>
-          <span>{isTeacher ? "참여자 활동" : "나의 개발자실"}</span>
-          <h2>{participantName(selected)} 활동 대시보드</h2>
-          <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{itemCount} 확인</p>
+          {isTeacher ? (
+            <>
+              <span>참여자 활동</span>
+              <h2>{participantName(selected)} 활동 대시보드</h2>
+              <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{itemCount} 확인</p>
+            </>
+          ) : (
+            <h2>나의 개발자실</h2>
+          )}
         </div>
       </header>
       {sections.length === 0 ? (
@@ -116,11 +122,9 @@ export default function BookPersonalDetail({
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
                         saveState={{ savingId, savedId, failedId }}
-                        confirmState={{ pendingKey: confirmingKey, failedKey: confirmFailedKey }}
                         onDraftChange={setDrafts}
                         onSave={saveResponse}
                         onToggleActivityLock={onToggleActivityLock}
-                        onConfirm={onConfirmItem ? confirmItem : null}
                       />
                     )
                 ))}

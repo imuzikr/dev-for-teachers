@@ -8414,26 +8414,6 @@ pre code {
   flex: 0 0 auto;
   margin: 0;
 }
-
-.books-step-summary-pills {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.books-step-summary-pills span {
-  min-height: 28px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0 10px;
-  background: var(--neutral);
-  color: var(--primary-dark);
-  font-size: 11px;
-  font-weight: 900;
-  white-space: nowrap;
-}
 .books-step-tabs button {
   min-height: 32px;
   padding: 0 11px;
@@ -8504,7 +8484,7 @@ pre code {
   max-height: calc(100dvh - 180px);
   overflow-y: auto;
   scrollbar-gutter: stable;
-  padding: 16px;
+  padding: 62px 16px 16px;
   background: var(--sage-card, var(--primary-light));
   border-right: 1px solid var(--border);
   transition: padding 0.22s ease;
@@ -8513,7 +8493,7 @@ pre code {
 .books-main--split .book-library-side {
   height: 100dvh;
   max-height: none;
-  padding: 18px;
+  padding: 64px 18px 18px;
 }
 
 .book-library-side.is-collapsed {
@@ -8528,10 +8508,13 @@ pre code {
   z-index: 2;
   width: 30px;
   min-width: 30px;
+  max-width: 30px;
   height: 30px;
   min-height: 30px;
+  max-height: 30px;
   display: inline-grid;
   place-items: center;
+  box-sizing: border-box;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -8559,12 +8542,14 @@ pre code {
 }
 
 .book-library-side.is-collapsed .book-library-collapse {
-  position: fixed;
-  top: 18px;
+  position: sticky;
+  top: 10px;
   width: 30px;
   min-width: 30px;
+  max-width: 30px;
   height: 34px;
   min-height: 34px;
+  max-height: 34px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -8573,8 +8558,9 @@ pre code {
 }
 
 .book-library-side.is-collapsed .book-library-collapse {
-  left: 9px;
+  left: auto;
   right: auto;
+  margin: 0 auto;
 }
 
 .book-library-side.is-collapsed .book-library-collapse:hover {
@@ -9870,6 +9856,13 @@ button.book-project-flow-pill:focus-visible {
 .book-personal-detail-head span { color: var(--primary-dark); font-size: 12px; font-weight: 800; }
 .book-personal-detail-head h2 { margin: 4px 0 0; color: var(--text); font-size: 24px; }
 .book-personal-detail-head p { margin: 5px 0 0; color: var(--text-sub); font-size: 13px; }
+.book-personal-detail-head--student {
+  align-items: center;
+}
+.book-personal-detail-head--student h2 {
+  margin: 0;
+  font-size: 28px;
+}
 .book-personal-detail-steps {
   display: flex;
   flex-direction: column;
@@ -10956,7 +10949,7 @@ button.book-project-flow-pill:focus-visible {
   .books-main--split .book-library-side {
     height: 100dvh;
     max-height: none;
-    padding: 12px;
+    padding: 58px 12px 12px;
     border-right: 1px solid var(--border);
     border-bottom: 0;
   }
