@@ -11311,14 +11311,18 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-personal-activity-card.does-not-require-answer .book-personal-instruction,
 .book-personal-activity-card.uses-answer-modal .book-personal-instruction {
-  height: auto;
+  height: 56px;
   min-height: 56px;
-  max-height: 180px;
+  max-height: 56px;
   flex: 0 0 auto;
 }
 .book-personal-activity-card.does-not-require-answer .book-personal-card-body,
 .book-personal-activity-card.uses-answer-modal .book-personal-card-body {
   flex: 0 0 auto;
+}
+.book-personal-card-body .book-project-resource-link strong {
+  margin-top: 0;
+  font-size: inherit;
 }
 .book-personal-response {
   display: flex;

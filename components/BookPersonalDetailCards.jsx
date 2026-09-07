@@ -144,13 +144,11 @@ export function BookPersonalResourceCard({
         </div>
       </header>
       <div className="book-personal-card-body">
+        {detailUrlSlot(locked ? "" : linkHref, linkLabel)}
         {locked ? (
           <p className="book-personal-instruction">교사가 자료를 열면 확인할 수 있습니다.</p>
         ) : (
-          <>
-            {detailUrlSlot(linkHref, linkLabel)}
-            <RichTextDisplay className="book-personal-instruction" html={resource.content} fallback="등록된 내용이 없습니다." />
-          </>
+          <RichTextDisplay className="book-personal-instruction" html={resource.content} fallback="등록된 내용이 없습니다." />
         )}
       </div>
       {isTeacher && onPresent ? (
