@@ -8782,19 +8782,23 @@ pre code {
 
 /* ── 책방 작업 화면: 왼쪽 제시물, 오른쪽 개인 카드 ── */
 .book-library-layout {
+  --library-open-width: clamp(280px, 23vw, 340px);
+  --help-open-width: clamp(280px, 22vw, 320px);
+  --library-width: var(--library-open-width);
+  --help-width: var(--help-open-width);
   display: grid;
-  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr) minmax(280px, 320px);
+  grid-template-columns: var(--library-width) minmax(260px, 1fr) var(--help-width);
   align-items: stretch;
   min-height: 520px;
   border: 1px solid var(--border);
   background: var(--card-bg);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: grid-template-columns 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .books-main--split .book-library-layout {
-  grid-template-columns: clamp(300px, 27vw, 360px) minmax(0, 1fr) clamp(288px, 22vw, 340px);
+  min-width: calc(var(--library-width) + 260px + var(--help-width));
   height: 100%;
   min-height: 0;
   border: 0;
@@ -8803,25 +8807,17 @@ pre code {
 }
 
 .books-main--split .book-library-layout.is-library-collapsed {
-  grid-template-columns: 48px minmax(0, 1fr) clamp(288px, 22vw, 340px);
+  --library-width: 48px;
 }
 
 .books-main--split .book-library-layout.is-student-main {
-  grid-template-columns: minmax(0, 1fr) clamp(288px, 22vw, 340px);
+  --library-width: 0px;
+  grid-template-columns: minmax(260px, 1fr) var(--help-width);
 }
 
 .book-library-layout.is-help-collapsed,
 .books-main--split .book-library-layout.is-help-collapsed {
-  grid-template-columns: minmax(248px, 304px) minmax(0, 1fr) 52px;
-}
-
-.books-main--split .book-library-layout.is-library-collapsed.is-help-collapsed {
-  grid-template-columns: 48px minmax(0, 1fr) 52px;
-}
-
-.book-library-layout.is-student-main.is-help-collapsed,
-.books-main--split .book-library-layout.is-student-main.is-help-collapsed {
-  grid-template-columns: minmax(0, 1fr) 52px;
+  --help-width: 52px;
 }
 
 .book-library-side {
@@ -8943,11 +8939,21 @@ pre code {
 
 .book-library-main > .topbar {
   flex: 0 0 auto;
+  height: auto;
+  min-height: 56px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 20px;
 }
 
-.book-library-layout.is-library-collapsed .books-content-head,
-.book-library-layout.is-library-collapsed .book-personal-dashboard {
-  padding-left: 36px;
+.book-library-main .topbar-left,
+.book-library-main .topnav-menu {
+  flex-wrap: wrap;
+}
+
+.book-library-main .topbar .user-area {
+  margin-left: auto;
+  flex-wrap: wrap;
 }
 
 .books-content-head {
@@ -12807,7 +12813,7 @@ button.book-project-flow-pill:focus-visible {
   }
 
   .books-main--split {
-    min-width: 720px;
+    min-width: 0;
     height: 100dvh;
     padding: 0;
     overflow: visible;
@@ -12818,31 +12824,8 @@ button.book-project-flow-pill:focus-visible {
   }
 
   .books-main--split .book-library-layout {
-    grid-template-columns: 280px minmax(420px, 1fr) 288px;
     height: 100%;
     min-height: 0;
-  }
-
-  .books-main--split .book-library-layout.is-library-collapsed {
-    grid-template-columns: 48px minmax(420px, 1fr) 288px;
-  }
-
-  .books-main--split .book-library-layout.is-student-main {
-    grid-template-columns: minmax(0, 1fr) 288px;
-  }
-
-  .book-library-layout.is-help-collapsed,
-  .books-main--split .book-library-layout.is-help-collapsed {
-    grid-template-columns: 280px minmax(420px, 1fr) 52px;
-  }
-
-  .books-main--split .book-library-layout.is-library-collapsed.is-help-collapsed {
-    grid-template-columns: 48px minmax(420px, 1fr) 52px;
-  }
-
-  .book-library-layout.is-student-main.is-help-collapsed,
-  .books-main--split .book-library-layout.is-student-main.is-help-collapsed {
-    grid-template-columns: minmax(0, 1fr) 52px;
   }
 
   .books-main--split .book-library-side {

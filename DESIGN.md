@@ -60,6 +60,8 @@
 
 ## 5. States
 
+- 양쪽 책방 패널은 독립적인 너비를 가진 같은 그리드의 열로 상단 메뉴와 본문을 함께 밀어낸다. 왼쪽은 280~340px, 오른쪽은 280~320px이며 접힌 레일은 각각 48px, 52px다. 열 전환은 400ms ease-in-out으로 이어지고 패널 본문은 고정된 읽기 폭에서 지연 페이드로 드러난다. 가운데 활동·자료 카드는 컨테이너 폭에 따라 220~340px로 조정되며 긴 행은 가로 스크롤한다. 좁은 화면은 중앙 최소 260px를 확보하고 작업 화면을 가로 스크롤한다. 움직임 줄이기 설정에서는 전환을 생략한다.
+
 - 반·차시 관리의 운영 중/보관 목록 모두 기존 경고색 버튼과 휴지통 아이콘에 `삭제` 문구를 함께 표시한다. 삭제는 항목 이름과 삭제 범위를 보여 주는 기존 확인 모달을 거치며, 처리 중에는 해당 행의 삭제 명령을 비활성화한다.
 - Inputs keep visible focus rings using the existing primary color.
 - Start and admin login controls use real buttons, preserve keyboard submission, and do not rely on placeholder-only labeling.

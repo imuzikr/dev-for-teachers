@@ -1,5 +1,111 @@
+.books-main--split .book-library-layout:not(.is-student-main) {
+  grid-template-columns: var(--library-width) minmax(260px, 1fr) var(--help-width);
+}
+
+.books-main--split {
+  overflow-x: auto;
+}
+
+.books-main--split .book-library-side,
+.books-main--split .book-library-side.is-collapsed,
+.books-main--split .book-help-drawer,
+.books-main--split .book-help-drawer.is-collapsed {
+  height: 100%;
+  padding: 64px 14px 18px;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+}
+
+.books-main--split .book-library-content {
+  width: calc(var(--library-open-width) - 46px);
+}
+
+.books-main--split .book-help-content {
+  width: calc(var(--help-open-width) - 46px);
+}
+
+.books-main--split .book-library-content,
+.books-main--split .book-help-content {
+  filter: none;
+  transform: none;
+  transition: opacity 0.2s ease 0.18s, visibility 0s;
+  will-change: auto;
+}
+
+.books-main--split .is-collapsed .book-library-content,
+.books-main--split .is-collapsed .book-help-content {
+  filter: none;
+  transform: none;
+  transition: opacity 0.12s ease, visibility 0s 0.12s;
+}
+
+.books-main--split .book-library-side .book-library-collapse,
+.books-main--split .book-help-drawer .book-help-toggle {
+  position: absolute;
+  top: 18px;
+  width: 30px;
+  min-height: 30px;
+  height: 30px;
+  margin: 0;
+}
+
+.books-main--split .book-library-side .book-library-collapse {
+  left: auto;
+  right: 9px;
+}
+
+.books-main--split .book-help-drawer .book-help-toggle {
+  left: 10px;
+}
+
+.book-library-main {
+  container-type: inline-size;
+  container-name: book-main;
+}
+
+.book-library-main .book-personal-detail-list {
+  grid-auto-columns: clamp(220px, calc(50cqw - 30px), 340px);
+}
+
+.book-library-main .book-personal-activity-card {
+  min-width: 0;
+  padding: 14px;
+}
+
+.book-library-main .book-dashboard-empty {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+@container book-main (max-width: 520px) {
+  .book-personal-activity-card > header {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .book-personal-activity-card footer.book-personal-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-left {
+    gap: 8px;
+  }
+
+  .topbar-divider {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-library-layout,
+  .books-main--split .book-library-content,
+  .books-main--split .book-help-content {
+    transition: none;
+  }
+}
+
 .book-library-layout.is-library-collapsed {
-  grid-template-columns: 48px minmax(0, 1fr);
+  --library-width: 48px;
 }
 
 .book-library-side {
@@ -359,7 +465,6 @@
   }
 
   .books-main--split .book-library-layout.is-library-collapsed {
-    grid-template-columns: 48px minmax(420px, 1fr) 288px;
     min-height: 0;
   }
 
@@ -405,5 +510,27 @@
 
   .book-side-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.books-main--split .book-library-side.is-collapsed,
+.books-main--split .book-help-drawer.is-collapsed {
+  padding: 64px 14px 18px;
+}
+
+.books-main--split .book-library-side.is-collapsed .book-library-collapse {
+  position: absolute;
+  top: 18px;
+  left: auto;
+  right: 9px;
+  height: 30px;
+  min-height: 30px;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .books-main--split .is-collapsed .book-library-content,
+  .books-main--split .is-collapsed .book-help-content {
+    transition: none;
   }
 }
