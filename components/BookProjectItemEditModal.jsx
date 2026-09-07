@@ -94,16 +94,9 @@ function ExportPanel({
 
   return (
     <section className="book-item-export-panel" aria-label={`${itemLabel} 내보내기`}>
-      <header>
-        <div>
-          <span>내보내기</span>
-          <strong>다른 반이나 차시로 복사</strong>
-        </div>
-      </header>
       <div className="book-item-export-grid">
         <label>
-          <span>범위</span>
-          <select value={scope} onChange={(event) => setScope(event.target.value)}>
+          <select aria-label="내보내기 범위" value={scope} onChange={(event) => setScope(event.target.value)}>
             <option value="item">{EXPORT_SCOPE_LABELS.item}</option>
             <option value="step">{EXPORT_SCOPE_LABELS.step}</option>
             <option value="project">{EXPORT_SCOPE_LABELS.project}</option>
