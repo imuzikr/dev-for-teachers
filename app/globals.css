@@ -10622,6 +10622,114 @@ pre code {
   font-weight: 700;
 }
 
+.book-help-progress {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(251, 250, 243, 0.68);
+}
+
+.book-help-progress-head {
+  min-width: 0;
+}
+
+.book-help-progress-head strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-help-progress-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.book-help-progress-row {
+  --student-progress-color: var(--primary);
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 2px 0 7px;
+}
+
+.book-help-progress-student {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-help-progress-student strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-help-progress-student span {
+  color: var(--student-progress-color);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.book-help-progress-cells {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 6px 4px 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  list-style: none;
+}
+
+.book-help-progress-cell {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  flex: 0 0 14px;
+  border: 1px solid color-mix(in srgb, var(--student-progress-color) 42%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--student-progress-color) 14%, transparent);
+}
+
+.book-help-progress-cell.is-step-start {
+  margin-left: 4px;
+}
+
+.book-help-progress-cell.is-filled {
+  border-color: var(--student-progress-color);
+  background: var(--student-progress-color);
+}
+
+.book-help-progress-cell span {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 2px #fff, 0 0 8px rgba(47, 111, 62, 0.42);
+}
+
 .book-help-item,
 .book-help-editor {
   border: 1px solid var(--border);

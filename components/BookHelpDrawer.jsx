@@ -10,6 +10,7 @@ import {
   updateBookHelpNote,
 } from "@/lib/bookHelpNotes";
 import BasicFormatEditor from "./BasicFormatEditor";
+import { progressItems, STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 import { resourceHref } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
 
@@ -75,7 +76,72 @@ function HelpNoteFields({ draft, onChange, disabled }) {
   );
 }
 
-export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, onToggleCollapsed, onToast }) {
+function participantName(participant) {
+  return participant?.realName || participant?.displayName || participant?.name || "이름 미설정";
+}
+
+function StudentProgressView({ participants, progressByUser, sections }) {
+  const cells = progressItems(sections);
+
+  if (participants.length === 0 || cells.length === 0) return null;
+
+  return (
+    <section className="book-help-progress" aria-label="학생 확인 진척도">
+      <header className="book-help-progress-head">
+        <strong>학생 진행 현황</strong>
+      </header>
+      <ol className="book-help-progress-list">
+        {participants.map((participant, participantIndex) => {
+          const completed = progressByUser.get(participant.uid) ?? new Set();
+          const completedIndexes = cells
+            .map((item, index) => (completed.has(item.key) ? index : -1))
+            .filter((index) => index >= 0);
+          const completedCount = completedIndexes.length;
+          const lastCompletedIndex = completedIndexes.at(-1) ?? -1;
+          const name = participantName(participant);
+          const studentColor = STUDENT_PROGRESS_COLORS[participantIndex % STUDENT_PROGRESS_COLORS.length];
+
+          return (
+            <li className="book-help-progress-row" key={participant.uid} style={{ "--student-progress-color": studentColor }}>
+              <div className="book-help-progress-student">
+                <strong>{name}</strong>
+                <span>{completedCount}/{cells.length}</span>
+              </div>
+              <ol className="book-help-progress-cells" aria-label={`${name} 확인 상태`}>
+                {cells.map((item, index) => {
+                  const checked = completed.has(item.key);
+                  const title = `${item.sectionTitle} ${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}`;
+                  return (
+                    <li
+                      className={`book-help-progress-cell${checked ? " is-filled" : ""}${item.itemIndex === 0 && index > 0 ? " is-step-start" : ""}`}
+                      key={`${participant.uid}:${item.key}`}
+                      title={`${title}\n${checked ? "확인함" : "미확인"}`}
+                      aria-label={`${title}, ${checked ? "확인함" : "미확인"}`}
+                    >
+                      {index === lastCompletedIndex && <span aria-hidden="true" />}
+                    </li>
+                  );
+                })}
+              </ol>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+export default function BookHelpDrawer({
+  classId,
+  user,
+  isTeacher,
+  collapsed,
+  onToggleCollapsed,
+  onToast,
+  participants = [],
+  progressByUser = new Map(),
+  progressSections = [],
+}) {
   const [notes, setNotes] = useState([]);
   const [expandedId, setExpandedId] = useState("");
   const [editingId, setEditingId] = useState("");
@@ -283,6 +349,14 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
             </button>
           )}
         </header>
+
+        {isTeacher && (
+          <StudentProgressView
+            participants={participants}
+            progressByUser={progressByUser}
+            sections={progressSections}
+          />
+        )}
 
         {editingId === "new" && (
           <section className="book-help-editor" aria-label="새 도움 글">

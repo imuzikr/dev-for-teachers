@@ -60,6 +60,9 @@
 
 ## 5. States
 
+- Student checklists align the checkbox with the first text line at every text size. Only the checkbox toggles; text remains selectable. Each student's checks autosave independently. Confirm saves partial progress without completion; all checks plus Confirm marks completion. Save failures retain input and expose retry. Student panel selection and collapsed state survive STEP changes and reloads, scoped to user and class.
+- Teacher help sidebar includes compact student progress rows using existing participant colors and ordered square cells. The final completed cell carries a small green light with a white rim and subtle glow, without a number. Empty and long lists remain readable in the existing drawer width.
+
 - 활동·자료 메인 카드는 항상 제목, URL, 상태, 확대 명령과 하단 열기 명령만 담는 컴팩트 표면을 사용한다. 본문, 템플릿 입력, 답변 입력은 카드에서 렌더링하지 않는다. 학생의 하단 명령은 확인 여부와 관계없이 `패널에서 열기`이며 왼쪽 패널에서 전체 내용과 확인/저장을 제공한다. 패널과 확대 모달은 같은 입력 상태를 공유한다. 기존 카드의 14px 간격, 44px 조작 영역, 8px 모서리와 테마 색상을 유지한다.
 - 기본 서식 도구의 체크리스트는 실제 체크박스와 항목 텍스트를 사용한다. 편집기 저장 시 체크리스트 서식을 유지하고 학생의 체크 상태는 교사 원본을 변경하지 않는다.
 
