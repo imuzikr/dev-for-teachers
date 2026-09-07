@@ -28,6 +28,8 @@
 
 ## 4. Components
 
+- `question-signal-note`: 학생이 아직 손들지 않은 상태에서 손바닥 버튼을 누르면 폭 420px 이하의 작은 메모 모달을 연다. 선택 입력 메모는 1,000자까지 받으며 `메모 없이 보내기`와 `메모와 함께 보내기`를 제공한다. 공백만 있으면 메모 전송을 비활성화한다. 두 명령은 좁은 화면에서도 한 줄 문구를 유지하도록 세로 배치한다. 전송 성공 후 닫고 실패 시 입력을 보존한다. 기존 손들기 취소를 유지한다. 교사의 손바닥 목록에는 학생별 메모 전체를 줄바꿈을 보존해 보여 주고, 확인 시 해당 신호를 처리하고 목록을 닫는다. 모달은 카드 배경·기존 입력 테두리·주요/보조 CTA 토큰, 12px 간격, 44px 이상 버튼, Escape·배경 닫기·포커스 순환을 사용한다.
+
 - `landing-top`: white app bar with logo on the left and compact entry controls on the right; it stays in normal document flow above the illustration and never overlays it.
 - `landing`: desktop hero preserves the source illustration ratio so the top of the artwork begins directly below the app bar without cropping.
 - `landing-quick-start`: school/name inputs, start button, and admin login button in one responsive row.

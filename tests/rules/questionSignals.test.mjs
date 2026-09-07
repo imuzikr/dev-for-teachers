@@ -2,6 +2,9 @@
 // 언제든 질문하기(손들기) — classes/{cId}/questionSignals/{uid}
 // =============================================================
 import { describe, it, before, after, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import * as firestore from "firebase/firestore";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import {
   doc, getDoc, setDoc, deleteDoc, getDocs, collection, serverTimestamp,
@@ -18,6 +21,22 @@ const payload = (cId, uid) => ({
   createdAt: serverTimestamp(),
   updatedAt: serverTimestamp(),
 });
+
+async function loadSignalStore(context) {
+  const source = await readFile(new URL("../../lib/store.js", import.meta.url), "utf8");
+  const identityStart = source.indexOf("function signalIdentity(");
+  const identityEnd = source.indexOf("function sortQuestionSignals(", identityStart);
+  const start = source.indexOf("export async function setQuestionSignal(");
+  const end = source.indexOf("\n// -------------------------------------------------------------", start);
+  assert.ok(identityStart >= 0 && identityEnd > identityStart && start >= 0 && end > start);
+  const bindings = { ...firestore, ...context };
+  return new Function(
+    ...Object.keys(bindings),
+    source.slice(identityStart, identityEnd)
+      + source.slice(start, end).replace("export async function", "async function")
+      + "\nreturn setQuestionSignal;",
+  )(...Object.values(bindings));
+}
 
 describe("손들기 규칙", () => {
   let env;
@@ -96,4 +115,81 @@ describe("손들기 규칙", () => {
     const db = asTeacher(env, "teacherA").firestore();
     await assertSucceeds(deleteDoc(doc(db, ...sigPath("cA", "stu1"))));
   });
+
+  it("메모는 작성자와 담당 교사만 읽고 확인 후 삭제할 수 있다", async () => {
+    const student = asStudent(env, "stu1").firestore();
+    const save = await loadSignalStore({ db: student, isFirebaseConfigured: true });
+    await save("cA", { uid: "stu1", realName: "학생A" }, true, "  질문 내용\n두 번째 줄  ");
+    const ref = doc(student, ...sigPath("cA", "stu1"));
+    assert.equal((await assertSucceeds(getDoc(ref))).data().note, "질문 내용\n두 번째 줄");
+    const teacher = asTeacher(env, "teacherA").firestore();
+    assert.equal((await assertSucceeds(getDoc(doc(teacher, ...sigPath("cA", "stu1"))))).data().note, "질문 내용\n두 번째 줄");
+    const peer = asStudent(env, "stu2").firestore();
+    await assertFails(getDoc(doc(peer, ...sigPath("cA", "stu1"))));
+    const otherTeacher = asTeacher(env, "teacherB").firestore();
+    await assertFails(getDoc(doc(otherTeacher, ...sigPath("cA", "stu1"))));
+    await assertSucceeds(deleteDoc(doc(teacher, ...sigPath("cA", "stu1"))));
+    assert.equal((await getDoc(ref)).exists(), false);
+  });
+
+  it("기존 메모를 수정하거나 메모 없이 보내기로 지울 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    const save = await loadSignalStore({ db, isFirebaseConfigured: true });
+    const user = { uid: "stu1" };
+    const ref = doc(db, ...sigPath("cA", "stu1"));
+    await save("cA", user, true, "첫 메모");
+    const createdAt = (await getDoc(ref)).data().createdAt;
+    await save("cA", user, true, "수정 메모");
+    assert.equal((await getDoc(ref)).data().note, "수정 메모");
+    assert.ok((await getDoc(ref)).data().createdAt.isEqual(createdAt));
+    await save("cA", user, true);
+    assert.equal((await getDoc(ref)).data().note, "");
+    await save("cA", user, false);
+    assert.equal((await getDoc(ref)).exists(), false);
+  });
+
+  for (const note of ["", "가".repeat(1000)]) {
+    it(`빈 메모와 1000자 경계 허용: ${note.length}자`, async () => {
+      const db = asStudent(env, "stu1").firestore();
+      await assertSucceeds(setDoc(doc(db, ...sigPath("cA", "stu1")), { ...payload("cA", "stu1"), note }));
+    });
+  }
+
+  for (const note of ["가".repeat(1001), null, 123, { text: "질문" }]) {
+    it(`잘못된 메모의 생성과 수정 거부: ${typeof note}, ${String(note).length}`, async () => {
+      const db = asStudent(env, "stu1").firestore();
+      const ref = doc(db, ...sigPath("cA", "stu1"));
+      await assertFails(setDoc(ref, { ...payload("cA", "stu1"), note }));
+      await assertSucceeds(setDoc(ref, payload("cA", "stu1")));
+      await assertFails(setDoc(ref, { note, updatedAt: serverTimestamp() }, { merge: true }));
+      const save = await loadSignalStore({ db, isFirebaseConfigured: true });
+      await assert.rejects(save("cA", { uid: "stu1" }, true, note), /질문 메모/);
+      assert.equal((await getDoc(ref)).data().note, undefined);
+    });
+  }
+
+  it("구형 클라이언트는 메모 없이 기존 손들기를 갱신할 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    const ref = doc(db, ...sigPath("cA", "stu1"));
+    await assertSucceeds(setDoc(ref, payload("cA", "stu1")));
+    await assertSucceeds(setDoc(ref, { updatedAt: serverTimestamp() }, { merge: true }));
+  });
+
+  it("데모 저장도 메모를 정리하고 이전 내용을 비우며 잘못된 입력을 거부한다", async () => {
+    const mock = {};
+    let notifications = 0;
+    const save = await loadSignalStore({ isFirebaseConfigured: false, mock, notifyQuestionSignals: () => { notifications += 1; } });
+    const user = { uid: "stu1" };
+    await save("cA", user, true, "  메모  ");
+    assert.equal(mock.questionSignals.stu1_cA.note, "메모");
+    await assert.rejects(save("cA", user, true, null), /질문 메모/);
+    await assert.rejects(save("cA", user, true, "가".repeat(1001)), /1,000자/);
+    assert.equal(mock.questionSignals.stu1_cA.note, "메모");
+    await save("cA", user, true);
+    assert.equal(mock.questionSignals.stu1_cA.note, "");
+    await save("cA", user, false);
+    assert.equal(mock.questionSignals.stu1_cA, undefined);
+    assert.equal(notifications, 3);
+  });
+
 });

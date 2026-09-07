@@ -352,6 +352,11 @@ service cloud.firestore {
       //  · 경로 = classes/{classId}/questionSignals/{uid}
       //  · 학생은 자기 손들기만 켜고/끄고, 담당 교사는 반 전체 목록만 확인합니다.
       match /questionSignals/{studentUid} {
+        function validNote() {
+          return !('note' in request.resource.data)
+                 || (request.resource.data.note is string
+                     && request.resource.data.note.size() <= 1000);
+        }
         allow get: if signedIn() && (
           isAdmin()
           || ownsClass(cId)
@@ -367,6 +372,7 @@ service cloud.firestore {
                       && request.resource.data.classId == cId
                       && isClassMember(cId)
                       && request.resource.data.createdAt == request.time
+                      && validNote()
                       && request.resource.data.updatedAt == request.time;
         allow update: if signedIn()
                       && studentUid == uid()
@@ -375,6 +381,7 @@ service cloud.firestore {
                       && request.resource.data.classId == cId
                       && request.resource.data.createdAt == resource.data.createdAt
                       && isClassMember(cId)
+                      && validNote()
                       && request.resource.data.updatedAt == request.time;
         allow delete: if signedIn() && (
           studentUid == uid()

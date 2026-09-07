@@ -14066,3 +14066,58 @@ button.book-project-flow-pill:focus-visible {
 .broadcast-stale-note strong { font-size: 17px; font-weight: 800; color: var(--text); }
 .broadcast-stale-note p { font-size: 14px; line-height: 1.7; color: var(--text-sub); }
 .broadcast-stale-note button { padding: 10px 22px; font-size: 14px; }
+
+/* Optional question notes share the existing hand-raise and modal surfaces. */
+.question-signal-note-modal {
+  width: min(420px, calc(100vw - 32px));
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  background: var(--card-bg);
+}
+.question-signal-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.question-signal-note-head h2 { margin: 0; font-size: 24px; }
+.question-signal-note-modal label { color: var(--text); font-weight: 800; }
+.question-signal-note-modal label span,
+.question-signal-note-hint { color: var(--text-sub); font-size: 12px; }
+.question-signal-note-modal textarea {
+  width: 100%;
+  min-height: 144px;
+  flex-shrink: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+.question-signal-note-modal textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.question-signal-note-hint { text-align: right; }
+.question-signal-note-actions { display: grid; gap: 8px; }
+.question-signal-note-actions button { min-height: 44px; white-space: nowrap; }
+.question-signal-note-error { margin: 0; color: var(--danger); font-size: 13px; word-break: keep-all; }
+.question-signal-dropdown { width: min(360px, calc(100vw - 24px)); }
+.question-signal-list > li { border-radius: 8px; background: var(--bg); }
+.question-signal-note-text {
+  margin: 0;
+  padding: 12px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+.question-signal-clear { min-height: 44px; min-width: 44px; }
