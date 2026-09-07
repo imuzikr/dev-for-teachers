@@ -600,8 +600,10 @@ service cloud.firestore {
     }
     function validBookHelpNoteUpdate() {
       return request.resource.data.keys().hasOnly([
-               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt', 'order'
              ])
+             && (!('order' in request.resource.data)
+                 || (request.resource.data.order is int && request.resource.data.order >= 0))
              && request.resource.data.classId == resource.data.classId
              && request.resource.data.createdBy == resource.data.createdBy
              && request.resource.data.createdAt == resource.data.createdAt

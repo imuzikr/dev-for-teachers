@@ -566,6 +566,123 @@
     transition: none;
   }
 }
+
+.book-help-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 6px;
+}
+
+.book-help-item-row:has(.book-help-drag-handle) {
+  grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.book-help-drag-handle {
+  width: 28px;
+  min-width: 28px;
+  min-height: 52px;
+  display: inline-grid;
+  place-content: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-sub);
+  cursor: grab;
+}
+
+.book-help-drag-handle:active {
+  cursor: grabbing;
+}
+
+.book-help-drag-handle:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.book-help-drag-handle span {
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.book-help-item-row .book-help-item-button {
+  grid-template-columns: 36px minmax(0, 1fr) 20px;
+  min-width: 0;
+}
+
+.book-help-item-row .book-help-item-button.is-link-only {
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+
+.book-help-item-button .book-help-content-indicator {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-content: center;
+  gap: 2px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary-dark);
+}
+
+.book-help-item-button .book-help-content-indicator span {
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.book-help-row-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+
+.book-help-row-btn,
+.book-help-order-btn {
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--primary-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.book-help-row-btn {
+  padding: 0 10px;
+}
+
+.book-help-order-btn {
+  width: 32px;
+  padding: 0;
+}
+
+.book-help-row-btn:hover,
+.book-help-row-btn:focus-visible,
+.book-help-order-btn:hover,
+.book-help-order-btn:focus-visible {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  outline: 0;
+}
+
+.book-help-row-btn:disabled,
+.book-help-order-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.book-help-row-actions .book-help-delete {
+  border-color: rgba(192, 74, 63, 0.34);
+  color: var(--danger);
+}
 .book-project-expand {
   width: 100%;
   margin-bottom: 12px;

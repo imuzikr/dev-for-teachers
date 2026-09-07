@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { stripHtml } from "@/lib/html";
 import {
   addBookHelpNote,
   deleteBookHelpNote,
+  reorderBookHelpNotes,
   subscribeBookHelpNotes,
   updateBookHelpNote,
 } from "@/lib/bookHelpNotes";
 import BasicFormatEditor from "./BasicFormatEditor";
-import BookHelpNoteModal from "./BookHelpNoteModal";
-import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import { resourceHref } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
 
 const EMPTY_DRAFT = { title: "", content: "", url: "" };
@@ -20,6 +21,23 @@ function helpDraftFromNote(note) {
     content: note?.content ?? "",
     url: note?.url ?? "",
   };
+}
+
+function hasHelpBody(note) {
+  return stripHtml(note?.content ?? "").trim().length > 0;
+}
+
+function orderedNotesWithRequest(notes, request) {
+  if (!request) return notes;
+  const orderRank = new Map(request.orderedIds.map((id, index) => [id, index]));
+  const scopedNotes = notes.filter((note) => note.classId === request.classId);
+  const otherNotes = notes.filter((note) => note.classId !== request.classId);
+  const orderedScopedNotes = [...scopedNotes].sort((a, b) => {
+    const left = orderRank.has(a.id) ? orderRank.get(a.id) : Number.MAX_SAFE_INTEGER;
+    const right = orderRank.has(b.id) ? orderRank.get(b.id) : Number.MAX_SAFE_INTEGER;
+    return left - right;
+  });
+  return [...otherNotes, ...orderedScopedNotes.map((note, index) => ({ ...note, order: index }))];
 }
 
 function HelpNoteFields({ draft, onChange, disabled }) {
@@ -59,26 +77,33 @@ function HelpNoteFields({ draft, onChange, disabled }) {
 
 export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, onToggleCollapsed, onToast }) {
   const [notes, setNotes] = useState([]);
-  const [selectedNoteId, setSelectedNoteId] = useState("");
   const [expandedId, setExpandedId] = useState("");
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const classIdRef = useRef(classId);
+  const dragNoteIdRef = useRef("");
+  const reorderRequestRef = useRef(null);
 
   useEffect(() => {
+    classIdRef.current = classId;
+  }, [classId]);
+
+  useEffect(() => {
+    reorderRequestRef.current = null;
+    dragNoteIdRef.current = "";
     setNotes([]);
-    setSelectedNoteId("");
+    setReordering(false);
     setExpandedId("");
     setEditingId("");
     setDraft(EMPTY_DRAFT);
     return subscribeBookHelpNotes(classId, (nextNotes) => {
-      setNotes(nextNotes);
-      setSelectedNoteId((currentId) => nextNotes.some((note) => note.id === currentId) ? currentId : "");
+      setNotes(orderedNotesWithRequest(nextNotes, reorderRequestRef.current));
     });
   }, [classId]);
 
   const currentNotes = notes.filter((note) => note.classId === classId);
-  const selectedNote = currentNotes.find((note) => note.id === selectedNoteId);
 
   function startNewNote() {
     setExpandedId("new");
@@ -87,13 +112,16 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
   }
 
   function toggleNote(note) {
-    if (!isTeacher) {
-      setSelectedNoteId(note.id);
+    const href = resourceHref(note.url);
+    const hasBody = hasHelpBody(note);
+    if (!hasBody && href) {
+      window.open(href, "_blank", "noopener,noreferrer");
       return;
     }
+
     const nextId = expandedId === note.id ? "" : note.id;
     setExpandedId(nextId);
-    setEditingId("");
+    if (isTeacher) setEditingId("");
     setDraft(helpDraftFromNote(note));
   }
 
@@ -160,6 +188,76 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
     }
   }
 
+  function orderedCurrentNotes(nextCurrentNotes) {
+    return [...notes.filter((note) => note.classId !== classId), ...nextCurrentNotes];
+  }
+
+  async function persistNoteOrder(nextCurrentNotes) {
+    if (!isTeacher || reordering || nextCurrentNotes.length < 2) return;
+    const requestClassId = classId;
+    const nextOrderedNotes = nextCurrentNotes.map((note, index) => ({ ...note, order: index }));
+    const previousNotes = notes;
+    const request = { classId: requestClassId, orderedIds: nextOrderedNotes.map((note) => note.id) };
+
+    reorderRequestRef.current = request;
+    setNotes(orderedCurrentNotes(nextOrderedNotes));
+    setReordering(true);
+    try {
+      await reorderBookHelpNotes(requestClassId, nextOrderedNotes);
+      if (classIdRef.current === requestClassId && reorderRequestRef.current === request) {
+        reorderRequestRef.current = null;
+        onToast?.("도움 글 순서를 저장했어요.");
+      }
+    } catch (error) {
+      console.error("[책방] 도움 글 순서 저장 실패:", error);
+      if (classIdRef.current === requestClassId) {
+        if (reorderRequestRef.current === request) reorderRequestRef.current = null;
+        setNotes(previousNotes);
+        onToast?.("도움 글 순서를 저장하지 못했어요. 이전 순서로 되돌렸어요.");
+      }
+    } finally {
+      if (classIdRef.current === requestClassId) setReordering(false);
+    }
+  }
+
+  function moveNote(noteId, direction) {
+    const fromIndex = currentNotes.findIndex((note) => note.id === noteId);
+    const toIndex = fromIndex + direction;
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= currentNotes.length) return;
+    const nextCurrentNotes = [...currentNotes];
+    const [movedNote] = nextCurrentNotes.splice(fromIndex, 1);
+    nextCurrentNotes.splice(toIndex, 0, movedNote);
+    persistNoteOrder(nextCurrentNotes);
+  }
+
+  function handleDragStart(event, note) {
+    if (!isTeacher || saving || reordering) return;
+    dragNoteIdRef.current = note.id;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", note.id);
+  }
+
+  function handleDragOver(event, note) {
+    const sourceId = dragNoteIdRef.current;
+    if (!sourceId || sourceId === note.id || saving || reordering) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(event, note) {
+    event.preventDefault();
+    const sourceId = dragNoteIdRef.current || event.dataTransfer.getData("text/plain");
+    dragNoteIdRef.current = "";
+    if (!sourceId || sourceId === note.id || saving || reordering) return;
+    const fromIndex = currentNotes.findIndex((item) => item.id === sourceId);
+    const toIndex = currentNotes.findIndex((item) => item.id === note.id);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const nextCurrentNotes = [...currentNotes];
+    const [movedNote] = nextCurrentNotes.splice(fromIndex, 1);
+    nextCurrentNotes.splice(toIndex, 0, movedNote);
+    persistNoteOrder(nextCurrentNotes);
+  }
+
   return (
     <aside className={`book-help-drawer${collapsed ? " is-collapsed" : ""}`} aria-label="도움 글">
       <button
@@ -201,23 +299,71 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
             <p className="book-help-empty">{isTeacher ? "아직 도움 글이 없습니다." : "선생님이 준비한 도움 글이 아직 없습니다."}</p>
           )}
           {currentNotes.map((note, index) => {
-            const open = isTeacher && expandedId === note.id;
+            const hasBody = hasHelpBody(note);
+            const open = hasBody && expandedId === note.id;
             const editing = editingId === note.id;
             const href = resourceHref(note.url);
             return (
-              <section className="book-help-item" key={note.id}>
-                <button
-                  type="button"
-                  className="book-help-item-button"
-                  onClick={() => toggleNote(note)}
-                  aria-expanded={isTeacher ? open : undefined}
-                  aria-haspopup={isTeacher ? undefined : "dialog"}
-                >
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{note.title || "제목 없는 도움 글"}</strong>
-                </button>
+              <section
+                className="book-help-item"
+                key={note.id}
+                onDragOver={(event) => handleDragOver(event, note)}
+                onDrop={(event) => handleDrop(event, note)}
+              >
+                <div className="book-help-item-row">
+                  {isTeacher && currentNotes.length > 1 && (
+                    <button
+                      type="button"
+                      className="book-help-drag-handle"
+                      draggable={!saving && !reordering}
+                      onDragStart={(event) => handleDragStart(event, note)}
+                      onDragEnd={() => { dragNoteIdRef.current = ""; }}
+                      aria-label={`${note.title || "제목 없는 도움 글"} 순서 끌어서 변경`}
+                      title="순서 끌어서 변경"
+                      disabled={saving || reordering}
+                    >
+                      <span aria-hidden="true"></span>
+                      <span aria-hidden="true"></span>
+                      <span aria-hidden="true"></span>
+                    </button>
+                  )}
 
-                {open && (
+                  <button
+                    type="button"
+                    className={`book-help-item-button${!hasBody && href ? " is-link-only" : ""}`}
+                    onClick={() => toggleNote(note)}
+                    aria-expanded={hasBody ? open : undefined}
+                  >
+                    <span className="book-help-item-index">{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{note.title || "제목 없는 도움 글"}</strong>
+                    {hasBody && (
+                      <span className="book-help-content-indicator" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </span>
+                    )}
+                  </button>
+
+                  {isTeacher && (
+                    <div className="book-help-row-actions" aria-label="도움 글 관리">
+                      {currentNotes.length > 1 && (
+                        <>
+                          <button type="button" className="book-help-order-btn" onClick={() => moveNote(note.id, -1)} disabled={saving || reordering || index === 0} aria-label="위로 이동">↑</button>
+                          <button type="button" className="book-help-order-btn" onClick={() => moveNote(note.id, 1)} disabled={saving || reordering || index === currentNotes.length - 1} aria-label="아래로 이동">↓</button>
+                        </>
+                      )}
+                      {!open && !editing && (
+                        <>
+                          <button type="button" className="book-help-row-btn" onClick={() => startEditing(note)} disabled={saving || reordering}>편집</button>
+                          <button type="button" className="book-help-row-btn book-help-delete" onClick={() => removeNote(note.id)} disabled={saving || reordering}>삭제</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {(open || editing) && (
                   <div className="book-help-detail">
                     {editing ? (
                       <>
@@ -229,7 +375,6 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
                       </>
                     ) : (
                       <>
-                        <div className="book-help-url">{resourceLinkLabel(href) || "URL 없음"}</div>
                         <RichTextDisplay className="book-help-text" html={note.content} fallback="등록된 내용이 없습니다." />
                         {href && (
                           <a className="book-help-link" href={href} target="_blank" rel="noopener noreferrer">
@@ -253,9 +398,6 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
       </div>
 
       {collapsed && <span className="book-help-rail-label">도움 글</span>}
-      {!isTeacher && selectedNote && (
-        <BookHelpNoteModal note={selectedNote} onClose={() => setSelectedNoteId("")} />
-      )}
     </aside>
   );
 }
