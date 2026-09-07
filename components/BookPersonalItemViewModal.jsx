@@ -23,7 +23,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied }) {
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
   const itemLabel = isResource ? "자료" : "활동";
@@ -36,16 +36,15 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
 
   if (typeof document === "undefined") return null;
 
-  return createPortal(
-    <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>
-      <section className="modal book-personal-expand-modal" role="dialog" aria-modal="true" aria-labelledby="book-personal-expand-title" onClick={(event) => event.stopPropagation()}>
+  const content = (
+      <section className={panelTarget ? "student-activity-detail" : "modal book-personal-expand-modal"} role={panelTarget ? undefined : "dialog"} aria-modal={panelTarget ? undefined : "true"} aria-label={item.title} onClick={(event) => event.stopPropagation()}>
         <header className="book-personal-expand-head">
-          <span>{orderLabel} · {itemLabel} 크게 보기</span>
-          <h3 id="book-personal-expand-title">{item.title}</h3>
-          <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
+          <span>{orderLabel} · {itemLabel}</span>
+          <h3>{item.title}</h3>
+          {panelTarget ? <button type="button" className="btn-outline" onClick={onExpand}>확대</button> : <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>}
         </header>
         <div className="book-personal-expand-body">
-          {modalUrlSlot(href, linkLabel)}
+          {modalUrlSlot(locked && !isTeacher ? "" : href, linkLabel)}
           {locked ? (
             <p className="book-personal-expand-locked">교사가 {itemLabel}를 열면 확인할 수 있습니다.</p>
           ) : !isTeacher && !isResource && item.templateEnabled === true ? (
@@ -57,15 +56,24 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
-          {requiresAnswer && (
+          {requiresAnswer && !locked && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-              <p>{response || "아직 입력한 내용이 없습니다."}</p>
+              {!isTeacher && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving} /> : <p>{response || "아직 입력한 내용이 없습니다."}</p>}
             </section>
+          )}
+          {!isTeacher && !locked && (
+            <div className="student-activity-detail-actions">
+              {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
+              {onSave && <button type="button" className="btn-primary" disabled={saving || (!requiresAnswer && confirmed)} onClick={async () => {
+                const saved = await onSave();
+                if (requiresAnswer && saved !== false && !panelTarget) onClose();
+              }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : confirmed ? "확인됨" : "확인"}</button>}
+              {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
+            </div>
           )}
         </div>
       </section>
-    </div>,
-    document.body
   );
+  return createPortal(panelTarget ? content : <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>{content}</div>, panelTarget || document.body);
 }

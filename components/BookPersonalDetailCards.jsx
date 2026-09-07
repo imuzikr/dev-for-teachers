@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
-import { backdropClose } from "@/lib/modal";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import RichTextDisplay from "./RichTextDisplay";
 import ActivityTemplate from "./ActivityTemplate";
 import { IconLock } from "./StatusIcons";
+import { useStudentActivityPanel } from "./StudentActivityPanel";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
   return (entriesByActivity[activityId] ?? []).find((entry) => entry.authorId === uid) ?? null;
@@ -62,52 +61,6 @@ function IconExpand({ size = 14 }) {
   );
 }
 
-function StudentAnswerEditModal({ activity, response, saving, failed, onSave, onClose }) {
-  const [draft, setDraft] = useState(response ?? "");
-
-  useEffect(() => {
-    setDraft(response ?? "");
-  }, [response, activity.id]);
-
-  if (typeof document === "undefined") return null;
-
-  async function save() {
-    const saved = await onSave(draft);
-    if (saved !== false) onClose();
-  }
-
-  return createPortal(
-    <div className="modal-backdrop book-answer-edit-backdrop" {...backdropClose(onClose)}>
-      <section className="modal book-answer-edit-modal" role="dialog" aria-modal="true" aria-labelledby={`book-answer-edit-${activity.id}`} onClick={(event) => event.stopPropagation()}>
-        <header className="book-answer-edit-head">
-          <div>
-            <span>나의 답변 작성</span>
-            <h3 id={`book-answer-edit-${activity.id}`}>{activity.title}</h3>
-          </div>
-          <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
-        </header>
-        <label className="book-answer-edit-body">
-          <span>답변 내용</span>
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="선생님이 안내한 내용을 여기에 입력하세요."
-            autoFocus
-          />
-        </label>
-        {failed && <p className="book-answer-edit-error">저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>}
-        <footer className="book-answer-edit-footer">
-          <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
-          <button type="button" className="btn-primary" disabled={saving} onClick={save}>
-            {saving ? "저장 중..." : "저장"}
-          </button>
-        </footer>
-      </section>
-    </div>,
-    document.body
-  );
-}
-
 export function BookPersonalResourceCard({
   detailItem,
   index,
@@ -121,6 +74,9 @@ export function BookPersonalResourceCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const resource = detailItem.source;
+  const panel = useStudentActivityPanel();
+  const panelKey = `resource:${resource.id}`;
+  const openPanel = () => panel?.open(panelKey);
   const linkHref = resourceHref(resource.url);
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
@@ -128,12 +84,12 @@ export function BookPersonalResourceCard({
   const locked = resource.locked === true;
 
   return (
-    <article className={`book-personal-activity-card book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
           <span>자료 {index + 1}</span>
-          <strong>{resource.title}</strong>
+          <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
           <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
@@ -163,12 +119,21 @@ export function BookPersonalResourceCard({
           <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
         </footer>
       )}
+      {panel?.selectedKey === panelKey && panel.target && (
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={onConfirm ? () => onConfirm(detailItem) : undefined} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} />
+      )}
       {expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
           index={index}
           response=""
           isTeacher={isTeacher}
+          confirmed={confirmed}
+          saving={confirmState.pendingKey === confirmationKey}
+          failed={confirmState.failedKey === confirmationKey}
+          onSave={onConfirm ? () => onConfirm(detailItem) : undefined}
+          onCopy={() => onCopy(resource)}
+          copied={copiedId === resource.id}
           onClose={() => setExpanded(false)}
         />
       )}
@@ -188,9 +153,13 @@ export function BookPersonalActivityCard({
   onPresent,
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [editingAnswer, setEditingAnswer] = useState(false);
   const [templateValues, setTemplateValues] = useState({});
   const activity = detailItem.source;
+  const [answerDraft, setAnswerDraft] = useState(response ?? "");
+  useEffect(() => { setAnswerDraft(response ?? ""); }, [activity.id, response]);
+  const panel = useStudentActivityPanel();
+  const panelKey = `activity:${activity.id}`;
+  const openPanel = () => panel?.open(panelKey);
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey);
   const locked = !!activity.locked;
@@ -200,12 +169,12 @@ export function BookPersonalActivityCard({
   const usesAnswerModal = requiresAnswer && !isTeacher;
 
   return (
-    <article className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}${usesAnswerModal ? " uses-answer-modal" : ""}`}>
+    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}${usesAnswerModal ? " uses-answer-modal" : ""}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">
           <span>활동 {index + 1}</span>
-          <strong>{activity.title}</strong>
+          <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
           <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인함" : "미확인"}</em>
@@ -240,7 +209,7 @@ export function BookPersonalActivityCard({
               type="button"
               className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
               disabled={locked || saveState.savingId === activity.id || !onSave}
-              onClick={() => setEditingAnswer(true)}
+              onClick={() => setExpanded(true)}
             >
               작성
             </button>
@@ -256,6 +225,9 @@ export function BookPersonalActivityCard({
           )}
         </footer>
       ) : null}
+      {panel?.selectedKey === panelKey && panel.target && (
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={onSave ? () => onSave(detailItem, requiresAnswer ? answerDraft : undefined) : undefined} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed || saveState.savedId === activity.id} />
+      )}
       {expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
@@ -264,17 +236,13 @@ export function BookPersonalActivityCard({
           isTeacher={isTeacher}
           templateValues={templateValues}
           onTemplateChange={setTemplateValues}
-          onClose={() => setExpanded(false)}
-        />
-      )}
-      {editingAnswer && (
-        <StudentAnswerEditModal
-          activity={activity}
-          response={response}
+          answerDraft={answerDraft}
+          onAnswerChange={setAnswerDraft}
+          onSave={onSave ? () => onSave(detailItem, requiresAnswer ? answerDraft : undefined) : undefined}
           saving={saveState.savingId === activity.id}
           failed={saveState.failedId === activity.id}
-          onSave={(nextResponse) => onSave(detailItem, nextResponse)}
-          onClose={() => setEditingAnswer(false)}
+          confirmed={confirmed || saveState.savedId === activity.id}
+          onClose={() => setExpanded(false)}
         />
       )}
     </article>

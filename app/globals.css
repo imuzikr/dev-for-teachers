@@ -8820,6 +8820,76 @@ pre code {
   grid-template-columns: minmax(260px, 1fr) var(--help-width);
 }
 
+.books-main--split .book-library-layout.is-student-main.has-student-panel {
+  --library-width: var(--library-open-width);
+  grid-template-columns: var(--library-width) minmax(260px, 1fr) var(--help-width);
+}
+
+.books-main--split .book-library-layout.is-student-main.has-student-panel.is-library-collapsed {
+  --library-width: 48px;
+}
+
+.student-activity-panel-content {
+  width: calc(var(--library-open-width) - 46px);
+}
+
+.student-activity-detail .book-personal-expand-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 0 16px;
+}
+
+.student-activity-detail .book-personal-expand-head h3 {
+  flex-basis: 100%;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.student-activity-detail .book-personal-expand-body {
+  display: grid;
+  gap: 16px;
+  padding: 16px 0;
+  overflow: visible;
+}
+
+.student-activity-detail .book-personal-expand-content,
+.student-activity-detail .activity-template-result {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.student-activity-detail-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.book-personal-expand-response textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  padding: 12px;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.student-item-title {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .book-library-layout.is-help-collapsed,
 .books-main--split .book-library-layout.is-help-collapsed {
   --help-width: 52px;

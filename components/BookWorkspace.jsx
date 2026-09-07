@@ -7,6 +7,7 @@ import BookHelpDrawer from "./BookHelpDrawer";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import { useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
+import StudentActivityPanel from "./StudentActivityPanel";
 import { bookDetailSections } from "./bookProjectItems";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
@@ -182,7 +183,10 @@ export default function BookWorkspace({
   }
 
   return (
-    <div className={`book-library-layout${showLibraryPanel && libraryCollapsed ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main"}`}>
+    <StudentActivityPanel key={`${classId}:${user?.uid}:${isTeacher ? "teacher" : selectedStepId}`} enabled={!isTeacher}>
+    {({ collapsed, sidebar }) => (
+    <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
+      {sidebar}
       {showLibraryPanel && (
       <aside className={`book-library-side${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
         <button
@@ -262,5 +266,7 @@ export default function BookWorkspace({
         onToast={onToast}
       />
     </div>
+    )}
+    </StudentActivityPanel>
   );
 }
