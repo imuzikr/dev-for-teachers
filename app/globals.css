@@ -3403,10 +3403,10 @@ pre code {
   overflow-y: auto;
   background: var(--bg);
   color: var(--text);
-  --rich-text-small-size: 11px;
-  --rich-text-normal-size: 13px;
-  --rich-text-large-size: 16px;
-  font-size: 13px;
+  --rich-text-small-size: 13px;
+  --rich-text-normal-size: 15px;
+  --rich-text-large-size: 18px;
+  font-size: 15px;
   line-height: 1.65;
   outline: none;
   white-space: pre-wrap;
@@ -8708,6 +8708,11 @@ pre code {
   line-height: 1;
   white-space: nowrap;
 }
+.books-head-main .class-select {
+  width: calc(10em + 52px);
+  max-width: 100%;
+  flex-shrink: 0;
+}
 .books-head-main h1 {
   display: inline-flex;
   align-items: center;
@@ -10635,10 +10640,10 @@ pre code {
   border-radius: 10px;
   background: var(--bg);
   color: var(--text);
-  --rich-text-small-size: 11px;
-  --rich-text-normal-size: 13px;
-  --rich-text-large-size: 16px;
-  font-size: 13px;
+  --rich-text-small-size: 13px;
+  --rich-text-normal-size: 15px;
+  --rich-text-large-size: 18px;
+  font-size: 15px;
   line-height: 1.7;
 }
 
@@ -11308,10 +11313,10 @@ button.book-project-flow-pill:focus-visible {
   border-radius: 8px;
   color: var(--text-sub);
   background: var(--primary-light);
-  --rich-text-small-size: 11px;
-  --rich-text-normal-size: 13px;
-  --rich-text-large-size: 16px;
-  font-size: 13px;
+  --rich-text-small-size: 13px;
+  --rich-text-normal-size: 15px;
+  --rich-text-large-size: 18px;
+  font-size: 15px;
   line-height: 1.65;
   word-break: keep-all;
 }
@@ -11417,10 +11422,10 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-personal-resource-content-text {
   margin: 0;
-  --rich-text-small-size: 11px;
-  --rich-text-normal-size: 13px;
-  --rich-text-large-size: 16px;
-  font-size: 13px;
+  --rich-text-small-size: 13px;
+  --rich-text-normal-size: 15px;
+  --rich-text-large-size: 18px;
+  font-size: 15px;
   line-height: 1.65;
 }
 .book-personal-activity-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

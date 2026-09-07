@@ -590,5 +590,6 @@
 }
 
 .book-project-edit-modal {
+  width: min(820px, calc(100vw - 24px));
   border-radius: 16px;
 }
