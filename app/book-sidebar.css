@@ -104,6 +104,16 @@
   padding: 14px;
 }
 
+.book-library-main .book-personal-activity-card.is-compact {
+  height: auto;
+  min-height: 0;
+  align-self: start;
+}
+
+.book-personal-activity-card.is-compact > .book-personal-card-body {
+  flex: 0 0 auto;
+}
+
 .book-library-main .book-dashboard-empty {
   word-break: keep-all;
   overflow-wrap: break-word;

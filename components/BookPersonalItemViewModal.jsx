@@ -23,7 +23,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange }) {
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
   const itemLabel = isResource ? "자료" : "활동";
@@ -53,6 +53,8 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
             <RichTextDisplay
               className="book-personal-expand-content"
               html={item.content}
+              checklistValues={checklistValues}
+              onChecklistChange={onChecklistChange}
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}

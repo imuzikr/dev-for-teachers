@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
-import RichTextDisplay from "./RichTextDisplay";
-import ActivityTemplate from "./ActivityTemplate";
 import { IconLock } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 
@@ -40,19 +38,6 @@ function detailUrlSlot(href, label) {
   );
 }
 
-function ConfirmButton({ confirmed, disabled, pending, onClick }) {
-  return (
-    <button
-      type="button"
-      className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
-      disabled={disabled || confirmed || pending}
-      onClick={onClick}
-    >
-      {pending ? "확인 중" : confirmed ? "확인됨" : "확인"}
-    </button>
-  );
-}
-
 function IconExpand({ size = 14 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -74,6 +59,8 @@ export function BookPersonalResourceCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const resource = detailItem.source;
+  const [checklistValues, setChecklistValues] = useState({});
+  useEffect(() => { setChecklistValues({}); }, [resource.id, resource.content]);
   const panel = useStudentActivityPanel();
   const panelKey = `resource:${resource.id}`;
   const openPanel = () => panel?.open(panelKey);
@@ -84,7 +71,7 @@ export function BookPersonalResourceCard({
   const locked = resource.locked === true;
 
   return (
-    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
@@ -92,9 +79,10 @@ export function BookPersonalResourceCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
-          <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
+          {!isTeacher && <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인됨" : "미확인"}</em>}
+          {isTeacher && <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
-          </button>
+          </button>}
           <button type="button" className="btn-ghost book-personal-expand-btn" title="자료 확대" aria-label="자료 확대" onClick={() => setExpanded(true)}>
             <IconExpand />
           </button>
@@ -102,11 +90,6 @@ export function BookPersonalResourceCard({
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(locked ? "" : linkHref, linkLabel)}
-        {locked ? (
-          <p className="book-personal-instruction">교사가 자료를 열면 확인할 수 있습니다.</p>
-        ) : (
-          <RichTextDisplay className="book-personal-instruction" html={resource.content} fallback="등록된 내용이 없습니다." />
-        )}
       </div>
       {isTeacher && onPresent ? (
         <footer className="book-personal-card-actions">
@@ -116,11 +99,11 @@ export function BookPersonalResourceCard({
         </footer>
       ) : !isTeacher && (
         <footer>
-          <ConfirmButton confirmed={confirmed} disabled={locked || !onConfirm} pending={confirmState.pendingKey === confirmationKey} onClick={() => onConfirm(detailItem)} />
+          <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       )}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={onConfirm ? () => onConfirm(detailItem) : undefined} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} />
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={onConfirm ? () => onConfirm(detailItem) : undefined} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
@@ -134,6 +117,8 @@ export function BookPersonalResourceCard({
           onSave={onConfirm ? () => onConfirm(detailItem) : undefined}
           onCopy={() => onCopy(resource)}
           copied={copiedId === resource.id}
+          checklistValues={checklistValues}
+          onChecklistChange={setChecklistValues}
           onClose={() => setExpanded(false)}
         />
       )}
@@ -155,21 +140,22 @@ export function BookPersonalActivityCard({
   const [expanded, setExpanded] = useState(false);
   const [templateValues, setTemplateValues] = useState({});
   const activity = detailItem.source;
+  const [checklistValues, setChecklistValues] = useState({});
+  useEffect(() => { setChecklistValues({}); }, [activity.id, activity.content]);
   const [answerDraft, setAnswerDraft] = useState(response ?? "");
   useEffect(() => { setAnswerDraft(response ?? ""); }, [activity.id, response]);
   const panel = useStudentActivityPanel();
   const panelKey = `activity:${activity.id}`;
   const openPanel = () => panel?.open(panelKey);
   const confirmationKey = bookConfirmationKey("activity", activity.id);
-  const confirmed = selectedProgress.has(confirmationKey);
+  const confirmed = selectedProgress.has(confirmationKey) || saveState.savedId === activity.id;
   const locked = !!activity.locked;
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const requiresAnswer = activity.requiresAnswer !== false;
-  const usesAnswerModal = requiresAnswer && !isTeacher;
 
   return (
-    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${requiresAnswer ? "" : " does-not-require-answer"}${usesAnswerModal ? " uses-answer-modal" : ""}`}>
+    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">
@@ -177,17 +163,14 @@ export function BookPersonalActivityCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
-          <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인함" : "미확인"}</em>
+          <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인됨" : "미확인"}</em>
           <button type="button" className="btn-ghost book-personal-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
             <IconExpand />
           </button>
         </div>
       </header>
       <div className="book-personal-card-body">
-        {detailUrlSlot(activityHref, activityLinkLabel)}
-        {!isTeacher && activity.templateEnabled === true && !locked ? (
-          <ActivityTemplate content={activity.content} values={templateValues} onChange={setTemplateValues} />
-        ) : <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />}
+        {detailUrlSlot(locked && !isTeacher ? "" : activityHref, activityLinkLabel)}
       </div>
       {isTeacher && (onToggleActivityLock || onPresent) ? (
         <footer className="book-personal-card-actions">
@@ -204,29 +187,11 @@ export function BookPersonalActivityCard({
         </footer>
       ) : !isTeacher ? (
         <footer>
-          {requiresAnswer ? (
-            <button
-              type="button"
-              className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
-              disabled={locked || saveState.savingId === activity.id || !onSave}
-              onClick={() => setExpanded(true)}
-            >
-              작성
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
-              disabled={locked || saveState.savingId === activity.id || !onSave}
-              onClick={() => onSave(detailItem)}
-            >
-              {saveState.savingId === activity.id ? "확인 중" : confirmed || saveState.savedId === activity.id ? "확인됨" : saveState.failedId === activity.id ? "다시 확인" : "확인"}
-            </button>
-          )}
+          <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       ) : null}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={onSave ? () => onSave(detailItem, requiresAnswer ? answerDraft : undefined) : undefined} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed || saveState.savedId === activity.id} />
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={onSave ? () => onSave(detailItem, requiresAnswer ? answerDraft : undefined) : undefined} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed || saveState.savedId === activity.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
@@ -237,6 +202,8 @@ export function BookPersonalActivityCard({
           templateValues={templateValues}
           onTemplateChange={setTemplateValues}
           answerDraft={answerDraft}
+          checklistValues={checklistValues}
+          onChecklistChange={setChecklistValues}
           onAnswerChange={setAnswerDraft}
           onSave={onSave ? () => onSave(detailItem, requiresAnswer ? answerDraft : undefined) : undefined}
           saving={saveState.savingId === activity.id}
