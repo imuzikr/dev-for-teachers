@@ -1,0 +1,41 @@
+.basic-format-toolbar button.basic-format-checklist {
+  gap: 4px;
+}
+
+.basic-format-area .rte-checklist,
+.book-rich-text .rte-checklist {
+  list-style: none;
+  padding-left: 0;
+}
+
+.basic-format-area .rte-checklist li,
+.book-rich-text .rte-checklist li {
+  min-height: 28px;
+}
+
+.basic-format-area .rte-checklist label,
+.book-rich-text .rte-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.basic-format-area .rte-checklist input[type="checkbox"],
+.book-rich-text .rte-checklist input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 5px 0 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 3px;
+  box-sizing: border-box;
+  accent-color: var(--primary);
+}
+
+.rte-checklist-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

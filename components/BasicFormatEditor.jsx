@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sanitizeHtml } from "@/lib/html";
+import "./ActivityChecklist.css";
 
 const SIZE_CLASSES = {
   small: "rte-size-small",
@@ -31,6 +32,15 @@ function IconListNumbered() {
   );
 }
 
+function IconChecklist() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3.5 5.2c0-.7.5-1.2 1.2-1.2h2.6c.7 0 1.2.5 1.2 1.2v2.6c0 .7-.5 1.2-1.2 1.2H4.7c-.7 0-1.2-.5-1.2-1.2V5.2ZM3.5 16.2c0-.7.5-1.2 1.2-1.2h2.6c.7 0 1.2.5 1.2 1.2v2.6c0 .7-.5 1.2-1.2 1.2H4.7c-.7 0-1.2-.5-1.2-1.2v-2.6Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M5 6.4l1.1 1.1L9 4.6M12 6.5h8M12 17.5h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function normalizeEditorHtml(root) {
   if (!root) return;
   root.querySelectorAll("font[size]").forEach((font) => {
@@ -51,6 +61,62 @@ function removeEmptySizeClasses(root) {
   });
 }
 
+function closestElement(node, selector, boundary) {
+  let current = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+  while (current && current !== boundary) {
+    if (current.matches(selector)) return current;
+    current = current.parentElement;
+  }
+  return null;
+}
+
+function moveCaretToEnd(node) {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function checklistItemHtml(text = "확인할 일") {
+  const safeText = text.replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
+  return `<ul class="rte-checklist"><li><label><input type="checkbox"> <span class="rte-checklist-text">${safeText}</span></label></li></ul>`;
+}
+
+function checklistLabel(checked = false, nodes = [document.createTextNode(" ")]) {
+  const input = document.createElement("input");
+  const label = document.createElement("label");
+  const text = document.createElement("span");
+  input.type = "checkbox";
+  input.checked = checked;
+  text.className = "rte-checklist-text";
+  text.replaceChildren(...nodes);
+  label.replaceChildren(input, document.createTextNode(" "), text);
+  return label;
+}
+
+function setChecklistItem(item) {
+  const existingInput = item.querySelector('input[type="checkbox"]');
+  const existingText = item.querySelector(".rte-checklist-text");
+  const nodes = [...item.childNodes].flatMap((node) => {
+    if (node === existingInput) return [];
+    if (node === existingText) return [...existingText.childNodes];
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "LABEL") {
+      const text = node.querySelector(".rte-checklist-text");
+      return text ? [...text.childNodes] : [...node.childNodes].filter((child) => child !== existingInput);
+    }
+    return [node];
+  });
+  item.replaceChildren(checklistLabel(Boolean(existingInput?.checked || existingInput?.hasAttribute("checked")), nodes));
+}
+
+function unsetChecklistItem(item) {
+  item.querySelectorAll('input[type="checkbox"]').forEach((input) => input.remove());
+  item.querySelectorAll("label").forEach((label) => label.replaceWith(...label.childNodes));
+}
+
 function removeSizeClasses(root) {
   if (!root) return;
   root.querySelectorAll("*").forEach((el) => {
@@ -61,6 +127,33 @@ function removeSizeClasses(root) {
 function detectWholeTextSize(html = "") {
   const found = Object.entries(SIZE_CLASSES).find(([, className]) => html.includes(className));
   return found?.[0] ?? "normal";
+}
+
+function syncChecklistCheckboxAttrs(root) {
+  root.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    if (input.checked) {
+      input.setAttribute("checked", "");
+    } else {
+      input.removeAttribute("checked");
+    }
+  });
+}
+
+function checklistItemText(item) {
+  const clone = item.cloneNode(true);
+  clone.querySelectorAll('input[type="checkbox"]').forEach((input) => input.remove());
+  return clone.textContent.replace(/\u00a0/g, " ").trim();
+}
+
+function moveCaretInsideText(node) {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const text = node.firstChild || node.appendChild(document.createTextNode(""));
+  const range = document.createRange();
+  range.setStart(text, text.textContent.length);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 export default function BasicFormatEditor({
@@ -89,6 +182,7 @@ export default function BasicFormatEditor({
     if (!area) return;
     normalizeEditorHtml(area);
     removeEmptySizeClasses(area);
+    syncChecklistCheckboxAttrs(area);
     const nextHtml = sanitizeHtml(area.innerHTML);
     if (area.innerHTML !== nextHtml) area.innerHTML = nextHtml;
     lastHtmlRef.current = nextHtml;
@@ -100,6 +194,96 @@ export default function BasicFormatEditor({
     if (disabled) return;
     areaRef.current?.focus();
     document.execCommand(command, false, null);
+    emitChange();
+  }
+
+  function toggleChecklist() {
+    const area = areaRef.current;
+    const selection = window.getSelection();
+    if (!area || !selection || disabled) return;
+    area.focus();
+
+    const range = selection.rangeCount ? selection.getRangeAt(0) : null;
+    const selectedInEditor = range && area.contains(range.commonAncestorContainer);
+    if (!selectedInEditor) {
+      const nextRange = document.createRange();
+      nextRange.selectNodeContents(area);
+      nextRange.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(nextRange);
+    }
+
+    const anchor = selection.anchorNode;
+    const list = closestElement(anchor, "ul, ol", area);
+    if (list?.classList.contains("rte-checklist")) {
+      list.classList.remove("rte-checklist");
+      list.querySelectorAll("li").forEach(unsetChecklistItem);
+      emitChange();
+      return;
+    }
+
+    const item = closestElement(anchor, "li", area);
+    if (item && list) {
+      if (list.tagName === "OL") {
+        const replacement = document.createElement("ul");
+        replacement.innerHTML = list.innerHTML;
+        list.replaceWith(replacement);
+        replacement.className = "rte-checklist";
+        replacement.querySelectorAll("li").forEach(setChecklistItem);
+      } else {
+        list.classList.add("rte-checklist");
+        list.querySelectorAll("li").forEach(setChecklistItem);
+      }
+      emitChange();
+      return;
+    }
+
+    const selectedText = selection.toString().trim();
+    document.execCommand("insertHTML", false, checklistItemHtml(selectedText || "확인할 일"));
+    const insertedList = closestElement(selection.anchorNode, "ul.rte-checklist", area);
+    if (insertedList) moveCaretInsideText(insertedList.querySelector(".rte-checklist-text"));
+    emitChange();
+  }
+
+  function handleAreaClick(event) {
+    if (disabled) {
+      event.preventDefault();
+      return;
+    }
+    if (event.target instanceof HTMLInputElement && event.target.type === "checkbox") {
+      emitChange();
+      return;
+    }
+    if (event.target instanceof Element && event.target.closest(".rte-checklist label")) {
+      window.setTimeout(emitChange, 0);
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (event.nativeEvent.isComposing || disabled || event.key !== "Enter") return;
+    const area = areaRef.current;
+    const selection = window.getSelection();
+    const item = area && selection ? closestElement(selection.anchorNode, "li", area) : null;
+    const list = item?.parentElement;
+    if (!item || !list?.classList.contains("rte-checklist")) return;
+
+    event.preventDefault();
+    if (!checklistItemText(item)) {
+      const exit = document.createElement("div");
+      exit.innerHTML = "<br>";
+      list.after(exit);
+      item.remove();
+      if (!list.querySelector("li")) list.remove();
+      moveCaretToEnd(exit);
+      emitChange();
+      return;
+    }
+
+    const nextItem = document.createElement("li");
+    const label = checklistLabel();
+    nextItem.append(label);
+    item.after(nextItem);
+    moveCaretInsideText(label.querySelector(".rte-checklist-text"));
     emitChange();
   }
 
@@ -167,6 +351,9 @@ export default function BasicFormatEditor({
         <button type="button" title="숫자 글머리 기호" aria-label="숫자 글머리 기호" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand("insertOrderedList")} disabled={disabled}>
           <IconListNumbered />
         </button>
+        <button type="button" title="체크리스트" aria-label="체크리스트" className="basic-format-checklist" onMouseDown={(event) => event.preventDefault()} onClick={toggleChecklist} disabled={disabled}>
+          <IconChecklist />
+        </button>
         <span className="basic-format-divider" aria-hidden="true" />
         <button type="button" title="작은 글자" aria-label="작은 글자" className={`basic-format-size basic-format-size--small${activeSize === "small" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("small")} disabled={disabled}>
           작게
@@ -188,7 +375,9 @@ export default function BasicFormatEditor({
         aria-label={ariaLabel}
         aria-multiline="true"
         onInput={emitChange}
+        onKeyDown={handleKeyDown}
         onBlur={emitChange}
+        onClick={handleAreaClick}
         onPaste={handlePaste}
         onDrop={handleDrop}
       />
