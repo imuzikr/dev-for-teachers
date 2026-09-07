@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { orderedStepItems } from "./BookProjectPreview";
 import BasicFormatEditor from "./BasicFormatEditor";
-import { IconTrash } from "./StatusIcons";
+import { IconChevronDown, IconChevronUp, IconTrash } from "./StatusIcons";
 
 function itemKey(kind, id) {
   return `${kind}:${id}`;
@@ -28,6 +28,8 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
         const key = itemKey(entry.kind, entry.id);
         const label = resource ? "자료" : "활동";
         const source = entry.source;
+        const previousKey = index > 0 ? itemKey(items[index - 1].kind, items[index - 1].id) : "";
+        const nextKey = index < items.length - 1 ? itemKey(items[index + 1].kind, items[index + 1].id) : "";
         return (
           <article
             className={`book-step-item-edit book-step-item-edit--${entry.kind}${draggingKey === key ? " is-dragging" : ""}`}
@@ -76,6 +78,28 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 placeholder={resource ? "자료 제목" : "활동 제목"}
                 aria-label={`${label} ${index + 1} 제목`}
               />
+              <div className="book-step-order-actions" aria-label={`${label} ${index + 1} 순서 변경`}>
+                <button
+                  type="button"
+                  className="book-step-order-btn"
+                  title="위로 이동"
+                  aria-label={`${label} ${index + 1} 위로 이동`}
+                  disabled={!previousKey}
+                  onClick={() => previousKey && onMove(key, previousKey)}
+                >
+                  <IconChevronUp size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="book-step-order-btn"
+                  title="아래로 이동"
+                  aria-label={`${label} ${index + 1} 아래로 이동`}
+                  disabled={!nextKey}
+                  onClick={() => nextKey && onMove(key, nextKey)}
+                >
+                  <IconChevronDown size={14} />
+                </button>
+              </div>
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">

@@ -9509,7 +9509,7 @@ pre code {
 }
 .book-step-item-edit > header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 44px;
+  grid-template-columns: auto minmax(0, 1fr) auto 44px;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
@@ -9530,6 +9530,33 @@ pre code {
   width: 36px;
   height: 36px;
   padding: 0;
+}
+.book-step-order-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.book-step-order-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(47, 111, 62, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--primary-dark);
+  font: inherit;
+  cursor: pointer;
+}
+.book-step-order-btn:hover:not(:disabled) {
+  border-color: rgba(47, 111, 62, 0.42);
+  background: var(--card-bg);
+}
+.book-step-order-btn:disabled {
+  color: rgba(42, 56, 45, 0.34);
+  cursor: default;
+  opacity: 0.52;
 }
 .book-step-answer-check {
   display: inline-flex;
@@ -10057,7 +10084,7 @@ pre code {
 
 .book-item-edit-top-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.82fr) minmax(320px, 1.18fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 14px;
 }
