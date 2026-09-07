@@ -135,7 +135,7 @@ function BooksPageInner() {
     if (localSelectedId !== remembered) setSelectedClassId(remembered);
   }, [admin, myClasses, teacherClassId, localSelectedId]);
 
-  const classId = admin ? teacherClassId : studentClassId;
+  const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
   useEffect(() => subscribeBookActivities(classId, setActivities), [classId]);

@@ -104,7 +104,7 @@ export default function BooksHome(props) {
                 </div>
                 {admin && classId && (
                   <button type="button" className="btn-primary books-project-create" onClick={() => onEditProject(false)}>
-                    {project ? "프로젝트 편집" : "프로젝트 만들기"}
+                    프로젝트 편집
                   </button>
                 )}
               </div>
