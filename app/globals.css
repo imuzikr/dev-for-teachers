@@ -8831,6 +8831,43 @@ pre code {
 
 .student-activity-panel-content {
   width: calc(var(--library-open-width) - 46px);
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition: opacity 240ms ease 120ms, transform 240ms ease 120ms, visibility 0s;
+}
+
+.student-activity-side.is-collapsed .student-activity-panel-content {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-12px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 0s 120ms;
+}
+
+.student-activity-detail {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  animation: student-activity-detail-enter 240ms ease both;
+}
+
+@keyframes student-activity-detail-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-library-layout.has-student-panel,
+  .student-activity-side .student-activity-panel-content,
+  .student-activity-side.is-collapsed .student-activity-panel-content {
+    transition: none;
+  }
+
+  .student-activity-detail {
+    animation: none;
+  }
 }
 
 .student-activity-detail .book-personal-expand-head {
@@ -14291,3 +14328,18 @@ button.book-project-flow-pill:focus-visible {
   word-break: keep-all;
 }
 .question-signal-clear { min-height: 44px; min-width: 44px; }
+
+/* Keep the reading surface anchored while the student rail animates. */
+.books-main--split .student-activity-side.is-collapsed {
+  padding: 64px 18px 18px;
+}
+.student-activity-side.is-collapsed .book-library-collapse {
+  position: absolute;
+  top: 18px;
+  right: 9px;
+}
+@media (max-width: 768px) {
+  .books-main--split .student-activity-side.is-collapsed {
+    padding: 58px 12px 12px;
+  }
+}

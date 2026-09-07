@@ -37,7 +37,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
           <button type="button" className="book-library-collapse" onClick={() => remember(selectedKey, !collapsed)} aria-expanded={!collapsed} aria-label={collapsed ? "활동 패널 펼치기" : "활동 패널 접기"} title={collapsed ? "활동 패널 펼치기" : "활동 패널 접기"}>
             <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
           </button>
-          <div className="student-activity-panel-content" hidden={collapsed}>
+          <div className="student-activity-panel-content" inert={collapsed} aria-hidden={collapsed}>
             <div ref={setTarget} />
           </div>
         </aside>

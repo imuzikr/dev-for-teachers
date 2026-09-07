@@ -60,6 +60,8 @@
 
 ## 5. States
 
+- 학생 활동 패널은 기존 400ms 열 너비 전환과 함께 본문을 120ms 지연 후 240ms 동안 페이드·가로 이동(12px)으로 펼친다. 접을 때는 120ms 동안 사라지며 접힌 콘텐츠는 키보드와 보조 기술에서 제외한다. 열린 패널에서 다른 항목을 선택하면 새 콘텐츠가 240ms 페이드·세로 이동(8px)으로 나타난다. 전체 상세(제목·URL·본문·답변·저장)는 `--border` 1px 테두리, `--card-bg` 배경, 8px 모서리, 16px 안쪽 여백의 하나의 사각형 카드로 감싼다. 움직임 줄이기에서는 모든 학생 패널 전환을 생략한다.
+
 - Student checklists align the checkbox with the first text line at every text size. Only the checkbox toggles; text remains selectable. Each student's checks autosave independently. Confirm saves partial progress without completion; all checks plus Confirm marks completion. Save failures retain input and expose retry. Student panel selection and collapsed state survive STEP changes and reloads, scoped to user and class.
 - Teacher help sidebar includes compact student progress rows using existing participant colors and ordered square cells. The final completed cell carries a small green light with a white rim and subtle glow, without a number. Empty and long lists remain readable in the existing drawer width.
 
