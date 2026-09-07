@@ -19,7 +19,7 @@
   align-items: flex-start;
   gap: 8px;
   min-width: 0;
-  cursor: pointer;
+  line-height: inherit;
 }
 
 .basic-format-area .rte-checklist input[type="checkbox"],
@@ -27,12 +27,15 @@
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
-  margin: 5px 0 0;
+  font: inherit;
+  line-height: inherit;
+  margin: calc((1lh - 16px) / 2) 0 0;
   min-height: 0;
   padding: 0;
   border-radius: 3px;
   box-sizing: border-box;
   accent-color: var(--primary);
+  cursor: pointer;
 }
 
 .rte-checklist-text {

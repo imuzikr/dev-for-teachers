@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { safeDisplayHtml, stripHtml } from "@/lib/html";
 import "./ActivityChecklist.css";
 
@@ -19,21 +19,27 @@ export default function RichTextDisplay({
     return source.trim() ? source : fallback;
   }, [fallback, html]);
   const [safeHtml, setSafeHtml] = useState(() => stripHtml(rawHtml));
+  const innerHtml = useMemo(() => ({ __html: safeHtml }), [safeHtml]);
 
   useEffect(() => {
     setSafeHtml(safeDisplayHtml(rawHtml));
     setLocalChecks({});
   }, [rawHtml]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const values = checklistValues ?? localChecks;
     rootRef.current?.querySelectorAll('input[type="checkbox"]').forEach((input, index) => {
       input.checked = Object.hasOwn(values, index) ? values[index] : input.hasAttribute("checked");
     });
-  }, [safeHtml, checklistValues, localChecks]);
+  });
 
   function changeCheck(event) {
-    if (!event.target.matches('input[type="checkbox"]')) return;
+    const target = event.target;
+    const element = target instanceof Element ? target : target?.parentElement;
+    if (!(target instanceof HTMLInputElement && target.type === "checkbox")) {
+      if (element?.closest(".rte-checklist label")) event.preventDefault();
+      return;
+    }
     const inputs = [...rootRef.current.querySelectorAll('input[type="checkbox"]')];
     const index = inputs.indexOf(event.target);
     const next = { ...(checklistValues ?? localChecks), [index]: event.target.checked };
@@ -46,7 +52,7 @@ export default function RichTextDisplay({
       ref={rootRef}
       onClick={changeCheck}
       className={`book-rich-text${className ? ` ${className}` : ""}`}
-      dangerouslySetInnerHTML={{ __html: safeHtml }}
+      dangerouslySetInnerHTML={innerHtml}
     />
   );
 }

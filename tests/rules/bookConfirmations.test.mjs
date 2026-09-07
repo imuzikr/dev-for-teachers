@@ -95,6 +95,62 @@ describe("책방 활동·자료 확인 규칙", () => {
     ));
   });
 
+  it("학생은 미완료 체크리스트 초안을 저장할 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertSucceeds(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", {
+        confirmed: false,
+        checklistValues: [true, false, true],
+        checklistVersion: "project-v1:resource-res1",
+      })
+    ));
+  });
+
+  it("체크리스트가 모두 체크되면 완료 확인을 저장할 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertSucceeds(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", {
+        confirmed: true,
+        checklistValues: [true, true],
+        checklistVersion: "project-v1:resource-res1",
+      })
+    ));
+  });
+
+  it("체크리스트에 미체크 항목이 있으면 완료 확인을 저장할 수 없다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", {
+        confirmed: true,
+        checklistValues: [true, false],
+        checklistVersion: "project-v1:resource-res1",
+      })
+    ));
+  });
+
+  it("체크리스트 값은 불리언 배열이어야 한다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", { confirmed: false, checklistValues: [true, "false"] })
+    ));
+  });
+
+  it("체크리스트 값과 버전은 제한 길이를 넘길 수 없다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", { confirmed: false, checklistValues: Array(501).fill(true) })
+    ));
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", { confirmed: false, checklistVersion: "v".repeat(101) })
+    ));
+  });
+
   it("학생은 잠긴 활동을 확인할 수 없다", async () => {
     const db = asStudent(env, "stu1").firestore();
     await assertFails(setDoc(

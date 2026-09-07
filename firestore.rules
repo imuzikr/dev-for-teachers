@@ -648,7 +648,7 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
                'classId', 'projectId', 'itemKind', 'itemId', 'itemTitle',
                'stepId', 'authorId', 'authorName', 'confirmed',
-               'createdAt', 'updatedAt'
+               'checklistValues', 'checklistVersion', 'createdAt', 'updatedAt'
              ])
              && request.resource.data.classId is string
              && request.resource.data.classId.size() > 0
@@ -665,7 +665,16 @@ service cloud.firestore {
              && request.resource.data.authorName is string
              && request.resource.data.authorName.size() > 0
              && request.resource.data.authorName.size() <= 80
-             && request.resource.data.confirmed == true
+             && request.resource.data.confirmed is bool
+             && (!('checklistValues' in request.resource.data)
+                 || (request.resource.data.checklistValues is list
+                     && request.resource.data.checklistValues.size() <= 500
+                     && request.resource.data.checklistValues.hasOnly([true, false])
+                     && (request.resource.data.confirmed == false
+                         || request.resource.data.checklistValues.hasOnly([true]))))
+             && (!('checklistVersion' in request.resource.data)
+                 || (request.resource.data.checklistVersion is string
+                     && request.resource.data.checklistVersion.size() <= 100))
              && request.resource.data.createdAt == request.time
              && request.resource.data.updatedAt == request.time;
     }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
+import { currentChecklistConfirmation } from "@/lib/activityChecklist";
+import { safeDisplayHtml } from "@/lib/html";
 import BookHelpDrawer from "./BookHelpDrawer";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import { useBookPresentationMode } from "./BookPresentationMode";
@@ -46,12 +48,16 @@ export default function BookWorkspace({
 }) {
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
+  const saveQueues = useRef(new Map());
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [helpCollapsed, setHelpCollapsed] = useState(false);
   const [draftProject, setDraftProject] = useState(null);
   const showLibraryPanel = isTeacher;
   const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
+  const scope = `${classId}:${projectId}:${user?.uid}`;
+  const activeScope = useRef(scope);
+  activeScope.current = scope;
   const previewProject = editingProject && draftProject ? draftProject : project;
   const previewActivities = useMemo(() => {
     const projectActivities = projectStepActivities(previewProject);
@@ -107,19 +113,30 @@ export default function BookWorkspace({
     return subscribeBookConfirmations({
       classId,
       authorId: isTeacher ? "" : user.uid,
-      callback: setConfirmations,
+      callback: (records) => setConfirmations(records.filter((record) => record.projectId === projectId)),
     });
-  }, [classId, isTeacher, user?.uid]);
+  }, [classId, projectId, isTeacher, user?.uid]);
 
   const confirmedItemsByUser = useMemo(() => {
     const progress = new Map(participants.map((participant) => [participant.uid, new Set()]));
+    if (!isTeacher && user?.uid && !progress.has(user.uid)) progress.set(user.uid, new Set());
+    const items = new Map(sections.flatMap((section) => section.items.map((item) => [bookConfirmationKey(item.kind, item.id), item])));
+    const counts = new Map();
     confirmations.forEach((confirmation) => {
-      if (progress.has(confirmation.authorId)) {
-        progress.get(confirmation.authorId).add(bookConfirmationKey(confirmation.itemKind, confirmation.itemId));
+      const key = bookConfirmationKey(confirmation.itemKind, confirmation.itemId);
+      const item = items.get(key);
+      if (!item || typeof document === "undefined") return;
+      if (!counts.has(key)) {
+        const root = document.createElement("div");
+        root.innerHTML = safeDisplayHtml(item.source.content || "");
+        counts.set(key, root.querySelectorAll('input[type="checkbox"]').length);
+      }
+      if (currentChecklistConfirmation(confirmation, item.source.content, counts.get(key)) && progress.has(confirmation.authorId)) {
+        progress.get(confirmation.authorId).add(key);
       }
     });
     return progress;
-  }, [confirmations, participants]);
+  }, [confirmations, participants, sections, isTeacher, user?.uid]);
 
   function toggleLibraryPanel() {
     setLibraryCollapsed((current) => {
@@ -141,19 +158,12 @@ export default function BookWorkspace({
     });
   }
 
-  function rememberConfirmedItem(item) {
+  function rememberConfirmedItem(item, state) {
     if (!user?.uid || !item?.id) return;
     const confirmationKey = bookConfirmationKey(item.kind, item.id);
     setConfirmations((current) => {
-      if (current.some((confirmation) => (
-        confirmation.authorId === user.uid
-        && bookConfirmationKey(confirmation.itemKind, confirmation.itemId) === confirmationKey
-      ))) {
-        return current;
-      }
-
       return [
-        ...current,
+        ...current.filter((confirmation) => !(confirmation.authorId === user.uid && bookConfirmationKey(confirmation.itemKind, confirmation.itemId) === confirmationKey)),
         {
           classId,
           projectId,
@@ -163,14 +173,16 @@ export default function BookWorkspace({
           stepId: item.stepId || "",
           authorId: user.uid,
           authorName: user.realName || user.displayName || "이름 미설정",
-          confirmed: true,
+          ...state,
         },
       ];
     });
   }
 
-  async function confirmBookItem(item) {
-    await saveBookConfirmation({
+  async function confirmBookItem(item, state = { confirmed: true }) {
+    const key = `${scope}:${item.kind}:${item.id}`;
+    const previous = saveQueues.current.get(key) ?? Promise.resolve();
+    const write = previous.catch(() => {}).then(() => saveBookConfirmation({
       classId,
       projectId,
       itemKind: item.kind,
@@ -178,12 +190,19 @@ export default function BookWorkspace({
       itemTitle: item.title,
       stepId: item.stepId,
       user,
-    });
-    rememberConfirmedItem(item);
+      ...state,
+    }));
+    saveQueues.current.set(key, write);
+    try {
+      await write;
+      if (activeScope.current === scope) rememberConfirmedItem(item, state);
+    } finally {
+      if (saveQueues.current.get(key) === write) saveQueues.current.delete(key);
+    }
   }
 
   return (
-    <StudentActivityPanel key={`${classId}:${user?.uid}:${isTeacher ? "teacher" : selectedStepId}`} enabled={!isTeacher}>
+    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} scope={scope} records={confirmations} saveChecklist={confirmBookItem}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
       {sidebar}
@@ -259,6 +278,9 @@ export default function BookWorkspace({
       </section>
       <BookHelpDrawer
         classId={classId}
+        participants={participants}
+        progressByUser={confirmedItemsByUser}
+        progressSections={sections}
         user={user}
         isTeacher={isTeacher}
         collapsed={helpCollapsed}

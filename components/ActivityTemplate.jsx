@@ -3,13 +3,24 @@
 import { useEffect, useId, useState } from "react";
 import { fillTemplate, templateFields, templatePlainText } from "@/lib/activityTemplate.mjs";
 import { IconCopy } from "./BookProjectPreview";
+import { safeDisplayHtml } from "@/lib/html";
+import RichTextDisplay from "./RichTextDisplay";
 
-export default function ActivityTemplate({ content, values, onChange }) {
+export default function ActivityTemplate({ content, values, onChange, hasChecklist, checklistValues, onChecklistChange }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
+  const [formattedResult, setFormattedResult] = useState("");
   const id = useId();
   useEffect(() => { setText(templatePlainText(content || "")); }, [content]);
   useEffect(() => setStatus(""), [content, values]);
+  useEffect(() => {
+    if (!hasChecklist) return;
+    const root = document.createElement("div");
+    root.innerHTML = safeDisplayHtml(content || "");
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) walker.currentNode.textContent = fillTemplate(walker.currentNode.textContent, values);
+    setFormattedResult(root.innerHTML);
+  }, [content, values, hasChecklist]);
   const fields = templateFields(text);
   const result = fillTemplate(text, values);
   const complete = fields.length > 0 && fields.every((field) => Object.hasOwn(values, field) && values[field].trim());
@@ -31,7 +42,7 @@ export default function ActivityTemplate({ content, values, onChange }) {
       </label>)}
     </div>
     {fields.length === 0 && <p className="form-error">등록된 템플릿 변수가 없습니다.</p>}
-    <div className="activity-template-result" aria-label="완성된 프롬프트">{result}</div>
+    {hasChecklist ? <RichTextDisplay className="activity-template-result" html={formattedResult} checklistValues={checklistValues} onChecklistChange={onChecklistChange} /> : <div className="activity-template-result" aria-label="완성된 프롬프트">{result}</div>}
     <button type="button" className="btn-outline" disabled={!complete} onClick={copy}><IconCopy /> 복사하기</button>
     <span className="activity-template-status" role="status">{status}</span>
   </section>;

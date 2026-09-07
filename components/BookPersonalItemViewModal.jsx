@@ -23,7 +23,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, checklistStatus, onRetryChecklist, hasChecklist }) {
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
   const itemLabel = isResource ? "자료" : "활동";
@@ -48,7 +48,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {locked ? (
             <p className="book-personal-expand-locked">교사가 {itemLabel}를 열면 확인할 수 있습니다.</p>
           ) : !isTeacher && !isResource && item.templateEnabled === true ? (
-            <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} />
+            <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
           ) : (
             <RichTextDisplay
               className="book-personal-expand-content"
@@ -67,10 +67,12 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {!isTeacher && !locked && (
             <div className="student-activity-detail-actions">
               {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
-              {onSave && <button type="button" className="btn-primary" disabled={saving || (!requiresAnswer && confirmed)} onClick={async () => {
+              {onSave && <button type="button" className="btn-primary" disabled={saving || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 const saved = await onSave();
                 if (requiresAnswer && saved !== false && !panelTarget) onClose();
-              }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : confirmed ? "확인됨" : "확인"}</button>}
+              }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인"}</button>}
+              {checklistStatus && checklistStatus !== "loading" && <small role="status">{checklistStatus === "saving" ? "자동 저장 중..." : checklistStatus === "failed" ? "체크 상태를 저장하지 못했어요." : "자동 저장됨"}</small>}
+              {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
               {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
             </div>
           )}

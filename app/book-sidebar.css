@@ -110,6 +110,11 @@
   align-self: start;
 }
 
+.book-personal-dashboard[hidden],
+.book-personal-step-section[hidden] {
+  display: none;
+}
+
 .book-personal-activity-card.is-compact > .book-personal-card-body {
   flex: 0 0 auto;
 }

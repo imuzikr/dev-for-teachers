@@ -34,6 +34,32 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
   const visibleParticipantCount = isTeacher ? participants.length : ownParticipant ? 1 : participants.length;
 
+  if (!isTeacher && ownParticipant) {
+    return (
+      <>
+        <div hidden={!activeStepSection}>
+          <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
+        </div>
+        <section className="book-personal-dashboard" hidden={!!activeStepSection} aria-label="나의 Step 카드">
+          <div className="book-dashboard-head"><h2>STEP 카드</h2></div>
+          {cardProgressGroups.length === 0 ? <div className="book-dashboard-empty">선생님이 활동을 준비하고 있습니다.</div> : (
+            <div className="book-student-step-grid">
+              {cardProgressGroups.map(({ section, stepIndex, items }) => (
+                <article className="book-student-step-card" key={section.id}>
+                  <button type="button" className="book-student-step-card-trigger" onClick={() => onSelectStep?.(section.id)} aria-label={`STEP ${stepIndex + 1} ${section.title} 열기`}>
+                    <header><span>STEP {stepIndex + 1}</span><strong>{section.title}</strong><em>{items.filter((item) => ownProgress.has(item.key)).length}/{section.items.length}</em></header>
+                    <PersonalProgressGroups groups={[{ section, stepIndex, items }]} completed={ownProgress} participantLabel={`STEP ${stepIndex + 1}`} />
+                    <p className="book-personal-card-hint">{section.activities.length} 활동 · {section.resources.length} 자료</p>
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </>
+    );
+  }
+
   if (selected) {
     const visibleSections = activeStepSection ? [activeStepSection] : sections;
 

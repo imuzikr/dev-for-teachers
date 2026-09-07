@@ -255,7 +255,7 @@ export default function BasicFormatEditor({
       return;
     }
     if (event.target instanceof Element && event.target.closest(".rte-checklist label")) {
-      window.setTimeout(emitChange, 0);
+      event.preventDefault();
     }
   }
 

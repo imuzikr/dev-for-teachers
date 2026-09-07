@@ -20,6 +20,7 @@ export default function BookPersonalDetail({
   onConfirmItem,
   saveDashboardText = saveBookDashboardText,
   backLabel = "← 개인 카드",
+  visibleStepId,
 }) {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
@@ -36,17 +37,17 @@ export default function BookPersonalDetail({
     ])));
   }, [activities, entriesByActivity, selected.uid]);
 
-  async function saveResponse(detailItem, nextText = null) {
+  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }) {
     const activity = detailItem.source;
     const answerText = nextText ?? drafts[activity.id] ?? "";
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
     try {
-      await saveDashboardText(activity.id, user, answerText);
-      await onConfirmItem?.(detailItem);
+      if (activity.requiresAnswer !== false) await saveDashboardText(activity.id, user, answerText);
+      await onConfirmItem?.(detailItem, checklistState);
       setDrafts((current) => ({ ...current, [activity.id]: answerText }));
-      setSavedId(activity.id);
+      if (checklistState.confirmed) setSavedId(activity.id);
       return true;
     } catch {
       setFailedId(activity.id);
@@ -56,14 +57,16 @@ export default function BookPersonalDetail({
     }
   }
 
-  async function confirmItem(item) {
+  async function confirmItem(item, checklistState) {
     const key = bookConfirmationKey(item.kind, item.id);
     setConfirmingKey(key);
     setConfirmFailedKey(null);
     try {
-      await onConfirmItem?.(item);
+      await onConfirmItem?.(item, checklistState);
+      return true;
     } catch {
       setConfirmFailedKey(key);
+      return false;
     } finally {
       setConfirmingKey(null);
     }
@@ -97,7 +100,7 @@ export default function BookPersonalDetail({
       ) : (
         <div className="book-personal-detail-steps" aria-label="프로젝트 활동과 자료 목록">
           {sections.map((section, sectionIndex) => (
-            <section className="book-personal-step-section" key={section.id}>
+            <section className="book-personal-step-section" key={section.id} hidden={visibleStepId !== undefined && section.id !== visibleStepId}>
               <header className="book-personal-step-head">
                 <span>STEP {sectionIndex + 1}</span>
                 <strong>{section.title}</strong>
