@@ -12,7 +12,7 @@ function IconExpandStep({ size = 15 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 9 4.8 4.8M15 9l4.2-4.2M15 15l4.2 4.2M9 15l-4.2 4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
 }
 
-export default function BookProjectPanel({ project, editing, appendStep, initialOpenStepId, saving, exporting, participantCount = 0, currentClassId = "", exportTargets = [], loadProject, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange, onExportProjectItem }) {
+export default function BookProjectPanel({ project, editing, expandRequest, appendStep, initialOpenStepId, saving, exporting, participantCount = 0, currentClassId = "", exportTargets = [], loadProject, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange, onExportProjectItem }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
@@ -94,6 +94,7 @@ export default function BookProjectPanel({ project, editing, appendStep, initial
   if (editing) {
     return (
       <BookProjectEditor
+        expandRequest={expandRequest}
         project={project}
         appendStep={appendStep}
         initialOpenStepId={initialOpenStepId}

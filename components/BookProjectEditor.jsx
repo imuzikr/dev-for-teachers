@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { backdropClose } from "@/lib/modal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
@@ -73,6 +75,7 @@ function initialDraft(project, appendStep, initialOpenStepId) {
 
 export default function BookProjectEditor({
   project,
+  expandRequest,
   appendStep,
   initialOpenStepId,
   saving,
@@ -86,6 +89,49 @@ export default function BookProjectEditor({
   const [openIds, setOpenIds] = useState(draft.openIds);
   const [activeStepId, setActiveStepId] = useState(draft.selectedStepId ?? null);
   const [addingItem, setAddingItem] = useState(null);
+  const [expanded, setExpanded] = useState(!appendStep && !initialOpenStepId);
+  const [mounted, setMounted] = useState(false);
+  const dialogRef = useRef(null);
+  const expandRef = useRef(null);
+  const previousExpandRequest = useRef(expandRequest);
+
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (previousExpandRequest.current !== expandRequest) setExpanded(true);
+    previousExpandRequest.current = expandRequest;
+  }, [expandRequest]);
+
+  useEffect(() => {
+    if (!mounted || !expanded || addingItem) return;
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.querySelector("input")?.focus();
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setExpanded(false);
+      }
+      if (event.key !== "Tab") return;
+      const controls = [...(dialogRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"], [contenteditable="true"]') ?? [])].filter((element) => element.getClientRects().length);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener("keydown", onKeyDown);
+      if (previous?.isConnected) previous.focus();
+      else expandRef.current?.focus();
+    };
+  }, [addingItem, expanded, mounted]);
 
   function updateStep(stepId, patch) {
     setSteps((current) => current.map((step) => step.id === stepId ? { ...step, ...patch } : step));
@@ -226,8 +272,7 @@ export default function BookProjectEditor({
     onDraftChange?.(draftProject);
   }, [draftProject, onDraftChange]);
 
-  return (
-    <>
+  const editor = (
       <div className="book-project-editor">
         <BookProjectSidebarTools
           project={draftProject}
@@ -254,6 +299,27 @@ export default function BookProjectEditor({
           <IconAddFeature size={17} /> Step 추가
         </button>
       </div>
+  );
+
+  return (
+    <>
+      <button ref={expandRef} type="button" className="btn-outline book-project-expand" onClick={() => setExpanded(true)}>프로젝트 크게 편집</button>
+      {!expanded && editor}
+      {mounted && expanded && createPortal(
+        <div className="modal-backdrop book-project-edit-backdrop" {...backdropClose(() => setExpanded(false))}>
+          <section ref={dialogRef} inert={addingItem ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">
+            <header className="modal-head">
+              <h3 id="book-project-dialog-title">{project ? "프로젝트 편집" : "프로젝트 만들기"}</h3>
+              <button type="button" className="btn-close" aria-label="패널로 돌아가기" onClick={() => setExpanded(false)}>×</button>
+            </header>
+            <div className="book-step-edit-modal-body">{editor}</div>
+            <footer className="book-item-edit-footer">
+              <button type="button" className="btn-outline" onClick={() => setExpanded(false)}>패널에서 계속 편집</button>
+              <button type="button" className="btn-primary" disabled={saving || !title.trim() || steps.length === 0} onClick={() => onSave({ title: title.trim(), steps })}>{saving ? "저장 중..." : "프로젝트 저장"}</button>
+            </footer>
+          </section>
+        </div>, document.body
+      )}
       {addingItem && addingStep && (
         <BookProjectItemEditModal
           project={draftProject}

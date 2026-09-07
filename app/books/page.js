@@ -139,7 +139,11 @@ function BooksPageInner() {
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
   useEffect(() => { setActivities([]); return subscribeBookActivities(classId, setActivities); }, [classId]);
-  useEffect(() => { setProject(null); return subscribeBookProject(classId, setProject); }, [classId]);
+  useEffect(() => {
+    setProject(null);
+    setEditingProject(false);
+    return subscribeBookProject(classId, setProject);
+  }, [classId]);
 
   useEffect(() => {
     if (!admin || !classId) {
@@ -256,6 +260,10 @@ function BooksPageInner() {
   }
 
   function openProjectEditor(appendStep = false, stepId = null) {
+    if (editingProject) {
+      setProjectEditorKey((current) => current + 1);
+      return;
+    }
     setAppendProjectStep(appendStep);
     setProjectEditorStepId(stepId);
     setProjectEditorKey((current) => current + 1);

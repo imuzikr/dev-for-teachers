@@ -566,3 +566,29 @@
     transition: none;
   }
 }
+.book-project-expand {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.book-project-edit-backdrop {
+  z-index: 1000;
+  align-items: center;
+  padding: 12px;
+}
+
+.book-project-edit-modal .book-project-title-field {
+  order: -1;
+}
+
+.book-project-edit-modal .book-project-save {
+  display: none;
+}
+
+.book-project-edit-modal .book-project-editor {
+  gap: 16px;
+}
+
+.book-project-edit-modal {
+  border-radius: 16px;
+}

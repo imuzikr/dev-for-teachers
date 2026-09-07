@@ -78,7 +78,8 @@ export default function BookWorkspace({
 
   useEffect(() => {
     if (!editingProject) setDraftProject(null);
-  }, [editingProject]);
+    else setLibraryCollapsed(false);
+  }, [editingProject, projectEditorKey]);
 
   useEffect(() => {
     if (!user?.uid || activities.length === 0) {
@@ -207,7 +208,8 @@ export default function BookWorkspace({
             <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
           ) : (
             <BookProjectPanel
-              key={projectEditorKey}
+              key={classId}
+              expandRequest={projectEditorKey}
               project={project}
               editing={editingProject}
               appendStep={appendProjectStep}
