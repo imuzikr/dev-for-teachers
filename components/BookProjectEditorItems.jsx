@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { orderedStepItems } from "./BookProjectPreview";
 import BasicFormatEditor from "./BasicFormatEditor";
+import ActivityTemplateSetting from "./ActivityTemplateSetting";
 import { IconChevronDown, IconChevronUp, IconTrash } from "./StatusIcons";
 
 function itemKey(kind, id) {
@@ -103,7 +104,9 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">
+              {!resource && <ActivityTemplateSetting enabled={source.templateEnabled === true} content={source.content} onChange={(templateEnabled) => onChange(entry.kind, source.id, { templateEnabled })} />}
               <BasicFormatEditor
+                templateEnabled={!resource && source.templateEnabled === true}
                 value={source.content || ""}
                 onChange={(content) => onChange(entry.kind, source.id, { content })}
                 placeholder={resource ? "" : "활동 안내사항"}

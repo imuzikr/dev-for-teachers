@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import BasicFormatEditor from "./BasicFormatEditor";
+import ActivityTemplateSetting from "./ActivityTemplateSetting";
 
 const EXPORT_SCOPE_LABELS = {
   project: "전체 Step",
@@ -152,6 +153,7 @@ export default function BookProjectItemEditModal({
   const [content, setContent] = useState(item?.content ?? "");
   const [url, setUrl] = useState(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
   const [requiresAnswer, setRequiresAnswer] = useState(item?.requiresAnswer !== false && !isCreating);
+  const [templateEnabled, setTemplateEnabled] = useState(item?.templateEnabled === true);
 
   useEffect(() => {
     setMounted(true);
@@ -162,7 +164,8 @@ export default function BookProjectItemEditModal({
     setContent(item?.content ?? "");
     setUrl(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
     setRequiresAnswer(item?.requiresAnswer !== false && !isCreating);
-  }, [isCreating, item?.id, item?.title, item?.content, item?.url, item?.bookUrl, item?.requiresAnswer, kind]);
+    setTemplateEnabled(item?.templateEnabled === true);
+  }, [isCreating, item?.id, item?.title, item?.content, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
 
   if (!mounted) return null;
 
@@ -175,7 +178,7 @@ export default function BookProjectItemEditModal({
       content,
       ...(kind === "resource"
         ? { url: trimmedUrl }
-        : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer }),
+        : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
     });
   }
 
@@ -241,7 +244,9 @@ export default function BookProjectItemEditModal({
               />
             )}
           </div>
+          {kind === "activity" && <ActivityTemplateSetting enabled={templateEnabled} content={content} onChange={setTemplateEnabled} />}
           <BasicFormatEditor
+            templateEnabled={kind === "activity" && templateEnabled}
             value={content}
             onChange={setContent}
             placeholder={kind === "activity" ? "활동 안내사항" : ""}

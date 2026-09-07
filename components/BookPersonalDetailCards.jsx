@@ -7,6 +7,7 @@ import { backdropClose } from "@/lib/modal";
 import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import RichTextDisplay from "./RichTextDisplay";
+import ActivityTemplate from "./ActivityTemplate";
 import { IconLock } from "./StatusIcons";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
@@ -188,6 +189,7 @@ export function BookPersonalActivityCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editingAnswer, setEditingAnswer] = useState(false);
+  const [templateValues, setTemplateValues] = useState({});
   const activity = detailItem.source;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey);
@@ -214,7 +216,9 @@ export function BookPersonalActivityCard({
       </header>
       <div className="book-personal-card-body">
         {detailUrlSlot(activityHref, activityLinkLabel)}
-        <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />
+        {!isTeacher && activity.templateEnabled === true && !locked ? (
+          <ActivityTemplate content={activity.content} values={templateValues} onChange={setTemplateValues} />
+        ) : <RichTextDisplay className="book-personal-instruction" html={activity.content} fallback="활동 안내사항" />}
       </div>
       {isTeacher && (onToggleActivityLock || onPresent) ? (
         <footer className="book-personal-card-actions">
@@ -258,6 +262,8 @@ export function BookPersonalActivityCard({
           index={index}
           response={response}
           isTeacher={isTeacher}
+          templateValues={templateValues}
+          onTemplateChange={setTemplateValues}
           onClose={() => setExpanded(false)}
         />
       )}

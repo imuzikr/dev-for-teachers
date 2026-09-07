@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
+import ActivityTemplate from "./ActivityTemplate";
 
 function modalUrlSlot(href, label) {
   if (href) {
@@ -22,7 +23,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, onClose }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose }) {
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
   const itemLabel = isResource ? "자료" : "활동";
@@ -47,6 +48,8 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {modalUrlSlot(href, linkLabel)}
           {locked ? (
             <p className="book-personal-expand-locked">교사가 {itemLabel}를 열면 확인할 수 있습니다.</p>
+          ) : !isTeacher && !isResource && item.templateEnabled === true ? (
+            <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} />
           ) : (
             <RichTextDisplay
               className="book-personal-expand-content"

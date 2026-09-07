@@ -611,3 +611,89 @@
   align-items: center;
   padding: 12px;
 }
+
+.activity-template-setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.activity-template-setting > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-template-setting input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  accent-color: var(--primary);
+}
+
+.activity-template-variables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--text-sub);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.activity-template {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.activity-template-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.activity-template-fields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.activity-template-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.activity-template-result {
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.activity-template > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+}
+
+.activity-template-status {
+  color: var(--text-sub);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.book-personal-expand-body .activity-template-result {
+  max-height: none;
+}

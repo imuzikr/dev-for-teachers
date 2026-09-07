@@ -68,6 +68,7 @@ export default function BasicFormatEditor({
   onChange,
   placeholder = "",
   disabled = false,
+  templateEnabled = false,
   ariaLabel = "서식 입력",
 }) {
   const areaRef = useRef(null);
@@ -116,6 +117,25 @@ export default function BasicFormatEditor({
     emitChange();
   }
 
+  function insertTemplateVariable() {
+    const area = areaRef.current;
+    const selection = window.getSelection();
+    if (!area || !selection || disabled) return;
+    const selected = selection.rangeCount && area.contains(selection.getRangeAt(0).commonAncestorContainer);
+    const label = selected ? selection.toString().replace(/^\{\{|\}\}$/g, "").trim() : "";
+    if (!selected) {
+      const range = document.createRange();
+      range.selectNodeContents(area);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    area.focus();
+    const name = label && !/[{}\r\n]/.test(label) && label.length <= 80 ? label : "입력값";
+    document.execCommand("insertText", false, `{{${name}}}`);
+    emitChange();
+  }
+
   function handlePaste(event) {
     const text = event.clipboardData?.getData("text/plain");
     if (text === undefined) return;
@@ -137,6 +157,7 @@ export default function BasicFormatEditor({
   return (
     <div className={`basic-format-editor${disabled ? " is-disabled" : ""}`}>
       <div className="basic-format-toolbar" aria-label="기본 서식 도구">
+        {templateEnabled && <button type="button" title="선택한 문구를 템플릿 변수로 지정" aria-label="템플릿 변수 삽입" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={insertTemplateVariable}>{"{}"}</button>}
         <button type="button" title="굵게" aria-label="굵게" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand("bold")} disabled={disabled}>
           <b>B</b>
         </button>
