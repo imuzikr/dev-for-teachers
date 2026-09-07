@@ -138,8 +138,8 @@ function BooksPageInner() {
   const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
-  useEffect(() => subscribeBookActivities(classId, setActivities), [classId]);
-  useEffect(() => subscribeBookProject(classId, setProject), [classId]);
+  useEffect(() => { setActivities([]); return subscribeBookActivities(classId, setActivities); }, [classId]);
+  useEffect(() => { setProject(null); return subscribeBookProject(classId, setProject); }, [classId]);
 
   useEffect(() => {
     if (!admin || !classId) {
