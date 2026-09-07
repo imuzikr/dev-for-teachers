@@ -11501,6 +11501,7 @@ button.book-project-flow-pill:focus-visible {
 .book-personal-expand-content,
 .book-personal-expand-locked,
 .book-personal-expand-response {
+  flex-shrink: 0;
   border-radius: 12px;
   background: var(--card-bg);
 }

@@ -44,7 +44,7 @@ function ConfirmButton({ confirmed, disabled, pending, onClick }) {
   return (
     <button
       type="button"
-      className={`btn-outline book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
+      className={`btn-primary book-personal-confirm${confirmed ? " is-confirmed" : ""}`}
       disabled={disabled || confirmed || pending}
       onClick={onClick}
     >
@@ -149,9 +149,7 @@ export function BookPersonalResourceCard({
         ) : (
           <>
             {detailUrlSlot(linkHref, linkLabel)}
-            <div className="book-personal-resource-content" aria-label="자료 본문">
-              <RichTextDisplay className="book-personal-resource-content-text" html={resource.content} />
-            </div>
+            <RichTextDisplay className="book-personal-instruction" html={resource.content} fallback="등록된 내용이 없습니다." />
           </>
         )}
       </div>

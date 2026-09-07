@@ -8,6 +8,7 @@ import {
   updateBookHelpNote,
 } from "@/lib/bookHelpNotes";
 import BasicFormatEditor from "./BasicFormatEditor";
+import BookHelpNoteModal from "./BookHelpNoteModal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
 
@@ -58,12 +59,26 @@ function HelpNoteFields({ draft, onChange, disabled }) {
 
 export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, onToggleCollapsed, onToast }) {
   const [notes, setNotes] = useState([]);
+  const [selectedNoteId, setSelectedNoteId] = useState("");
   const [expandedId, setExpandedId] = useState("");
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => subscribeBookHelpNotes(classId, setNotes), [classId]);
+  useEffect(() => {
+    setNotes([]);
+    setSelectedNoteId("");
+    setExpandedId("");
+    setEditingId("");
+    setDraft(EMPTY_DRAFT);
+    return subscribeBookHelpNotes(classId, (nextNotes) => {
+      setNotes(nextNotes);
+      setSelectedNoteId((currentId) => nextNotes.some((note) => note.id === currentId) ? currentId : "");
+    });
+  }, [classId]);
+
+  const currentNotes = notes.filter((note) => note.classId === classId);
+  const selectedNote = currentNotes.find((note) => note.id === selectedNoteId);
 
   function startNewNote() {
     setExpandedId("new");
@@ -72,6 +87,10 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
   }
 
   function toggleNote(note) {
+    if (!isTeacher) {
+      setSelectedNoteId(note.id);
+      return;
+    }
     const nextId = expandedId === note.id ? "" : note.id;
     setExpandedId(nextId);
     setEditingId("");
@@ -178,11 +197,11 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
         )}
 
         <div className="book-help-list">
-          {notes.length === 0 && (
+          {currentNotes.length === 0 && (
             <p className="book-help-empty">{isTeacher ? "아직 도움 글이 없습니다." : "선생님이 준비한 도움 글이 아직 없습니다."}</p>
           )}
-          {notes.map((note, index) => {
-            const open = expandedId === note.id;
+          {currentNotes.map((note, index) => {
+            const open = isTeacher && expandedId === note.id;
             const editing = editingId === note.id;
             const href = resourceHref(note.url);
             return (
@@ -191,7 +210,8 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
                   type="button"
                   className="book-help-item-button"
                   onClick={() => toggleNote(note)}
-                  aria-expanded={open}
+                  aria-expanded={isTeacher ? open : undefined}
+                  aria-haspopup={isTeacher ? undefined : "dialog"}
                 >
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <strong>{note.title || "제목 없는 도움 글"}</strong>
@@ -233,6 +253,9 @@ export default function BookHelpDrawer({ classId, user, isTeacher, collapsed, on
       </div>
 
       {collapsed && <span className="book-help-rail-label">도움 글</span>}
+      {!isTeacher && selectedNote && (
+        <BookHelpNoteModal note={selectedNote} onClose={() => setSelectedNoteId("")} />
+      )}
     </aside>
   );
 }
