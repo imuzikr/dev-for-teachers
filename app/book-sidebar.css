@@ -185,6 +185,16 @@
   color: var(--color-white);
 }
 
+.book-step-nav-item.is-active .book-step-nav-copy > span,
+.book-step-nav-item.is-active .book-step-nav-copy > strong {
+  color: var(--color-white);
+}
+
+.book-step-nav-item.is-active .book-step-nav-copy > small {
+  color: rgba(255, 255, 255, 0.86);
+  opacity: 1;
+}
+
 .book-step-nav-item > span {
   grid-row: 1 / 3;
   color: inherit;
