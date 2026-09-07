@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import ClassChangeModal from "./ClassChangeModal";
 import { setSelectedClassId } from "@/lib/classroom";
 import BookClassroomTools from "./BookClassroomTools";
 import BookWorkspace from "./BookWorkspace";
@@ -13,7 +14,7 @@ export default function BooksHome(props) {
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     exportingProject, onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
-    onExportProjectItem, loadProject,
+    onExportProjectItem, loadProject, joiningClass, onJoinClass,
   } = props;
   const stepTabs = useMemo(() => (
     (displayedProject?.steps ?? []).map((step, index) => ({
@@ -26,6 +27,8 @@ export default function BooksHome(props) {
     [allTeacherClasses, myClassesAll]
   );
   const [selectedStepId, setSelectedStepId] = useState(null);
+  const [changingClass, setChangingClass] = useState(false);
+  const closeClassChange = useCallback(() => setChangingClass(false), []);
 
   useEffect(() => {
     if (stepTabs.length === 0) {
@@ -71,6 +74,7 @@ export default function BooksHome(props) {
                       {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
                     </select>
                   ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
+                  {!admin && onJoinClass && <button type="button" className="btn-outline books-class-change" onClick={() => setChangingClass(true)}>반 변경</button>}
                   {!admin && stepTabs.length > 0 && (
                     <div className="books-step-tabs" aria-label="프로젝트 Step 선택">
                       {stepTabs.map((step) => {
@@ -158,6 +162,7 @@ export default function BooksHome(props) {
         onSelectStep={setSelectedStepId}
         onToast={onToast}
       />
+      {!admin && changingClass && <ClassChangeModal joining={joiningClass} onJoin={onJoinClass} onClose={closeClassChange} />}
     </main>
   );
 }

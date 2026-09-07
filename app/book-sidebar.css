@@ -593,3 +593,21 @@
   width: min(820px, calc(100vw - 24px));
   border-radius: 16px;
 }
+
+.books-class-change {
+  min-height: 36px;
+  padding: 0 14px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.class-change-modal {
+  width: min(440px, calc(100vw - 24px));
+  max-width: 440px;
+  border-radius: 16px;
+}
+
+.class-change-backdrop {
+  align-items: center;
+  padding: 12px;
+}

@@ -328,15 +328,17 @@ function BooksPageInner() {
   }
 
   async function handleJoinClass(code) {
-    if (!user?.uid || joiningClass) return;
+    if (!user?.uid || joiningClass) return false;
     setJoiningClass(true);
     try {
       const joinedClass = await joinClassByCode(code, user);
       setSelectedClassId(joinedClass.id);
       setToast(`${joinedClass.name ?? "우리 반"}에 참여했어요.`);
+      return true;
     } catch (error) {
       console.error("[책방] 반 참여 실패:", error);
       setToast("참여 코드를 확인하지 못했어요. 선생님이 알려 준 코드를 다시 입력해 주세요.");
+      return false;
     } finally {
       setJoiningClass(false);
     }
@@ -374,6 +376,7 @@ function BooksPageInner() {
         onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={setConfirmDelete}
         onExportProjectItem={handleExportProjectItem}
         loadProject={getBookProject}
+        joiningClass={joiningClass} onJoinClass={handleJoinClass}
       />
 
       <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />
