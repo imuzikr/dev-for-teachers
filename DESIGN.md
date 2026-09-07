@@ -56,6 +56,7 @@
 
 ## 5. States
 
+- 반·차시 관리의 운영 중/보관 목록 모두 기존 경고색 버튼과 휴지통 아이콘에 `삭제` 문구를 함께 표시한다. 삭제는 항목 이름과 삭제 범위를 보여 주는 기존 확인 모달을 거치며, 처리 중에는 해당 행의 삭제 명령을 비활성화한다.
 - Inputs keep visible focus rings using the existing primary color.
 - Start and admin login controls use real buttons, preserve keyboard submission, and do not rely on placeholder-only labeling.
 - On mobile, the entry controls wrap into a two-column grid with full-width buttons so Korean labels do not clip.

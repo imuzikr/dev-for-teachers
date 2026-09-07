@@ -17,6 +17,7 @@ export function ActiveClassRow({
   onSaveJoinCode,
   onToast,
   onArchive,
+  onDelete,
 }) {
   return (
     <li className="class-mgr-row">
@@ -69,6 +70,16 @@ export function ActiveClassRow({
         >
           보관
         </button>
+        <button
+          type="button"
+          className="btn-ghost class-mgr-delete"
+          onClick={() => onDelete({ id: classItem.id, name: classItem.name })}
+          disabled={busy}
+          aria-label={`${classItem.name} 삭제`}
+          title="완전히 삭제(되돌릴 수 없음)"
+        >
+          <IconTrash size={15} /> 삭제
+        </button>
       </div>
     </li>
   );
@@ -107,9 +118,10 @@ export function ArchivedClassRow({
           className="btn-ghost class-mgr-delete"
           onClick={() => onDelete({ id: classItem.id, name: classItem.name })}
           disabled={busy}
+          aria-label={`${classItem.name} 삭제`}
           title="완전히 삭제(되돌릴 수 없음)"
         >
-          <IconTrash size={15} />
+          <IconTrash size={15} /> 삭제
         </button>
       </div>
     </li>

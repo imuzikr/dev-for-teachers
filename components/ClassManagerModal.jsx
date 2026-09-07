@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================
-// 반 관리하기 — 새 반 만들기 · 이름 수정 · 보관 · (보관된 반) 복원·삭제
+// 반·차시 관리하기 — 만들기 · 이름 수정 · 보관 · 복원 · 삭제
 // -------------------------------------------------------------
 // =============================================================
 import { useState } from "react";
@@ -189,16 +189,16 @@ export default function ClassManagerModal({
   }
 
   async function handleDelete() {
-    if (!confirmDelete) return;
+    if (!confirmDelete || busyId) return;
     const { id, name } = confirmDelete;
     setConfirmDelete(null);
     setBusyId(id);
     setError("");
     try {
       await deleteClass(id);
-      onToast?.(`'${name}' ${unitLabel}을 완전히 삭제했어요.`);
+      onToast?.(`${unitLabel} '${name}' 삭제를 완료했어요.`);
     } catch {
-      setError(`${unitLabel}을 삭제하지 못했어요.`);
+      setError(`${unitLabel} 삭제에 실패했어요. 다시 시도해 주세요.`);
     } finally {
       setBusyId(null);
     }
@@ -257,6 +257,7 @@ export default function ClassManagerModal({
                   onSaveJoinCode={handleSaveJoinCode}
                   onToast={onToast}
                   onArchive={handleArchive}
+                  onDelete={setConfirmDelete}
                 />
               ))}
             </ul>
@@ -286,8 +287,9 @@ export default function ClassManagerModal({
 
       {confirmDelete && (
         <ConfirmModal
-          title={`'${confirmDelete.name}' ${unitLabel}을 완전히 삭제할까요?`}
-          description={`보드·카드 등 이 ${unitLabel}의 모든 데이터가 영구히 사라지고 되돌릴 수 없어요.`}
+          title={`${unitLabel} 삭제`}
+          preview={confirmDelete.name}
+          description={<span style={{ wordBreak: "keep-all" }}>프로젝트, 활동과 답변, 자료, 참여 정보가 삭제됩니다. 되돌릴 수 없어요.</span>}
           confirmLabel="삭제"
           danger
           onConfirm={handleDelete}
