@@ -23,6 +23,7 @@ export default function BookClassroomTools({
   roster,
   onSelectClass,
   onToast,
+  onOpenProgress,
 }) {
   const [classManagerOpen, setClassManagerOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -80,6 +81,7 @@ export default function BookClassroomTools({
             {unitLabel} 관리하기
           </button>
         )}
+        {isTeacher && onOpenProgress && <button type="button" className="btn-ghost" disabled={!classId} onClick={onOpenProgress}>전체 진행률</button>}
       </div>
 
       {classManagerOpen && (

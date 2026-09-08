@@ -28,6 +28,9 @@ export default function BooksHome(props) {
   );
   const [selectedStepId, setSelectedStepId] = useState(null);
   const [changingClass, setChangingClass] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
+  const closeProgress = useCallback(() => setProgressOpen(false), []);
+  useEffect(() => { setProgressOpen(false); }, [classId, displayedProject?.id, admin]);
   const closeClassChange = useCallback(() => setChangingClass(false), []);
 
   useEffect(() => {
@@ -104,6 +107,7 @@ export default function BooksHome(props) {
                     roster={roster}
                     onSelectClass={onSelectTeacherClass}
                     onToast={onToast}
+                    onOpenProgress={() => setProgressOpen(true)}
                   />
                 </div>
                 {admin && classId && (
@@ -139,6 +143,9 @@ export default function BooksHome(props) {
         )}
         activities={visibleActivities}
         participants={participants}
+        progressOpen={progressOpen}
+        onCloseProgress={closeProgress}
+        className={currentClass?.name ?? ""}
         user={user}
         isTeacher={admin}
         hasClass={!!classId}

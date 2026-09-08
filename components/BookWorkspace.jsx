@@ -6,6 +6,7 @@ import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations }
 import { currentChecklistConfirmation } from "@/lib/activityChecklist";
 import { safeDisplayHtml } from "@/lib/html";
 import BookHelpDrawer from "./BookHelpDrawer";
+import BookClassProgressModal from "./BookClassProgressModal";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import { BookImagePresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
@@ -23,6 +24,9 @@ export default function BookWorkspace({
   header,
   activities,
   participants,
+  progressOpen,
+  onCloseProgress,
+  className,
   user,
   isTeacher,
   hasClass,
@@ -280,6 +284,13 @@ export default function BookWorkspace({
           onSelectStep={onSelectStep}
         />
         {bookPresentation.modal}
+        {isTeacher && progressOpen && <BookClassProgressModal
+          className={className}
+          participants={participants}
+          sections={sections}
+          progressByUser={confirmedItemsByUser}
+          onClose={onCloseProgress}
+        />}
       </section>
       <BookHelpDrawer
         classId={classId}
