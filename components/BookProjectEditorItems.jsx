@@ -11,7 +11,7 @@ function itemKey(kind, id) {
   return `${kind}:${id}`;
 }
 
-export default function BookProjectEditorItems({ step, onChange, onRemove, onMove, onImageBusyChange, disabled = false }) {
+export default function BookProjectEditorItems({ step, onChange, onRemove, onMove, onAdd, onImageBusyChange, disabled = false }) {
   const [draggingKey, setDraggingKey] = useState(null);
   const items = orderedStepItems(step);
 
@@ -114,16 +114,22 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 ariaLabel={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
               />
               <BookItemImageEditor disabled={disabled} onBusyChange={(busy) => onImageBusyChange?.(key, busy)} images={source.images || []} imageSizes={source.imageSizes} onChange={(images, imageSizes) => onChange(entry.kind, source.id, { images, imageSizes })} />
-              <input
-                value={resource ? source.url || "" : source.bookUrl || source.url || ""}
-                onChange={(event) => {
-                  const url = event.target.value;
-                  onChange(entry.kind, source.id, resource ? { url } : { url, bookUrl: url });
-                }}
-                placeholder={resource ? "자료 링크 URL (선택)" : "활동 링크 URL (선택)"}
-                aria-label={`${label} ${index + 1} 링크 URL`}
-                type="url"
-              />
+              <div className={onAdd && index === items.length - 1 ? "book-step-add-actions book-step-item-action-row" : "book-step-item-url-row"}>
+                {onAdd && index === items.length - 1 && <>
+                  <button type="button" className="btn-ghost" disabled={disabled} onClick={() => onAdd("activity")}>+ 활동 추가</button>
+                  <button type="button" className="btn-ghost" disabled={disabled} onClick={() => onAdd("resource")}>+ 자료 추가</button>
+                </>}
+                <input
+                  value={resource ? source.url || "" : source.bookUrl || source.url || ""}
+                  onChange={(event) => {
+                    const url = event.target.value;
+                    onChange(entry.kind, source.id, resource ? { url } : { url, bookUrl: url });
+                  }}
+                  placeholder={resource ? "자료 링크 URL" : "활동 링크 URL"}
+                  aria-label={`${label} ${index + 1} 링크 URL`}
+                  type="url"
+                />
+              </div>
             </div>
           </article>
         );

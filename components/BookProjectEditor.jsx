@@ -274,11 +274,12 @@ export default function BookProjectEditor({
           onChange={(kind, id, patch) => updateItem(step.id, kind, id, patch)}
           onRemove={(kind, id) => removeItem(step.id, kind, id)}
           onMove={(fromKey, toKey) => moveItem(step.id, fromKey, toKey)}
+          onAdd={(kind) => openAddItemModal(step.id, kind)}
         />
-        <div className="book-step-add-actions">
+        {step.activities.length + step.resources.length === 0 && <div className="book-step-add-actions">
           <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "activity")}>+ 활동 추가</button>
           <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "resource")}>+ 자료 추가</button>
-        </div>
+        </div>}
         <button
           type="button"
           className="btn-primary book-step-save"

@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Step editors place the two add commands and the last item's URL input in one equal-width, three-column row, ordered activity add, resource add, URL. Controls are 48px high with 8px gaps and corners; body editors use the full available width. Other items retain their own URL field, and empty Steps retain the two add commands without a URL field.
+
 - Activity and resource card headers use 16px status, image, and expansion icons centered in equal 28px slots with 4px gaps (44px slots for coarse pointers). All icons share a center line without decorative backgrounds or borders. Confirmation status is an outline square when unconfirmed and a checked square in the existing completed green when confirmed. Status icons remain read-only with tooltip and accessible labels; locked items retain the lock icon.
 
 - 학생 왼쪽 패널은 현재 선택된 Step의 활동·자료만 표시한다. Step 목록으로 돌아가거나 다른 Step으로 바꾸어 선택 항목이 범위를 벗어나면 저장된 패널 선택도 지워 빈 패널을 유지한다. 같은 Step 내 항목 전환은 기존 콘텐츠 120ms 퇴장 후 새 콘텐츠 240ms 등장으로 이어지며 빠르게 연속 선택하면 마지막 항목만 표시한다. 패널 재오픈은 입력 상태를 유지하고, 항목 교체는 스크롤을 처음으로 되돌린다. 오른쪽 도움 글은 학생 화면에서도 그리드 열 안에서 중앙 폭을 밀어내며, 중앙 콘텐츠의 스크롤은 그 열 내부에서 처리한다. 교사 중앙 활동 카드의 잠금 버튼은 12px 글자와 줄바꿈 금지로 한 줄을 유지한다.

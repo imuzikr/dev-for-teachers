@@ -10415,7 +10415,7 @@ pre code {
 
 .book-step-edit-modal .book-step-item-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.36fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 
@@ -10428,8 +10428,25 @@ pre code {
   max-height: 420px;
 }
 
-.book-step-edit-modal .book-step-item-fields > input {
-  min-height: 46px;
+.book-step-item-url-row > input {
+  width: 100%;
+}
+.book-step-item-action-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+.book-step-item-action-row > input,
+.book-step-item-action-row > .btn-ghost {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .book-step-modal-add-actions {

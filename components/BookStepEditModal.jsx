@@ -156,11 +156,13 @@ export default function BookStepEditModal({ project, step, stepNumber, saving, o
             onChange={updateItem}
             onRemove={removeItem}
             onMove={moveItem}
+            onAdd={setAddingItem}
+            disabled={saving}
           />
-          <div className="book-step-add-actions book-step-modal-add-actions">
+          {activities.length + resources.length === 0 && <div className="book-step-add-actions book-step-modal-add-actions">
             <button type="button" className="btn-ghost" onClick={() => setAddingItem("activity")}>+ 활동 추가</button>
             <button type="button" className="btn-ghost" onClick={() => setAddingItem("resource")}>+ 자료 추가</button>
-          </div>
+          </div>}
         </div>
         <footer className="book-item-edit-footer">
           <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
