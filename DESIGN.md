@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Activity and resource card confirmation status uses a fixed 16px outline square when unconfirmed and a checked square when confirmed, with the existing completed green color. Status icons are read-only, retain tooltip and accessible state labels, and preserve the lock icon for locked items.
+
 - 학생 왼쪽 패널은 현재 선택된 Step의 활동·자료만 표시한다. Step 목록으로 돌아가거나 다른 Step으로 바꾸어 선택 항목이 범위를 벗어나면 저장된 패널 선택도 지워 빈 패널을 유지한다. 같은 Step 내 항목 전환은 기존 콘텐츠 120ms 퇴장 후 새 콘텐츠 240ms 등장으로 이어지며 빠르게 연속 선택하면 마지막 항목만 표시한다. 패널 재오픈은 입력 상태를 유지하고, 항목 교체는 스크롤을 처음으로 되돌린다. 오른쪽 도움 글은 학생 화면에서도 그리드 열 안에서 중앙 폭을 밀어내며, 중앙 콘텐츠의 스크롤은 그 열 내부에서 처리한다. 교사 중앙 활동 카드의 잠금 버튼은 12px 글자와 줄바꿈 금지로 한 줄을 유지한다.
 
 - 학생 활동 패널은 기존 400ms 열 너비 전환과 함께 본문을 120ms 지연 후 240ms 동안 페이드·가로 이동(12px)으로 펼친다. 접을 때는 120ms 동안 사라지며 접힌 콘텐츠는 키보드와 보조 기술에서 제외한다. 열린 패널에서 다른 항목을 선택하면 새 콘텐츠가 240ms 페이드·세로 이동(8px)으로 나타난다. 전체 상세(제목·URL·본문·답변·저장)는 `--border` 1px 테두리, `--card-bg` 배경, 8px 모서리, 16px 안쪽 여백의 하나의 사각형 카드로 감싼다. 움직임 줄이기에서는 모든 학생 패널 전환을 생략한다.

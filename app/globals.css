@@ -11533,6 +11533,14 @@ button.book-project-flow-pill:focus-visible {
   white-space: nowrap;
 }
 .book-personal-card-head-actions > em.is-done { color: var(--primary-dark); font-weight: 800; }
+.book-personal-card-head-actions > em[role="img"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
 .book-personal-card-head-actions > em.is-locked { color: var(--danger); font-weight: 800; }
 .book-personal-activity-card.is-locked {
   background: var(--soft-bg);
