@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { uploadImage } from "@/lib/storageUpload";
 import { BOOK_ITEM_IMAGE_LIMIT as MAX_IMAGES, BOOK_ITEM_IMAGE_MAX_CHARS as MAX_IMAGE_CHARACTERS } from "@/lib/bookProjectImages";
 import "./BookItemImageEditor.css";
 
 export default function BookItemImageEditor({ images = [], onChange, disabled = false, onBusyChange }) {
   const inputRef = useRef(null);
+  const helpId = useId();
+  const [dragging, setDragging] = useState(false);
   const mountedRef = useRef(false);
   const busyRef = useRef(false);
   const onChangeRef = useRef(onChange);
@@ -24,9 +26,7 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
     };
   }, []);
 
-  async function attachFiles(event) {
-    const files = [...(event.target.files || [])];
-    event.target.value = "";
+  async function attachFiles(files) {
     if (!files.length || busyRef.current || disabled) return;
     setError("");
     if (images.length + files.length > MAX_IMAGES) {
@@ -63,6 +63,33 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
     }
   }
 
+  function handlePaste(event) {
+    const files = [...(event.clipboardData?.items ?? [])]
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile()).filter(Boolean);
+    if (!files.length) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void attachFiles(files);
+  }
+
+  function handleDragOver(event) {
+    if (![...(event.dataTransfer?.types ?? [])].includes("Files")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = disabled || busyRef.current ? "none" : "copy";
+    setDragging(!disabled && !busyRef.current);
+  }
+
+  function handleDrop(event) {
+    setDragging(false);
+    const files = [...(event.dataTransfer?.files ?? [])];
+    if (!files.length) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void attachFiles(files);
+  }
+
   function moveImage(index, offset) {
     const next = [...images];
     [next[index], next[index + offset]] = [next[index + offset], next[index]];
@@ -70,21 +97,31 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
   }
 
   return (
-    <section className="book-item-images" aria-label="첨부 이미지" aria-busy={busy}>
+    <section className={`book-item-images${dragging ? " is-dragging" : ""}`} aria-label="첨부 이미지" aria-busy={busy}
+      tabIndex={disabled ? -1 : 0} aria-disabled={disabled || busy} aria-describedby={helpId}
+      onPaste={handlePaste} onDragEnter={handleDragOver} onDragOver={handleDragOver} onDrop={handleDrop}
+      onDragLeave={(event) => {
+        if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDragging(false);
+      }}
+    >
       <div className="book-item-images-head">
         <span>이미지 {images.length}/{MAX_IMAGES}</span>
         <button type="button" className="btn-outline" disabled={disabled || busy || images.length >= MAX_IMAGES} onClick={() => inputRef.current?.click()}>
           {busy ? "이미지 준비 중…" : "이미지 첨부"}
         </button>
-        <input ref={inputRef} type="file" accept="image/*" multiple hidden aria-label="첨부 이미지 선택" onChange={attachFiles} />
+        <input ref={inputRef} type="file" accept="image/*" multiple hidden aria-label="첨부 이미지 선택" onChange={(event) => {
+          const files = [...(event.target.files ?? [])];
+          event.target.value = "";
+          void attachFiles(files);
+        }} />
       </div>
-      <p className="book-item-images-help">여러 장을 함께 선택할 수 있어요. 아래 순서대로 발표합니다.</p>
+      <p id={helpId} className="book-item-images-help">이미지를 여기로 끌어 놓거나, 이 영역을 클릭한 뒤 Ctrl+V / ⌘V로 붙여넣으세요. 여러 장도 가능해요.</p>
       {error && <p className="book-item-images-error" role="alert">{error}</p>}
       {images.length > 0 && (
         <ol className="book-item-images-list">
           {images.map((image, index) => (
             <li key={`${index}:${image.slice(-32)}`}>
-              <img src={image} alt={`첨부 이미지 ${index + 1}`} />
+              <img draggable={false} src={image} alt={`첨부 이미지 ${index + 1}`} />
               <div className="book-item-images-controls">
                 <span>{index + 1}</span>
                 <button type="button" disabled={disabled || busy || index === 0} aria-label={`이미지 ${index + 1} 앞으로 이동`} onClick={() => moveImage(index, -1)}>←</button>

@@ -11,3 +11,6 @@
 .book-item-images-controls button { min-width: 32px; min-height: 44px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--card-bg); color: var(--text); font-size: 12px; }
 .book-item-images-controls button:disabled { opacity: .4; cursor: default; }
 .book-item-images-controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.book-item-images:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.book-item-images.is-dragging { border-color: var(--primary); background: var(--primary-light); }
+.book-item-images-help { word-break: keep-all; overflow-wrap: anywhere; }
