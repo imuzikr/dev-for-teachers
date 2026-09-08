@@ -14402,3 +14402,23 @@ button.book-project-flow-pill:focus-visible {
     transition: none;
   }
 }
+
+.book-personal-card-head-actions > .book-card-expand-btn,
+.book-project-detail-actions .book-card-expand-btn {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text-sub);
+}
+.book-personal-card-head-actions > .book-card-expand-btn:hover,
+.book-project-detail-actions .book-card-expand-btn:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--primary-dark);
+}
+.book-card-expand-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.book-card-expand-btn svg { width: 14px; height: 14px; }
+.book-card-expand-btn svg path { stroke-width: 1.6; }

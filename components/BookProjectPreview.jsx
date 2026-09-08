@@ -152,7 +152,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
             <BookItemImageIndicator images={item.images} />
             {onPreview && (
-              <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 크게 편집`} aria-label={`${itemLabel} 크게 편집`} onClick={onPreview}>
+              <button type="button" className="btn-ghost book-project-icon-action book-card-expand-btn" title={`${itemLabel} 크게 편집`} aria-label={`${itemLabel} 크게 편집`} onClick={onPreview}>
                 <IconExpand />
               </button>
             )}
