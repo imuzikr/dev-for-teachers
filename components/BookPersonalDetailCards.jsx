@@ -7,6 +7,7 @@ import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { IconLock } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
+import { BookItemImageIndicator } from "./BookItemImages";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
   return (entriesByActivity[activityId] ?? []).find((entry) => entry.authorId === uid) ?? null;
@@ -82,6 +83,7 @@ export function BookPersonalResourceCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
+          {isTeacher && <BookItemImageIndicator images={resource.images} />}
           {!isTeacher && <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인됨" : "미확인"}</em>}
           {isTeacher && <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
@@ -171,6 +173,7 @@ export function BookPersonalActivityCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
+          {isTeacher && <BookItemImageIndicator images={activity.images} />}
           <em className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : undefined}>{locked ? <IconLock size={13} /> : confirmed ? "확인됨" : "미확인"}</em>
           <button type="button" className="btn-ghost book-personal-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
             <IconExpand />

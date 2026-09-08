@@ -20,3 +20,18 @@ export default function BookItemImages({ images, onPresent }) {
     </section>
   );
 }
+
+export function BookItemImageIndicator({ images }) {
+  const count = Array.isArray(images) ? images.filter(safeBookImageUrl).length : 0;
+  if (!count) return null;
+  const label = `첨부 이미지 ${count}장`;
+  return (
+    <span className="book-item-image-indicator" role="img" aria-label={label} title={label}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.6" />
+        <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.6" />
+        <path d="m21 15-5-5L5 21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}

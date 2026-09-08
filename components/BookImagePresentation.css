@@ -17,3 +17,5 @@
 .book-presentation-image--medium { width: 70%; height: 70%; }
 .book-presentation-image--small { width: 45%; height: 45%; }
 .book-presentation-foot button:disabled { opacity: .45; cursor: not-allowed; }
+
+.book-item-image-indicator { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 14px; width: 14px; height: 14px; color: var(--text-sub); }

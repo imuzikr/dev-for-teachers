@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { stripHtml } from "@/lib/html";
 import RichTextDisplay from "./RichTextDisplay";
+import { BookItemImageIndicator } from "./BookItemImages";
 import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
 
 function IconEdit({ size = 16 }) {
@@ -149,6 +150,7 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
           <span className="book-project-detail-kind">{itemLabel}</span>
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
+            <BookItemImageIndicator images={item.images} />
             {onPreview && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 크게 편집`} aria-label={`${itemLabel} 크게 편집`} onClick={onPreview}>
                 <IconExpand />
