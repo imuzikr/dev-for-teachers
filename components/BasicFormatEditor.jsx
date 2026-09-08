@@ -85,7 +85,7 @@ function checklistItemHtml(text = "확인할 일") {
   return `<ul class="rte-checklist"><li><label><input type="checkbox"> <span class="rte-checklist-text">${safeText}</span></label></li></ul>`;
 }
 
-function checklistLabel(checked = false, nodes = [document.createTextNode(" ")]) {
+function checklistLabel(checked = false, nodes = [document.createElement("br")]) {
   const input = document.createElement("input");
   const label = document.createElement("label");
   const text = document.createElement("span");
@@ -180,11 +180,11 @@ export default function BasicFormatEditor({
   function emitChange() {
     const area = areaRef.current;
     if (!area) return;
-    normalizeEditorHtml(area);
-    removeEmptySizeClasses(area);
     syncChecklistCheckboxAttrs(area);
-    const nextHtml = sanitizeHtml(area.innerHTML);
-    if (area.innerHTML !== nextHtml) area.innerHTML = nextHtml;
+    const snapshot = area.cloneNode(true);
+    normalizeEditorHtml(snapshot);
+    removeEmptySizeClasses(snapshot);
+    const nextHtml = sanitizeHtml(snapshot.innerHTML);
     lastHtmlRef.current = nextHtml;
     setActiveSize(detectWholeTextSize(nextHtml));
     onChange?.(nextHtml);
@@ -260,18 +260,22 @@ export default function BasicFormatEditor({
   }
 
   function handleKeyDown(event) {
-    if (event.nativeEvent.isComposing || disabled || event.key !== "Enter") return;
+    if (event.nativeEvent.isComposing || event.keyCode === 229 || disabled || event.key !== "Enter") return;
     const area = areaRef.current;
     const selection = window.getSelection();
     const item = area && selection ? closestElement(selection.anchorNode, "li", area) : null;
     const list = item?.parentElement;
     if (!item || !list?.classList.contains("rte-checklist")) return;
 
+    if (event.shiftKey) return;
     event.preventDefault();
     if (!checklistItemText(item)) {
       const exit = document.createElement("div");
       exit.innerHTML = "<br>";
+      const remaining = list.cloneNode(false);
+      while (item.nextSibling) remaining.append(item.nextSibling);
       list.after(exit);
+      if (remaining.childNodes.length) exit.after(remaining);
       item.remove();
       if (!list.querySelector("li")) list.remove();
       moveCaretToEnd(exit);
@@ -279,11 +283,24 @@ export default function BasicFormatEditor({
       return;
     }
 
+    const range = selection.getRangeAt(0);
+    const text = item.querySelector(".rte-checklist-text");
+    if (!text || !text.contains(range.startContainer) || !text.contains(range.endContainer)) return;
+    range.deleteContents();
+    const tail = range.cloneRange();
+    tail.setEnd(text, text.childNodes.length);
+    const remainder = tail.extractContents();
+    if (!text.textContent && !text.querySelector("br")) text.append(document.createElement("br"));
+    if (!remainder.textContent && !remainder.querySelector("br")) remainder.append(document.createElement("br"));
     const nextItem = document.createElement("li");
-    const label = checklistLabel();
+    const label = checklistLabel(false, [...remainder.childNodes]);
     nextItem.append(label);
     item.after(nextItem);
-    moveCaretInsideText(label.querySelector(".rte-checklist-text"));
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(label.querySelector(".rte-checklist-text"));
+    nextRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
     emitChange();
   }
 
