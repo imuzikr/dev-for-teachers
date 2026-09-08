@@ -61,7 +61,7 @@
 
 ## 5. States
 
-- Teacher whole-class progress opens from the class-management toolbar in a viewport-sized modal (up to 1800px wide, 88dvh high), independent of roster size. Steps are rows, students are fixed 88px columns, with a 160px sticky Step column and sticky student headers. Horizontal scrolling supports 100 or more students without truncating the roster. Reuse sidebar confirmation squares, participant colors, and the single last-completed green light. The modal is read-only, shares live workspace progress, handles empty rosters/Steps, traps keyboard focus, restores focus, and closes with Escape or backdrop.
+- Teacher whole-class progress uses the supplied scoreboard structure: each activity/resource is a row grouped by Step, with a sticky 220px label column (144px mobile) and one 20px square per student in 24px columns. Compact numbered column headers and square tooltips identify students. Confirmed cells use sage #8cb78d/#78a67b, unconfirmed cells use resource surface/border tokens, locked cells use #d1d0ca/#eeede8 diagonal stripes, and the last completed item retains one green light per student. The viewport-sized modal (up to 1800px, 88dvh) remains independent of roster size, supports all students via scrolling, shares live progress, and preserves focus handling and empty states.
 
 - Step editors place the two add commands and the last item's URL input in one equal-width, three-column row, ordered activity add, resource add, URL. Controls are 48px high with 8px gaps and corners; body editors use the full available width. Other items retain their own URL field, and empty Steps retain the two add commands without a URL field.
 

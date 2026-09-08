@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
-import { progressItems, STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
+import { progressItems } from "./bookProgressItems";
 
 export default function BookClassProgressModal({ className, participants, sections, progressByUser, onClose }) {
   const titleId = useId();
@@ -15,13 +15,12 @@ export default function BookClassProgressModal({ className, participants, sectio
     ...section,
     cells: items.filter((item) => item.sectionIndex === index),
   })), [items, sections]);
-  const students = useMemo(() => participants.map((participant, index) => {
+  const students = useMemo(() => participants.map((participant) => {
     const completed = progressByUser.get(participant.uid) ?? new Set();
     const checkedItems = items.filter((item) => completed.has(item.key));
     return {
       ...participant,
       label: participant.realName || participant.displayName || participant.name || "이름 미설정",
-      color: STUDENT_PROGRESS_COLORS[index % STUDENT_PROGRESS_COLORS.length],
       completed,
       count: checkedItems.length,
       lastKey: checkedItems.at(-1)?.key,
@@ -59,6 +58,11 @@ export default function BookClassProgressModal({ className, participants, sectio
           <div><h2 id={titleId}>전체 진행률</h2><p>{className}{className ? " · " : ""}{students.length}명 · {sections.length} Steps</p></div>
           <button type="button" className="btn-close" aria-label="닫기" onClick={onClose}>×</button>
         </header>
+        <div className="book-class-progress-legend" aria-label="확인 상태 범례">
+          <span><i className="book-score-cell is-filled" />확인함</span>
+          <span><i className="book-score-cell" />미확인</span>
+          <span><i className="book-score-cell is-locked" />잠김</span>
+        </div>
         {students.length === 0 || rows.length === 0 ? (
           <p className="book-class-progress-empty">{students.length === 0 ? "참여한 학생이 없습니다." : "등록된 Step이 없습니다."}</p>
         ) : (
@@ -66,25 +70,30 @@ export default function BookClassProgressModal({ className, participants, sectio
             <table className="book-class-progress-table">
               <caption className="sr-only">학생별 활동과 자료 확인 상태</caption>
               <thead><tr>
-                <th scope="col">Step / 학생</th>
-                {students.map((student) => <th scope="col" key={student.uid} style={{ "--student-progress-color": student.color }}>
-                  <span title={`${student.label}${student.school ? ` · ${student.school}` : ""}`}>{student.label}</span>
-                  <small>{student.count}/{items.length}</small>
+                <th scope="col">활동 · 자료</th>
+                {students.map((student, index) => <th scope="col" key={student.uid} title={`${student.label} · ${student.count}/${items.length}`} aria-label={`${student.label} · ${student.count}/${items.length}`}>
+                  {index + 1}
                 </th>)}
               </tr></thead>
-              <tbody>{rows.map((row, rowIndex) => <tr key={row.id}>
-                <th scope="row"><small>STEP {rowIndex + 1}</small><strong>{row.title}</strong></th>
-                {students.map((student) => <td key={student.uid} style={{ "--student-progress-color": student.color }}>
-                  {row.cells.length === 0 ? <span aria-label="등록된 항목 없음">-</span> : <ol className="book-class-progress-cells" aria-label={`${student.label}, ${row.title}`}>
-                    {row.cells.map((item) => {
+              {rows.map((row, rowIndex) => <tbody key={row.id}>
+                {row.cells.length === 0 ? <tr><th scope="row"><small>STEP {rowIndex + 1}</small><strong>{row.title}</strong></th><td colSpan={students.length}>등록된 항목 없음</td></tr> : row.cells.map((item, itemIndex) => {
+                  const locked = item.source?.locked === true;
+                  const count = students.filter((student) => student.completed.has(item.key)).length;
+                  return <tr key={item.key} className={itemIndex === 0 ? "is-step-start" : undefined}>
+                    <th scope="row" title={`${row.title} · ${item.title}`}>
+                      {itemIndex === 0 && <small>STEP {rowIndex + 1} · {row.title}</small>}
+                      <div className="book-score-row-meta"><span>{item.kind === "activity" ? "활동" : "자료"} {item.itemIndex + 1}</span><span>{count}/{students.length}</span></div>
+                      <strong>{item.title}</strong>
+                    </th>
+                    {students.map((student) => {
                       const checked = student.completed.has(item.key);
                       const latest = item.key === student.lastKey;
-                      const label = `${item.kind === "activity" ? "활동" : "자료"} ${item.itemIndex + 1}: ${item.title}, ${checked ? "확인함" : "미확인"}${latest ? ", 마지막 완료" : ""}`;
-                      return <li key={item.key} className={`book-help-progress-cell${checked ? " is-filled" : ""}`} title={label} aria-label={label}>{latest && <span aria-hidden="true" />}</li>;
+                      const label = `${student.label} · ${item.title} · ${checked ? "확인함" : "미확인"}${locked ? " · 잠김" : ""}${latest ? " · 마지막 완료" : ""}`;
+                      return <td key={student.uid}><span role="img" className={`book-score-cell${checked ? " is-filled" : ""}${locked ? " is-locked" : ""}`} title={label} aria-label={label}>{latest && <span className="book-score-latest" aria-hidden="true" />}</span></td>;
                     })}
-                  </ol>}
-                </td>)}
-              </tr>)}</tbody>
+                  </tr>;
+                })}
+              </tbody>)}
             </table>
           </div>
         )}

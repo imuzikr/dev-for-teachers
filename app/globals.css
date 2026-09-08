@@ -10810,8 +10810,6 @@ pre code {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
   isolation: isolate;
 }
 .book-class-progress-scroll:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -10825,36 +10823,43 @@ pre code {
 .book-class-progress-table th,
 .book-class-progress-table td {
   box-sizing: border-box;
-  width: 88px;
-  min-width: 88px;
-  max-width: 88px;
-  padding: 12px 8px;
-  vertical-align: top;
-  text-align: left;
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: var(--card-bg);
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
+  padding: 6px 2px;
+  vertical-align: middle;
+  text-align: center;
+  background: #fff;
 }
 .book-class-progress-table thead th { position: sticky; top: 0; z-index: 2; background: var(--bg-deep); }
 .book-class-progress-table th:first-child {
   position: sticky;
   left: 0;
   z-index: 1;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  text-align: left;
+  padding: 8px 12px;
   background: var(--bg-deep);
 }
 .book-class-progress-table thead th:first-child { z-index: 3; }
-.book-class-progress-table th span,
-.book-class-progress-table th strong { display: block; overflow-wrap: anywhere; line-height: 1.5; }
+.book-class-progress-table th strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; font-weight: 500; }
 .book-class-progress-table th small { display: block; margin-top: 4px; color: var(--text-sub); font-size: 11px; }
-.book-class-progress-table thead th:not(:first-child) { border-top: 3px solid var(--student-progress-color); }
-.book-class-progress-cells { display: grid; grid-template-columns: repeat(4, 14px); gap: 6px 3px; list-style: none; padding: 4px 0; margin: 0; }
+.book-class-progress-table thead th { font-size: 10px; color: var(--text-sub); }
+.book-class-progress-table tbody + tbody tr:first-child > * { border-top: 8px solid #fff; }
+.book-score-row-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--primary-dark); }
+.book-score-cell { position: relative; display: inline-block; vertical-align: middle; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--resource-border); background: var(--resource-light); }
+.book-score-cell.is-filled { background: #8cb78d; border-color: #78a67b; }
+.book-score-cell.is-locked { border-color: var(--border); background: repeating-linear-gradient(45deg, #d1d0ca 0 3px, #eeede8 3px 6px); }
+.book-score-latest { position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px #fff; }
+.book-class-progress-legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-sub); }
+.book-class-progress-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.book-class-progress-legend .book-score-cell { width: 16px; height: 16px; }
 .book-class-progress-empty { flex: 1; display: grid; place-items: center; color: var(--text-sub); }
 @media (max-width: 520px) {
   .modal.book-class-progress-modal { padding: 16px; gap: 16px; }
-  .book-class-progress-table th:first-child { width: 112px; min-width: 112px; max-width: 112px; }
+  .book-class-progress-table th:first-child { width: 144px; min-width: 144px; max-width: 144px; }
 }
 
 .book-help-item,
