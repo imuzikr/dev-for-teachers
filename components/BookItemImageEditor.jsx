@@ -2,10 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { uploadImage } from "@/lib/storageUpload";
-import { BOOK_ITEM_IMAGE_LIMIT as MAX_IMAGES, BOOK_ITEM_IMAGE_MAX_CHARS as MAX_IMAGE_CHARACTERS } from "@/lib/bookProjectImages";
+import { normalizeBookImageSizes, BOOK_ITEM_IMAGE_LIMIT as MAX_IMAGES, BOOK_ITEM_IMAGE_MAX_CHARS as MAX_IMAGE_CHARACTERS } from "@/lib/bookProjectImages";
 import "./BookItemImageEditor.css";
 
-export default function BookItemImageEditor({ images = [], onChange, disabled = false, onBusyChange }) {
+export default function BookItemImageEditor({ images = [], imageSizes, onChange, disabled = false, onBusyChange }) {
+  const sizes = normalizeBookImageSizes(imageSizes, images);
   const inputRef = useRef(null);
   const helpId = useId();
   const [dragging, setDragging] = useState(false);
@@ -51,7 +52,7 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
         }
         additions.push(image);
       }
-      if (mountedRef.current) onChangeRef.current([...images, ...additions]);
+      if (mountedRef.current) onChangeRef.current([...images, ...additions], [...sizes, ...additions.map(() => "medium")]);
     } catch (cause) {
       if (mountedRef.current) setError(cause instanceof Error && cause.message ? cause.message : "이미지를 읽지 못했어요. JPG 또는 PNG 파일로 다시 선택해 주세요.");
     } finally {
@@ -93,7 +94,9 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
   function moveImage(index, offset) {
     const next = [...images];
     [next[index], next[index + offset]] = [next[index + offset], next[index]];
-    onChange(next);
+    const nextSizes = [...sizes];
+    [nextSizes[index], nextSizes[index + offset]] = [nextSizes[index + offset], nextSizes[index]];
+    onChange(next, nextSizes);
   }
 
   return (
@@ -122,11 +125,23 @@ export default function BookItemImageEditor({ images = [], onChange, disabled = 
           {images.map((image, index) => (
             <li key={`${index}:${image.slice(-32)}`}>
               <img draggable={false} src={image} alt={`첨부 이미지 ${index + 1}`} />
+              <label className="book-item-image-size">
+                <span>방송 크기</span>
+                <select aria-label={`이미지 ${index + 1} 방송 크기`} value={sizes[index]} disabled={disabled || busy} onChange={(event) => {
+                  const nextSizes = [...sizes];
+                  nextSizes[index] = event.target.value;
+                  onChange(images, nextSizes);
+                }}>
+                  <option value="large">대</option>
+                  <option value="medium">중</option>
+                  <option value="small">소</option>
+                </select>
+              </label>
               <div className="book-item-images-controls">
                 <span>{index + 1}</span>
                 <button type="button" disabled={disabled || busy || index === 0} aria-label={`이미지 ${index + 1} 앞으로 이동`} onClick={() => moveImage(index, -1)}>←</button>
                 <button type="button" disabled={disabled || busy || index === images.length - 1} aria-label={`이미지 ${index + 1} 뒤로 이동`} onClick={() => moveImage(index, 1)}>→</button>
-                <button type="button" disabled={disabled || busy} aria-label={`이미지 ${index + 1} 삭제`} onClick={() => { setError(""); onChange(images.filter((_, imageIndex) => imageIndex !== index)); }}>삭제</button>
+                <button type="button" disabled={disabled || busy} aria-label={`이미지 ${index + 1} 삭제`} onClick={() => { setError(""); onChange(images.filter((_, imageIndex) => imageIndex !== index), sizes.filter((_, imageIndex) => imageIndex !== index)); }}>삭제</button>
               </div>
             </li>
           ))}

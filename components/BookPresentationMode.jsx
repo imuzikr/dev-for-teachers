@@ -18,8 +18,12 @@ function itemImages(item) {
   const source = item?.source ?? item ?? {};
   const doc = new DOMParser().parseFromString(safeDisplayHtml(source.content ?? ""), "text/html");
   const inline = [...doc.querySelectorAll("img")].map((img) => ({ src: safeBookImageUrl(img.getAttribute("src")), alt: img.getAttribute("alt") || "첨부 이미지" })).filter((img) => img.src);
-  const attached = (Array.isArray(source.images) ? source.images : []).map(safeBookImageUrl).filter(Boolean).map((src, index) => ({ src, alt: `첨부 이미지 ${index + 1}` }));
-  return { images: [...inline, ...attached], inlineCount: inline.length };
+  const attached = (Array.isArray(source.images) ? source.images : []).map((src, index) => ({
+    src: safeBookImageUrl(src), alt: `첨부 이미지 ${index + 1}`,
+    size: ["large", "medium", "small"].includes(source.imageSizes?.[index]) ? source.imageSizes[index] : "medium",
+  })).filter((image) => image.src);
+  doc.querySelectorAll("img").forEach((image) => image.remove());
+  return { images: [...inline, ...attached], inlineCount: inline.length, textHtml: doc.body.innerHTML };
 }
 
 export function useBookPresentationMode({ isTeacher, classId, user, projectId, projectTitle, sections, broadcastClient = defaultBroadcastClient }) {
@@ -31,9 +35,7 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
   const openRef = useRef(false);
   const items = useMemo(() => sections.flatMap((section) => section.items), [sections]);
   const activeItem = target ? items.find((item) => itemKey(item) === target.key) ?? null : null;
-  const stepItems = activeItem ? sections.find((section) => section.id === activeItem.stepId)?.items ?? items : [];
-  const activeIndex = activeItem ? stepItems.findIndex((item) => itemKey(item) === itemKey(activeItem)) : -1;
-  const image = target?.images?.[target.imageIndex];
+  const image = target?.images?.[target.slideIndex - 1];
 
   useEffect(() => { openRef.current = Boolean(activeItem); }, [activeItem]);
   useEffect(() => () => {
@@ -52,12 +54,11 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
     setBusy(true);
     setError("");
     if (!target) setTarget(nextTarget);
-    const currentStepItems = sections.find((section) => section.id === item.stepId)?.items ?? items;
-    const itemIndex = Math.max(0, currentStepItems.findIndex((entry) => itemKey(entry) === itemKey(item)));
-    const payload = bookPresentationPayload(item, { projectId, projectTitle, itemIndex, itemTotal: currentStepItems.length });
-    const selectedImage = nextTarget.images?.[nextTarget.imageIndex];
+    const payload = bookPresentationPayload(item, { projectId, projectTitle, itemIndex: nextTarget.slideIndex, itemTotal: nextTarget.images.length + 1 });
+    Object.assign(payload, { content: nextTarget.textHtml, images: [], slideIndex: nextTarget.slideIndex, slideTotal: nextTarget.images.length + 1 });
+    const selectedImage = nextTarget.images[nextTarget.slideIndex - 1];
     if (selectedImage) {
-      Object.assign(payload, { imageUrl: selectedImage.src, imageAlt: selectedImage.alt, imageIndex: nextTarget.imageIndex, imageTotal: nextTarget.images.length, content: "", images: [] });
+      Object.assign(payload, { imageUrl: selectedImage.src, imageAlt: selectedImage.alt, imageSize: selectedImage.size ?? "medium", imageIndex: nextTarget.slideIndex - 1, imageTotal: nextTarget.images.length, content: "" });
     }
     try {
       await broadcastClient.startBroadcast(user, classId, payload);
@@ -71,21 +72,21 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
     }
   }
 
-  function presentItem(item) { return present(item, { key: itemKey(item) }); }
+  function presentItem(item) {
+    const { images, textHtml } = itemImages(item);
+    return present(item, { key: itemKey(item), images, textHtml, slideIndex: 0 });
+  }
   function presentImage(item, index, inline = false) {
-    const { images, inlineCount } = itemImages(item);
+    const { images, inlineCount, textHtml } = itemImages(item);
     const imageIndex = index + (inline ? 0 : inlineCount);
     if (!images[imageIndex]) return;
-    return present(item, { key: itemKey(item), images, imageIndex });
+    return present(item, { key: itemKey(item), images, textHtml, slideIndex: imageIndex + 1 });
   }
   function move(delta) {
     if (!activeItem) return;
-    if (image) {
-      const imageIndex = (target.imageIndex + delta + target.images.length) % target.images.length;
-      return present(activeItem, { ...target, imageIndex });
-    }
-    if (!stepItems.length) return;
-    return presentItem(stepItems[(activeIndex + delta + stepItems.length) % stepItems.length]);
+    const slideIndex = target.slideIndex + delta;
+    if (slideIndex < 0 || slideIndex > target.images.length) return;
+    return present(activeItem, { ...target, slideIndex });
   }
   async function close() {
     if (pending.current) return;
@@ -104,11 +105,13 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
     presentImage,
     modal: activeItem ? (
       <BookPresentationModal
-        item={activeItem}
+        item={{ ...activeItem, source: { ...(activeItem.source ?? activeItem), content: target.textHtml, images: [] } }}
         image={image}
-        positionLabel={image ? `이미지 ${target.imageIndex + 1} / ${target.images.length}` : `${activeIndex + 1} / ${stepItems.length}`}
-        onPrevious={!image || target.images.length > 1 ? () => move(-1) : undefined}
-        onNext={!image || target.images.length > 1 ? () => move(1) : undefined}
+        positionLabel={`${image ? "이미지" : "텍스트"} · ${target.slideIndex + 1} / ${target.images.length + 1}`}
+        onPrevious={() => move(-1)}
+        onNext={() => move(1)}
+        previousDisabled={target.slideIndex === 0}
+        nextDisabled={target.slideIndex === target.images.length}
         onClose={close}
         busy={busy}
         error={error}

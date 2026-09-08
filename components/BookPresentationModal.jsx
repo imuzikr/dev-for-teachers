@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import BookItemImages, { safeBookImageUrl } from "./BookItemImages";
+import { safeBookImageUrl } from "./BookItemImages";
 import { useEffect, useRef, useState } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
@@ -80,6 +80,8 @@ export default function BookPresentationModal({
   positionLabel,
   onPrevious,
   onNext,
+  previousDisabled = false,
+  nextDisabled = false,
   onClose,
   audienceLabel = "선생님이 화면을 보여주고 있어요",
   fullScreen = false,
@@ -106,15 +108,15 @@ export default function BookPresentationModal({
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0, left: 0 });
-  }, [item?.id, kind]);
+  }, [item?.id, kind, image?.src]);
 
   if (typeof document === "undefined") return null;
   return createPortal(
     <div ref={modalRef} tabIndex={-1} onKeyDown={(event) => {
       event.stopPropagation();
       if (event.key === "Escape" && onClose && !busy) { event.preventDefault(); onClose(); }
-      if (event.key === "ArrowLeft" && onPrevious && !busy) { event.preventDefault(); onPrevious(); }
-      if (event.key === "ArrowRight" && onNext && !busy) { event.preventDefault(); onNext(); }
+      if (event.key === "ArrowLeft" && onPrevious && !busy && !previousDisabled) { event.preventDefault(); onPrevious(); }
+      if (event.key === "ArrowRight" && onNext && !busy && !nextDisabled) { event.preventDefault(); onNext(); }
       if (event.key === "Tab") {
         const buttons = [...modalRef.current.querySelectorAll('button:not(:disabled), a[href]')];
         const first = buttons[0]; const last = buttons.at(-1);
@@ -137,7 +139,7 @@ export default function BookPresentationModal({
         </header>
 
         <div className={`book-presentation-body${image ? " is-image" : ""}`} ref={bodyRef} aria-busy={busy}>
-          {image ? (imageFailed ? <p role="alert">이미지를 불러오지 못했어요.</p> : <img key={image.src} className="book-presentation-image" src={safeBookImageUrl(image.src)} alt={image.alt || "발표 이미지"} onError={() => setImageFailed(true)} />) : <>
+          {image ? (imageFailed ? <p role="alert">이미지를 불러오지 못했어요.</p> : <img key={image.src} className={`book-presentation-image book-presentation-image--${["large", "medium", "small"].includes(image.size) ? image.size : "medium"}`} src={safeBookImageUrl(image.src)} alt={image.alt || "발표 이미지"} onError={() => setImageFailed(true)} />) : <>
 
           {href ? (
             <a className="book-presentation-url" href={href} target="_blank" rel="noopener noreferrer">
@@ -149,7 +151,6 @@ export default function BookPresentationModal({
           <article className={`book-presentation-content book-presentation-content--${kind}`}>
             {kind === "activity" && <span>활동 안내사항</span>}
             <RichTextDisplay className="book-presentation-rich" html={content} />
-            <BookItemImages images={(item?.source ?? item)?.images} />
           </article>
           </>}
         </div>
@@ -160,8 +161,8 @@ export default function BookPresentationModal({
           <footer className={`book-presentation-foot${onClose ? " has-exit" : ""}${!canNavigate ? " is-exit-only" : ""}`}>
             {canNavigate && (
               <>
-                <button type="button" className="btn-outline" disabled={busy} onClick={onPrevious}>이전</button>
-                <button type="button" className="btn-primary" disabled={busy} onClick={onNext}>다음</button>
+                <button type="button" className="btn-outline" disabled={busy || previousDisabled} onClick={onPrevious}>이전</button>
+                <button type="button" className="btn-primary" disabled={busy || nextDisabled} onClick={onNext}>다음</button>
               </>
             )}
             {onClose && (

@@ -45,7 +45,7 @@ async function loadModules(firebase = false) {
 }
 
 const image = "data:image/jpeg;base64,YWJj";
-const draft = () => ({ classId: "image-class", title: "이미지 프로젝트", steps: [{ id: "step1", title: "첫 단계", activities: [{ id: "act1", title: "활동", images: [image, "https://example.com/two.jpg"] }], resources: [{ id: "res1", title: "자료", images: [image] }] }] });
+const draft = () => ({ classId: "image-class", title: "이미지 프로젝트", steps: [{ id: "step1", title: "첫 단계", activities: [{ id: "act1", title: "활동", images: [image, "https://example.com/two.jpg"], imageSizes: ["large", "small"] }], resources: [{ id: "res1", title: "자료", images: [image], imageSizes: ["medium"] }] }] });
 const user = { uid: "teacher" };
 
 test("image validation preserves order and duplicates, supports absent legacy field, and rejects unsafe or oversized attachments", async () => {
@@ -69,9 +69,14 @@ test("mock save, reload, edit and export retain separate activity and resource i
   let project = await api.getBookProject("image-class");
   assert.deepEqual(Array.from(project.steps[0].activities[0].images), draft().steps[0].activities[0].images);
   assert.deepEqual(Array.from(project.steps[0].resources[0].images), [image]);
+  assert.deepEqual(Array.from(project.steps[0].activities[0].imageSizes), ["large", "small"]);
+  assert.deepEqual(Array.from(project.steps[0].resources[0].imageSizes), ["medium"]);
   const cloned = api.cloneBookProjectStep(project.steps[0]);
   assert.deepEqual(Array.from(cloned.activities[0].images), draft().steps[0].activities[0].images);
   assert.deepEqual(Array.from(cloned.resources[0].images), [image]);
+  assert.deepEqual(Array.from(cloned.activities[0].imageSizes), ["large", "small"]);
+  assert.deepEqual(Array.from(cloned.resources[0].imageSizes), ["medium"]);
+  assert.notEqual(cloned.activities[0].imageSizes, project.steps[0].activities[0].imageSizes);
   assert.notEqual(cloned.activities[0].images, project.steps[0].activities[0].images);
   project.steps[0].activities[0].title = "다른 제목";
   await api.saveBookProject(user, { ...project, classId: "image-class" });
@@ -98,9 +103,42 @@ test("Firestore batch writes images to project and flattened documents and never
   const project = api.writes.find(([ref]) => ref.path.startsWith("bookProjects"))[1];
   assert.deepEqual(Array.from(activity.images), draft().steps[0].activities[0].images);
   assert.deepEqual(Array.from(resource.images), [image]);
+  assert.deepEqual(Array.from(activity.imageSizes), ["large", "small"]);
+  assert.deepEqual(Array.from(resource.imageSizes), ["medium"]);
+  assert.deepEqual(Array.from(project.steps[0].activities[0].imageSizes), ["large", "small"]);
   assert.equal(project.steps[0].activities[0].images.length, 2);
   const oversized = draft();
   oversized.steps[0].activities[0].content = "한".repeat(300000);
   await assert.rejects(api.saveBookProject(user, oversized), { code: "book-project/size-limit" });
   assert.equal(api.commits(), 1);
+});
+
+
+test("legacy and malformed size metadata default to medium without changing image count", async () => {
+  const api = await loadModules();
+  assert.deepEqual(Array.from(api.normalizeBookImageSizes(undefined, [image, image])), ["medium", "medium"]);
+  assert.deepEqual(Array.from(api.normalizeBookImageSizes(["small", "invalid", "large"], [image, image])), ["small", "medium"]);
+  const legacy = draft();
+  delete legacy.steps[0].activities[0].imageSizes;
+  await api.saveBookProject(user, legacy);
+  const reloaded = await api.getBookProject("image-class");
+  assert.deepEqual(Array.from(reloaded.steps[0].activities[0].imageSizes), ["medium", "medium"]);
+});
+
+test("reordered and removed image-size pairs survive save and export", async () => {
+  const api = await loadModules();
+  const edited = draft();
+  edited.steps[0].activities[0].images.reverse();
+  edited.steps[0].activities[0].imageSizes.reverse();
+  await api.saveBookProject(user, edited);
+  const saved = await api.getBookProject("image-class");
+  const cloned = api.cloneBookProjectStep(saved.steps[0]);
+  assert.equal(cloned.activities[0].images[0], "https://example.com/two.jpg");
+  assert.deepEqual(Array.from(cloned.activities[0].imageSizes), ["small", "large"]);
+  saved.steps[0].activities[0].images.splice(0, 1);
+  saved.steps[0].activities[0].imageSizes.splice(0, 1);
+  await api.saveBookProject(user, saved);
+  const reloaded = await api.getBookProject("image-class");
+  assert.deepEqual(Array.from(reloaded.steps[0].activities[0].images), [image]);
+  assert.deepEqual(Array.from(reloaded.steps[0].activities[0].imageSizes), ["large"]);
 });

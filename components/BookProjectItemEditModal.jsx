@@ -153,6 +153,7 @@ export default function BookProjectItemEditModal({
   const [title, setTitle] = useState(item?.title ?? "");
   const [content, setContent] = useState(item?.content ?? "");
   const [images, setImages] = useState(item?.images ?? []);
+  const [imageSizes, setImageSizes] = useState(item?.imageSizes);
   const [imagesBusy, setImagesBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [url, setUrl] = useState(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
@@ -167,10 +168,11 @@ export default function BookProjectItemEditModal({
     setTitle(item?.title ?? "");
     setContent(item?.content ?? "");
     setImages(item?.images ?? []);
+    setImageSizes(item?.imageSizes);
     setUrl(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
     setRequiresAnswer(item?.requiresAnswer !== false && !isCreating);
     setTemplateEnabled(item?.templateEnabled === true);
-  }, [isCreating, item?.id, item?.title, item?.content, item?.images, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
+  }, [isCreating, item?.id, item?.title, item?.content, item?.images, item?.imageSizes, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
 
   if (!mounted) return null;
 
@@ -184,6 +186,7 @@ export default function BookProjectItemEditModal({
         title: trimmedTitle,
         content,
         images,
+        imageSizes,
         ...(kind === "resource"
           ? { url: trimmedUrl }
           : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
@@ -263,7 +266,7 @@ export default function BookProjectItemEditModal({
             placeholder={kind === "activity" ? "활동 안내사항" : ""}
             ariaLabel={`${itemLabel} 내용`}
           />
-          <BookItemImageEditor key={`${kind}:${item?.id || "new"}`} images={images} onChange={setImages} onBusyChange={setImagesBusy} disabled={saving} />
+          <BookItemImageEditor key={`${kind}:${item?.id || "new"}`} images={images} imageSizes={imageSizes} onChange={(nextImages, nextSizes) => { setImages(nextImages); setImageSizes(nextSizes); }} onBusyChange={setImagesBusy} disabled={saving} />
         </div>
         {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <footer className="book-item-edit-footer">

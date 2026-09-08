@@ -629,7 +629,11 @@ service cloud.firestore {
     }
     function validBookImages(data) {
       let images = data.get('images', []);
+      let sizes = data.get('imageSizes', []);
       return images is list && images.size() <= 8
+             && (!('imageSizes' in data)
+                 || (sizes is list && sizes.size() == images.size()
+                     && sizes.hasOnly(['large', 'medium', 'small'])))
              && validBookImageAt(images, 0)
              && validBookImageAt(images, 1)
              && validBookImageAt(images, 2)
@@ -647,7 +651,7 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
                'resourceId', 'classId', 'projectId', 'projectVersion',
                'stepId', 'stepOrder', 'resourceOrder',
-               'title', 'content', 'url', 'images', 'locked', 'createdBy', 'createdAt', 'updatedAt'
+               'title', 'content', 'url', 'images', 'imageSizes', 'locked', 'createdBy', 'createdAt', 'updatedAt'
              ])
              && validBookImages(request.resource.data)
              && request.resource.data.resourceId == resourceId

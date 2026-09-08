@@ -14,3 +14,8 @@
 .book-item-images:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .book-item-images.is-dragging { border-color: var(--primary); background: var(--primary-light); }
 .book-item-images-help { word-break: keep-all; overflow-wrap: anywhere; }
+
+.book-item-image-size { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-sub); }
+.book-item-image-size select { width: auto; min-width: 64px; min-height: 44px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--card-bg); color: var(--text); font: inherit; }
+.book-item-image-size select:disabled { opacity: .4; }
+.book-item-image-size select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

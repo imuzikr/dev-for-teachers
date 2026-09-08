@@ -113,7 +113,7 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 placeholder={resource ? "" : "활동 안내사항"}
                 ariaLabel={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
               />
-              <BookItemImageEditor disabled={disabled} onBusyChange={(busy) => onImageBusyChange?.(key, busy)} images={source.images || []} onChange={(images) => onChange(entry.kind, source.id, { images })} />
+              <BookItemImageEditor disabled={disabled} onBusyChange={(busy) => onImageBusyChange?.(key, busy)} images={source.images || []} imageSizes={source.imageSizes} onChange={(images, imageSizes) => onChange(entry.kind, source.id, { images, imageSizes })} />
               <input
                 value={resource ? source.url || "" : source.bookUrl || source.url || ""}
                 onChange={(event) => {

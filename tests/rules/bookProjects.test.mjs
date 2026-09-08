@@ -123,4 +123,16 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     }
   });
 
+  it("accepts aligned image sizes and rejects invalid or mismatched metadata", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    const images = ["https://example.com/image.jpg", "https://example.com/two.jpg"];
+    for (const [collection, payload] of [["bookResources", resourcePayload], ["bookActivities", activityPayload]]) {
+      const ref = doc(db, collection, collection === "bookResources" ? "res1" : "act1");
+      await assertSucceeds(setDoc(ref, payload("teacherA", { images, imageSizes: ["large", "small"] })));
+      for (const imageSizes of [null, "medium", [], ["medium"], ["medium", "small", "large"], ["huge", "small"], [1, "small"]]) {
+        await assertFails(setDoc(ref, payload("teacherA", { images, imageSizes })));
+      }
+    }
+  });
+
 });

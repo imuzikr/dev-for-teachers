@@ -10157,7 +10157,7 @@ pre code {
 }
 
 .book-item-edit-modal {
-  width: min(94vw, 1040px);
+  width: min(94vw, 700px);
   max-width: none;
   max-height: min(92dvh, 860px);
   display: flex;
@@ -10202,7 +10202,7 @@ pre code {
 
 .book-item-edit-top-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 14px;
 }
@@ -11720,7 +11720,7 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-expand-modal {
-  width: min(94vw, 1040px);
+  width: min(94vw, 700px);
   max-width: none;
   max-height: min(90dvh, 820px);
   display: flex;
@@ -11920,7 +11920,7 @@ button.book-project-flow-pill:focus-visible {
   backdrop-filter: blur(4px);
 }
 .book-presentation-modal {
-  width: min(1120px, calc(100vw - 40px));
+  width: min(750px, calc(100vw - 40px));
   max-height: min(90dvh, 820px);
   display: flex;
   flex-direction: column;

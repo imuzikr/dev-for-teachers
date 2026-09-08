@@ -99,8 +99,8 @@ function PresentationOverlayBody({ broadcast }) {
     return (
       <BookPresentationModal
         item={bookPresentationItemFromBroadcast(broadcast)}
-        image={broadcast.imageUrl ? { src: broadcast.imageUrl, alt: broadcast.imageAlt } : undefined}
-        positionLabel={broadcast.imageUrl ? `이미지 ${Number(broadcast.imageIndex) + 1} / ${broadcast.imageTotal}` : typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
+        image={broadcast.imageUrl ? { src: broadcast.imageUrl, alt: broadcast.imageAlt, size: broadcast.imageSize } : undefined}
+        positionLabel={typeof broadcast.slideIndex === "number" ? `${broadcast.imageUrl ? "이미지" : "텍스트"} · ${broadcast.slideIndex + 1} / ${broadcast.slideTotal}` : broadcast.imageUrl ? `이미지 ${Number(broadcast.imageIndex) + 1} / ${broadcast.imageTotal}` : typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
         fullScreen
       />
     );
