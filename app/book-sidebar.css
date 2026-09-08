@@ -75,28 +75,6 @@
   scroll-snap-type: none;
 }
 
-.book-library-layout:not(.is-student-main) .book-personal-activity-copy {
-  display: contents;
-}
-
-.book-library-layout:not(.is-student-main) .book-personal-activity-copy > strong {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  min-height: 2.6em;
-  margin-top: 0;
-  line-height: 1.3;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.book-library-layout:not(.is-student-main) .book-personal-card-head-actions {
-  grid-column: 3;
-  grid-row: 1;
-}
-
 .book-library-main .book-personal-activity-card {
   min-width: 0;
   width: 100%;
@@ -125,11 +103,6 @@
 }
 
 @container book-main (max-width: 520px) {
-  .book-personal-activity-card > header {
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-    gap: 8px;
-  }
-
   .book-personal-activity-card footer.book-personal-card-actions {
     grid-template-columns: 1fr;
   }

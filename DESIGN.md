@@ -25,6 +25,7 @@
 - Logo and hero title use the existing serif display face.
 - Buttons and form controls use the existing UI sans stack.
 - Korean text must avoid cramped containers that force single-syllable orphan lines.
+- 활동·자료 상세 카드 헤더는 첫 줄에 28px 순서 배지, 11px 종류·확인 상태와 28px 아이콘 명령을 압축하고, 제목은 별도 아랫줄 전체 폭에서 14px/1.45 크기로 말줄임 없이 줄바꿈한다. 행·명령 간격은 4px/8px이며 터치 포인터에서는 아이콘 명령을 44px 조작 영역으로 확장한다. 제목은 최소 두 줄 높이를 확보한다.
 
 ## 4. Components
 
@@ -67,7 +68,7 @@
 - Student checklists align the checkbox with the first text line at every text size. Only the checkbox toggles; text remains selectable. Each student's checks autosave independently. Confirm saves partial progress without completion; all checks plus Confirm marks completion. Save failures retain input and expose retry. Student panel selection and collapsed state survive STEP changes and reloads, scoped to user and class.
 - Teacher help sidebar includes compact student progress rows using existing participant colors and ordered square cells. The final completed cell carries a small green light with a white rim and subtle glow, without a number. Empty and long lists remain readable in the existing drawer width.
 
-- 활동·자료 메인 카드는 항상 제목, URL, 상태, 확대 명령과 하단 열기 명령만 담는 컴팩트 표면을 사용한다. 본문, 템플릿 입력, 답변 입력은 카드에서 렌더링하지 않는다. 학생의 하단 명령은 확인 여부와 관계없이 `패널에서 열기`이며 왼쪽 패널에서 전체 내용과 확인/저장을 제공한다. 패널과 확대 모달은 같은 입력 상태를 공유한다. 기존 카드의 14px 간격, 44px 조작 영역, 8px 모서리와 테마 색상을 유지한다.
+- 활동·자료 메인 카드는 항상 제목, URL, 상태, 확대 명령과 하단 열기 명령만 담는 컴팩트 표면을 사용한다. 본문, 템플릿 입력, 답변 입력은 카드에서 렌더링하지 않는다. 학생의 하단 명령은 확인 여부와 관계없이 `패널에서 열기`이며 왼쪽 패널에서 전체 내용과 확인/저장을 제공한다. 패널과 확대 모달은 같은 입력 상태를 공유한다. 기존 카드의 14px 간격, 하단 버튼의 44px 조작 영역, 8px 모서리와 테마 색상을 유지한다. 헤더 아이콘은 위의 컴팩트 헤더 규칙을 따른다.
 - 기본 서식 도구의 체크리스트는 실제 체크박스와 항목 텍스트를 사용한다. 편집기 저장 시 체크리스트 서식을 유지하고 학생의 체크 상태는 교사 원본을 변경하지 않는다.
 
 - 활동 템플릿은 교사의 체크박스로 활성화한다. 안내사항의 `{{변수 이름}}`에서 중복을 제외한 입력창을 만들고, 학생 카드와 확대 모달은 현재 화면의 입력값을 공유한다. 입력값은 원본이나 다른 학생에게 저장하지 않으며, 모두 입력한 후 개인화된 일반 텍스트를 복사한다.
