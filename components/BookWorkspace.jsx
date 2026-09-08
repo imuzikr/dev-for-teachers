@@ -69,6 +69,10 @@ export default function BookWorkspace({
     ];
   }, [activities, previewProject]);
   const sections = useMemo(() => bookDetailSections(previewProject, previewActivities), [previewActivities, previewProject]);
+  const studentPanelItemKeys = useMemo(() => new Set(
+    (sections.find((section) => section.id === selectedStepId)?.items ?? [])
+      .map((item) => `${item.kind}:${item.id}`),
+  ), [sections, selectedStepId]);
   const bookPresentation = useBookPresentationMode({
     isTeacher,
     classId,
@@ -202,7 +206,7 @@ export default function BookWorkspace({
   }
 
   return (
-    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} scope={scope} records={confirmations} saveChecklist={confirmBookItem}>
+    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
       {sidebar}

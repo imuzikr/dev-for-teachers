@@ -37,7 +37,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   if (!isTeacher && ownParticipant) {
     return (
       <>
-        <div hidden={!activeStepSection}>
+        <div className="book-personal-selected-view" hidden={!activeStepSection}>
           <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
         </div>
         <section className="book-personal-dashboard" hidden={!!activeStepSection} aria-label="나의 Step 카드">
