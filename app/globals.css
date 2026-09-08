@@ -11921,6 +11921,7 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-presentation-modal {
   width: min(750px, calc(100vw - 40px));
+  height: min(90dvh, 820px);
   max-height: min(90dvh, 820px);
   display: flex;
   flex-direction: column;

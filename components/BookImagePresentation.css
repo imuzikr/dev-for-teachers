@@ -10,10 +10,8 @@
 .book-presentation-status[role="alert"] { color: var(--danger, #b42318); }
 @keyframes book-image-enter { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .book-presentation-image { animation: none; } }
-.book-presentation-modal.is-image { height: min(90dvh, 820px); }
-.book-presentation-modal.is-image .book-presentation-body { flex: 1; min-height: 0; }
-.book-presentation-modal.is-image .book-presentation-head,
-.book-presentation-modal.is-image .book-presentation-foot { flex-shrink: 0; }
+.book-presentation-modal .book-presentation-head,
+.book-presentation-modal .book-presentation-foot { flex-shrink: 0; }
 .book-presentation-backdrop { z-index: 3300; }
 .book-presentation-image--large { width: 100%; height: 100%; }
 .book-presentation-image--medium { width: 70%; height: 70%; }
