@@ -11533,13 +11533,14 @@ button.book-project-flow-pill:focus-visible {
   white-space: nowrap;
 }
 .book-personal-card-head-actions > em.is-done { color: var(--primary-dark); font-weight: 800; }
-.book-personal-card-head-actions > em[role="img"] {
+.book-personal-card-head-actions > em[role="img"],
+.book-personal-card-head-actions > .book-item-image-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
 }
 .book-personal-card-head-actions > em.is-locked { color: var(--danger); font-weight: 800; }
 .book-personal-activity-card.is-locked {
@@ -14430,3 +14431,17 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-card-expand-btn svg { width: 14px; height: 14px; }
 .book-card-expand-btn svg path { stroke-width: 1.6; }
+.book-personal-card-head-actions svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+@media (pointer: coarse) {
+  .book-personal-card-head-actions > em[role="img"],
+  .book-personal-card-head-actions > .book-item-image-indicator {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+}
