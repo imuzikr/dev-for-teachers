@@ -104,4 +104,23 @@ describe("개발자실 프로젝트 저장 규칙", () => {
       projectPayload("teacherA", { classId: "archived" })
     ));
   });
+  it("allows optional JPEG and HTTPS image arrays for owner activity and resource saves", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    for (const images of [[], ["data:image/jpeg;base64,YWJj", "https://example.com/image.jpg"], Array(8).fill("data:image/jpeg;base64,YWJj")]) {
+      await assertSucceeds(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { images })));
+      await assertSucceeds(setDoc(doc(db, "bookActivities", "act1"), activityPayload("teacherA", { images })));
+    }
+  });
+
+  it("rejects malformed, unsafe, excessive and cumulatively oversized image arrays", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    const invalidImages = [null, "invalid", [123], ["javascript:alert(1)"],
+      ["data:image/svg+xml;base64,YWJj"], Array(9).fill("https://example.com/image.jpg"),
+      ["data:image/jpeg;base64," + "a".repeat(310000), "data:image/jpeg;base64," + "a".repeat(310000)]];
+    for (const images of invalidImages) {
+      await assertFails(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { images })));
+      await assertFails(setDoc(doc(db, "bookActivities", "act1"), activityPayload("teacherA", { images })));
+    }
+  });
+
 });

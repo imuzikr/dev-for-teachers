@@ -99,7 +99,8 @@ function PresentationOverlayBody({ broadcast }) {
     return (
       <BookPresentationModal
         item={bookPresentationItemFromBroadcast(broadcast)}
-        positionLabel={typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
+        image={broadcast.imageUrl ? { src: broadcast.imageUrl, alt: broadcast.imageAlt } : undefined}
+        positionLabel={broadcast.imageUrl ? `이미지 ${Number(broadcast.imageIndex) + 1} / ${broadcast.imageTotal}` : typeof broadcast.itemIndex === "number" && typeof broadcast.itemTotal === "number" ? `${broadcast.itemIndex + 1} / ${broadcast.itemTotal}` : ""}
         fullScreen
       />
     );

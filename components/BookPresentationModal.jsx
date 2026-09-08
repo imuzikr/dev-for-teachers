@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import BookItemImages, { safeBookImageUrl } from "./BookItemImages";
+import { useEffect, useRef, useState } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
 
@@ -47,6 +49,7 @@ export function bookPresentationPayload(item, position) {
     content: presentationContent({ ...item, kind }),
     url,
     locked: source.locked === true,
+    images: Array.isArray(source.images) ? source.images.map(safeBookImageUrl).filter(Boolean) : [],
   };
 }
 
@@ -67,6 +70,7 @@ export function bookPresentationItemFromBroadcast(broadcast) {
       url: broadcast?.url ?? "",
       bookUrl: kind === "activity" ? broadcast?.url ?? "" : "",
       locked: broadcast?.locked === true,
+      images: broadcast?.images ?? [],
     },
   };
 }
@@ -79,6 +83,10 @@ export default function BookPresentationModal({
   onClose,
   audienceLabel = "선생님이 화면을 보여주고 있어요",
   fullScreen = false,
+  image,
+  busy = false,
+  error,
+  onRetry,
 }) {
   const kind = item?.kind === "resource" || item?.itemKind === "resource" ? "resource" : "activity";
   const title = presentationTitle({ ...item, kind });
@@ -87,14 +95,35 @@ export default function BookPresentationModal({
   const linkLabel = resourceLinkLabel(href);
   const canNavigate = Boolean(onPrevious && onNext);
   const bodyRef = useRef(null);
+  const modalRef = useRef(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => { setImageFailed(false); }, [image?.src]);
+  useEffect(() => {
+    const previous = document.activeElement;
+    modalRef.current?.focus();
+    return () => { if (previous?.isConnected) previous.focus(); };
+  }, []);
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0, left: 0 });
   }, [item?.id, kind]);
 
-  return (
-    <div className={`book-presentation-backdrop${fullScreen ? " is-fullscreen" : ""}`} role="alertdialog" aria-modal="true" aria-label={`${title} 발표 모드`}>
-      <section className="book-presentation-modal">
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div ref={modalRef} tabIndex={-1} onKeyDown={(event) => {
+      event.stopPropagation();
+      if (event.key === "Escape" && onClose && !busy) { event.preventDefault(); onClose(); }
+      if (event.key === "ArrowLeft" && onPrevious && !busy) { event.preventDefault(); onPrevious(); }
+      if (event.key === "ArrowRight" && onNext && !busy) { event.preventDefault(); onNext(); }
+      if (event.key === "Tab") {
+        const buttons = [...modalRef.current.querySelectorAll('button:not(:disabled), a[href]')];
+        const first = buttons[0]; const last = buttons.at(-1);
+        if (!first) { event.preventDefault(); return; }
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }} className={`book-presentation-backdrop${fullScreen ? " is-fullscreen" : ""}`} role="alertdialog" aria-modal="true" aria-label={`${title} 발표 모드`}>
+      <section className={`book-presentation-modal${image ? " is-image" : ""}`}>
         <header className="book-presentation-head">
           <div>
             <span>{audienceLabel}</span>
@@ -107,7 +136,9 @@ export default function BookPresentationModal({
           </div>
         </header>
 
-        <div className="book-presentation-body" ref={bodyRef}>
+        <div className={`book-presentation-body${image ? " is-image" : ""}`} ref={bodyRef} aria-busy={busy}>
+          {image ? (imageFailed ? <p role="alert">이미지를 불러오지 못했어요.</p> : <img key={image.src} className="book-presentation-image" src={safeBookImageUrl(image.src)} alt={image.alt || "발표 이미지"} onError={() => setImageFailed(true)} />) : <>
+
           {href ? (
             <a className="book-presentation-url" href={href} target="_blank" rel="noopener noreferrer">
               {linkLabel || href}
@@ -118,19 +149,23 @@ export default function BookPresentationModal({
           <article className={`book-presentation-content book-presentation-content--${kind}`}>
             {kind === "activity" && <span>활동 안내사항</span>}
             <RichTextDisplay className="book-presentation-rich" html={content} />
+            <BookItemImages images={(item?.source ?? item)?.images} />
           </article>
+          </>}
         </div>
+        {busy && <p className="book-presentation-status" role="status">방송에 반영 중...</p>}
+        {error && <p className="book-presentation-status" role="alert">{error} {onRetry && <button type="button" disabled={busy} onClick={onRetry}>다시 방송</button>}</p>}
 
         {(canNavigate || onClose) && (
           <footer className={`book-presentation-foot${onClose ? " has-exit" : ""}${!canNavigate ? " is-exit-only" : ""}`}>
             {canNavigate && (
               <>
-                <button type="button" className="btn-outline" onClick={onPrevious}>이전</button>
-                <button type="button" className="btn-primary" onClick={onNext}>다음</button>
+                <button type="button" className="btn-outline" disabled={busy} onClick={onPrevious}>이전</button>
+                <button type="button" className="btn-primary" disabled={busy} onClick={onNext}>다음</button>
               </>
             )}
             {onClose && (
-              <button type="button" className="btn-ghost book-presentation-close" onClick={onClose} aria-label="발표 종료">
+              <button type="button" className="btn-ghost book-presentation-close" disabled={busy} onClick={onClose} aria-label="발표 종료">
                 <span className="book-presentation-close-mark" aria-hidden="true" />
                 <span>발표 종료</span>
               </button>
@@ -138,6 +173,6 @@ export default function BookPresentationModal({
           </footer>
         )}
       </section>
-    </div>
+    </div>, document.body
   );
 }

@@ -4,13 +4,14 @@ import { useState } from "react";
 import { orderedStepItems } from "./BookProjectPreview";
 import BasicFormatEditor from "./BasicFormatEditor";
 import ActivityTemplateSetting from "./ActivityTemplateSetting";
+import BookItemImageEditor from "./BookItemImageEditor";
 import { IconChevronDown, IconChevronUp, IconTrash } from "./StatusIcons";
 
 function itemKey(kind, id) {
   return `${kind}:${id}`;
 }
 
-export default function BookProjectEditorItems({ step, onChange, onRemove, onMove }) {
+export default function BookProjectEditorItems({ step, onChange, onRemove, onMove, onImageBusyChange, disabled = false }) {
   const [draggingKey, setDraggingKey] = useState(null);
   const items = orderedStepItems(step);
 
@@ -112,6 +113,7 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                 placeholder={resource ? "" : "활동 안내사항"}
                 ariaLabel={`${label} ${index + 1} ${resource ? "내용" : "안내사항"}`}
               />
+              <BookItemImageEditor disabled={disabled} onBusyChange={(busy) => onImageBusyChange?.(key, busy)} images={source.images || []} onChange={(images) => onChange(entry.kind, source.id, { images })} />
               <input
                 value={resource ? source.url || "" : source.bookUrl || source.url || ""}
                 onChange={(event) => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { assertBookProjectSize, normalizeBookItemImages } from "@/lib/bookProjectImages";
 import { backdropClose } from "@/lib/modal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
@@ -91,6 +92,8 @@ export default function BookProjectEditor({
   const [addingItem, setAddingItem] = useState(null);
   const [expanded, setExpanded] = useState(!appendStep && !initialOpenStepId);
   const [mounted, setMounted] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [busyImages, setBusyImages] = useState(new Set());
   const dialogRef = useRef(null);
   const expandRef = useRef(null);
   const previousExpandRequest = useRef(expandRequest);
@@ -132,6 +135,21 @@ export default function BookProjectEditor({
       else expandRef.current?.focus();
     };
   }, [addingItem, expanded, mounted]);
+
+  async function saveProject() {
+    if (saving || busyImages.size > 0 || !title.trim()) return;
+    setSaveError("");
+    try {
+      const nextProject = { title: title.trim(), steps };
+      for (const step of steps) {
+        for (const item of [...step.activities, ...step.resources]) normalizeBookItemImages(item.images);
+      }
+      assertBookProjectSize(nextProject);
+      await onSave(nextProject);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
+  }
 
   function updateStep(stepId, patch) {
     setSteps((current) => current.map((step) => step.id === stepId ? { ...step, ...patch } : step));
@@ -245,6 +263,14 @@ export default function BookProjectEditor({
         </div>
         <BookProjectEditorItems
           step={step}
+          disabled={saving}
+          onImageBusyChange={(key, busy) => setBusyImages((current) => {
+            const next = new Set(current);
+            const itemKey = `${step.id}:${key}`;
+            if (busy) next.add(itemKey);
+            else next.delete(itemKey);
+            return next;
+          })}
           onChange={(kind, id, patch) => updateItem(step.id, kind, id, patch)}
           onRemove={(kind, id) => removeItem(step.id, kind, id)}
           onMove={(fromKey, toKey) => moveItem(step.id, fromKey, toKey)}
@@ -256,8 +282,8 @@ export default function BookProjectEditor({
         <button
           type="button"
           className="btn-primary book-step-save"
-          disabled={saving || !title.trim()}
-          onClick={() => onSave({ title: title.trim(), steps })}
+          disabled={saving || busyImages.size > 0 || !title.trim()}
+          onClick={saveProject}
         >
           {saving ? "저장 중..." : `Step ${stepNumber} 저장`}
         </button>
@@ -274,6 +300,7 @@ export default function BookProjectEditor({
 
   const editor = (
       <div className="book-project-editor">
+        {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <BookProjectSidebarTools
           project={draftProject}
           participantCount={participantCount}
@@ -286,8 +313,8 @@ export default function BookProjectEditor({
         <button
           type="button"
           className="btn-primary book-project-save"
-          disabled={saving || !title.trim() || steps.length === 0}
-          onClick={() => onSave({ title: title.trim(), steps })}
+          disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0}
+          onClick={saveProject}
         >
           {saving ? "저장 중..." : "프로젝트 저장"}
         </button>
@@ -315,7 +342,7 @@ export default function BookProjectEditor({
             <div className="book-step-edit-modal-body">{editor}</div>
             <footer className="book-item-edit-footer">
               <button type="button" className="btn-outline" onClick={() => setExpanded(false)}>패널에서 계속 편집</button>
-              <button type="button" className="btn-primary" disabled={saving || !title.trim() || steps.length === 0} onClick={() => onSave({ title: title.trim(), steps })}>{saving ? "저장 중..." : "프로젝트 저장"}</button>
+              <button type="button" className="btn-primary" disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0} onClick={saveProject}>{saving ? "저장 중..." : "프로젝트 저장"}</button>
             </footer>
           </section>
         </div>, document.body

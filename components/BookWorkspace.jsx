@@ -7,7 +7,7 @@ import { currentChecklistConfirmation } from "@/lib/activityChecklist";
 import { safeDisplayHtml } from "@/lib/html";
 import BookHelpDrawer from "./BookHelpDrawer";
 import BookPersonalDashboard from "./BookPersonalDashboard";
-import { useBookPresentationMode } from "./BookPresentationMode";
+import { BookImagePresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { bookDetailSections } from "./bookProjectItems";
@@ -206,6 +206,7 @@ export default function BookWorkspace({
   }
 
   return (
+    <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
     <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
@@ -294,5 +295,6 @@ export default function BookWorkspace({
     </div>
     )}
     </StudentActivityPanel>
+    </BookImagePresentationContext.Provider>
   );
 }

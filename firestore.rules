@@ -616,12 +616,40 @@ service cloud.firestore {
              && request.resource.data.url.size() <= 1000
              && request.resource.data.updatedAt == request.time;
     }
+    function validBookImageAt(images, index) {
+      return images.size() <= index || (
+        images[index] is string
+        && images[index].size() <= 600000
+        && (images[index].matches('https://[^ ]+')
+            || images[index].matches('data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}'))
+      );
+    }
+    function bookImageSizeAt(images, index) {
+      return images.size() <= index ? 0 : images[index].size();
+    }
+    function validBookImages(data) {
+      let images = data.get('images', []);
+      return images is list && images.size() <= 8
+             && validBookImageAt(images, 0)
+             && validBookImageAt(images, 1)
+             && validBookImageAt(images, 2)
+             && validBookImageAt(images, 3)
+             && validBookImageAt(images, 4)
+             && validBookImageAt(images, 5)
+             && validBookImageAt(images, 6)
+             && validBookImageAt(images, 7)
+             && (bookImageSizeAt(images, 0) + bookImageSizeAt(images, 1)
+                 + bookImageSizeAt(images, 2) + bookImageSizeAt(images, 3)
+                 + bookImageSizeAt(images, 4) + bookImageSizeAt(images, 5)
+                 + bookImageSizeAt(images, 6) + bookImageSizeAt(images, 7)) <= 600000;
+    }
     function validBookResource(resourceId) {
       return request.resource.data.keys().hasOnly([
                'resourceId', 'classId', 'projectId', 'projectVersion',
                'stepId', 'stepOrder', 'resourceOrder',
-               'title', 'content', 'url', 'locked', 'createdBy', 'createdAt', 'updatedAt'
+               'title', 'content', 'url', 'images', 'locked', 'createdBy', 'createdAt', 'updatedAt'
              ])
+             && validBookImages(request.resource.data)
              && request.resource.data.resourceId == resourceId
              && request.resource.data.classId is string
              && request.resource.data.classId.size() > 0
@@ -773,9 +801,12 @@ service cloud.firestore {
         || ownsClass(resource.data.classId)
         || isClassMember(resource.data.classId)
       );
-      allow create: if isAdmin()
-                    || (isTeacher() && ownsClassEditable(request.resource.data.classId));
-      allow update, delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow create: if (isAdmin()
+                    || (isTeacher() && ownsClassEditable(request.resource.data.classId)))
+                    && validBookImages(request.resource.data);
+      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+                    && validBookImages(request.resource.data);
+      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
 
       match /entries/{sId} {
         allow read: if signedIn() && (

@@ -4,6 +4,9 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
+import { useContext } from "react";
+import { BookImagePresentationContext } from "./BookPresentationMode";
+import BookItemImages from "./BookItemImages";
 import ActivityTemplate from "./ActivityTemplate";
 
 function modalUrlSlot(href, label) {
@@ -24,6 +27,8 @@ function modalUrlSlot(href, label) {
 }
 
 export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, checklistStatus, onRetryChecklist, hasChecklist }) {
+  const presentImage = useContext(BookImagePresentationContext);
+  const onPresent = isTeacher && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
   const itemLabel = isResource ? "자료" : "활동";
@@ -53,11 +58,13 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
             <RichTextDisplay
               className="book-personal-expand-content"
               html={item.content}
+              onImageClick={onPresent ? (index) => onPresent(index, true) : undefined}
               checklistValues={checklistValues}
               onChecklistChange={onChecklistChange}
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
+          {!locked && <BookItemImages images={item.images} onPresent={onPresent} />}
           {requiresAnswer && !locked && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>

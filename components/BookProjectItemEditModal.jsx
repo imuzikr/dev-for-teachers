@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import BasicFormatEditor from "./BasicFormatEditor";
 import ActivityTemplateSetting from "./ActivityTemplateSetting";
+import BookItemImageEditor from "./BookItemImageEditor";
 
 const EXPORT_SCOPE_LABELS = {
   project: "전체 Step",
@@ -151,6 +152,9 @@ export default function BookProjectItemEditModal({
   const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState(item?.title ?? "");
   const [content, setContent] = useState(item?.content ?? "");
+  const [images, setImages] = useState(item?.images ?? []);
+  const [imagesBusy, setImagesBusy] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [url, setUrl] = useState(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
   const [requiresAnswer, setRequiresAnswer] = useState(item?.requiresAnswer !== false && !isCreating);
   const [templateEnabled, setTemplateEnabled] = useState(item?.templateEnabled === true);
@@ -162,24 +166,31 @@ export default function BookProjectItemEditModal({
   useEffect(() => {
     setTitle(item?.title ?? "");
     setContent(item?.content ?? "");
+    setImages(item?.images ?? []);
     setUrl(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
     setRequiresAnswer(item?.requiresAnswer !== false && !isCreating);
     setTemplateEnabled(item?.templateEnabled === true);
-  }, [isCreating, item?.id, item?.title, item?.content, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
+  }, [isCreating, item?.id, item?.title, item?.content, item?.images, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
 
   if (!mounted) return null;
 
   async function save() {
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+    if (!trimmedTitle || imagesBusy) return;
     const trimmedUrl = url.trim();
-    await onSave({
-      title: trimmedTitle,
-      content,
-      ...(kind === "resource"
-        ? { url: trimmedUrl }
-        : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
-    });
+    setSaveError("");
+    try {
+      await onSave({
+        title: trimmedTitle,
+        content,
+        images,
+        ...(kind === "resource"
+          ? { url: trimmedUrl }
+          : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
+      });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   return createPortal(
@@ -252,10 +263,12 @@ export default function BookProjectItemEditModal({
             placeholder={kind === "activity" ? "활동 안내사항" : ""}
             ariaLabel={`${itemLabel} 내용`}
           />
+          <BookItemImageEditor key={`${kind}:${item?.id || "new"}`} images={images} onChange={setImages} onBusyChange={setImagesBusy} disabled={saving} />
         </div>
+        {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <footer className="book-item-edit-footer">
           <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
-          <button type="button" className="btn-primary" disabled={saving || !title.trim()} onClick={save}>
+          <button type="button" className="btn-primary" disabled={saving || imagesBusy || !title.trim()} onClick={save}>
             {saving ? "저장 중..." : isCreating ? `${itemLabel} 추가` : `${itemLabel} 저장`}
           </button>
         </footer>

@@ -1,0 +1,13 @@
+.book-item-images { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); }
+.book-item-images-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-sub); }
+.book-item-images-head .btn-outline { padding: 8px 12px; min-height: 44px; font-size: 12px; }
+.book-item-images-help, .book-item-images-error { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-sub); }
+.book-item-images-error { color: var(--danger); }
+.book-item-images-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
+.book-item-images-list li { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; }
+.book-item-images-list img { display: block; width: 100%; height: 120px; object-fit: contain; background: var(--primary-light); }
+.book-item-images-controls { display: flex; align-items: center; gap: 4px; padding: 4px; }
+.book-item-images-controls span { margin-right: auto; padding-left: 4px; font-size: 12px; color: var(--text-sub); }
+.book-item-images-controls button { min-width: 32px; min-height: 44px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--card-bg); color: var(--text); font-size: 12px; }
+.book-item-images-controls button:disabled { opacity: .4; cursor: default; }
+.book-item-images-controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
