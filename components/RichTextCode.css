@@ -1,0 +1,24 @@
+.basic-format-area pre,
+.book-rich-text pre {
+  min-width: 0;
+  max-width: 100%;
+  margin: 8px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--text);
+  font-family: var(--font-mono), monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  overflow-x: auto;
+  tab-size: 2;
+}
+.book-rich-text .rich-code-block { min-width: 0; max-width: 100%; margin: 12px 0; white-space: normal; }
+.rich-code-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; min-height: 36px; font-size: 12px; }
+.rich-code-actions button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: var(--primary-light); color: var(--text); cursor: pointer; }
+.rich-code-actions button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rich-code-actions button:disabled { opacity: .6; cursor: wait; }

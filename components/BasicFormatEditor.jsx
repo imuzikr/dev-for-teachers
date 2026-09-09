@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { sanitizeHtml } from "@/lib/html";
+import { escapeHtml, sanitizeHtml } from "@/lib/html";
 import "./ActivityChecklist.css";
+import "./RichTextCode.css";
 
 const SIZE_CLASSES = {
   small: "rte-size-small",
@@ -260,9 +261,22 @@ export default function BasicFormatEditor({
   }
 
   function handleKeyDown(event) {
-    if (event.nativeEvent.isComposing || event.keyCode === 229 || disabled || event.key !== "Enter") return;
+    if (event.nativeEvent.isComposing || event.keyCode === 229 || disabled) return;
     const area = areaRef.current;
     const selection = window.getSelection();
+    const pre = area && selection ? closestElement(selection.anchorNode, "pre", area) : null;
+    if (pre && event.key === "Enter") {
+      event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        const paragraph = document.createElement("div");
+        paragraph.append(document.createElement("br"));
+        pre.after(paragraph);
+        moveCaretToEnd(paragraph);
+      } else document.execCommand("insertLineBreak", false);
+      emitChange();
+      return;
+    }
+    if (event.key !== "Enter") return;
     const item = area && selection ? closestElement(selection.anchorNode, "li", area) : null;
     const list = item?.parentElement;
     if (!item || !list?.classList.contains("rte-checklist")) return;
@@ -337,6 +351,21 @@ export default function BasicFormatEditor({
     emitChange();
   }
 
+  function insertCodeBlock() {
+    const area = areaRef.current;
+    const selection = window.getSelection();
+    if (!area || !selection || disabled) return;
+    area.focus();
+    if (!selection.rangeCount || !area.contains(selection.getRangeAt(0).commonAncestorContainer)) moveCaretToEnd(area);
+    const existing = closestElement(selection.anchorNode, "pre", area);
+    if (existing) return;
+    const text = selection.toString();
+    document.execCommand("insertHTML", false, `<pre><code>${text ? escapeHtml(text) : "<br>"}</code></pre>`);
+    const pre = closestElement(selection.anchorNode, "pre", area);
+    if (pre) moveCaretToEnd(pre.querySelector("code") || pre);
+    emitChange();
+  }
+
   function handlePaste(event) {
     const text = event.clipboardData?.getData("text/plain");
     if (text === undefined) return;
@@ -372,6 +401,7 @@ export default function BasicFormatEditor({
           <IconChecklist />
         </button>
         <span className="basic-format-divider" aria-hidden="true" />
+        <button type="button" title="코드 블록" aria-label="코드 블록" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={insertCodeBlock}><code>&lt;/&gt;</code></button>
         <button type="button" title="작은 글자" aria-label="작은 글자" className={`basic-format-size basic-format-size--small${activeSize === "small" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("small")} disabled={disabled}>
           작게
         </button>

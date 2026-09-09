@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Activity formatting supports `pre`/`code` blocks through a compact `</>` toolbar command. Code preserves whitespace in a horizontally scrollable, monospace inset using existing surface/text/border tokens. Read-only blocks have a separate copy action with success/error feedback; copying excludes surrounding prose and does not toggle checklists. Templates preserve code formatting after variable substitution.
+
 - Student detail images (inline and attachments) open a body-portal lightbox at z-index 4000, filling the available viewport with object-fit contain. Closing via backdrop, Escape, or the close button preserves the underlying activity/checklist. Keyboard activation, focus trapping and restoration are supported; teacher image presentation remains separate.
 
 - Sidebar Step expansion actions are positioned relative to a dedicated header wrapper, never the accordion body. Header grid reserves equal 30px slots for expansion and collapse so long content cannot move the expansion icon or cover the title.

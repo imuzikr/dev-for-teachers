@@ -5,6 +5,7 @@ import { safeDisplayHtml, stripHtml } from "@/lib/html";
 import "./ActivityChecklist.css";
 import { safeBookImageUrl } from "./BookItemImages";
 import BookImageLightbox from "./BookImageLightbox";
+import RichTextCodeCopies from "./RichTextCodeCopies";
 
 export default function RichTextDisplay({
   html = "",
@@ -79,6 +80,7 @@ export default function RichTextDisplay({
       className={`book-rich-text${className ? ` ${className}` : ""}`}
       dangerouslySetInnerHTML={innerHtml}
     />
+    <RichTextCodeCopies rootRef={rootRef} html={safeHtml} />
     {preview && <BookImageLightbox image={preview} onClose={() => setPreview(null)} />}</>
   );
 }
