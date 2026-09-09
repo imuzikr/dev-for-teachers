@@ -167,7 +167,20 @@ export default function BasicFormatEditor({
 }) {
   const areaRef = useRef(null);
   const lastHtmlRef = useRef("");
+  const activeCodeRef = useRef(null);
+  const [inCodeBlock, setInCodeBlock] = useState(false);
   const [activeSize, setActiveSize] = useState(() => detectWholeTextSize(value));
+
+  useEffect(() => {
+    function updateCodeSelection() {
+      const area = areaRef.current;
+      const pre = area ? closestElement(window.getSelection()?.anchorNode, "pre", area) : null;
+      activeCodeRef.current = pre && area.contains(pre) ? pre : null;
+      setInCodeBlock(Boolean(activeCodeRef.current));
+    }
+    document.addEventListener("selectionchange", updateCodeSelection);
+    return () => document.removeEventListener("selectionchange", updateCodeSelection);
+  }, []);
 
   useEffect(() => {
     const nextHtml = sanitizeHtml(value || "");
@@ -260,6 +273,24 @@ export default function BasicFormatEditor({
     }
   }
 
+  function exitCodeBlock(pre = activeCodeRef.current) {
+    const area = areaRef.current;
+    if (disabled || !pre || !area?.contains(pre)) return;
+    const paragraph = document.createElement("div");
+    paragraph.append(document.createElement("br"));
+    let exitAfter = pre;
+    for (let parent = pre.parentElement; parent && parent !== area; parent = parent.parentElement) {
+      if (parent.matches("ul, ol")) exitAfter = parent;
+    }
+    exitAfter.after(paragraph);
+    area.focus();
+    moveCaretToEnd(paragraph);
+    activeCodeRef.current = null;
+    setInCodeBlock(false);
+    paragraph.scrollIntoView({ block: "nearest" });
+    emitChange();
+  }
+
   function handleKeyDown(event) {
     if (event.nativeEvent.isComposing || event.keyCode === 229 || disabled) return;
     const area = areaRef.current;
@@ -268,10 +299,8 @@ export default function BasicFormatEditor({
     if (pre && event.key === "Enter") {
       event.preventDefault();
       if (event.ctrlKey || event.metaKey) {
-        const paragraph = document.createElement("div");
-        paragraph.append(document.createElement("br"));
-        pre.after(paragraph);
-        moveCaretToEnd(paragraph);
+        exitCodeBlock(pre);
+        return;
       } else document.execCommand("insertLineBreak", false);
       emitChange();
       return;
@@ -358,7 +387,10 @@ export default function BasicFormatEditor({
     area.focus();
     if (!selection.rangeCount || !area.contains(selection.getRangeAt(0).commonAncestorContainer)) moveCaretToEnd(area);
     const existing = closestElement(selection.anchorNode, "pre", area);
-    if (existing) return;
+    if (existing) {
+      exitCodeBlock(existing);
+      return;
+    }
     const text = selection.toString();
     document.execCommand("insertHTML", false, `<pre><code>${text ? escapeHtml(text) : "<br>"}</code></pre>`);
     const pre = closestElement(selection.anchorNode, "pre", area);
@@ -401,7 +433,8 @@ export default function BasicFormatEditor({
           <IconChecklist />
         </button>
         <span className="basic-format-divider" aria-hidden="true" />
-        <button type="button" title="코드 블록" aria-label="코드 블록" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={insertCodeBlock}><code>&lt;/&gt;</code></button>
+        <button type="button" title="코드 블록" aria-label="코드 블록" aria-pressed={inCodeBlock} className={inCodeBlock ? "is-active" : ""} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={insertCodeBlock}><code>&lt;/&gt;</code></button>
+        <button type="button" title="코드 밖으로 (Ctrl+Enter)" aria-label="코드 밖으로" disabled={disabled || !inCodeBlock} onMouseDown={(event) => event.preventDefault()} onClick={() => exitCodeBlock()}>코드 밖으로</button>
         <button type="button" title="작은 글자" aria-label="작은 글자" className={`basic-format-size basic-format-size--small${activeSize === "small" ? " is-active" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => applySize("small")} disabled={disabled}>
           작게
         </button>

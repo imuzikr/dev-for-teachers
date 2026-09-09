@@ -11,3 +11,5 @@ Call the default export of `tests/codeFormatting.browser.mjs` with a Playwright 
 Remove the temporary route before building or deploying. This fixture has no backend writes or authentication dependencies.
 
 Student and template previews must hide the code body and expose a full-width copy row. The teacher preview must retain the expanded code. The suite verifies these role-specific states without changing the stored HTML.
+
+The visible code-exit command must move to a regular paragraph and become disabled outside code. Code-format toggling and Ctrl/Cmd+Enter share the exit path. When code is nested in a list, exit after the containing list so creating a new checklist cannot toggle off the original checklist.

@@ -21,8 +21,9 @@ export default async function verifyCodeFormatting(page, baseUrl = "http://local
   await page.keyboard.type("const a = 1;");
   await page.keyboard.press("Enter");
   await page.keyboard.type("  const b = 2;");
-  await page.keyboard.press("Control+Enter");
+  await page.getByRole("button", { name: "코드 밖으로", exact: true }).click();
   await page.keyboard.type("Outside code");
+  assert(await page.getByRole("button", { name: "코드 밖으로", exact: true }).isDisabled(), "Exit control must disable outside code");
   await copy.click();
   assert(normalize(await page.evaluate(() => navigator.clipboard.readText())) === "const a = 1;\n  const b = 2;", "Copy must exclude prose after code block");
   await page.evaluate(() => {
@@ -35,6 +36,16 @@ export default async function verifyCodeFormatting(page, baseUrl = "http://local
   await copy.click();
   await display.getByText("복사됨", { exact: true }).waitFor();
   assert(await display.getByRole("status").textContent() === "복사됨", "Copy must recover after failure");
+  await editor.evaluate((area) => {
+    area.innerHTML = '<ul class="rte-checklist"><li><label><input type="checkbox"><span class="rte-checklist-text">Code task<pre><code>const nested = 1;</code></pre></span></label></li></ul>';
+    area.dispatchEvent(new InputEvent("input", { bubbles: true }));
+  });
+  await editor.locator("pre").click();
+  await page.getByRole("button", { name: "코드 밖으로", exact: true }).click();
+  await page.getByRole("button", { name: "체크리스트", exact: true }).click();
+  await page.keyboard.type("Next task");
+  assert(await editor.locator('input[type="checkbox"]').count() === 2, "Exiting nested code must preserve the original checklist when adding a new task");
+  assert(await editor.locator("pre").textContent() === "const nested = 1;", "Exiting nested code must preserve its content");
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Page overflow at ${width}px`);

@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- The activity editor keeps a visible `코드 밖으로` toolbar command, enabled while the caret is inside a code block. It moves focus to a new ordinary paragraph immediately after that block without changing its code; Ctrl/Cmd+Enter and re-clicking the active code-format command use the same exit path. The toolbar wraps naturally on narrow screens.
+
 - Student activity/resource detail panels and enlarged modals display each code block as one full-width, 48px-minimum copy row (`</>`, code label, copy icon). Code content remains available to copying but is hidden from layout; multiple blocks are numbered. Success/failure feedback is separate from the stable row label. Teacher previews and editors retain expanded code. Template code uses the student's substituted values.
 
 - Activity formatting supports `pre`/`code` blocks through a compact `</>` toolbar command. Code preserves whitespace in a horizontally scrollable, monospace inset using existing surface/text/border tokens. Read-only blocks have a separate copy action with success/error feedback; copying excludes surrounding prose and does not toggle checklists. Templates preserve code formatting after variable substitution.
