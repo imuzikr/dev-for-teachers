@@ -83,17 +83,13 @@ export default function BookPersonalDetail({
     <section className={`book-personal-dashboard book-personal-detail${isTeacher ? " book-personal-detail--teacher" : ""}`} aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
       <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
         <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
-        <div>
-          {isTeacher ? (
-            <>
+        {isTeacher && (
+          <div>
               <span>참여자 활동</span>
               <h2>{participantName(selected)} 활동 대시보드</h2>
               <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{itemCount} 확인</p>
-            </>
-          ) : (
-            <h2>나의 개발자실</h2>
-          )}
-        </div>
+          </div>
+        )}
       </header>
       {sections.length === 0 ? (
         <div className="book-dashboard-empty">선생님이 활동을 준비하고 있습니다.</div>
