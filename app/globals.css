@@ -9552,7 +9552,10 @@ pre code {
 
 .book-step-flow-item.has-actions .book-step-flow-trigger {
   padding-right: 8px;
+  grid-template-columns: minmax(0, 1fr) 30px 30px;
 }
+
+.book-step-flow-head { position: relative; }
 
 .book-step-flow-trigger {
   position: static;

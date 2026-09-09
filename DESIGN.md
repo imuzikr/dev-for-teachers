@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Sidebar Step expansion actions are positioned relative to a dedicated header wrapper, never the accordion body. Header grid reserves equal 30px slots for expansion and collapse so long content cannot move the expansion icon or cover the title.
+
 - Teacher whole-class progress uses the supplied scoreboard structure: each activity/resource is a row grouped by Step, with a sticky 220px label column (144px mobile) and one 20px square per student in 24px columns. Compact numbered column headers and square tooltips identify students. Confirmed cells use sage #8cb78d/#78a67b, unconfirmed cells use resource surface/border tokens, locked cells use #d1d0ca/#eeede8 diagonal stripes, and the last completed item retains one green light per student. The viewport-sized modal (up to 1800px, 88dvh) remains independent of roster size, supports all students via scrolling, shares live progress, and preserves focus handling and empty states.
 
 - Step editors place the two add commands and the last item's URL input in one equal-width, three-column row, ordered activity add, resource add, URL. Controls are 48px high with 8px gaps and corners; body editors use the full available width. Other items retain their own URL field, and empty Steps retain the two add commands without a URL field.

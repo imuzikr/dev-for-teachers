@@ -81,12 +81,14 @@ export default function BookProjectSidebarTools({
 
           return (
             <article className={`book-step-flow-item${open ? " is-open" : ""}${renderStepAction ? " has-actions" : ""}`} key={step.id}>
-              {trigger}
-              {renderStepAction && (
-                <div className="book-step-flow-actions">
-                  {renderStepAction(step, displayIndex)}
-                </div>
-              )}
+              <div className="book-step-flow-head">
+                {trigger}
+                {renderStepAction && (
+                  <div className="book-step-flow-actions">
+                    {renderStepAction(step, displayIndex)}
+                  </div>
+                )}
+              </div>
               {open && (
                 <div className="book-step-flow-body" id={panelId}>
                   {renderStepContent(step)}
