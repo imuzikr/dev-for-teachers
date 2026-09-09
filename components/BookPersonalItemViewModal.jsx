@@ -78,7 +78,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && <button type="button" className="btn-primary" disabled={saving || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 const saved = await onSave();
-                if (requiresAnswer && saved !== false && !panelTarget) onClose();
+                if (saved !== false && !panelTarget) onClose();
               }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인"}</button>}
               {checklistStatus && checklistStatus !== "loading" && <small role="status">{checklistStatus === "saving" ? "자동 저장 중..." : checklistStatus === "failed" ? "체크 상태를 저장하지 못했어요." : "자동 저장됨"}</small>}
               {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
