@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { safeDisplayHtml, stripHtml } from "@/lib/html";
 import "./ActivityChecklist.css";
 import { safeBookImageUrl } from "./BookItemImages";
+import BookImageLightbox from "./BookImageLightbox";
 
 export default function RichTextDisplay({
   html = "",
@@ -13,9 +14,11 @@ export default function RichTextDisplay({
   checklistValues,
   onChecklistChange,
   onImageClick,
+  previewImages = false,
 }) {
   const rootRef = useRef(null);
   const [localChecks, setLocalChecks] = useState({});
+  const [preview, setPreview] = useState(null);
   const rawHtml = useMemo(() => {
     const source = String(html || "");
     return source.trim() ? source : fallback;
@@ -30,10 +33,10 @@ export default function RichTextDisplay({
 
   useLayoutEffect(() => {
     [...(rootRef.current?.querySelectorAll("img") ?? [])].filter((img) => safeBookImageUrl(img.getAttribute("src"))).forEach((img, index) => {
-      if (onImageClick) {
+      if (onImageClick || previewImages) {
         img.setAttribute("role", "button");
         img.tabIndex = 0;
-        img.setAttribute("aria-label", `이미지 ${index + 1} 발표`);
+        img.setAttribute("aria-label", `이미지 ${index + 1} ${onImageClick ? "발표" : "크게 보기"}`);
       } else {
         img.removeAttribute("role");
         img.removeAttribute("tabindex");
@@ -49,9 +52,10 @@ export default function RichTextDisplay({
   function changeCheck(event) {
     const target = event.target;
     const element = target instanceof Element ? target : target?.parentElement;
-    if (onImageClick && element?.tagName === "IMG" && safeBookImageUrl(element.getAttribute("src"))) {
+    if ((onImageClick || previewImages) && element?.tagName === "IMG" && safeBookImageUrl(element.getAttribute("src"))) {
       event.preventDefault();
-      onImageClick([...rootRef.current.querySelectorAll("img")].filter((img) => safeBookImageUrl(img.getAttribute("src"))).indexOf(element));
+      if (onImageClick) onImageClick([...rootRef.current.querySelectorAll("img")].filter((img) => safeBookImageUrl(img.getAttribute("src"))).indexOf(element));
+      else setPreview({ src: element.getAttribute("src"), alt: element.getAttribute("alt") });
       return;
     }
     if (!(target instanceof HTMLInputElement && target.type === "checkbox")) {
@@ -66,14 +70,15 @@ export default function RichTextDisplay({
   }
 
   return (
-    <Tag
+    <><Tag
       ref={rootRef}
       onClick={changeCheck}
-      onKeyDown={onImageClick ? (event) => {
+      onKeyDown={onImageClick || previewImages ? (event) => {
         if ((event.key === "Enter" || event.key === " ") && event.target.tagName === "IMG") changeCheck(event);
       } : undefined}
       className={`book-rich-text${className ? ` ${className}` : ""}`}
       dangerouslySetInnerHTML={innerHtml}
     />
+    {preview && <BookImageLightbox image={preview} onClose={() => setPreview(null)} />}</>
   );
 }

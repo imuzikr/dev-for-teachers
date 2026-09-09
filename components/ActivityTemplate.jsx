@@ -42,7 +42,7 @@ export default function ActivityTemplate({ content, values, onChange, hasCheckli
       </label>)}
     </div>
     {fields.length === 0 && <p className="form-error">등록된 템플릿 변수가 없습니다.</p>}
-    {hasChecklist ? <RichTextDisplay className="activity-template-result" html={formattedResult} checklistValues={checklistValues} onChecklistChange={onChecklistChange} /> : <div className="activity-template-result" aria-label="완성된 프롬프트">{result}</div>}
+    {hasChecklist ? <RichTextDisplay previewImages className="activity-template-result" html={formattedResult} checklistValues={checklistValues} onChecklistChange={onChecklistChange} /> : <div className="activity-template-result" aria-label="완성된 프롬프트">{result}</div>}
     <button type="button" className="btn-outline" disabled={!complete} onClick={copy}><IconCopy /> 복사하기</button>
     <span className="activity-template-status" role="status">{status}</span>
   </section>;

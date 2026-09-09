@@ -58,13 +58,14 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
             <RichTextDisplay
               className="book-personal-expand-content"
               html={item.content}
+              previewImages={!isTeacher}
               onImageClick={onPresent ? (index) => onPresent(index, true) : undefined}
               checklistValues={checklistValues}
               onChecklistChange={onChecklistChange}
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
-          {!locked && <BookItemImages images={item.images} onPresent={onPresent} />}
+          {!locked && <BookItemImages images={item.images} onPresent={onPresent} previewImages={!isTeacher} />}
           {requiresAnswer && !locked && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
