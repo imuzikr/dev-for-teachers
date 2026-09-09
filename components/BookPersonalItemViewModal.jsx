@@ -4,10 +4,11 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { BookImagePresentationContext } from "./BookPresentationMode";
 import BookItemImages from "./BookItemImages";
 import ActivityTemplate from "./ActivityTemplate";
+import ChecklistWarningModal from "./ChecklistWarningModal";
 
 function modalUrlSlot(href, label) {
   if (href) {
@@ -26,7 +27,8 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, checklistStatus, onRetryChecklist, hasChecklist }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
+  const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
   const item = detailItem.source;
@@ -77,6 +79,10 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
             <div className="student-activity-detail-actions">
               {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && <button type="button" className="btn-primary" disabled={saving || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
+                if (hasChecklist && !checklistComplete) {
+                  setShowChecklistWarning(true);
+                  return;
+                }
                 const saved = await onSave();
                 if (saved !== false && !panelTarget) onClose();
               }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인"}</button>}
@@ -88,5 +94,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
         </div>
       </section>
   );
-  return createPortal(panelTarget ? content : <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>{content}</div>, panelTarget || document.body);
+  return <>{createPortal(panelTarget ? content : <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>{content}</div>, panelTarget || document.body)}
+    {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
+  </>;
 }

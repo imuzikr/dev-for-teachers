@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Incomplete checklists cannot be confirmed from student detail panels or enlarged modals. A body-portal alert dialog at z-index 4100 shows the two requested Korean sentences separated by a line break and one acknowledgement button. Dismissal preserves the underlying content and checklist; all tasks must be checked before completion saving and modal close. Existing checkbox autosave remains enabled. The alert traps focus, restores focus/scroll, and consumes Escape without closing the underlying modal.
+
 - The activity editor keeps a visible `코드 밖으로` toolbar command, enabled while the caret is inside a code block. It moves focus to a new ordinary paragraph immediately after that block without changing its code; Ctrl/Cmd+Enter and re-clicking the active code-format command use the same exit path. The toolbar wraps naturally on narrow screens.
 
 - Student activity/resource detail panels and enlarged modals display each code block as one full-width, 48px-minimum copy row (`</>`, code label, copy icon). Code content remains available to copying but is hidden from layout; multiple blocks are numbered. Success/failure feedback is separate from the stable row label. Teacher previews and editors retain expanded code. Template code uses the student's substituted values.

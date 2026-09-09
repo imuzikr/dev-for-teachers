@@ -1,0 +1,4 @@
+.checklist-warning-backdrop { z-index: 4100; }
+.checklist-warning-modal { width: min(520px, 100%); max-width: 520px; }
+.checklist-warning-modal .confirm-desc { margin: 0 0 20px; font-size: 16px; line-height: 1.7; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.checklist-warning-modal > button { width: 100%; }

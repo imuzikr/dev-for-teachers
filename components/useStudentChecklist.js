@@ -78,7 +78,7 @@ export default function useStudentChecklist(item) {
     change: (next) => persist(checklistSnapshot(defaults, next)),
     retry: () => persist(snapshot),
     async confirm(save) {
-      if (loadedVersion !== version) return false;
+      if (loadedVersion !== version || !checklistComplete(snapshot)) return false;
       const request = ++revision.current;
       pending.current = true;
       const saved = await save();
