@@ -6,11 +6,14 @@ export default async function verifyCodeFormatting(page, baseUrl = "http://local
   const display = page.locator('[data-testid="display"]');
   const copy = display.getByRole("button", { name: "코드 복사", exact: true });
   await copy.waitFor();
+  assert(!await display.locator("pre").isVisible(), "Student code must be collapsed into a copy row");
+  assert(await page.locator('[data-testid="teacher"] pre').isVisible(), "Teacher code must remain expanded");
   await display.getByRole("checkbox").check();
   await copy.click();
   assert(normalize(await page.evaluate(() => navigator.clipboard.readText())) === "rules_version = '2';\n  allow read: if x < 10 && y > 0;", "Code copy must preserve whitespace and literal HTML characters");
   assert(await display.getByRole("checkbox").isChecked(), "Copy must preserve checklist state");
   await page.locator('[data-testid="template"]').getByRole("button", { name: "코드 복사", exact: true }).click();
+  assert(!await page.locator('[data-testid="template"] pre').isVisible(), "Template code must use the compact student row");
   assert(normalize(await page.evaluate(() => navigator.clipboard.readText())) === "const value = 1;\n  console.log(value);", "Template code must copy substituted values");
   const editor = page.getByRole("textbox", { name: "서식 입력" });
   await editor.fill("");

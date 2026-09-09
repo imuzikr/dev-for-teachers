@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Student activity/resource detail panels and enlarged modals display each code block as one full-width, 48px-minimum copy row (`</>`, code label, copy icon). Code content remains available to copying but is hidden from layout; multiple blocks are numbered. Success/failure feedback is separate from the stable row label. Teacher previews and editors retain expanded code. Template code uses the student's substituted values.
+
 - Activity formatting supports `pre`/`code` blocks through a compact `</>` toolbar command. Code preserves whitespace in a horizontally scrollable, monospace inset using existing surface/text/border tokens. Read-only blocks have a separate copy action with success/error feedback; copying excludes surrounding prose and does not toggle checklists. Templates preserve code formatting after variable substitution.
 
 - Student detail images (inline and attachments) open a body-portal lightbox at z-index 4000, filling the available viewport with object-fit contain. Closing via backdrop, Escape, or the close button preserves the underlying activity/checklist. Keyboard activation, focus trapping and restoration are supported; teacher image presentation remains separate.

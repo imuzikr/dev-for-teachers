@@ -22,3 +22,19 @@
 .rich-code-actions button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: var(--primary-light); color: var(--text); cursor: pointer; }
 .rich-code-actions button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .rich-code-actions button:disabled { opacity: .6; cursor: wait; }
+.book-rich-text--compact-code pre { display: none; }
+.book-rich-text--compact-code .rich-code-actions { display: block; }
+.rich-code-compact-control { min-width: 0; width: 100%; }
+.rich-code-actions button.rich-code-copy-row {
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  padding: 10px 14px;
+  gap: 10px;
+  font-size: 14px;
+  text-align: left;
+}
+.rich-code-copy-row > span { flex: 1; min-width: 0; }
+.rich-code-copy-row > svg { flex-shrink: 0; }
+.rich-code-copy-row:hover { border-color: var(--primary); }
+.rich-code-copy-status { display: block; padding: 4px 0 0; color: var(--text-sub); }

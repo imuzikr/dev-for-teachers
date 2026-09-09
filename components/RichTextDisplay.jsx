@@ -16,6 +16,7 @@ export default function RichTextDisplay({
   onChecklistChange,
   onImageClick,
   previewImages = false,
+  compactCode = false,
 }) {
   const rootRef = useRef(null);
   const [localChecks, setLocalChecks] = useState({});
@@ -77,10 +78,10 @@ export default function RichTextDisplay({
       onKeyDown={onImageClick || previewImages ? (event) => {
         if ((event.key === "Enter" || event.key === " ") && event.target.tagName === "IMG") changeCheck(event);
       } : undefined}
-      className={`book-rich-text${className ? ` ${className}` : ""}`}
+      className={`book-rich-text${compactCode ? " book-rich-text--compact-code" : ""}${className ? ` ${className}` : ""}`}
       dangerouslySetInnerHTML={innerHtml}
     />
-    <RichTextCodeCopies rootRef={rootRef} html={safeHtml} />
+    <RichTextCodeCopies rootRef={rootRef} html={safeHtml} compact={compactCode} />
     {preview && <BookImageLightbox image={preview} onClose={() => setPreview(null)} />}</>
   );
 }

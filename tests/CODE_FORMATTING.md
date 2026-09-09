@@ -9,3 +9,5 @@ export { default } from "@/tests/fixtures/CodeFormatPage";
 Call the default export of `tests/codeFormatting.browser.mjs` with a Playwright Chromium page and the server origin. It checks code entry, line breaks, exiting the block, exact clipboard text, template substitution, checklist preservation, permission failure/retry, and viewport overflow at 375/768/1280 pixels. The browser context must support clipboard permissions. Windows clipboard line endings are normalized in assertions.
 
 Remove the temporary route before building or deploying. This fixture has no backend writes or authentication dependencies.
+
+Student and template previews must hide the code body and expose a full-width copy row. The teacher preview must retain the expanded code. The suite verifies these role-specific states without changing the stored HTML.

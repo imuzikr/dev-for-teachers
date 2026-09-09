@@ -59,6 +59,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               className="book-personal-expand-content"
               html={item.content}
               previewImages={!isTeacher}
+              compactCode={!isTeacher}
               onImageClick={onPresent ? (index) => onPresent(index, true) : undefined}
               checklistValues={checklistValues}
               onChecklistChange={onChecklistChange}

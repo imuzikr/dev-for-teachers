@@ -9,7 +9,8 @@ export default function CodeFormatPage() {
   const [values, setValues] = useState({ Rules: "const value = 1;\n  console.log(value);" });
   return <main style={{ padding: 20, maxWidth: 960, margin: "auto" }}>
     <BasicFormatEditor value={html} onChange={setHtml} templateEnabled />
-    <section data-testid="display"><RichTextDisplay html={html} /></section>
+    <section data-testid="display"><RichTextDisplay html={html} compactCode /></section>
+    <section data-testid="teacher"><RichTextDisplay html={html} /></section>
     <section data-testid="template"><ActivityTemplate content={'<pre><code>{{Rules}}</code></pre>'} values={values} onChange={setValues} /></section>
   </main>;
 }

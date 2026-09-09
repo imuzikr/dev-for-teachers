@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { IconCopy } from "./BookProjectPreview";
 import "./RichTextCode.css";
 
-function CopyCode({ pre }) {
+function CopyCode({ pre, compact, index, count }) {
   const [status, setStatus] = useState("");
   const [pending, setPending] = useState(false);
   async function copy(event) {
@@ -24,10 +24,21 @@ function CopyCode({ pre }) {
       setPending(false);
     }
   }
+  if (compact) {
+    const label = count > 1 ? `코드 ${index + 1} 복사` : "코드 복사";
+    return <div className="rich-code-compact-control">
+      <button type="button" className="rich-code-copy-row" title={label} aria-label={label} disabled={pending} onClick={copy}>
+        <code aria-hidden="true">&lt;/&gt;</code>
+        <span>{pending ? "복사 중..." : label}</span>
+        <IconCopy />
+      </button>
+      {status && <span className="rich-code-copy-status" role="status">{status}</span>}
+    </div>;
+  }
   return <><span role="status">{status}</span><button type="button" title="코드 복사" aria-label="코드 복사" disabled={pending} onClick={copy}><IconCopy /></button></>;
 }
 
-export default function RichTextCodeCopies({ rootRef, html }) {
+export default function RichTextCodeCopies({ rootRef, html, compact = false }) {
   const [blocks, setBlocks] = useState([]);
   useLayoutEffect(() => {
     // Copy controls are display-only and never enter the stored HTML or code text.
@@ -43,5 +54,5 @@ export default function RichTextCodeCopies({ rootRef, html }) {
     setBlocks(next);
     return () => next.forEach(({ pre, wrapper }) => wrapper.replaceWith(pre));
   }, [html, rootRef]);
-  return blocks.map(({ pre, host }, index) => createPortal(<CopyCode pre={pre} />, host, `${html}:${index}`));
+  return blocks.map(({ pre, host }, index) => createPortal(<CopyCode pre={pre} compact={compact} index={index} count={blocks.length} />, host, `${html}:${index}`));
 }
