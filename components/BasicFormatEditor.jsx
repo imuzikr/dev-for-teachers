@@ -296,6 +296,49 @@ export default function BasicFormatEditor({
     const area = areaRef.current;
     const selection = window.getSelection();
     const pre = area && selection ? closestElement(selection.anchorNode, "pre", area) : null;
+    if (event.key === " " && !event.ctrlKey && !event.metaKey && !event.altKey
+      && area && selection?.rangeCount && selection.isCollapsed && area.contains(selection.anchorNode)
+      && !closestElement(selection.anchorNode, "pre, code, li", area)) {
+      const caret = selection.getRangeAt(0);
+      const block = closestElement(caret.startContainer, "p, div, h1, h2, h3, h4, h5, h6, blockquote", area) || area;
+      const prefix = caret.cloneRange();
+      prefix.selectNodeContents(block);
+      prefix.setEnd(caret.startContainer, caret.startOffset);
+      let lineBreak = null;
+      for (const boundary of block.querySelectorAll("br, p, div, h1, h2, h3, h4, h5, h6, blockquote")) {
+        const parent = boundary.parentNode;
+        const offset = Array.prototype.indexOf.call(parent.childNodes, boundary) + 1;
+        if (prefix.comparePoint(parent, offset) === 0) {
+          prefix.setStartAfter(boundary);
+          lineBreak = boundary.tagName === "BR" ? boundary : null;
+        }
+      }
+      let textBreak = null;
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const limit = node === caret.startContainer ? caret.startOffset : node.length;
+        const index = node.textContent.lastIndexOf("\n", limit - 1);
+        if (index >= 0 && prefix.comparePoint(node, index + 1) === 0) {
+          prefix.setStart(node, index + 1);
+          textBreak = { node, index };
+          lineBreak = null;
+        }
+      }
+      const contents = prefix.cloneContents();
+      if (contents.textContent === "-" && !contents.querySelector("img, input, hr")) {
+        event.preventDefault();
+        if (lineBreak) prefix.setStartBefore(lineBreak);
+        if (textBreak) prefix.setStart(textBreak.node, textBreak.index);
+        selection.removeAllRanges();
+        selection.addRange(prefix);
+        document.execCommand("delete", false);
+        if (lineBreak || textBreak) document.execCommand("insertParagraph", false);
+        document.execCommand("insertUnorderedList", false);
+        emitChange();
+        return;
+      }
+    }
     if (pre && event.key === "Enter") {
       event.preventDefault();
       if (event.ctrlKey || event.metaKey) {
