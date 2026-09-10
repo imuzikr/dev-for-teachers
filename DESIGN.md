@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Sidebar activity/resource pencil commands open the existing single-item edit modal, not the whole Step editor. Its activity/resource save action updates only the selected item while preserving sibling items and ordering. The separate Step and project edit commands keep their original scope.
+
 - The incomplete-checklist alert says `완료하지 않은 할 일이 남아 있습니다.` then `모든 할 일을 완료해야 확인으로 처리됩니다.` on a new line. Its `닫기` button dismisses both the alert and the enlarged activity modal without submitting completion; a detail panel stays open. Escape/backdrop dismiss only the alert. Checklist values persist when reopening, and completion remains gated on every task being checked.
 
 - Student detail panels constrain their body grid and image gallery to the available inner width, including scrollbar space. Long code previews must truncate inside their own row without enlarging sibling URLs, images, or confirmation controls; attached images retain their full aspect ratio and enlargement action.

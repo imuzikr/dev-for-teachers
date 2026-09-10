@@ -125,7 +125,7 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
               item={entry.source}
               kind={entry.kind}
               onPreview={() => setEditingItem({ stepId: step.id, kind: entry.kind, itemId: entry.id })}
-              onEdit={onEdit ? () => onEdit(false, step.id) : null}
+              onEdit={onSave ? () => setEditingItem({ stepId: step.id, kind: entry.kind, itemId: entry.id }) : null}
               onDelete={onDelete ? () => onDelete({ kind: entry.kind, item: entry.source, stepId: step.id }) : null}
               onToggleLock={onToggleProjectItemLock
                 ? (locked) => onToggleProjectItemLock(entry, locked)
