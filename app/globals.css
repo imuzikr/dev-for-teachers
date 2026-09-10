@@ -10815,7 +10815,7 @@ pre code {
 .modal.book-class-progress-modal {
   width: min(1800px, calc(100vw - 32px));
   max-width: none;
-  height: 88dvh;
+  height: 94dvh;
   max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
@@ -10875,7 +10875,9 @@ pre code {
 .book-class-progress-table th small { display: block; margin-top: 4px; color: var(--text-sub); font-size: 11px; }
 .book-class-progress-table thead th { font-size: 10px; color: var(--student-progress-color, var(--text-sub)); }
 .book-class-progress-table tbody + tbody tr:first-child > * { border-top: 8px solid #fff; }
-.book-score-row-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--primary-dark); }
+.book-score-row-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 16px; color: var(--primary-dark); }
+.book-class-progress-table tbody td { vertical-align: bottom; }
+.book-class-progress-table td > .book-score-cell { display: block; margin-inline: auto; }
 .book-score-cell { position: relative; display: inline-block; vertical-align: middle; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--resource-border); background: var(--resource-light); }
 .book-score-cell.is-filled:not(.is-locked) { border-width: 2px; border-color: var(--student-progress-color, var(--primary)); }
 .book-score-cell.is-filled:not(.is-locked)::after { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 5px; height: 5px; border-radius: 50%; background: var(--student-progress-color, var(--primary)); }
