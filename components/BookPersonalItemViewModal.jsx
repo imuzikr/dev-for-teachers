@@ -95,6 +95,9 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
       </section>
   );
   return <>{createPortal(panelTarget ? content : <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>{content}</div>, panelTarget || document.body)}
-    {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
+    {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} onAcknowledge={() => {
+      setShowChecklistWarning(false);
+      if (!panelTarget) onClose();
+    }} />}
   </>;
 }

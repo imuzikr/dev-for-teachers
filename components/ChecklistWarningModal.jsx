@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import "./ChecklistWarningModal.css";
 
-export default function ChecklistWarningModal({ onClose }) {
+export default function ChecklistWarningModal({ onClose, onAcknowledge = onClose }) {
   const buttonRef = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -35,7 +35,7 @@ export default function ChecklistWarningModal({ onClose }) {
   return createPortal(<div className="modal-backdrop checklist-warning-backdrop" {...backdropClose(onClose)}>
     <section className="confirm-modal checklist-warning-modal" role="alertdialog" aria-modal="true" aria-label="미완료 할 일" aria-describedby={descriptionId} onClick={(event) => event.stopPropagation()}>
       <p id={descriptionId} className="confirm-desc">완료하지 않은 할 일이 남아 있습니다.<br />모든 할 일을 완료해야 확인으로 처리됩니다.</p>
-      <button ref={buttonRef} type="button" className="btn-primary" onClick={onClose}>닫기</button>
+      <button ref={buttonRef} type="button" className="btn-primary" onClick={onAcknowledge}>닫기</button>
     </section>
   </div>, document.body);
 }

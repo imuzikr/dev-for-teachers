@@ -19,6 +19,10 @@ export default async function verifyIncompleteChecklist(page, baseUrl = "http://
     await warning.getByRole("button", { name: "닫기", exact: true }).click();
     await warning.waitFor({ state: "detached" });
     if (await page.locator("output").textContent() !== "미확인") throw new Error("Closing warning must not confirm the activity");
+    if (!panel) {
+      await detail.waitFor({ state: "detached" });
+      await page.getByRole("button", { name: "열기", exact: true }).click();
+    }
     if (!await detail.isVisible() || !await checks.first().isChecked() || await checks.nth(1).isChecked()) throw new Error("Warning dismissal must preserve detail and checkbox values");
     await checks.nth(1).check();
     await detail.getByRole("button", { name: "확인", exact: true }).click();
