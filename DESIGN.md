@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Compact student code-copy items show the first two non-empty lines beneath their label in 12px monospace. Long lines use ellipsis within the available width; copying still uses the entire unmodified code text, including blank lines and indentation. Template previews use substituted values and never render code as HTML.
+
 - Incomplete checklists cannot be confirmed from student detail panels or enlarged modals. A body-portal alert dialog at z-index 4100 shows the two requested Korean sentences separated by a line break and one acknowledgement button. Dismissal preserves the underlying content and checklist; all tasks must be checked before completion saving and modal close. Existing checkbox autosave remains enabled. The alert traps focus, restores focus/scroll, and consumes Escape without closing the underlying modal.
 
 - The activity editor keeps a visible `코드 밖으로` toolbar command, enabled while the caret is inside a code block. It moves focus to a new ordinary paragraph immediately after that block without changing its code; Ctrl/Cmd+Enter and re-clicking the active code-format command use the same exit path. The toolbar wraps naturally on narrow screens.

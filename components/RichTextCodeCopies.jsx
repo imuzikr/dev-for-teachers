@@ -5,6 +5,13 @@ import { createPortal } from "react-dom";
 import { IconCopy } from "./BookProjectPreview";
 import "./RichTextCode.css";
 
+function codeText(pre) {
+  const clone = pre.cloneNode(true);
+  clone.querySelectorAll("br").forEach((br) => br.replaceWith(document.createTextNode("\n")));
+  clone.querySelectorAll("div, p").forEach((block) => block.append(document.createTextNode("\n")));
+  return clone.textContent.replace(/\u00a0/g, " ");
+}
+
 function CopyCode({ pre, compact, index, count }) {
   const [status, setStatus] = useState("");
   const [pending, setPending] = useState(false);
@@ -13,10 +20,7 @@ function CopyCode({ pre, compact, index, count }) {
     event.stopPropagation();
     setPending(true);
     try {
-      const clone = pre.cloneNode(true);
-      clone.querySelectorAll("br").forEach((br) => br.replaceWith(document.createTextNode("\n")));
-      clone.querySelectorAll("div, p").forEach((block) => block.append(document.createTextNode("\n")));
-      await navigator.clipboard.writeText(clone.textContent.replace(/\u00a0/g, " "));
+      await navigator.clipboard.writeText(codeText(pre));
       setStatus("복사됨");
     } catch {
       setStatus("복사 실패. 다시 시도해 주세요.");
@@ -26,10 +30,14 @@ function CopyCode({ pre, compact, index, count }) {
   }
   if (compact) {
     const label = count > 1 ? `코드 ${index + 1} 복사` : "코드 복사";
+    const preview = codeText(pre).split(/\r?\n/).filter((line) => line.trim()).slice(0, 2);
     return <div className="rich-code-compact-control">
       <button type="button" className="rich-code-copy-row" title={label} aria-label={label} disabled={pending} onClick={copy}>
         <code aria-hidden="true">&lt;/&gt;</code>
-        <span>{pending ? "복사 중..." : label}</span>
+        <span className="rich-code-copy-content">
+          <span>{pending ? "복사 중..." : label}</span>
+          <code className="rich-code-preview" aria-label="코드 미리보기">{preview.map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}</code>
+        </span>
         <IconCopy />
       </button>
       {status && <span className="rich-code-copy-status" role="status">{status}</span>}

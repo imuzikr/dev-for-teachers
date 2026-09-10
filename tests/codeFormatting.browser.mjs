@@ -8,6 +8,8 @@ export default async function verifyCodeFormatting(page, baseUrl = "http://local
   await copy.waitFor();
   assert(!await display.locator("pre").isVisible(), "Student code must be collapsed into a copy row");
   assert(await page.locator('[data-testid="teacher"] pre').isVisible(), "Teacher code must remain expanded");
+  assert(await display.locator(".rich-code-preview > span").count() === 2, "Compact code must preview two lines");
+  assert(await display.locator(".rich-code-preview > span").first().textContent() === "rules_version = '2';", "Preview must reflect actual code");
   await display.getByRole("checkbox").check();
   await copy.click();
   assert(normalize(await page.evaluate(() => navigator.clipboard.readText())) === "rules_version = '2';\n  allow read: if x < 10 && y > 0;", "Code copy must preserve whitespace and literal HTML characters");
@@ -15,8 +17,23 @@ export default async function verifyCodeFormatting(page, baseUrl = "http://local
   await page.locator('[data-testid="template"]').getByRole("button", { name: "코드 복사", exact: true }).click();
   assert(!await page.locator('[data-testid="template"] pre').isVisible(), "Template code must use the compact student row");
   assert(normalize(await page.evaluate(() => navigator.clipboard.readText())) === "const value = 1;\n  console.log(value);", "Template code must copy substituted values");
+  assert((await page.locator('[data-testid="template"] .rich-code-preview').textContent()).includes("const value = 1;"), "Template preview must reflect substituted values");
   const editor = page.getByRole("textbox", { name: "서식 입력" });
   await editor.fill("");
+  await page.getByRole("button", { name: "코드 블록", exact: true }).click();
+  await page.keyboard.type("first line");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("second line");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("third line must be copied");
+  assert(!(await display.locator(".rich-code-preview").textContent()).includes("third line"), "Preview must stay compact");
+  await copy.click();
+  assert(normalize(await page.evaluate(() => navigator.clipboard.readText())).includes("third line must be copied"), "Copy must include code omitted from preview");
+  await editor.evaluate((area) => {
+    area.replaceChildren();
+    area.dispatchEvent(new InputEvent("input", { bubbles: true }));
+  });
+  await editor.focus();
   await page.getByRole("button", { name: "코드 블록", exact: true }).click();
   await page.keyboard.type("const a = 1;");
   await page.keyboard.press("Enter");

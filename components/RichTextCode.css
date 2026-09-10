@@ -38,3 +38,7 @@
 .rich-code-copy-row > svg { flex-shrink: 0; }
 .rich-code-copy-row:hover { border-color: var(--primary); }
 .rich-code-copy-status { display: block; padding: 4px 0 0; color: var(--text-sub); }
+.rich-code-copy-content { display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+.rich-code-preview { display: block; font-family: var(--font-mono), monospace; font-size: 12px; line-height: 1.5; color: var(--text); text-transform: none; font-weight: 400; }
+.rich-code-preview > span { display: block; overflow: hidden; white-space: pre; text-overflow: ellipsis; }
+.book-rich-text--compact-code .rte-checklist-text:has(.rich-code-block) { flex: 1; }
