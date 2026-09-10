@@ -11829,8 +11829,8 @@ button.book-project-flow-pill:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.book-personal-resource-card footer.book-personal-card-actions {
-  grid-template-columns: 1fr;
+.book-personal-resource-card footer.book-personal-card-actions > button:only-child {
+  grid-column: 1 / -1;
 }
 .book-personal-activity-card footer button { min-width: 0; min-height: 44px; flex: 1; padding: 7px 10px; }
 .book-library-layout:not(.is-student-main) .book-personal-card-actions > button:not(.book-presentation-card-btn) {

@@ -10,6 +10,7 @@ import BookClassProgressModal from "./BookClassProgressModal";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import { BookImagePresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
+import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { bookDetailSections } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
@@ -58,6 +59,7 @@ export default function BookWorkspace({
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [helpCollapsed, setHelpCollapsed] = useState(false);
   const [draftProject, setDraftProject] = useState(null);
+  const [editingCard, setEditingCard] = useState(null);
   const showLibraryPanel = isTeacher;
   const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
@@ -65,6 +67,21 @@ export default function BookWorkspace({
   const activeScope = useRef(scope);
   activeScope.current = scope;
   const previewProject = editingProject && draftProject ? draftProject : project;
+  const editingCardStep = editingCard?.scope === scope && isTeacher
+    ? previewProject?.steps?.find((step) => step.id === editingCard.stepId)
+    : null;
+  const editingCardCollection = editingCard?.kind === "resource" ? "resources" : "activities";
+  const editingCardItem = editingCardStep?.[editingCardCollection]?.find((item) => item.id === editingCard.id);
+
+  async function saveCardItem(patch) {
+    if (!editingCardItem || !onSaveProject) return false;
+    const nextSteps = previewProject.steps.map((step) => step.id === editingCardStep.id
+      ? { ...step, [editingCardCollection]: step[editingCardCollection].map((item) => item.id === editingCardItem.id ? { ...item, ...patch } : item) }
+      : step);
+    const saved = await onSaveProject({ title: previewProject.title, steps: nextSteps });
+    if (saved !== false) setEditingCard(null);
+    return saved;
+  }
   const previewActivities = useMemo(() => {
     const projectActivities = projectStepActivities(previewProject);
     if (projectActivities.length === 0) return activities;
@@ -283,10 +300,26 @@ export default function BookWorkspace({
           onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
           onPresentItem={isTeacher ? bookPresentation.presentItem : null}
+          onEditItem={isTeacher && onSaveProject ? (item) => setEditingCard({ scope, stepId: item.stepId, kind: item.kind, id: item.id }) : null}
           selectedStepId={selectedStepId}
           onSelectStep={onSelectStep}
         />
         {bookPresentation.modal}
+        {editingCardItem && <BookProjectItemEditModal
+          key={`${scope}:${editingCard.kind}:${editingCard.id}`}
+          project={previewProject}
+          step={editingCardStep}
+          item={editingCardItem}
+          kind={editingCard.kind}
+          saving={savingProject}
+          exporting={exportingProject}
+          currentClassId={classId}
+          exportTargets={exportTargets}
+          loadProject={loadProject}
+          onSave={saveCardItem}
+          onExport={onExportProjectItem ? (request) => onExportProjectItem({ ...request, sourceStepId: editingCardStep.id, sourceItemKind: editingCard.kind, sourceItemId: editingCard.id }) : undefined}
+          onClose={() => setEditingCard(null)}
+        />}
         {isTeacher && progressOpen && <BookClassProgressModal
           className={className}
           participants={participants}

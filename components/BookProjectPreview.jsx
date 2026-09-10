@@ -6,7 +6,7 @@ import RichTextDisplay from "./RichTextDisplay";
 import { BookItemImageIndicator } from "./BookItemImages";
 import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
 
-function IconEdit({ size = 16 }) {
+export function IconEdit({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 19.5h4l10-10a2.12 2.12 0 0 0-3-3l-10 10-1 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="m14 8 3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 

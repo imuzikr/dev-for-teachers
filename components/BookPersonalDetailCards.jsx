@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
-import { IconCopy, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
+import { IconCopy, IconEdit, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
-import { IconCheckSquare, IconLock } from "./StatusIcons";
+import { IconCheckSquare, IconLock, IconUnlock } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
 import { BookItemImageIndicator } from "./BookItemImages";
@@ -58,6 +58,8 @@ export function BookPersonalResourceCard({
   onCopy,
   onConfirm,
   onPresent,
+  onEdit,
+  onToggleResourceLock,
 }) {
   const [expanded, setExpanded] = useState(false);
   const resource = detailItem.source;
@@ -84,6 +86,8 @@ export function BookPersonalResourceCard({
         </div>
         <div className="book-personal-card-head-actions">
           {!isTeacher && <em role="img" className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : confirmed ? "확인됨" : "미확인"} title={locked ? "잠김" : confirmed ? "확인됨" : "미확인"}>{locked ? <IconLock size={16} /> : <IconCheckSquare checked={confirmed} />}</em>}
+          {isTeacher && <em role="img" aria-label={locked ? "잠김" : "열림"} title={locked ? "잠김" : "열림"}>{locked ? <IconLock size={16} /> : <IconUnlock size={16} />}</em>}
+          {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="자료 수정" aria-label="자료 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
           {isTeacher && <button type="button" className="btn-ghost book-personal-copy-btn" title="자료 복사" aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
           </button>}
@@ -96,11 +100,14 @@ export function BookPersonalResourceCard({
       <div className="book-personal-card-body">
         {detailUrlSlot(locked ? "" : linkHref, linkLabel)}
       </div>
-      {isTeacher && onPresent ? (
+      {isTeacher && (onToggleResourceLock || onPresent) ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
+          {onToggleResourceLock && <button type="button" className={locked ? "btn-primary" : "btn-outline"} onClick={() => onToggleResourceLock(detailItem, !locked)}>
+            {locked ? "자료 열기" : "자료 잠그기"}
+          </button>}
+          {onPresent && <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
             발표 모드
-          </button>
+          </button>}
         </footer>
       ) : !isTeacher && (
         <footer>
@@ -144,6 +151,7 @@ export function BookPersonalActivityCard({
   onSave,
   onToggleActivityLock,
   onPresent,
+  onEdit,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [templateValues, setTemplateValues] = useState({});
@@ -174,6 +182,7 @@ export function BookPersonalActivityCard({
         </div>
         <div className="book-personal-card-head-actions">
           <em role="img" className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : confirmed ? "확인됨" : "미확인"} title={locked ? "잠김" : confirmed ? "확인됨" : "미확인"}>{locked ? <IconLock size={16} /> : <IconCheckSquare checked={confirmed} />}</em>
+          {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="활동 수정" aria-label="활동 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
           {isTeacher && <BookItemImageIndicator images={activity.images} />}
           <button type="button" className="btn-ghost book-personal-expand-btn book-card-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
             <IconExpand />
