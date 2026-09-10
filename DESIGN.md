@@ -61,7 +61,9 @@
 
 ## 5. States
 
-- The overall progress table uses the shared student palette in participant order, matching the help sidebar. Each student column's number and cells share a color; unchecked cells use 14% fill and 42% border, checked cells use the solid color. Locked cells retain neutral hatching and latest completion retains its green dot. Status labels and the existing legend remain available independently of color.
+- Sidebar items have one edit command: the pencil opens single-item editing. Remove the duplicate expand-edit command; retain separate Step expansion and student enlargement. Right-side actions use 22px slots and 4px gaps in copy (resources only), image indicator, edit, delete order.
+
+- The overall progress table uses the shared student palette in participant order. All unlocked cells retain the same 14% student-colored fill; unchecked cells have a 1px 42% border, while checked cells have a 2px solid border and a centered 5px dot. The legend shows the same border/dot distinction on a shared neutral background. Locked cells retain neutral hatching with no confirmation dot; latest completion retains its separate green corner marker. Cell dimensions stay unchanged.
 
 - Sidebar activity/resource pencil commands open the existing single-item edit modal, not the whole Step editor. Its activity/resource save action updates only the selected item while preserving sibling items and ordering. The separate Step and project edit commands keep their original scope.
 
