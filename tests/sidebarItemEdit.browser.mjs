@@ -1,6 +1,7 @@
 export default async function verifySidebarItemEdit(page, baseUrl = "http://localhost:3045") {
   await page.goto(`${baseUrl}/qa-item-edit`);
   await page.locator(".book-step-flow-trigger").first().click();
+  if (await page.getByRole("button", { name: /^(활동|자료) 크게 편집$/ }).count()) throw new Error("Duplicate item edit command remains");
   const savedProject = async () => JSON.parse(await page.getByTestId("saved-project").textContent());
   const initial = await savedProject();
   for (const [label, collection] of [["활동", "activities"], ["자료", "resources"]]) {

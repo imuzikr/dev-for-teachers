@@ -14,10 +14,6 @@ export function IconCopy({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
 }
 
-function IconExpand({ size = 16 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.4 4H4v4.4M15.6 4H20v4.4M20 15.6V20h-4.4M4 15.6V20h4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.2 9.2 4.6 4.6M14.8 9.2l4.6-4.6M14.8 14.8l4.6 4.6M9.2 14.8l-4.6 4.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
-}
-
 export function resourceHref(url) {
   const trimmed = String(url ?? "").trim();
   if (!trimmed) return "";
@@ -94,7 +90,7 @@ export function stepPreviewItems(step) {
   return orderedStepItems(step);
 }
 
-export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
+export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
   const [copied, setCopied] = useState(false);
   const content = item.content || "";
   const linkSource = kind === "activity" ? item.bookUrl || item.url : item.url;
@@ -150,12 +146,12 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
           <span className="book-project-detail-kind">{itemLabel}</span>
           <strong>{item.title}</strong>
           <div className="book-project-detail-actions" aria-label={`${itemLabel} 명령`}>
-            <BookItemImageIndicator images={item.images} />
-            {onPreview && (
-              <button type="button" className="btn-ghost book-project-icon-action book-card-expand-btn" title={`${itemLabel} 크게 편집`} aria-label={`${itemLabel} 크게 편집`} onClick={onPreview}>
-                <IconExpand />
+            {kind === "resource" && (
+              <button type="button" className="btn-ghost book-project-icon-action book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
+                <IconCopy />
               </button>
             )}
+            <BookItemImageIndicator images={item.images} />
             {onEdit && (
               <button type="button" className="btn-ghost book-project-icon-action" title={`${itemLabel} 수정`} aria-label={`${itemLabel} 수정`} onClick={onEdit}>
                 <IconEdit />
@@ -164,11 +160,6 @@ export function ProjectDisplayItem({ item, kind, onPreview, onEdit, onDelete, on
             {onDelete && (
               <button type="button" className="btn-ghost role-danger-btn book-project-icon-action" title={`${itemLabel} 삭제`} aria-label={`${itemLabel} 삭제`} onClick={onDelete}>
                 <IconTrash size={14} />
-              </button>
-            )}
-            {kind === "resource" && (
-              <button type="button" className="btn-ghost book-project-icon-action book-project-copy-action" title="자료 복사" aria-label={copied ? "자료를 복사했습니다" : "자료 복사"} onClick={copyResource}>
-                <IconCopy />
               </button>
             )}
           </div>

@@ -21,7 +21,7 @@ export default function SidebarItemEditPage() {
   return <main style={{ maxWidth: 360, padding: 12 }}>
     <label><input type="checkbox" checked={fail} onChange={(e) => setFail(e.target.checked)} />저장 실패</label>
     <output data-testid="step-edits">{stepEdits}</output>
-    <BookProjectPanel project={project} onSave={save} saving={saving} onEdit={() => setStepEdits((n) => n + 1)} />
+    <BookProjectPanel project={project} onSave={save} saving={saving} onDelete={() => {}} onEdit={() => setStepEdits((n) => n + 1)} />
     <script type="application/json" data-testid="saved-project">{JSON.stringify(project)}</script>
   </main>;
 }
