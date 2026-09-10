@@ -330,9 +330,6 @@ export default function BookWorkspace({
       </section>
       <BookHelpDrawer
         classId={classId}
-        participants={participants}
-        progressByUser={confirmedItemsByUser}
-        progressSections={sections}
         user={user}
         isTeacher={isTeacher}
         collapsed={helpCollapsed}
