@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- The incomplete-checklist alert says `완료하지 않은 할 일이 남아 있습니다.` then `모든 할 일을 완료해야 확인으로 처리됩니다.` on a new line. Its `닫기` button only dismisses the alert and never submits completion; the activity confirmation remains gated on every task being checked.
+
 - Student detail panels constrain their body grid and image gallery to the available inner width, including scrollbar space. Long code previews must truncate inside their own row without enlarging sibling URLs, images, or confirmation controls; attached images retain their full aspect ratio and enlargement action.
 
 - Compact student code-copy items show the first two non-empty lines beneath their label in 12px monospace. Long lines use ellipsis within the available width; copying still uses the entire unmodified code text, including blank lines and indentation. Template previews use substituted values and never render code as HTML.

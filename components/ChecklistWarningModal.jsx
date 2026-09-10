@@ -34,8 +34,8 @@ export default function ChecklistWarningModal({ onClose }) {
   }, []);
   return createPortal(<div className="modal-backdrop checklist-warning-backdrop" {...backdropClose(onClose)}>
     <section className="confirm-modal checklist-warning-modal" role="alertdialog" aria-modal="true" aria-label="미완료 할 일" aria-describedby={descriptionId} onClick={(event) => event.stopPropagation()}>
-      <p id={descriptionId} className="confirm-desc">완료되지 않은 할 일이 남아 있습니다.<br />모든 할 일을 완료한 후 다시 확인을 눌러주세요.</p>
-      <button ref={buttonRef} type="button" className="btn-primary" onClick={onClose}>확인</button>
+      <p id={descriptionId} className="confirm-desc">완료하지 않은 할 일이 남아 있습니다.<br />모든 할 일을 완료해야 확인으로 처리됩니다.</p>
+      <button ref={buttonRef} type="button" className="btn-primary" onClick={onClose}>닫기</button>
     </section>
   </div>, document.body);
 }

@@ -14,10 +14,11 @@ export default async function verifyIncompleteChecklist(page, baseUrl = "http://
     const warning = page.getByRole("alertdialog", { name: "미완료 할 일" });
     await warning.waitFor();
     const message = await warning.locator("p").innerText();
-    if (message !== "완료되지 않은 할 일이 남아 있습니다.\n모든 할 일을 완료한 후 다시 확인을 눌러주세요.") throw new Error("Incorrect warning text");
+    if (message !== "완료하지 않은 할 일이 남아 있습니다.\n모든 할 일을 완료해야 확인으로 처리됩니다.") throw new Error("Incorrect warning text");
     if (await page.locator("output").textContent() !== "미확인") throw new Error("Incomplete activity must not become confirmed");
-    await page.keyboard.press("Escape");
+    await warning.getByRole("button", { name: "닫기", exact: true }).click();
     await warning.waitFor({ state: "detached" });
+    if (await page.locator("output").textContent() !== "미확인") throw new Error("Closing warning must not confirm the activity");
     if (!await detail.isVisible() || !await checks.first().isChecked() || await checks.nth(1).isChecked()) throw new Error("Warning dismissal must preserve detail and checkbox values");
     await checks.nth(1).check();
     await detail.getByRole("button", { name: "확인", exact: true }).click();
