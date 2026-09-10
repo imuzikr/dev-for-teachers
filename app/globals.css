@@ -11597,7 +11597,7 @@ button.book-project-flow-pill:focus-visible {
 }
 .book-personal-activity-card > header {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 28px max-content minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -11613,7 +11613,7 @@ button.book-project-flow-pill:focus-visible {
   font-weight: 900;
 }
 .book-personal-activity-copy { display: contents; }
-.book-personal-activity-copy > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; }
+.book-personal-activity-copy > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .book-personal-activity-card strong {
   display: block;
   margin-top: 5px;
@@ -11650,9 +11650,11 @@ button.book-project-flow-pill:focus-visible {
   font-weight: 900;
 }
 .book-personal-card-head-actions {
+  min-width: 0;
   grid-column: 3;
   grid-row: 1;
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
@@ -11833,8 +11835,10 @@ button.book-project-flow-pill:focus-visible {
   grid-column: 1 / -1;
 }
 .book-personal-activity-card footer button { min-width: 0; min-height: 44px; flex: 1; padding: 7px 10px; }
-.book-library-layout:not(.is-student-main) .book-personal-card-actions > button:not(.book-presentation-card-btn) {
-  font-size: 12px;
+.book-library-layout:not(.is-student-main) .book-personal-card-actions > button {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
   white-space: nowrap;
 }
 .book-presentation-card-btn {
@@ -14568,7 +14572,23 @@ button.book-project-flow-pill:focus-visible {
   height: 16px;
   flex-shrink: 0;
 }
+@media (pointer: fine) {
+  .book-library-layout:not(.is-student-main) .book-personal-card-head-actions { gap: 2px; }
+  .book-library-layout:not(.is-student-main) .book-personal-card-head-actions > button,
+  .book-library-layout:not(.is-student-main) .book-personal-card-head-actions > em[role="img"],
+  .book-library-layout:not(.is-student-main) .book-personal-card-head-actions > .book-item-image-indicator {
+    flex: 0 0 24px;
+    width: 24px;
+    min-width: 24px;
+    height: 28px;
+    min-height: 28px;
+  }
+}
 @media (pointer: coarse) {
+  .book-library-layout:not(.is-student-main) .book-personal-card-head-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
   .book-personal-card-head-actions > em[role="img"],
   .book-personal-card-head-actions > .book-item-image-indicator {
     flex-basis: 44px;
