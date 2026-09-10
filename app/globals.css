@@ -8831,6 +8831,7 @@ pre code {
 
 .student-activity-panel-content {
   width: calc(var(--library-open-width) - 46px);
+  max-width: 100%;
   opacity: 1;
   visibility: visible;
   transform: translateX(0);
@@ -8885,9 +8886,22 @@ pre code {
 
 .student-activity-detail .book-personal-expand-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: 16px 0;
   overflow: visible;
+}
+
+.student-activity-detail .book-personal-expand-body > * {
+  min-width: 0;
+}
+
+.student-activity-detail .book-item-image-gallery {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.student-activity-detail .book-item-image-gallery > button {
+  min-width: 0;
 }
 
 .student-activity-detail .book-personal-expand-content,

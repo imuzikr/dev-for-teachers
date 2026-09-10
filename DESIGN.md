@@ -61,6 +61,8 @@
 
 ## 5. States
 
+- Student detail panels constrain their body grid and image gallery to the available inner width, including scrollbar space. Long code previews must truncate inside their own row without enlarging sibling URLs, images, or confirmation controls; attached images retain their full aspect ratio and enlargement action.
+
 - Compact student code-copy items show the first two non-empty lines beneath their label in 12px monospace. Long lines use ellipsis within the available width; copying still uses the entire unmodified code text, including blank lines and indentation. Template previews use substituted values and never render code as HTML.
 
 - Incomplete checklists cannot be confirmed from student detail panels or enlarged modals. A body-portal alert dialog at z-index 4100 shows the two requested Korean sentences separated by a line break and one acknowledgement button. Dismissal preserves the underlying content and checklist; all tasks must be checked before completion saving and modal close. Existing checkbox autosave remains enabled. The alert traps focus, restores focus/scroll, and consumes Escape without closing the underlying modal.
