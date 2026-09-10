@@ -182,7 +182,7 @@ export default function BookProjectItemEditModal({
     const trimmedUrl = url.trim();
     setSaveError("");
     try {
-      await onSave({
+      const saved = await onSave({
         title: trimmedTitle,
         content,
         images,
@@ -191,6 +191,7 @@ export default function BookProjectItemEditModal({
           ? { url: trimmedUrl }
           : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
       });
+      if (saved === false) setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }

@@ -14,7 +14,7 @@ export default function BooksHome(props) {
     project, displayedProject, visibleActivities, participants, editingProject, projectEditorKey,
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     exportingProject, onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
-    onExportProjectItem, loadProject, joiningClass, onJoinClass,
+    onExportProjectItem, loadProject, joiningClass, onJoinClass, liveProjectReady,
   } = props;
   const stepTabs = useMemo(() => (
     (displayedProject?.steps ?? []).map((step, index) => ({
@@ -57,6 +57,7 @@ export default function BooksHome(props) {
   return (
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
       <BookWorkspace
+        liveProjectReady={liveProjectReady}
         header={(
           <>
             {topNav}

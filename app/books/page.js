@@ -55,6 +55,8 @@ function BooksPageInner() {
   const [memberUids, setMemberUids] = useState([]);
   const [activities, setActivities] = useState([]);
   const [project, setProject] = useState(null);
+  const [activitiesLoadedClass, setActivitiesLoadedClass] = useState(null);
+  const [projectLoadedClass, setProjectLoadedClass] = useState(null);
   const [editingProject, setEditingProject] = useState(false);
   const [projectEditorKey, setProjectEditorKey] = useState(0);
   const [appendProjectStep, setAppendProjectStep] = useState(false);
@@ -138,11 +140,28 @@ function BooksPageInner() {
   const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
 
-  useEffect(() => { setActivities([]); return subscribeBookActivities(classId, setActivities); }, [classId]);
   useEffect(() => {
+    let active = true;
+    setActivities([]);
+    setActivitiesLoadedClass(null);
+    const unsubscribe = subscribeBookActivities(classId, (nextActivities) => {
+      if (!active) return;
+      setActivities(nextActivities);
+      setActivitiesLoadedClass(classId);
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [classId]);
+  useEffect(() => {
+    let active = true;
     setProject(null);
+    setProjectLoadedClass(null);
     setEditingProject(false);
-    return subscribeBookProject(classId, setProject);
+    const unsubscribe = subscribeBookProject(classId, (nextProject) => {
+      if (!active) return;
+      setProject(nextProject);
+      setProjectLoadedClass(classId);
+    });
+    return () => { active = false; unsubscribe(); };
   }, [classId]);
 
   useEffect(() => {
@@ -214,8 +233,11 @@ function BooksPageInner() {
       return true;
     } catch (error) {
       console.error("[책방] 프로젝트 저장 실패:", error);
-      setToast(error?.code === "book-project/image-limit" || error?.code === "book-project/size-limit" ? error.message : "프로젝트를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
-      return false;
+      const message = error?.code?.startsWith("book-project/")
+        ? error.message
+        : "프로젝트를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.";
+      setToast(message);
+      throw new Error(message);
     } finally {
       setSavingProject(false);
     }
@@ -368,6 +390,7 @@ function BooksPageInner() {
         classPurpose={classPurpose} myClasses={myClasses} myClassesAll={myClassesAll}
         allTeacherClasses={ownedClassesAll} membershipIds={membershipIds} roster={roster}
         project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
+        liveProjectReady={Boolean(classId && activitiesLoadedClass === classId && projectLoadedClass === classId)}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
         appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
         exportingProject={exportingProject}

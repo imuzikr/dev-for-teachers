@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import vm from "node:vm";
 
-async function loadModules(firebase = false) {
+async function loadModules(firebase = false, { uploadFails = false } = {}) {
   const context = vm.createContext({ console, Date, Map, Set, TextEncoder, crypto: { randomUUID } });
   const source = (file) => readFileSync(new URL(`../lib/${file}.js`, import.meta.url), "utf8");
   const imageModule = new vm.SourceTextModule(source("bookProjectImages"), { context });
@@ -13,6 +13,7 @@ async function loadModules(firebase = false) {
   const writes = [];
   let commits = 0;
   let id = 0;
+  let uploads = 0;
   const stub = (exports) => new vm.SyntheticModule(Object.keys(exports), function defineExports() {
     Object.entries(exports).forEach(([name, value]) => this.setExport(name, value));
   }, { context });
@@ -33,7 +34,14 @@ async function loadModules(firebase = false) {
     "./classPurpose": stub({ CLASS_PURPOSE_INTERNAL: "internal", getClassPurpose: () => "internal", normalizeClassPurpose: () => "internal" }),
     "./user": stub({ getCurrentUser: () => null, isAdmin: () => false }),
     "./storageUpload": stub({ deleteAttachedFiles: async () => {} }),
+    "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
+    "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => {
+      uploads += 1;
+      if (uploadFails) throw new Error("Image upload failed");
+      const uploadItem = (item) => ({ ...item, images: item.images.map((url, index) => url.startsWith("data:") ? `https://example.com/storage/${item.id}/${index}.jpg` : url) });
+      return steps.map((step) => ({ ...step, activities: step.activities.map(uploadItem), resources: step.resources.map(uploadItem) }));
+    } }),
   };
   const store = new vm.SourceTextModule(storeSource, { context });
   await store.link((specifier) => dependencies[specifier]);
@@ -41,7 +49,7 @@ async function loadModules(firebase = false) {
   const exports = new vm.SourceTextModule(source("bookProjectExport"), { context });
   await exports.link((specifier) => dependencies[specifier]);
   await exports.evaluate();
-  return { ...imageModule.namespace, ...store.namespace, ...exports.namespace, writes, commits: () => commits };
+  return { ...imageModule.namespace, ...store.namespace, ...exports.namespace, writes, commits: () => commits, uploads: () => uploads };
 }
 
 const image = "data:image/jpeg;base64,YWJj";
@@ -101,8 +109,8 @@ test("Firestore batch writes images to project and flattened documents and never
   const activity = api.writes.find(([ref]) => ref.path.startsWith("bookActivities"))[1];
   const resource = api.writes.find(([ref]) => ref.path.startsWith("bookResources"))[1];
   const project = api.writes.find(([ref]) => ref.path.startsWith("bookProjects"))[1];
-  assert.deepEqual(Array.from(activity.images), draft().steps[0].activities[0].images);
-  assert.deepEqual(Array.from(resource.images), [image]);
+  assert.deepEqual(Array.from(activity.images), ["https://example.com/storage/act1/0.jpg", "https://example.com/two.jpg"]);
+  assert.deepEqual(Array.from(resource.images), ["https://example.com/storage/res1/0.jpg"]);
   assert.deepEqual(Array.from(activity.imageSizes), ["large", "small"]);
   assert.deepEqual(Array.from(resource.imageSizes), ["medium"]);
   assert.deepEqual(Array.from(project.steps[0].activities[0].imageSizes), ["large", "small"]);
@@ -111,6 +119,29 @@ test("Firestore batch writes images to project and flattened documents and never
   oversized.steps[0].activities[0].content = "한".repeat(300000);
   await assert.rejects(api.saveBookProject(user, oversized), { code: "book-project/size-limit" });
   assert.equal(api.commits(), 1);
+  assert.equal(api.uploads(), 1);
+});
+
+test("Firestore saves a project whose inline images together exceed one document", async () => {
+  const api = await loadModules(true);
+  const project = draft();
+  project.steps[0].activities[0].images = ["data:image/jpeg;base64," + "a".repeat(450000)];
+  project.steps[0].resources[0].images = ["data:image/jpeg;base64," + "b".repeat(450000)];
+  assert.throws(() => api.assertBookProjectSize(project), { code: "book-project/size-limit" });
+  assert.doesNotThrow(() => api.assertBookProjectSize(project, { pendingImageUploads: true }));
+  await api.saveBookProject(user, project);
+  assert.equal(api.commits(), 1);
+  const saved = api.writes.find(([ref]) => ref.path.startsWith("bookProjects"))[1];
+  assert.ok(!JSON.stringify(saved).includes("data:image"));
+  assert.equal(saved.steps[0].activities[0].images.length, 1);
+  assert.equal(saved.steps[0].resources[0].images.length, 1);
+});
+
+test("an upload failure never commits partial project edits", async () => {
+  const api = await loadModules(true, { uploadFails: true });
+  await assert.rejects(api.saveBookProject(user, draft()), /Image upload failed/);
+  assert.equal(api.commits(), 0);
+  assert.equal(api.writes.length, 0);
 });
 
 

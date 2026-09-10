@@ -8,12 +8,13 @@ export function useStudentActivityPanel() {
   return useContext(PanelContext);
 }
 
-export default function StudentActivityPanel({ children, enabled, scope = "", records = [], saveChecklist, itemKeys }) {
+export default function StudentActivityPanel({ children, enabled, scope = "", records = [], saveChecklist, itemKeys, autoOpenRequest = null }) {
   const [selectedKey, setSelectedKey] = useState(null);
   const [requestedKey, setRequestedKey] = useState(null);
   const [collapsed, setCollapsed] = useState(true);
   const [target, setTarget] = useState(null);
   const restored = useRef(false);
+  const consumedAutoOpen = useRef("");
   const visibleKey = itemKeys.has(selectedKey) ? selectedKey : null;
   const nextKey = itemKeys.has(requestedKey) ? requestedKey : null;
   const switching = visibleKey !== null && nextKey !== visibleKey;
@@ -46,6 +47,15 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
     }, switching && !collapsed && !reduceMotion ? 120 : 0);
     return () => window.clearTimeout(timer);
   }, [requestedKey, nextKey, selectedKey, visibleKey, switching, collapsed, scope, target]);
+
+  useEffect(() => {
+    if (!enabled || !autoOpenRequest?.key || !itemKeys.has(autoOpenRequest.key)) return;
+    const identity = `${autoOpenRequest.scope ?? scope}:${autoOpenRequest.generation ?? ""}:${autoOpenRequest.requestId ?? ""}:${autoOpenRequest.key}`;
+    if (consumedAutoOpen.current === identity) return;
+    consumedAutoOpen.current = identity;
+    setRequestedKey(autoOpenRequest.key);
+    setCollapsed(false);
+  }, [autoOpenRequest, enabled, itemKeys, scope]);
 
   const value = enabled ? {
     selectedKey: visibleKey, scope, records, saveChecklist, target,

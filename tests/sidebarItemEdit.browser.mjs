@@ -28,6 +28,7 @@ export default async function verifySidebarItemEdit(page, baseUrl = "http://loca
   await dialog.getByRole("button", { name: "활동 저장", exact: true }).click();
   await page.waitForTimeout(300);
   if (!await dialog.isVisible() || await dialog.getByRole("textbox", { name: "활동 제목", exact: true }).inputValue() !== "실패 후 유지할 입력") throw new Error("Failed save discarded input");
+  if (!await dialog.getByRole("alert").isVisible()) throw new Error("Failed save must display an error inside the modal");
   await dialog.getByRole("button", { name: "닫기", exact: true }).last().click();
   if (JSON.stringify(await savedProject()) !== JSON.stringify(beforeFailure)) throw new Error("Failed or cancelled edit changed project");
   await page.getByRole("button", { name: "Step 편집", exact: true }).click();

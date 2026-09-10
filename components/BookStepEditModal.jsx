@@ -57,6 +57,7 @@ export default function BookStepEditModal({ project, step, stepNumber, saving, o
   const [resources, setResources] = useState(() => (step?.resources ?? []).map((item) => ({ ...item })));
   const [itemOrder, setItemOrder] = useState(() => normalizedOrder(step ?? { activities: [], resources: [] }));
   const [addingItem, setAddingItem] = useState(null);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -121,15 +122,21 @@ export default function BookStepEditModal({ project, step, stepNumber, saving, o
 
   async function saveStep() {
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+    if (!trimmedTitle || saving) return;
     const savedStep = { ...draftStep, title: trimmedTitle };
-    const saved = await onSave?.({
-      title: project.title,
-      steps: (project.steps ?? []).map((candidate) => (
-        candidate.id === step.id ? savedStep : candidate
-      )),
-    });
-    if (saved !== false) onClose();
+    setSaveError("");
+    try {
+      const saved = await onSave?.({
+        title: project.title,
+        steps: (project.steps ?? []).map((candidate) => (
+          candidate.id === step.id ? savedStep : candidate
+        )),
+      });
+      if (saved !== false) onClose();
+      else setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 다시 저장해 주세요.");
+    }
   }
 
   return createPortal(
@@ -164,6 +171,7 @@ export default function BookStepEditModal({ project, step, stepNumber, saving, o
             <button type="button" className="btn-ghost" onClick={() => setAddingItem("resource")}>+ 자료 추가</button>
           </div>}
         </div>
+        {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <footer className="book-item-edit-footer">
           <button type="button" className="btn-outline" onClick={onClose}>닫기</button>
           <button type="button" className="btn-primary" disabled={saving || !title.trim()} onClick={saveStep}>

@@ -144,8 +144,9 @@ export default function BookProjectEditor({
       for (const step of steps) {
         for (const item of [...step.activities, ...step.resources]) normalizeBookItemImages(item.images);
       }
-      assertBookProjectSize(nextProject);
-      await onSave(nextProject);
+      assertBookProjectSize(nextProject, { pendingImageUploads: true });
+      const saved = await onSave(nextProject);
+      if (saved === false) setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }

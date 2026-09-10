@@ -2,6 +2,75 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    function authRole() {
+      return request.auth.token.get('role', '');
+    }
+    function adminPath() {
+      return /databases/(default)/documents/system/admin;
+    }
+    function profilePath() {
+      return /databases/(default)/documents/users/$(uid());
+    }
+    function isSystemAdmin() {
+      return signedIn()
+             && firestore.exists(adminPath())
+             && firestore.get(adminPath()).data.uid == uid();
+    }
+    function profileRole() {
+      return signedIn() && firestore.exists(profilePath())
+             ? firestore.get(profilePath()).data.get('role', '')
+             : '';
+    }
+    function hasApprovedOwnerRole() {
+      return authRole() in ['teacher', 'admin']
+             || (authRole() == '' && profileRole() in ['teacher', 'admin']);
+    }
+    function classDoc(classId) {
+      return firestore.get(/databases/(default)/documents/classes/$(classId));
+    }
+    function membershipExists(classId) {
+      return firestore.exists(/databases/(default)/documents/memberships/$(uid() + '_' + classId));
+    }
+    function canReadClassImage(classId, ownerUid) {
+      let classData = classDoc(classId).data;
+      return signedIn()
+             && (
+                  classData.createdBy == uid()
+                  || (ownerUid == uid() && isSystemAdmin())
+                  || (classData.get('archived', false) != true && membershipExists(classId))
+                );
+    }
+    function validImageWrite(imageName) {
+      return imageName.matches('^[a-f0-9]{64}\\.jpg$')
+             && request.resource.size <= 600000
+             && request.resource.contentType == 'image/jpeg';
+    }
+    function canWriteClassImage(classId, ownerUid, imageName) {
+      let classData = classDoc(classId).data;
+      return signedIn()
+             && uid() == ownerUid
+             && validImageWrite(imageName)
+             && classData.get('archived', false) != true
+             && (
+                  classData.createdBy == uid()
+                  ? (
+                      hasApprovedOwnerRole()
+                    )
+                  : isSystemAdmin()
+                );
+    }
+
+    match /book-project-images/{classId}/{ownerUid}/{imageName} {
+      allow read: if canReadClassImage(classId, ownerUid);
+      allow write: if resource == null && canWriteClassImage(classId, ownerUid, imageName);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -12,6 +12,7 @@ import { BookImagePresentationContext, useBookPresentationMode } from "./BookPre
 import BookProjectPanel from "./BookProjectPanel";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { bookDetailSections } from "./bookProjectItems";
+import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 const HELP_DRAWER_COLLAPSED_KEY = "book_help_drawer_collapsed";
@@ -32,6 +33,7 @@ export default function BookWorkspace({
   hasClass,
   activeClassId,
   project,
+  liveProjectReady = true,
   editingProject,
   projectEditorKey,
   appendProjectStep,
@@ -85,6 +87,7 @@ export default function BookWorkspace({
     projectTitle: previewProject?.title ?? "",
     sections,
   });
+  const studentPanelAutoOpen = useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready: liveProjectReady, scope });
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
@@ -211,7 +214,7 @@ export default function BookWorkspace({
 
   return (
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
-    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem}>
+    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem} autoOpenRequest={studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
       {sidebar}

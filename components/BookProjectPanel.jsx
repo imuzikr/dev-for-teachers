@@ -56,7 +56,7 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
     return items.map((item) => ({ kind: item.kind, id: item.id }));
   }
 
-  function moveStepItem(step, fromKey, toKey) {
+  async function moveStepItem(step, fromKey, toKey) {
     if (!onSave || fromKey === toKey) return;
     const items = stepPreviewItems(step);
     const fromIndex = items.findIndex((item) => itemKey(item.kind, item.id) === fromKey);
@@ -70,7 +70,11 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
         ? { ...candidate, itemOrder: orderFromItems(nextItems) }
         : candidate
     ));
-    onSave({ title: project.title, steps: nextSteps });
+    try {
+      await onSave({ title: project.title, steps: nextSteps });
+    } catch (error) {
+      console.error("프로젝트 순서를 저장하지 못했어요:", error);
+    }
   }
 
   async function saveProjectItem(stepId, kind, itemId, patch) {
