@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
-import { progressItems } from "./bookProgressItems";
+import { progressItems, STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 
 export default function BookClassProgressModal({ className, participants, sections, progressByUser, onClose }) {
   const titleId = useId();
@@ -15,11 +15,12 @@ export default function BookClassProgressModal({ className, participants, sectio
     ...section,
     cells: items.filter((item) => item.sectionIndex === index),
   })), [items, sections]);
-  const students = useMemo(() => participants.map((participant) => {
+  const students = useMemo(() => participants.map((participant, index) => {
     const completed = progressByUser.get(participant.uid) ?? new Set();
     const checkedItems = items.filter((item) => completed.has(item.key));
     return {
       ...participant,
+      color: STUDENT_PROGRESS_COLORS[index % STUDENT_PROGRESS_COLORS.length],
       label: participant.realName || participant.displayName || participant.name || "이름 미설정",
       completed,
       count: checkedItems.length,
@@ -71,7 +72,7 @@ export default function BookClassProgressModal({ className, participants, sectio
               <caption className="sr-only">학생별 활동과 자료 확인 상태</caption>
               <thead><tr>
                 <th scope="col">활동 · 자료</th>
-                {students.map((student, index) => <th scope="col" key={student.uid} title={`${student.label} · ${student.count}/${items.length}`} aria-label={`${student.label} · ${student.count}/${items.length}`}>
+                {students.map((student, index) => <th scope="col" key={student.uid} style={{ "--student-progress-color": student.color }} title={`${student.label} · ${student.count}/${items.length}`} aria-label={`${student.label} · ${student.count}/${items.length}`}>
                   {index + 1}
                 </th>)}
               </tr></thead>
@@ -89,7 +90,7 @@ export default function BookClassProgressModal({ className, participants, sectio
                       const checked = student.completed.has(item.key);
                       const latest = item.key === student.lastKey;
                       const label = `${student.label} · ${item.title} · ${checked ? "확인함" : "미확인"}${locked ? " · 잠김" : ""}${latest ? " · 마지막 완료" : ""}`;
-                      return <td key={student.uid}><span role="img" className={`book-score-cell${checked ? " is-filled" : ""}${locked ? " is-locked" : ""}`} title={label} aria-label={label}>{latest && <span className="book-score-latest" aria-hidden="true" />}</span></td>;
+                      return <td key={student.uid} style={{ "--student-progress-color": student.color }}><span role="img" className={`book-score-cell${checked ? " is-filled" : ""}${locked ? " is-locked" : ""}`} title={label} aria-label={label}>{latest && <span className="book-score-latest" aria-hidden="true" />}</span></td>;
                     })}
                   </tr>;
                 })}
