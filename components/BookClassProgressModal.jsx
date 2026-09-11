@@ -83,7 +83,7 @@ export default function BookClassProgressModal({ className, participants, sectio
                   return <tr key={item.key} className={itemIndex === 0 ? "is-step-start" : undefined}>
                     <th scope="row" title={`${row.title} · ${item.title}`}>
                       {itemIndex === 0 && <small>STEP {rowIndex + 1} · {row.title}</small>}
-                      <div className="book-score-row-meta"><span>{item.kind === "activity" ? "활동" : "자료"} {item.itemIndex + 1}</span><span>{count}/{students.length}</span></div>
+                      <div className="book-score-row-meta"><span>{item.kind === "activity" ? "활동" : "자료"} {item.itemIndex + 1}</span><span>{students.length > 0 && count === students.length && <span role="img" aria-label="모두 확인 완료">⭐</span>}{count === students.length ? " " : ""}{count}/{students.length}</span></div>
                     </th>
                     {students.map((student) => {
                       const checked = student.completed.has(item.key);

@@ -1,5 +1,7 @@
 # 교사 개발자 Design Contract
 
+- 전체 진행률의 완료 인원 표시는 수강생이 1명 이상이고 해당 활동·자료를 모두 확인했을 때만 `⭐ 8/8`처럼 별 이모지를 앞에 붙인다. 기존 글자 크기와 행 배치를 유지하며 미완료·참여자 없음에는 별을 표시하지 않는다.
+
 - 도움 글의 3선 표시 오른쪽에는 기존 선형 확대 아이콘과 44px 높이의 독립 버튼을 배치한다. 본문과 제목별 항목은 기존 도움 글 모달에서 전체 높이로 읽고 닫기, Escape, 배경 클릭, 포커스 복귀를 유지한다.
 - 도움 글 상위에는 제목과 URL만 둔다. 모든 본문은 들여쓴 하위 항목으로 표시하며 각 항목은 제목, 서식 본문, 링크와 개별 편집·저장·삭제 기능을 가진다. 이전 상위 본문은 첫 번째 ‘기존 내용’ 항목으로 보존하고, 항목 변경 시 원본과 함께 원자적으로 저장한다. 새 도움 글의 항목은 상위 저장 시 함께 저장한다.
 - 767px 이하 책방 화면은 콘텐츠에 맞춰 전체 페이지 높이가 늘어나고 문서 자체를 세로 스크롤할 수 있다. 기존 패널의 가로 접근은 유지하며 768px 이상에서는 기존 고정 높이와 내부 스크롤을 유지한다. 모달을 열 때의 문서 스크롤 잠금은 변경하지 않는다.
@@ -67,7 +69,7 @@
 
 - Sidebar items have one edit command: the pencil opens single-item editing. Remove the duplicate expand-edit command; retain separate Step expansion and student enlargement. Right-side actions use 22px slots and 4px gaps in copy (resources only), image indicator, edit, delete order.
 
-- The overall progress table uses the shared student palette in participant order. All unlocked cells retain the same 14% student-colored fill; unchecked cells have a 1px 42% border, while checked cells have a 2px solid border and a centered 5px dot. The legend shows the same border/dot distinction on a shared neutral background. Locked cells retain neutral hatching with no confirmation dot; latest completion retains its separate green corner marker. Cell dimensions stay unchanged.
+- The overall progress table uses the shared student palette in participant order. All unlocked cells retain the same 14% student-colored fill; unchecked cells have a 1px 42% border, while checked cells have a 2px solid border with no central dot. The legend shows the same border distinction on a shared neutral background. Locked cells retain neutral hatching; latest completion retains its separate green corner marker. Cell dimensions stay unchanged.
 
 - Sidebar activity/resource pencil commands open the existing single-item edit modal, not the whole Step editor. Its activity/resource save action updates only the selected item while preserving sibling items and ordering. The separate Step and project edit commands keep their original scope.
 

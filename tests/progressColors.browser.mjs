@@ -24,7 +24,7 @@ export default async function verifyProgressColors(page, baseUrl = "http://local
     };
   });
   if (result.colors.length !== 100 || new Set(result.colors).size !== 10 || result.colors[0] !== "#bb6d52" || result.colors[10] !== result.colors[0]) throw new Error("Shared palette mapping failed");
-  if (!result.stableFillAndSize || !result.matchingColumns || !result.firstFill.includes("0.14") || result.checkedBorder !== "2px" || result.pendingBorder !== "1px" || result.checkedDot === "none") throw new Error("Confirmed border/dot or preserved color failed");
+  if (!result.stableFillAndSize || !result.matchingColumns || !result.firstFill.includes("0.14") || result.checkedBorder !== "2px" || result.pendingBorder !== "1px" || result.checkedDot !== "none") throw new Error("Confirmed border, absent central dot, or preserved color failed");
   if (!result.locked.includes("repeating-linear-gradient") || result.dots !== 67) throw new Error("Locked or latest completion indicator changed");
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });

@@ -10880,7 +10880,6 @@ pre code {
 .book-class-progress-table td > .book-score-cell { display: block; margin-inline: auto; }
 .book-score-cell { position: relative; display: inline-block; vertical-align: middle; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--resource-border); background: var(--resource-light); }
 .book-score-cell.is-filled:not(.is-locked) { border-width: 2px; border-color: var(--student-progress-color, var(--primary)); }
-.book-score-cell.is-filled:not(.is-locked)::after { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 5px; height: 5px; border-radius: 50%; background: var(--student-progress-color, var(--primary)); }
 .book-score-cell.is-locked { border-color: var(--border); background: repeating-linear-gradient(45deg, #d1d0ca 0 3px, #eeede8 3px 6px); }
 .book-class-progress-table .book-score-cell:not(.is-locked) {
   border-color: color-mix(in srgb, var(--student-progress-color) 42%, transparent);
