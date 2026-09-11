@@ -8918,6 +8918,19 @@ pre code {
   gap: 10px;
 }
 
+.student-activity-detail-actions .student-checklist-check-all {
+  justify-self: start;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+@media (pointer: coarse) {
+  .student-activity-detail-actions .student-checklist-check-all { min-height: 44px; }
+}
+
 .book-personal-expand-response textarea {
   box-sizing: border-box;
   width: 100%;

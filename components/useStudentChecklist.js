@@ -76,6 +76,10 @@ export default function useStudentChecklist(item) {
     values, status: loadedVersion === version ? status : "loading", hasChecklist: defaults.length > 0,
     complete: checklistComplete(snapshot),
     change: (next) => persist(checklistSnapshot(defaults, next)),
+    checkAll: () => {
+      if (loadedVersion !== version || defaults.length === 0) return;
+      return persist(defaults.map(() => true));
+    },
     retry: () => persist(snapshot),
     async confirm(save) {
       if (loadedVersion !== version || !checklistComplete(snapshot)) return false;

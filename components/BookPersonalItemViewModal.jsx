@@ -27,7 +27,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
@@ -78,6 +78,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {!isTeacher && !locked && (
             <div className="student-activity-detail-actions">
               {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
+              {onSave && hasChecklist && onCheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>한 번에 체크하기</button>}
               {onSave && <button type="button" className="btn-primary" disabled={saving || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 if (hasChecklist && !checklistComplete) {
                   setShowChecklistWarning(true);

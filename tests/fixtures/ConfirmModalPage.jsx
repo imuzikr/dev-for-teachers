@@ -31,6 +31,6 @@ export default function ConfirmModalPage() {
     <button onClick={() => { setConfirmed(false); setOpen(true); }}>열기</button>
     <output>{confirmed ? "확인 완료" : "미확인"}</output>
     <div ref={setTarget} />
-    {open && <BookPersonalItemViewModal detailItem={detailItem} index={0} isTeacher={false} panelTarget={panel ? target : null} onExpand={() => {}} onClose={() => setOpen(false)} onSave={() => checklist.confirm(save)} saving={saving} confirmed={confirmed} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} checklistValues={checklist.values} onChecklistChange={checklist.change} checklistStatus={checklist.status} />}
+    {open && <BookPersonalItemViewModal detailItem={detailItem} index={0} isTeacher={false} panelTarget={panel ? target : null} onExpand={() => {}} onClose={() => setOpen(false)} onSave={() => checklist.confirm(save)} saving={saving} confirmed={confirmed} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} checklistValues={checklist.values} onChecklistChange={checklist.change} onCheckAll={checklist.checkAll} checklistStatus={checklist.status} />}
   </main>;
 }
