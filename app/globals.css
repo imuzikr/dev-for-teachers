@@ -13273,6 +13273,35 @@ button.book-project-flow-pill:focus-visible {
     padding: 12px 12px 60px;
   }
 
+  @media (max-width: 767px) {
+    .board-shell.books-board-shell {
+      min-height: 100dvh;
+      height: auto;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+
+    .books-main--split {
+      min-height: 100dvh;
+      height: auto;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+
+    .books-main--split .book-library-layout {
+      min-height: 100dvh;
+      height: auto;
+    }
+
+    .books-main--split .book-library-main {
+      overflow: visible;
+    }
+
+    .books-main--split .book-personal-dashboard {
+      overflow-y: visible;
+    }
+  }
+
   .book-dashboard-head {
     flex-wrap: wrap;
   }

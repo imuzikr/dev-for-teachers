@@ -500,6 +500,13 @@
     padding: 10px 6px;
   }
 
+  .books-main--split .book-library-side.is-collapsed,
+  .books-main--split .book-help-drawer,
+  .books-main--split .book-help-drawer.is-collapsed {
+    height: auto;
+    min-height: 100dvh;
+  }
+
   .book-library-side.is-collapsed .book-library-collapse {
     position: static;
     left: auto;
