@@ -80,6 +80,10 @@ export default function useStudentChecklist(item) {
       if (loadedVersion !== version || defaults.length === 0) return;
       return persist(defaults.map(() => true));
     },
+    uncheckAll: () => {
+      if (loadedVersion !== version || defaults.length === 0) return;
+      return persist(defaults.map(() => false));
+    },
     retry: () => persist(snapshot),
     async confirm(save) {
       if (loadedVersion !== version || !checklistComplete(snapshot)) return false;

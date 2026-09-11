@@ -8918,6 +8918,12 @@ pre code {
   gap: 10px;
 }
 
+.student-checklist-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .student-activity-detail-actions .student-checklist-check-all {
   justify-self: start;
   min-height: 32px;
@@ -8925,6 +8931,7 @@ pre code {
   border-radius: 999px;
   font-size: 12px;
   line-height: 20px;
+  white-space: nowrap;
 }
 
 @media (pointer: coarse) {

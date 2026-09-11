@@ -10,13 +10,22 @@ export default async function verifyCheckAllChecklist(page, baseUrl) {
       await page.getByRole("button", { name: "열기", exact: true }).click();
       const detail = page.locator(panel ? ".student-activity-detail" : ".book-personal-expand-modal");
       const checks = detail.getByRole("checkbox");
-      const bulk = detail.getByRole("button", { name: "한 번에 체크하기", exact: true });
+      const bulk = detail.getByRole("button", { name: "모두 체크하기", exact: true });
+      const clear = detail.getByRole("button", { name: "모두 체크 해제하기", exact: true });
       await checks.first().check();
+      await clear.click();
+      assert.deepEqual(await checks.evaluateAll((inputs) => inputs.map((input) => input.checked)), [false, false]);
+      assert.equal(await page.locator("output").textContent(), "미확인");
       await bulk.click();
       assert.deepEqual(await checks.evaluateAll((inputs) => inputs.map((input) => input.checked)), [true, true]);
       assert.equal(await page.locator("output").textContent(), "미확인");
       assert(await bulk.isDisabled());
       assert(await detail.isVisible());
+      await clear.click();
+      assert.deepEqual(await checks.evaluateAll((inputs) => inputs.map((input) => input.checked)), [false, false]);
+      await clear.click();
+      assert.deepEqual(await checks.evaluateAll((inputs) => inputs.map((input) => input.checked)), [false, false]);
+      await bulk.click();
       await checks.last().uncheck();
       assert(await bulk.isEnabled());
       await bulk.click();
@@ -28,6 +37,10 @@ export default async function verifyCheckAllChecklist(page, baseUrl) {
           const confirmBox = await detail.getByRole("button", { name: "확인", exact: true }).boundingBox();
           assert(bulkBox.y + bulkBox.height <= confirmBox.y);
           assert(await bulk.evaluate((button) => button.scrollWidth <= button.clientWidth));
+          const clearBox = await clear.boundingBox();
+          assert.equal(Math.round(clearBox.y), Math.round(bulkBox.y));
+          assert(clearBox.x >= bulkBox.x + bulkBox.width);
+          assert(await clear.evaluate((button) => button.scrollWidth <= button.clientWidth));
           await page.screenshot({ path: `qa-check-all-${panel ? "panel" : "modal"}-${width}.png`, fullPage: true });
         }
       }
@@ -39,6 +52,7 @@ export default async function verifyCheckAllChecklist(page, baseUrl) {
   }
   await page.goto(`${baseUrl}/qa-confirm`);
   await page.getByRole("button", { name: "열기", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "한 번에 체크하기", exact: true }).count(), 0);
-  return "Bulk checks remain unconfirmed until Confirm; activity/resource, modal/panel, repeat, empty and responsive checks passed";
+  assert.equal(await page.getByRole("button", { name: "모두 체크하기", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "모두 체크 해제하기", exact: true }).count(), 0);
+  return "Bulk select and clear: partial/full/empty clear, separate confirmation, activity/resource, modal/panel and responsive checks passed";
 }

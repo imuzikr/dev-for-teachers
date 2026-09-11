@@ -116,7 +116,7 @@ export function BookPersonalResourceCard({
         </footer>
       )}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
@@ -132,7 +132,7 @@ export function BookPersonalResourceCard({
           onRetryChecklist={checklist.retry}
           hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete}
           onCopy={() => onCopy(resource)}
-          onCheckAll={checkAll}
+          onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll}
           copied={copiedId === resource.id}
           checklistValues={checklistValues}
           onChecklistChange={setChecklistValues}
@@ -214,7 +214,7 @@ export function BookPersonalActivityCard({
         </footer>
       ) : null}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
@@ -228,7 +228,7 @@ export function BookPersonalActivityCard({
           checklistValues={checklistValues}
           onChecklistChange={setChecklistValues}
           onAnswerChange={setAnswerDraft}
-          onCheckAll={checkAll}
+          onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll}
           onSave={save}
           checklistStatus={checklist.status}
           onRetryChecklist={checklist.retry}
