@@ -38,4 +38,54 @@ describe("Help note ordering", () => {
     }
     await assertFails(updateDoc(ref, { order: 0, classId: "other", updatedAt: serverTimestamp() }));
   });
+  it("allows optional bounded sections on create and update while legacy notes stay valid", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    await assertSucceeds(setDoc(doc(db, "bookHelpNotes", "withSections"), {
+      classId: "cA",
+      title: "With sections",
+      content: "root",
+      url: "",
+      sections: [
+        { id: "intro", title: "Intro", content: "section content", url: "https://example.test/intro" },
+      ],
+      createdBy: "teacherA",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }));
+    await assertSucceeds(updateDoc(doc(db, "bookHelpNotes", "one"), {
+      sections: [
+        { id: "added", title: "Added", content: "", url: "" },
+      ],
+      updatedAt: serverTimestamp(),
+    }));
+  });
+  it("rejects section arrays beyond limits or malformed fields", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    const base = {
+      classId: "cA",
+      title: "Bad sections",
+      content: "",
+      url: "",
+      createdBy: "teacherA",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    await assertFails(setDoc(doc(db, "bookHelpNotes", "tooMany"), {
+      ...base,
+      sections: Array.from({ length: 21 }, (_, index) => ({
+        id: `section-${index}`,
+        title: "Title",
+        content: "",
+        url: "",
+      })),
+    }));
+    await assertFails(updateDoc(doc(db, "bookHelpNotes", "one"), {
+      sections: [{ id: "empty-title", title: "", content: "", url: "" }],
+      updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(doc(db, "bookHelpNotes", "one"), {
+      sections: [{ id: "long-url", title: "Title", content: "", url: "x".repeat(1001) }],
+      updatedAt: serverTimestamp(),
+    }));
+  });
 });

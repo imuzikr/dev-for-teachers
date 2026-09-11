@@ -8,10 +8,14 @@ import {
   reorderBookHelpNotes,
   subscribeBookHelpNotes,
   updateBookHelpNote,
+  saveBookHelpSection,
+  deleteBookHelpSection,
 } from "@/lib/bookHelpNotes";
 import BasicFormatEditor from "./BasicFormatEditor";
 import { resourceHref } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
+import BookHelpNoteModal from "./BookHelpNoteModal";
+import BookHelpSections from "./BookHelpSections";
 
 const EMPTY_DRAFT = { title: "", content: "", url: "" };
 
@@ -24,7 +28,7 @@ function helpDraftFromNote(note) {
 }
 
 function hasHelpBody(note) {
-  return stripHtml(note?.content ?? "").trim().length > 0;
+  return stripHtml(note?.content ?? "").trim().length > 0 || (note?.sections?.length ?? 0) > 0;
 }
 
 function orderedNotesWithRequest(notes, request) {
@@ -88,6 +92,9 @@ export default function BookHelpDrawer({
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
+  const [modalId, setModalId] = useState("");
+  const [newSections, setNewSections] = useState([]);
+  const [sectionDirty, setSectionDirty] = useState(false);
   const [reordering, setReordering] = useState(false);
   const classIdRef = useRef(classId);
   const dragNoteIdRef = useRef("");
@@ -101,6 +108,9 @@ export default function BookHelpDrawer({
     reorderRequestRef.current = null;
     dragNoteIdRef.current = "";
     setNotes([]);
+    setModalId("");
+    setNewSections([]);
+    setSectionDirty(false);
     setReordering(false);
     setExpandedId("");
     setEditingId("");
@@ -113,12 +123,15 @@ export default function BookHelpDrawer({
   const currentNotes = notes.filter((note) => note.classId === classId);
 
   function startNewNote() {
+    setNewSections([]);
+    setSectionDirty(false);
     setExpandedId("new");
     setEditingId("new");
     setDraft(EMPTY_DRAFT);
   }
 
   function toggleNote(note) {
+    if (saving || sectionDirty) return;
     const href = resourceHref(note.url);
     const hasBody = hasHelpBody(note);
     if (!hasBody && href) {
@@ -133,13 +146,14 @@ export default function BookHelpDrawer({
   }
 
   function startEditing(note) {
+    if (saving || sectionDirty) return;
     setExpandedId(note.id);
     setEditingId(note.id);
     setDraft(helpDraftFromNote(note));
   }
 
   async function saveNewNote() {
-    if (!user?.uid || !classId || saving) return;
+    if (!user?.uid || !classId || saving || sectionDirty) return;
     if (!draft.title.trim()) {
       onToast?.("도움 글 제목을 입력해 주세요.");
       return;
@@ -147,7 +161,7 @@ export default function BookHelpDrawer({
 
     setSaving(true);
     try {
-      const noteId = await addBookHelpNote(user, classId, draft);
+      const noteId = await addBookHelpNote(user, classId, { ...draft, sections: newSections });
       setExpandedId(noteId);
       setEditingId("");
       setDraft(EMPTY_DRAFT);
@@ -161,7 +175,7 @@ export default function BookHelpDrawer({
   }
 
   async function saveExistingNote(noteId) {
-    if (!noteId || saving) return;
+    if (!noteId || saving || sectionDirty) return;
     if (!draft.title.trim()) {
       onToast?.("도움 글 제목을 입력해 주세요.");
       return;
@@ -181,7 +195,7 @@ export default function BookHelpDrawer({
   }
 
   async function removeNote(noteId) {
-    if (!noteId || saving) return;
+    if (!noteId || saving || sectionDirty) return;
 
     setSaving(true);
     try {
@@ -285,7 +299,7 @@ export default function BookHelpDrawer({
             <h2>수업 보조 자료</h2>
           </div>
           {isTeacher && (
-            <button type="button" className="btn-primary book-help-add" onClick={startNewNote}>
+            <button type="button" className="btn-primary book-help-add" onClick={startNewNote} disabled={saving || sectionDirty || editingId === "new"}>
               추가
             </button>
           )}
@@ -294,9 +308,12 @@ export default function BookHelpDrawer({
         {editingId === "new" && (
           <section className="book-help-editor" aria-label="새 도움 글">
             <HelpNoteFields draft={draft} onChange={setDraft} disabled={saving} />
+            <BookHelpSections sections={newSections} editable={!saving} onDirtyChange={setSectionDirty}
+              onSave={async (section, { create }) => setNewSections((items) => create ? [...items, section] : items.map((item) => item.id === section.id ? section : item))}
+              onDelete={async (id) => setNewSections((items) => items.filter((item) => item.id !== id))} />
             <div className="book-help-actions">
-              <button type="button" className="btn-ghost" onClick={() => setEditingId("")} disabled={saving}>취소</button>
-              <button type="button" className="btn-primary" onClick={saveNewNote} disabled={saving}>저장</button>
+              <button type="button" className="btn-ghost" onClick={() => { setEditingId(""); setSectionDirty(false); }} disabled={saving || sectionDirty}>취소</button>
+              <button type="button" className="btn-primary" onClick={saveNewNote} disabled={saving || sectionDirty}>저장</button>
             </div>
           </section>
         )}
@@ -307,7 +324,7 @@ export default function BookHelpDrawer({
           )}
           {currentNotes.map((note, index) => {
             const hasBody = hasHelpBody(note);
-            const open = hasBody && expandedId === note.id;
+            const open = (hasBody || isTeacher) && expandedId === note.id;
             const editing = editingId === note.id;
             const href = resourceHref(note.url);
             return (
@@ -339,6 +356,7 @@ export default function BookHelpDrawer({
                     type="button"
                     className={`book-help-item-button${!hasBody && href ? " is-link-only" : ""}`}
                     onClick={() => toggleNote(note)}
+                    disabled={saving || sectionDirty}
                     aria-expanded={hasBody ? open : undefined}
                   >
                     <span className="book-help-item-index">{String(index + 1).padStart(2, "0")}</span>
@@ -351,6 +369,10 @@ export default function BookHelpDrawer({
                       </span>
                     )}
                   </button>
+
+                  {hasBody && <button type="button" className="book-help-expand" onClick={() => setModalId(note.id)} aria-label={`${note.title} 확대`} title="확대">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4M9 9 4.8 4.8M15 9l4.2-4.2M15 15l4.2 4.2M9 15l-4.2 4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>}
 
                   {isTeacher && (
                     <div className="book-help-row-actions" aria-label="도움 글 관리">
@@ -377,12 +399,12 @@ export default function BookHelpDrawer({
                         <HelpNoteFields draft={draft} onChange={setDraft} disabled={saving} />
                         <div className="book-help-actions">
                           <button type="button" className="btn-ghost" onClick={() => setEditingId("")} disabled={saving}>취소</button>
-                          <button type="button" className="btn-primary" onClick={() => saveExistingNote(note.id)} disabled={saving}>저장</button>
+                          <button type="button" className="btn-primary" onClick={() => saveExistingNote(note.id)} disabled={saving || sectionDirty}>저장</button>
                         </div>
                       </>
                     ) : (
                       <>
-                        <RichTextDisplay className="book-help-text" html={note.content} fallback="등록된 내용이 없습니다." />
+                        {note.content && <RichTextDisplay className="book-help-text" html={note.content} />}
                         {href && (
                           <a className="book-help-link" href={href} target="_blank" rel="noopener noreferrer">
                             링크 열기
@@ -390,12 +412,15 @@ export default function BookHelpDrawer({
                         )}
                         {isTeacher && (
                           <div className="book-help-actions">
-                            <button type="button" className="btn-ghost" onClick={() => startEditing(note)}>편집</button>
-                            <button type="button" className="btn-ghost book-help-delete" onClick={() => removeNote(note.id)} disabled={saving}>삭제</button>
+                            <button type="button" className="btn-ghost" onClick={() => startEditing(note)} disabled={saving || sectionDirty}>편집</button>
+                            <button type="button" className="btn-ghost book-help-delete" onClick={() => removeNote(note.id)} disabled={saving || sectionDirty}>삭제</button>
                           </div>
                         )}
                       </>
                     )}
+                    <BookHelpSections key={note.id} sections={note.sections} editable={isTeacher && !saving} onDirtyChange={setSectionDirty}
+                      onSave={(section, options) => saveBookHelpSection(note.id, section, options)}
+                      onDelete={(sectionId) => deleteBookHelpSection(note.id, sectionId)} />
                   </div>
                 )}
               </section>
@@ -405,6 +430,7 @@ export default function BookHelpDrawer({
       </div>
 
       {collapsed && <span className="book-help-rail-label">도움 글</span>}
+      {currentNotes.find((note) => note.id === modalId) && <BookHelpNoteModal note={currentNotes.find((note) => note.id === modalId)} onClose={() => setModalId("")} />}
     </aside>
   );
 }

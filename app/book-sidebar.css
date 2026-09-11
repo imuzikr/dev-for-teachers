@@ -566,6 +566,29 @@
   grid-template-columns: 28px minmax(0, 1fr);
 }
 
+.book-help-item-row:has(.book-help-expand) { grid-template-columns: minmax(0, 1fr) 36px; }
+.book-help-item-row:has(.book-help-drag-handle):has(.book-help-expand) { grid-template-columns: 28px minmax(0, 1fr) 36px; }
+.book-help-expand { display: grid; place-items: center; align-self: center; width: 32px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--text-sub); cursor: pointer; }
+.book-help-expand:hover { color: var(--primary-dark); }
+.book-help-expand:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 4px; }
+.book-help-sections { display: grid; min-width: 0; gap: 12px; }
+.book-help-section { min-width: 0; border-top: 1px solid var(--border); padding-top: 12px; }
+.book-help-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.book-help-section-head h4 { margin: 0; color: var(--primary-dark); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.book-help-section-actions { display: flex; gap: 6px; }
+.book-help-section-editor { display: grid; min-width: 0; gap: 10px; }
+.book-help-section-add { width: 100%; min-height: 44px; border-style: dashed; }
+.book-help-field-label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 900; color: var(--primary-dark); }
+.book-help-error { margin: 0; color: var(--danger, #b13f35); font-size: 13px; overflow-wrap: anywhere; }
+.book-help-section .book-help-link { display: inline-block; margin-top: 8px; }
+.book-help-note-modal .book-help-sections { margin-top: 16px; }
+.book-help-note-modal .book-personal-expand-content { min-height: 0; padding: 12px 0; border-radius: 0; background: transparent; }
+.book-help-note-modal .book-help-section-head h4 { font-size: 18px; }
+.book-help-detail .book-help-section .book-help-text { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.book-help-section-editor > .book-help-actions { position: sticky; bottom: 0; z-index: 1; padding: 8px 0; background: var(--card-bg); }
+.book-help-note-modal .btn-close { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 4px; }
+.book-help-note-modal .btn-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 .book-help-drag-handle {
   width: 28px;
   min-width: 28px;

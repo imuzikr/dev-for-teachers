@@ -584,7 +584,7 @@ service cloud.firestore {
     }
     function validBookHelpNote(classId) {
       return request.resource.data.keys().hasOnly([
-               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt'
+               'classId', 'title', 'content', 'url', 'sections', 'createdBy', 'createdAt', 'updatedAt'
              ])
              && request.resource.data.classId == classId
              && request.resource.data.title is string
@@ -594,13 +594,15 @@ service cloud.firestore {
              && request.resource.data.content.size() <= 5000
              && request.resource.data.url is string
              && request.resource.data.url.size() <= 1000
+             && (!('sections' in request.resource.data)
+                 || validBookHelpSections(request.resource.data))
              && request.resource.data.createdBy == uid()
              && request.resource.data.createdAt == request.time
              && request.resource.data.updatedAt == request.time;
     }
     function validBookHelpNoteUpdate() {
       return request.resource.data.keys().hasOnly([
-               'classId', 'title', 'content', 'url', 'createdBy', 'createdAt', 'updatedAt', 'order'
+               'classId', 'title', 'content', 'url', 'sections', 'createdBy', 'createdAt', 'updatedAt', 'order'
              ])
              && (!('order' in request.resource.data)
                  || (request.resource.data.order is int && request.resource.data.order >= 0))
@@ -614,7 +616,50 @@ service cloud.firestore {
              && request.resource.data.content.size() <= 5000
              && request.resource.data.url is string
              && request.resource.data.url.size() <= 1000
+             && (!('sections' in request.resource.data)
+                 || validBookHelpSections(request.resource.data))
              && request.resource.data.updatedAt == request.time;
+    }
+    function validBookHelpSectionAt(sections, index) {
+      return sections.size() <= index || (
+        sections[index] is map
+        && sections[index].keys().hasOnly(['id', 'title', 'content', 'url'])
+        && sections[index].id is string
+        && sections[index].id.size() > 0
+        && sections[index].id.size() <= 100
+        && sections[index].title is string
+        && sections[index].title.size() > 0
+        && sections[index].title.size() <= 120
+        && sections[index].content is string
+        && sections[index].content.size() <= 5000
+        && sections[index].url is string
+        && sections[index].url.size() <= 1000
+      );
+    }
+    function validBookHelpSections(data) {
+      let sections = data.get('sections', []);
+      return sections is list
+             && sections.size() <= 20
+             && validBookHelpSectionAt(sections, 0)
+             && validBookHelpSectionAt(sections, 1)
+             && validBookHelpSectionAt(sections, 2)
+             && validBookHelpSectionAt(sections, 3)
+             && validBookHelpSectionAt(sections, 4)
+             && validBookHelpSectionAt(sections, 5)
+             && validBookHelpSectionAt(sections, 6)
+             && validBookHelpSectionAt(sections, 7)
+             && validBookHelpSectionAt(sections, 8)
+             && validBookHelpSectionAt(sections, 9)
+             && validBookHelpSectionAt(sections, 10)
+             && validBookHelpSectionAt(sections, 11)
+             && validBookHelpSectionAt(sections, 12)
+             && validBookHelpSectionAt(sections, 13)
+             && validBookHelpSectionAt(sections, 14)
+             && validBookHelpSectionAt(sections, 15)
+             && validBookHelpSectionAt(sections, 16)
+             && validBookHelpSectionAt(sections, 17)
+             && validBookHelpSectionAt(sections, 18)
+             && validBookHelpSectionAt(sections, 19);
     }
     function validBookImageAt(images, index) {
       return images.size() <= index || (
