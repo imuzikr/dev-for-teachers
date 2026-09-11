@@ -4,6 +4,13 @@ export default async function verifyHelpSections(page, baseUrl) {
   await page.goto(`${baseUrl}/qa-help-sections`);
   const drawer = page.getByRole("complementary", { name: "도움 글", exact: true });
   await drawer.getByRole("button", { name: "01 Vercel", exact: true }).click();
+  assert.equal(await drawer.locator(".book-help-detail > .book-help-text").count(), 0);
+  await drawer.getByRole("heading", { name: "기존 내용", exact: true }).waitFor();
+  await drawer.locator(".book-help-detail > .book-help-actions").getByRole("button", { name: "편집", exact: true }).click();
+  assert.equal(await drawer.getByRole("textbox", { name: "도움 글 내용", exact: true }).count(), 0);
+  await drawer.getByLabel("URL", { exact: true }).fill("https://vercel.com/docs");
+  await drawer.getByRole("button", { name: "저장", exact: true }).click();
+  await drawer.getByRole("heading", { name: "기존 내용", exact: true }).waitFor();
   await drawer.getByRole("button", { name: "+ 항목 추가", exact: true }).click();
   await drawer.getByRole("button", { name: "항목 저장", exact: true }).click();
   assert.match(await drawer.getByRole("alert").textContent(), /제목/);
@@ -20,6 +27,11 @@ export default async function verifyHelpSections(page, baseUrl) {
   await quota.getByLabel("항목 제목", { exact: true }).fill("배포 횟수");
   await quota.getByRole("button", { name: "항목 저장", exact: true }).click();
   await drawer.getByRole("heading", { name: "배포 횟수", exact: true }).waitFor();
+  const legacy = drawer.getByRole("region", { name: "기존 내용", exact: true });
+  await legacy.getByRole("button", { name: "편집", exact: true }).click();
+  await legacy.getByLabel("항목 제목", { exact: true }).fill("빌드 제한");
+  await legacy.getByRole("button", { name: "항목 저장", exact: true }).click();
+  await drawer.getByRole("heading", { name: "빌드 제한", exact: true }).waitFor();
   assert.equal(await drawer.getByRole("heading", { name: "실행 제한", exact: true }).count(), 1);
   await page.getByRole("button", { name: "학생 화면", exact: true }).click();
   await drawer.getByRole("button", { name: "01 Vercel", exact: true }).click();
@@ -41,6 +53,11 @@ export default async function verifyHelpSections(page, baseUrl) {
     const box = await modal.boundingBox();
     assert(box.x >= 0 && box.x + box.width <= width + 1);
     await page.screenshot({ path: `qa-help-sections-modal-${width}.png`, fullPage: true });
+    await modal.getByText("함수 실행 시간을 확인합니다.", { exact: true }).scrollIntoViewIfNeeded();
+    const lastLine = await modal.getByText("함수 실행 시간을 확인합니다.", { exact: true }).boundingBox();
+    const bodyBox = await modal.locator(".book-personal-expand-body").boundingBox();
+    assert(lastLine.y + lastLine.height <= bodyBox.y + bodyBox.height + 1);
+    await page.screenshot({ path: `qa-help-sections-modal-bottom-${width}.png`, fullPage: true });
     await page.keyboard.press("Escape");
     assert.equal(await page.getByRole("dialog").count(), 0);
     assert.equal(await expand.evaluate((button) => document.activeElement === button), true);
@@ -54,6 +71,7 @@ export default async function verifyHelpSections(page, baseUrl) {
   assert.equal(await drawer.getByRole("heading", { name: "배포 횟수", exact: true }).count(), 1);
   await drawer.getByRole("button", { name: "추가", exact: true }).click();
   const newNote = drawer.getByRole("region", { name: "새 도움 글", exact: true });
+  assert.equal(await newNote.getByRole("textbox", { name: "도움 글 내용", exact: true }).count(), 0);
   await newNote.getByLabel("제목", { exact: true }).fill("GitHub");
   await newNote.getByRole("button", { name: "+ 항목 추가", exact: true }).click();
   await newNote.getByLabel("항목 제목", { exact: true }).fill("저장소 만들기");

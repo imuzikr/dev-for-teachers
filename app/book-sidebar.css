@@ -584,6 +584,8 @@
 .book-help-note-modal .book-help-sections { margin-top: 16px; }
 .book-help-note-modal .book-personal-expand-content { min-height: 0; padding: 12px 0; border-radius: 0; background: transparent; }
 .book-help-note-modal .book-help-section-head h4 { font-size: 18px; }
+.book-help-detail > .book-help-sections { margin-left: 6px; padding-left: 12px; border-left: 1px solid var(--border); }
+.book-help-detail > .book-help-sections:empty { display: none; }
 .book-help-detail .book-help-section .book-help-text { padding: 0; border: 0; border-radius: 0; background: transparent; }
 .book-help-section-editor > .book-help-actions { position: sticky; bottom: 0; z-index: 1; padding: 8px 0; background: var(--card-bg); }
 .book-help-note-modal .btn-close { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 4px; }

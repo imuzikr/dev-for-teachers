@@ -4,7 +4,6 @@ import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
-import RichTextDisplay from "./RichTextDisplay";
 import BookHelpSections from "./BookHelpSections";
 
 export default function BookHelpNoteModal({ note, onClose }) {
@@ -74,11 +73,6 @@ export default function BookHelpNoteModal({ note, onClose }) {
               <strong>{resourceLinkLabel(href)}</strong>
             </a>
           )}
-          {(note.content || !note.sections?.length) && <RichTextDisplay
-            className="book-personal-expand-content"
-            html={note.content}
-            fallback="등록된 내용이 없습니다."
-          />}
           <BookHelpSections sections={note.sections} expanded />
         </div>
       </section>

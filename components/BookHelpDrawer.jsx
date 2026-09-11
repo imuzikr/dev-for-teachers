@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { stripHtml } from "@/lib/html";
 import {
   addBookHelpNote,
   deleteBookHelpNote,
@@ -11,24 +10,21 @@ import {
   saveBookHelpSection,
   deleteBookHelpSection,
 } from "@/lib/bookHelpNotes";
-import BasicFormatEditor from "./BasicFormatEditor";
 import { resourceHref } from "./BookProjectPreview";
-import RichTextDisplay from "./RichTextDisplay";
 import BookHelpNoteModal from "./BookHelpNoteModal";
 import BookHelpSections from "./BookHelpSections";
 
-const EMPTY_DRAFT = { title: "", content: "", url: "" };
+const EMPTY_DRAFT = { title: "", url: "" };
 
 function helpDraftFromNote(note) {
   return {
     title: note?.title ?? "",
-    content: note?.content ?? "",
     url: note?.url ?? "",
   };
 }
 
 function hasHelpBody(note) {
-  return stripHtml(note?.content ?? "").trim().length > 0 || (note?.sections?.length ?? 0) > 0;
+  return (note?.sections?.length ?? 0) > 0;
 }
 
 function orderedNotesWithRequest(notes, request) {
@@ -50,6 +46,7 @@ function HelpNoteFields({ draft, onChange, disabled }) {
       <label>
         <span>제목</span>
         <input
+          maxLength={120}
           value={draft.title}
           disabled={disabled}
           onChange={(event) => onChange({ ...draft, title: event.target.value })}
@@ -57,18 +54,9 @@ function HelpNoteFields({ draft, onChange, disabled }) {
         />
       </label>
       <label>
-        <span>내용</span>
-        <BasicFormatEditor
-          value={draft.content}
-          disabled={disabled}
-          onChange={(content) => onChange({ ...draft, content })}
-          placeholder="학생들에게 보여줄 도움 내용을 입력하세요."
-          ariaLabel="도움 글 내용"
-        />
-      </label>
-      <label>
         <span>URL</span>
         <input
+          maxLength={1000}
           value={draft.url}
           disabled={disabled}
           onChange={(event) => onChange({ ...draft, url: event.target.value })}
@@ -134,7 +122,7 @@ export default function BookHelpDrawer({
     if (saving || sectionDirty) return;
     const href = resourceHref(note.url);
     const hasBody = hasHelpBody(note);
-    if (!hasBody && href) {
+    if (!isTeacher && !hasBody && href) {
       window.open(href, "_blank", "noopener,noreferrer");
       return;
     }
@@ -404,7 +392,6 @@ export default function BookHelpDrawer({
                       </>
                     ) : (
                       <>
-                        {note.content && <RichTextDisplay className="book-help-text" html={note.content} />}
                         {href && (
                           <a className="book-help-link" href={href} target="_blank" rel="noopener noreferrer">
                             링크 열기
