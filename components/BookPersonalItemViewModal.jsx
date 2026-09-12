@@ -68,7 +68,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
-          {!locked && <BookItemImages images={item.images} onPresent={onPresent} previewImages={!isTeacher} />}
+          {!locked && isTeacher && <BookItemImages images={item.images} onPresent={onPresent} />}
           {requiresAnswer && !locked && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
@@ -95,6 +95,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
             </div>
           )}
+          {!locked && !isTeacher && <BookItemImages images={item.images} previewImages />}
         </div>
       </section>
   );

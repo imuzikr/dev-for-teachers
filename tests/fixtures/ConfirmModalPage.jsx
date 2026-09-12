@@ -14,6 +14,7 @@ export default function ConfirmModalPage() {
   const [withChecklist, setWithChecklist] = useState(false);
   const detailItem = { kind, id: "fixture", source: { title: "확인할 자료", requiresAnswer: false, content: withChecklist ? '<ul class="rte-checklist"><li><label><input type="checkbox"><span class="rte-checklist-text">첫 번째 할 일</span></label></li><li><label><input type="checkbox"><span class="rte-checklist-text">두 번째 할 일</span></label></li></ul>' : "활동 안내사항" } };
   const checklist = useStudentChecklist(detailItem);
+  detailItem.source.images = typeof window === "undefined" ? [] : [`${window.location.origin}/downloads/user-management-button.png`];
   async function save() {
     setSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 100));

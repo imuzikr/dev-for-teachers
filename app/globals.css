@@ -8919,13 +8919,14 @@ pre code {
 }
 
 .student-checklist-bulk-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
 .student-activity-detail-actions .student-checklist-check-all {
-  justify-self: start;
+  width: 100%;
+  min-width: 0;
   min-height: 32px;
   padding: 4px 12px;
   border-radius: 999px;

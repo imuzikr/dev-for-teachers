@@ -40,6 +40,14 @@ export default async function verifyCheckAllChecklist(page, baseUrl) {
           const clearBox = await clear.boundingBox();
           assert.equal(Math.round(clearBox.y), Math.round(bulkBox.y));
           assert(clearBox.x >= bulkBox.x + bulkBox.width);
+          assert(Math.abs(bulkBox.width - clearBox.width) < 1);
+          const rowBox = await detail.locator(".student-checklist-bulk-actions").boundingBox();
+          assert(Math.abs(bulkBox.x - rowBox.x) < 1);
+          assert(Math.abs(clearBox.x + clearBox.width - rowBox.x - rowBox.width) < 1);
+          const gallery = detail.getByRole("region", { name: "첨부 이미지", exact: true });
+          const galleryBox = await gallery.boundingBox();
+          assert(confirmBox.y + confirmBox.height <= galleryBox.y);
+          await gallery.getByRole("img").evaluate((image) => image.decode());
           assert(await clear.evaluate((button) => button.scrollWidth <= button.clientWidth));
           await page.screenshot({ path: `qa-check-all-${panel ? "panel" : "modal"}-${width}.png`, fullPage: true });
         }
