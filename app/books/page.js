@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   deleteBookActivity,
-  classAcceptsJoin,
   getBookProject,
   joinClassByCode,
   saveBookProject,
@@ -11,7 +10,6 @@ import {
   subscribeBookProject,
   subscribeClassMembers,
   subscribeClasses,
-  subscribeMyMemberships,
   subscribeUserDirectory,
   updateBookActivity,
 } from "@/lib/store";
@@ -27,7 +25,7 @@ import {
   appendClonedBookProjectStep,
   appendClonedBookProjectSteps,
 } from "@/lib/bookProjectExport";
-import { useAutomaticClassMembership } from "@/lib/useAutomaticClassMembership";
+import { useAutomaticClassMembership, useVisibleClassMemberships } from "@/lib/useAutomaticClassMembership";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import TopNav from "@/components/TopNav";
@@ -46,8 +44,10 @@ function BooksPageInner() {
   const admin = user ? isTeacher(user) : false;
   const superAdmin = user ? isAdmin(user) : false;
 
-  const [classes, setClasses] = useState([]);
-  const [memberships, setMemberships] = useState([]);
+  const [classSnapshot, setClassSnapshot] = useState(null);
+  const subscriptionKey = JSON.stringify([user?.uid, user?.role]);
+  const classes = useMemo(() => classSnapshot?.key === subscriptionKey
+    ? classSnapshot.items : [], [classSnapshot, subscriptionKey]);
   const [localSelectedId, setLocalSelectedId] = useState(null);
   const [classPurpose, setClassPurpose] = useState(getSelectedClassPurpose);
   const [teacherClassId, setTeacherClassId] = useState(null);
@@ -85,17 +85,28 @@ function BooksPageInner() {
     return () => window.removeEventListener("class-purpose-change", syncPurpose);
   }, []);
 
-  useEffect(() => subscribeClasses(setClasses), []);
-
   useEffect(() => {
-    if (!user || admin) {
-      setMemberships([]);
-      return;
-    }
-    return subscribeMyMemberships(user.uid, setMemberships);
-  }, [user?.uid, admin]);
+    setClassSnapshot(null);
+    if (!user?.uid) return;
+    let active = true;
+    const unsubscribe = subscribeClasses((items) => {
+      if (active) setClassSnapshot({ key: subscriptionKey, items });
+    }, user);
+    return () => { active = false; unsubscribe(); };
+  }, [user?.uid, user?.role, subscriptionKey]);
 
-  useAutomaticClassMembership({ user, isOperator: admin, classes, memberships });
+  const activeClassIdsKey = JSON.stringify(classes
+    .filter((item) => item.archived === false && item.accessVersion === 2)
+    .map((item) => item.id).sort());
+  const activeClassIds = useMemo(() => JSON.parse(activeClassIdsKey), [activeClassIdsKey]);
+  const { memberships, resolvedClassIds, ready: membershipsReady } = useVisibleClassMemberships({
+    user, isOperator: admin, activeClassIds,
+  });
+
+  useAutomaticClassMembership({
+    user, isOperator: admin, classes, memberships, resolvedClassIds,
+    ready: classSnapshot?.key === subscriptionKey && membershipsReady,
+  });
 
   useEffect(() => {
     if (!admin) {
@@ -114,8 +125,8 @@ function BooksPageInner() {
     [ownedClassesAll, classPurpose]
   );
   const myClasses = useMemo(() => myClassesAll.filter((c) => !c.archived), [myClassesAll]);
-  const membershipIds = useMemo(() => memberships.map((m) => m.classId), [memberships]);
-  const joinableClasses = useMemo(() => classes.filter(classAcceptsJoin), [classes]);
+  const membershipIds = useMemo(() => memberships.map((m) => m.classId)
+    .filter((id) => activeClassIds.includes(id)), [memberships, activeClassIds]);
   const studentClassId =
     localSelectedId && membershipIds.includes(localSelectedId)
       ? localSelectedId
@@ -372,7 +383,6 @@ function BooksPageInner() {
         <main className="books-main books-main--join">
           <TopNav active="books" />
           <ClassJoinPanel
-            joinableCount={joinableClasses.length}
             joining={joiningClass}
             onJoin={handleJoinClass}
           />
@@ -385,11 +395,14 @@ function BooksPageInner() {
   return (
     <div className="board-shell books-board-shell">
       <BooksHome
+        key={`${subscriptionKey}:${classId ?? ""}`}
         topNav={<TopNav active="books" />}
         admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
         classPurpose={classPurpose} myClasses={myClasses} myClassesAll={myClassesAll}
         allTeacherClasses={ownedClassesAll} membershipIds={membershipIds} roster={roster}
-        project={project} displayedProject={displayedProject} visibleActivities={visibleActivities}
+        project={projectLoadedClass === classId && classId ? project : null}
+        displayedProject={projectLoadedClass === classId && activitiesLoadedClass === classId && classId ? displayedProject : null}
+        visibleActivities={activitiesLoadedClass === classId && classId ? visibleActivities : []}
         liveProjectReady={Boolean(classId && activitiesLoadedClass === classId && projectLoadedClass === classId)}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
         appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}

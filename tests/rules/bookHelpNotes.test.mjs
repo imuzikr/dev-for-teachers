@@ -10,7 +10,7 @@ describe("Help note ordering", () => {
   beforeEach(async () => {
     await env.clearFirestore();
     await seed(env, async db => {
-      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: false });
+      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: false });
       for (const id of ["one", "two"]) {
         await setDoc(doc(db, "bookHelpNotes", id), {
           classId: "cA", title: id, content: "", url: "", createdBy: "teacherA",

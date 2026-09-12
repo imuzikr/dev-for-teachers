@@ -28,7 +28,7 @@ describe("개인 활동 제출물 규칙", () => {
   beforeEach(async () => {
     await env.clearFirestore();
     await seed(env, async (db) => {
-      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: false });
+      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: false });
       await setDoc(doc(db, "memberships", "stu1_cA"), { uid: "stu1", classId: "cA" });
       await setDoc(doc(db, "memberships", "stu2_cA"), { uid: "stu2", classId: "cA" });
       await setDoc(doc(db, "bookActivities", "act1"), {

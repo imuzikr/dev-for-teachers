@@ -5,7 +5,7 @@
 // -------------------------------------------------------------
 // 오른쪽: 역할 전환(개발용) ｜ 사용자 프로필 ｜ 로그아웃
 // =============================================================
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAdmin, isTeacher } from "@/lib/user";
 import { isFirebaseConfigured } from "@/lib/firebase";
@@ -13,7 +13,6 @@ import { signOutUser } from "@/lib/auth";
 import {
   subscribeUserDirectory,
   subscribeClasses,
-  subscribeMyMemberships,
   subscribeBroadcast,
   stopBroadcast,
   reportPresence,
@@ -26,6 +25,7 @@ import {
 } from "@/lib/classroom";
 import { getClassPurpose, getClassPurposeLabel, getNextClassPurpose } from "@/lib/classPurpose";
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import { useVisibleClassMemberships } from "@/lib/useAutomaticClassMembership";
 import UserProfile from "./UserProfile";
 import RoleSwitcher from "./RoleSwitcher";
 import RoleManagerModal from "./RoleManagerModal";
@@ -37,12 +37,14 @@ import { IconLogo, IconLogout, IconPeople } from "./StatusIcons";
 export default function TopNav({ active }) {
   const router = useRouter();
   const user = useCurrentUser();
-  const admin = user ? isTeacher(user) : false;      // 교사+관리자
+  const admin = user ? isTeacher(user) : false;
   const isStrictAdmin = user ? isAdmin(user) : false; // 최고 관리자만 (역할 관리)
   const [roleMgrOpen, setRoleMgrOpen] = useState(false);
   const [directory, setDirectory] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [memberships, setMemberships] = useState([]);
+  const [classSnapshot, setClassSnapshot] = useState(null);
+  const subscriptionKey = JSON.stringify([user?.uid, user?.role]);
+  const classes = useMemo(() => classSnapshot?.key === subscriptionKey
+    ? classSnapshot.items : [], [classSnapshot, subscriptionKey]);
   const [sessionClassId, setSessionClassId] = useState(null);
   const [classPurpose, setClassPurpose] = useState(getSelectedClassPurpose);
 
@@ -53,20 +55,22 @@ export default function TopNav({ active }) {
   }, [isStrictAdmin]);
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !admin) {
-      setClasses([]);
-      return;
-    }
-    return subscribeClasses(setClasses);
-  }, [admin]);
+    setClassSnapshot(null);
+    if (!isFirebaseConfigured || !user?.uid) return;
+    let active = true;
+    const unsubscribe = subscribeClasses((items) => {
+      if (active) setClassSnapshot({ key: subscriptionKey, items });
+    }, user);
+    return () => { active = false; unsubscribe(); };
+  }, [user?.uid, user?.role, subscriptionKey]);
 
-  useEffect(() => {
-    if (!isFirebaseConfigured || admin || !user?.uid) {
-      setMemberships([]);
-      return;
-    }
-    return subscribeMyMemberships(user.uid, setMemberships);
-  }, [admin, user?.uid]);
+  const activeClassIdsKey = JSON.stringify(classes
+    .filter((item) => item.archived === false && item.accessVersion === 2)
+    .map((item) => item.id).sort());
+  const activeClassIds = useMemo(() => JSON.parse(activeClassIdsKey), [activeClassIdsKey]);
+  const { memberships } = useVisibleClassMemberships({
+    user, isOperator: admin, activeClassIds, enabled: isFirebaseConfigured,
+  });
 
   // 뱃지 숫자와 교사가 관리하는 화면의 숫자가 항상 일치합니다.
   useEffect(() => {
@@ -83,7 +87,8 @@ export default function TopNav({ active }) {
     return () => window.removeEventListener("class-purpose-change", syncPurpose);
   }, []);
 
-  const membershipIds = memberships.map((m) => m.classId);
+  const membershipIds = memberships.map((m) => m.classId)
+    .filter((id) => activeClassIds.includes(id));
   const activeClassId =
     sessionClassId && membershipIds.includes(sessionClassId)
       ? sessionClassId
@@ -101,12 +106,19 @@ export default function TopNav({ active }) {
 
   // 발표 강제 전환(방송) 구독 — 학생은 "지금 보고 있는 반", 교사는 자신이
   // 상단바가 항상 떠 있으므로 여기서 구독하면 앱 전체에 적용됩니다.
-  const [broadcast, setBroadcast] = useState(null);
+  const [broadcastSnapshot, setBroadcastSnapshot] = useState(null);
   const broadcastClassId = admin ? sessionClassId : activeClassId;
+  const broadcastKey = `${subscriptionKey}:${broadcastClassId}`;
+  const broadcast = broadcastSnapshot?.key === broadcastKey ? broadcastSnapshot.value : null;
   useEffect(() => {
-    if (!isFirebaseConfigured || !broadcastClassId) { setBroadcast(null); return; }
-    return subscribeBroadcast(broadcastClassId, setBroadcast);
-  }, [broadcastClassId]);
+    setBroadcastSnapshot(null);
+    if (!isFirebaseConfigured || !broadcastClassId) return;
+    let active = true;
+    const unsubscribe = subscribeBroadcast(broadcastClassId, (value) => {
+      if (active) setBroadcastSnapshot({ key: broadcastKey, value });
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [broadcastClassId, broadcastKey]);
 
   // 발표 중에는 학생 화면이 실제로 보이는지 교사에게 알립니다(전광판용).
   //
@@ -237,7 +249,7 @@ export default function TopNav({ active }) {
     </header>
 
     {/* 학생 화면 — 교사가 방송 중이면 화면 전체를 강제로 덮습니다(학생은 닫을 수 없음) */}
-    {!admin && broadcast && <PresentationOverlay broadcast={broadcast} />}
+    {!admin && activeClassId && broadcast && <PresentationOverlay broadcast={broadcast} />}
 
     {/* 교사 화면 — 자기 반에 방송이 켜져 있으면 어디서든 바로 끌 수 있는 안전장치 */}
     {admin && broadcast && (

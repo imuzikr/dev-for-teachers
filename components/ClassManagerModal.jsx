@@ -6,6 +6,7 @@
 // =============================================================
 import { useState } from "react";
 import { backdropClose } from "@/lib/modal";
+import { isAdmin } from "@/lib/user";
 import {
   addClass,
   archiveClass,
@@ -43,6 +44,7 @@ export default function ClassManagerModal({
   const [busyId, setBusyId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null); // { id, name } | null
   const [error, setError] = useState("");
+  const canManageJoinAccess = isAdmin(user);
 
   const active = classes.filter((c) => !c.archived);
   const archived = classes.filter((c) => c.archived);
@@ -120,7 +122,7 @@ export default function ClassManagerModal({
   }
 
   async function handleToggleJoinAccess(c) {
-    if (busyId) return;
+    if (!canManageJoinAccess || busyId) return;
     const nextEnabled = c.joinEnabled !== true;
     const nextCode = isValidClassJoinCode(c.joinCode) ? c.joinCode : createUniqueClassJoinCode(c.id);
     setBusyId(c.id);
@@ -139,7 +141,7 @@ export default function ClassManagerModal({
   }
 
   async function handleRefreshJoinCode(c) {
-    if (busyId) return;
+    if (!canManageJoinAccess || busyId) return;
     setBusyId(c.id);
     setError("");
     try {
@@ -156,7 +158,7 @@ export default function ClassManagerModal({
   }
 
   async function handleSaveJoinCode(c, value) {
-    if (busyId) return;
+    if (!canManageJoinAccess || busyId) return;
     const joinCode = normalizeClassJoinCode(value);
     if (!isValidClassJoinCode(joinCode)) {
       setError("참여 코드는 숫자 6자리로 입력해 주세요.");
@@ -203,6 +205,8 @@ export default function ClassManagerModal({
       setBusyId(null);
     }
   }
+
+  if (!canManageJoinAccess) return null;
 
   return (
     <div className="modal-backdrop" {...backdropClose(onClose)}>

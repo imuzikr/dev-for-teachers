@@ -74,8 +74,8 @@ describe("개발자실 프로젝트 저장 규칙", () => {
   beforeEach(async () => {
     await env.clearFirestore();
     await seed(env, async (db) => {
-      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: false });
-      await setDoc(doc(db, "classes", "archived"), { createdBy: "teacherA", archived: true });
+      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: false });
+      await setDoc(doc(db, "classes", "archived"), { createdBy: "teacherA", accessVersion: 2, archived: true });
     });
   });
 

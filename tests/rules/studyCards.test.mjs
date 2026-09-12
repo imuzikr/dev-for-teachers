@@ -25,7 +25,7 @@ describe("공부방 카드 규칙", () => {
   beforeEach(async () => {
     await env.clearFirestore();
     await seed(env, async (db) => {
-      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: false });
+      await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: false });
       await setDoc(doc(db, "memberships", "stu1_cA"), { uid: "stu1", classId: "cA" });
       await setDoc(doc(db, "memberships", "stu2_cA"), { uid: "stu2", classId: "cA" });
       // 주의: editMode는 반드시 넣어야 합니다. 규칙의 isBoardLocked()가
@@ -91,7 +91,7 @@ describe("공부방 카드 규칙", () => {
   });
 
   it("보관된 반에서는 교사도 카드를 쓸 수 없다", async () => {
-    await seed(env, (db) => setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: true }));
+    await seed(env, (db) => setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: true }));
     const db = asTeacher(env, "teacherA").firestore();
     await assertFails(setDoc(doc(db, "studyBoards", "open", "cards", "teacherA"), card("teacherA")));
   });

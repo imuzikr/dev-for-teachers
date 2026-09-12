@@ -4,7 +4,7 @@ import { useState } from "react";
 import { IconSchool } from "./StatusIcons";
 import { isValidClassJoinCode, normalizeClassJoinCode } from "@/lib/store";
 
-export default function ClassJoinPanel({ joinableCount, joining, onJoin }) {
+export default function ClassJoinPanel({ joining, onJoin }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
@@ -27,9 +27,9 @@ export default function ClassJoinPanel({ joinableCount, joining, onJoin }) {
           <IconSchool size={32} />
         </div>
         <p className="class-join-kicker">개발자실 참여</p>
-        <h1 id="class-join-title">우리 반 참여 코드로 들어가세요</h1>
+        <h1 id="class-join-title" style={{ wordBreak: "keep-all" }}>우리 반 참여 코드로 들어가세요</h1>
         <p className="class-join-copy">
-          선생님이 반 관리에서 가입을 열고 알려 준 코드를 입력하면, 다음 접속부터는 자동으로 해당 반 개발자실로 들어갑니다.
+          안내받은 숫자 6자리 참여 코드를 입력해 주세요.
         </p>
 
         <form className="class-join-form" onSubmit={handleSubmit}>
@@ -54,11 +54,6 @@ export default function ClassJoinPanel({ joinableCount, joining, onJoin }) {
           {error && <p className="form-error">{error}</p>}
         </form>
 
-        <p className="class-join-footnote">
-          {joinableCount === 1
-            ? "가입 허용 중인 반이 하나라면 자동 연결을 시도합니다."
-            : "가입 허용 중인 반이 여러 개이거나 없으면 참여 코드가 필요합니다."}
-        </p>
       </section>
     </main>
   );

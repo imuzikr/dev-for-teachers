@@ -2,8 +2,9 @@ import { after, before, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
+import { initializeApp, deleteApp } from "firebase/app";
 import * as firestore from "firebase/firestore";
-import { asStudent, makeEnv, seed } from "./helpers.mjs";
+import { makeEnv, seed } from "./helpers.mjs";
 
 let env;
 before(async () => {
@@ -20,7 +21,7 @@ async function loadSubscription(db) {
   assert.ok(start >= 0 && end > start);
   return runInNewContext(
     source.slice(start, end).replace("export function", "function") + "\nsubscribeMyMemberships;",
-    { ...firestore, db, isFirebaseConfigured: true },
+    { ...firestore, db, isFirebaseConfigured: true, uniqueClassIds: (ids) => [...new Set(ids)] },
   );
 }
 
@@ -28,14 +29,19 @@ it("first join waits for server acknowledgement before exposing project access, 
   const { doc, setDoc, serverTimestamp, disableNetwork, enableNetwork, onSnapshot, getDoc } = firestore;
   await seed(env, async (db) => {
     await setDoc(doc(db, "classes", "new-class"), {
-      createdBy: "teacher", archived: false, joinEnabled: true, joinCode: "123456",
+      createdBy: "teacher", accessVersion: 2, archived: false, joinEnabled: true,
     });
     await setDoc(doc(db, "memberships", "new-student_existing"), {
-      uid: "new-student", classId: "existing",
+      uid: "new-student", classId: "existing", accessVersion: 2,
     });
+    await setDoc(doc(db, "classes", "existing"), { createdBy: "teacher", accessVersion: 2, archived: false });
+    await setDoc(doc(db, "classJoinSecrets", "new-class"), { joinCode: "123456" });
     await setDoc(doc(db, "bookProjects", "new-class"), { title: "First project" });
   });
-  const db = asStudent(env, "new-student").firestore();
+  const app = initializeApp({ projectId: "demo-membership-subscription" }, "membership-listener");
+  const db = firestore.getFirestore(app);
+  const [host, port] = (process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080").split(":");
+  firestore.connectFirestoreEmulator(db, host, Number(port), { mockUserToken: { sub: "new-student" } });
   const subscribe = await loadSubscription(db);
   let latest = [];
   let resolveUpdate;
@@ -44,9 +50,9 @@ it("first join waits for server acknowledgement before exposing project access, 
   const joined = new Promise((resolve) => { resolveJoined = resolve; });
   const stop = subscribe("new-student", (rows) => {
     latest = rows;
-    resolveUpdate();
+    if (rows.some((row) => row.classId === "existing")) resolveUpdate();
     if (rows.some((row) => row.classId === "new-class")) resolveJoined();
-  });
+  }, ["existing", "new-class"]);
   const membershipRef = doc(db, "memberships", "new-student_new-class");
   let stopPending = () => {};
   let write;
@@ -59,9 +65,14 @@ it("first join waits for server acknowledgement before exposing project access, 
         if (snap.metadata.hasPendingWrites) resolve();
       });
     });
-    write = setDoc(membershipRef, {
-      uid: "new-student", classId: "new-class", joinCode: "123456", joinedAt: serverTimestamp(),
+    const batch = firestore.writeBatch(db);
+    batch.set(doc(db, "classJoinClaims", "new-student"), {
+      uid: "new-student", classId: "new-class", joinCode: "123456", createdAt: serverTimestamp(),
     });
+    batch.set(membershipRef, {
+      uid: "new-student", classId: "new-class", accessVersion: 2, joinedAt: serverTimestamp(),
+    });
+    write = batch.commit();
     await pending;
     await new Promise((resolve) => setTimeout(resolve, 50));
     assert.deepEqual(Array.from(latest, (row) => row.classId), ["existing"],
@@ -77,6 +88,7 @@ it("first join waits for server acknowledgement before exposing project access, 
     stopPending();
     await enableNetwork(db);
     await write;
-    await db.terminate();
+    await firestore.terminate(db);
+    await deleteApp(app);
   }
 });

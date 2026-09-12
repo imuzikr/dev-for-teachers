@@ -105,6 +105,10 @@ service cloud.firestore {
     function isClassArchived(cId) {
       return get(/databases/$(database)/documents/classes/$(cId)).data.get('archived', false) == true;
     }
+    function isClassActive(cId) {
+      let data = get(/databases/$(database)/documents/classes/$(cId)).data;
+      return data.get('accessVersion', 0) == 2 && data.get('archived', true) == false;
+    }
     function ownsClass(cId) {
       // isTeacher()가 false면 &&에서 단락되어 get을 수행하지 않음(학생 비용 없음)
       return isTeacher() && classOwnerUid(cId) == uid();
@@ -117,56 +121,57 @@ service cloud.firestore {
     }
     // 보관된 반은 학생도 접근 불가 — 소속 여부와 별개로 항상 거부.
     function isClassMember(cId) {
-      return !isClassArchived(cId)
+      return isClassActive(cId)
              && exists(/databases/$(database)/documents/memberships/$(uid() + '_' + cId));
     }
     function hasClassMembership(memberUid, cId) {
       return exists(/databases/$(database)/documents/memberships/$(memberUid + '_' + cId));
     }
-    function isClassJoinOpen(cId) {
-      return exists(/databases/$(database)/documents/classes/$(cId))
-             && !isClassArchived(cId)
+    function validJoinCode(code) {
+      return code is string && code.matches('^[0-9]{6}$');
+    }
+    function isClassJoinOpen(cId, code) {
+      return validJoinCode(code)
+             && isClassActive(cId)
              && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinEnabled', false) == true
-             && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinCode', '') is string
-             && get(/databases/$(database)/documents/classes/$(cId)).data.get('joinCode', '') == request.resource.data.joinCode;
+             && get(/databases/$(database)/documents/classJoinSecrets/$(cId)).data.joinCode == code;
+    }
+    function validClassMetadata() {
+      return !('joinCode' in request.resource.data)
+             && request.resource.data.accessVersion == 2
+             && request.resource.data.archived is bool;
     }
     function validOwnedClassUpdate() {
-      return changedOnly(['name', 'archived', 'joinEnabled', 'joinCode'])
+      return changedOnly(['name', 'archived', 'joinEnabled'])
              && request.resource.data.createdBy == resource.data.createdBy
              && request.resource.data.get('name', '') is string
              && request.resource.data.get('name', '').size() > 0
              && request.resource.data.get('name', '').size() <= 80
              && request.resource.data.get('archived', false) is bool
-             && request.resource.data.get('joinEnabled', false) is bool
-             && request.resource.data.get('joinCode', '') is string
-             && (
-                  request.resource.data.get('joinCode', '') == ''
-                  || request.resource.data.get('joinCode', '').matches('^[0-9]{6}$')
-                )
-             && (
-                  request.resource.data.get('joinEnabled', false) == false
-                  || request.resource.data.get('joinCode', '').matches('^[0-9]{6}$')
-                );
+             && request.resource.data.get('joinEnabled', false) is bool;
     }
     function validMembershipId(mId) {
       return mId == (request.resource.data.uid + '_' + request.resource.data.classId);
     }
     function validCodeMembershipCreate(mId) {
+      let claim = getAfter(/databases/$(database)/documents/classJoinClaims/$(uid())).data;
       return request.resource.data.uid == uid()
              && validMembershipId(mId)
-             && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt', 'joinCode'])
-             && request.resource.data.joinCode is string
-             && request.resource.data.joinCode.matches('^[0-9]{6}$')
-             && isClassJoinOpen(request.resource.data.classId)
+             && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinedAt', 'accessVersion'])
+             && request.resource.data.accessVersion == 2
+             && claim.uid == uid()
+             && claim.classId == request.resource.data.classId
+             && claim.createdAt == request.time
+             && isClassJoinOpen(request.resource.data.classId, claim.joinCode)
              && request.resource.data.joinedAt == request.time;
     }
     function validInheritedMembershipCreate(mId) {
       return request.resource.data.keys().hasOnly([
-               'uid', 'classId', 'joinedAt', 'joinCode', 'inheritedFromClassId'
+               'uid', 'classId', 'joinedAt', 'accessVersion', 'inheritedFromClassId'
              ])
              && request.resource.data.uid is string
              && validMembershipId(mId)
-             && request.resource.data.joinCode == ''
+             && request.resource.data.accessVersion == 2
              && request.resource.data.inheritedFromClassId is string
              && request.resource.data.classId != request.resource.data.inheritedFromClassId
              && classExists(request.resource.data.classId)
@@ -184,10 +189,6 @@ service cloud.firestore {
                   || (
                        ownsClassEditable(request.resource.data.classId)
                        && ownsClass(request.resource.data.inheritedFromClassId)
-                     )
-                  || (
-                       request.resource.data.uid == uid()
-                       && isClassMember(request.resource.data.inheritedFromClassId)
                      )
                 );
     }
@@ -343,9 +344,13 @@ service cloud.firestore {
     //    교사 화면은 본인 개설 반만 클라이언트에서 필터링해 표시.
     //  · 생성·수정·삭제: 관리자 전용.
     match /classes/{cId} {
-      allow read: if signedIn();
-      allow create: if isAdmin() && request.resource.data.createdBy == uid();
-      allow update: if isAdmin() || (ownsClass(cId) && validOwnedClassUpdate());
+      allow read: if signedIn() && (isAdmin() || ownsClass(cId)
+                    || (resource.data.get('accessVersion', 0) == 2
+                        && resource.data.get('archived', true) == false));
+      allow create: if isAdmin() && request.resource.data.createdBy == uid()
+                       && validClassMetadata();
+      allow update: if (isAdmin() && validClassMetadata())
+                       || (ownsClass(cId) && validOwnedClassUpdate());
       allow delete: if isAdmin();
 
       // ── 언제든 질문하기(손들기) ─────────────────────────────
@@ -360,7 +365,7 @@ service cloud.firestore {
         allow get: if signedIn() && (
           isAdmin()
           || ownsClass(cId)
-          || studentUid == uid()
+          || (studentUid == uid() && isClassMember(cId))
         );
         allow list: if signedIn() && (
           isAdmin()
@@ -384,7 +389,7 @@ service cloud.firestore {
                       && validNote()
                       && request.resource.data.updatedAt == request.time;
         allow delete: if signedIn() && (
-          studentUid == uid()
+          (studentUid == uid() && isClassMember(cId))
           || isAdmin()
           || ownsClassEditable(cId)
         );
@@ -426,11 +431,45 @@ service cloud.firestore {
       }
     }
 
-    // ── 소속(멤버십) — 본인 것 + 그 반 소유 교사/관리자만. ──
+    match /classJoinSecrets/{cId} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['joinCode'])
+                            && validJoinCode(request.resource.data.joinCode);
+    }
+    match /classJoinLookup/{code} {
+      allow get: if isAdmin() || (signedIn() && validJoinCode(code)
+                    && resource.data.keys().hasOnly(['classId'])
+                    && isClassJoinOpen(resource.data.classId, code));
+      allow list, delete: if isAdmin();
+      allow create, update: if isAdmin() && validJoinCode(code)
+                            && request.resource.data.keys().hasOnly(['classId'])
+                            && request.resource.data.classId is string
+                            && request.resource.data.classId.size() > 0;
+    }
+    match /classJoinClaims/{claimUid} {
+      allow read, delete: if isAdmin();
+      allow create, update: if signedIn() && claimUid == uid()
+                            && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinCode', 'createdAt'])
+                            && request.resource.data.uid == uid()
+                            && request.resource.data.classId is string
+                            && request.resource.data.createdAt == request.time
+                            && isClassJoinOpen(request.resource.data.classId, request.resource.data.joinCode);
+    }
+
+    // Student reads are per-class and require migrated, code-free documents.
     match /memberships/{mId} {
-      allow read: if signedIn() && (
-        resource.data.uid == uid() || isAdmin() || ownsClass(resource.data.classId)
+      allow get: if signedIn() && (
+        (!exists(/databases/$(database)/documents/memberships/$(mId))
+          && mId.size() > uid().size() + 1
+          && mId[0:uid().size() + 1] == uid() + '_')
+        || isAdmin() || ownsClass(resource.data.classId)
+        || (resource.data.uid == uid()
+            && resource.data.get('accessVersion', 0) == 2
+            && !('joinCode' in resource.data)
+            && isClassActive(resource.data.classId))
       );
+      allow list: if isAdmin() || ownsClass(resource.data.classId);
       allow create: if signedIn()
                     && (
                          validCodeMembershipCreate(mId)
@@ -474,7 +513,7 @@ service cloud.firestore {
                             && request.resource.data.visible is bool
                             && isClassMember(request.resource.data.classId);
       allow delete: if isAdmin()
-                    || resource.data.uid == uid()
+                    || (resource.data.uid == uid() && isClassMember(resource.data.classId))
                     || ownsClassEditable(resource.data.classId);
     }
 
@@ -493,7 +532,8 @@ service cloud.firestore {
 
     // ── 공부방 보드 — 읽기는 로그인 사용자(메타데이터), 쓰기는 반 소유 교사/관리자 ──
     match /studyBoards/{bId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && (isAdmin() || ownsClass(resource.data.classId)
+                                    || isClassMember(resource.data.classId));
       allow create: if isAdmin()
                     || (isTeacher() && ownsClassEditable(request.resource.data.classId));
       allow update, delete: if isAdmin() || ownsClassEditable(resource.data.classId);
@@ -504,8 +544,7 @@ service cloud.firestore {
         // 카드만 읽을 수 있음(memberUids array-contains 쿼리로 접근).
         // '함께 보기'(shared)면 다른 모둠 카드도 읽기 가능(수정은 불가).
         allow read: if signedIn() && (
-          resource.data.authorId == uid()
-          || isAdmin()
+          isAdmin()
           || ownsBoard(bId)
           || (isBoardClassMember(bId)
               && (
@@ -859,7 +898,7 @@ service cloud.firestore {
 
       match /entries/{sId} {
         allow read: if signedIn() && (
-          isAdmin() || ownsBookActivity(aId) || sId == uid()
+          isAdmin() || ownsBookActivity(aId) || (sId == uid() && isBookActivityMember(aId))
         );
         allow create, update: if signedIn()
                       && sId == uid()
@@ -870,10 +909,12 @@ service cloud.firestore {
       }
 
       match /groups/{gId} {
-        allow read, delete: if isAdmin() || ownsBookActivityEditable(aId);
+        allow read: if isAdmin() || ownsBookActivity(aId);
+        allow delete: if isAdmin() || ownsBookActivityEditable(aId);
 
         match /words/{wordId} {
-          allow read, delete: if isAdmin() || ownsBookActivityEditable(aId);
+          allow read: if isAdmin() || ownsBookActivity(aId);
+          allow delete: if isAdmin() || ownsBookActivityEditable(aId);
         }
       }
     }
@@ -902,20 +943,15 @@ service cloud.firestore {
     // ── 컬렉션 그룹 쿼리 규칙 ─────────────────────────────────
     // collectionGroup() 쿼리는 {path=**} 그룹 규칙이 없으면 무조건 거부됨.
     // · answers: 질문 게시판은 전체 공유라 로그인 사용자 읽기(경로 규칙과 동일 노출)
-    // · cards  : 본인 카드(학생 리포트 '내 카드') / 내 모둠 카드 / 최고 관리자만.
-    //   교사에게는 열지 않음 — 반(보드) 격리 유지. 쓰기는 여기 없음(경로 규칙 적용).
+    // Cards and entries are admin-only here; direct rules check the real parent class.
     match /{path=**}/answers/{aId} {
       allow read: if signedIn();
     }
     match /{path=**}/cards/{cardId} {
-      allow read: if signedIn() && (
-        resource.data.authorId == uid()
-        || isAdmin()
-        || resource.data.get('memberUids', []).hasAny([uid()])
-      );
+      allow read: if isAdmin();
     }
     match /{path=**}/entries/{entryId} {
-      allow read: if signedIn() && (isAdmin() || resource.data.authorId == uid());
+      allow read: if isAdmin();
     }
     match /{path=**}/attendanceRecords/{recordId} {
       allow read: if isAdmin();
