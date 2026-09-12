@@ -48,6 +48,13 @@ service cloud.firestore {
     function adminPath() {
       return /databases/$(database)/documents/system/admin;
     }
+    function classDeletionLockPath() {
+      return /databases/$(database)/documents/system/classDeletionLock;
+    }
+    function classDeletionClientWritesOpen() {
+      return !exists(classDeletionLockPath())
+             || get(classDeletionLockPath()).data.get('active', false) != true;
+    }
     function isVerifiedGoogleUser() {
       return signedIn()
              && request.auth.token.email_verified == true
@@ -79,13 +86,17 @@ service cloud.firestore {
 
     match /system/{docId} {
       allow get: if docId == 'admin' && isVerifiedGoogleUser();
-      allow create: if docId == 'admin'
+      allow create: if classDeletionClientWritesOpen()
+                    && docId == 'admin'
                     && isVerifiedGoogleUser()
                     && !exists(adminPath())
                     && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
                     && request.resource.data.uid == uid()
                     && request.resource.data.createdAt == request.time;
       allow list, update, delete: if false;
+    }
+    match /classDeletionJobs/{classId} {
+      allow read, write: if false;
     }
 
     // ── 반 소유권 헬퍼 ────────────────────────────────────────
@@ -235,7 +246,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if signedIn() && (userId == uid() || isTeacher());
       // 일반 사용자는 익명 프로필만, 지정 Google 계정은 관리자 프로필만 생성합니다.
-      allow create: if signedIn() && userId == uid() && (
+      allow create: if classDeletionClientWritesOpen() && signedIn() && userId == uid() && (
         isGuestUserProfile(userId)
         || (isAdminAfterWrite() && request.resource.data.role == 'admin')
       );
@@ -248,7 +259,7 @@ service cloud.firestore {
       //      대상도 학생(또는 본인)으로 좁혀, 다른 교사의 프로필은 못 고칩니다.
       //      선생님 신청 승인·거절(requestedRole)은 최고 관리자 전용 화면이라
       //      교사 목록에서 뺐습니다.
-      allow update: if signedIn() && (
+      allow update: if classDeletionClientWritesOpen() && signedIn() && (
         isAdmin()
         || (userId == uid() && isAdminAfterWrite()
             && request.resource.data.role == 'admin')
@@ -265,7 +276,7 @@ service cloud.firestore {
               ['displayName','emoji','email','studentId']
             ))
       );
-      allow delete: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen() && isAdmin();
 
     }
 
@@ -274,12 +285,13 @@ service cloud.firestore {
       allow read: if signedIn();
       // createdAt은 반드시 서버 시각. 임의 값(특히 미래 날짜)을 넣으면
       // 주간 랭킹 집계 창에서 영원히 빠지지 않습니다.
-      allow create: if signedIn() && request.resource.data.authorId == uid()
+      allow create: if classDeletionClientWritesOpen()
+                    && signedIn() && request.resource.data.authorId == uid()
                     && request.resource.data.createdAt == request.time
                     && request.resource.data.answerCount == 0
                     && request.resource.data.meTooIds == []
                     && request.resource.data.resolved == false;
-      allow update: if signedIn() && (
+      allow update: if classDeletionClientWritesOpen() && signedIn() && (
         (resource.data.authorId == uid()
           && changedOnly(['title','content','keyword','imageUrl','images',
                           'resolved','reflectionPending','understoodAnswerId','reflection']))
@@ -298,20 +310,23 @@ service cloud.firestore {
             && resource.data.meTooIds.toSet()
                  .difference(request.resource.data.meTooIds.toSet()).hasOnly([uid()]))
       );
-      allow delete: if signedIn() && (resource.data.authorId == uid() || isTeacher());
+      allow delete: if classDeletionClientWritesOpen()
+                    && signedIn() && (resource.data.authorId == uid() || isTeacher());
 
       match /answers/{aId} {
         allow read: if signedIn();
-        allow create: if signedIn() && request.resource.data.authorId == uid()
+        allow create: if classDeletionClientWritesOpen()
+                      && signedIn() && request.resource.data.authorId == uid()
                       && request.resource.data.createdAt == request.time;
-        allow update: if signedIn() && (
+        allow update: if classDeletionClientWritesOpen() && signedIn() && (
           (resource.data.authorId == uid()
             && changedOnly(['content','imageUrl','images']))
           || isTeacher()
           || (changedOnly(['understood'])
               && get(/databases/$(database)/documents/questions/$(qId)).data.authorId == uid())
         );
-        allow delete: if signedIn() && (resource.data.authorId == uid() || isTeacher());
+        allow delete: if classDeletionClientWritesOpen()
+                      && signedIn() && (resource.data.authorId == uid() || isTeacher());
       }
     }
 
@@ -320,14 +335,16 @@ service cloud.firestore {
     //    작성자 제한이 없으면 아무나 서로의 공지를 지울 수 있었습니다)
     match /notices/{nId} {
       allow read: if signedIn();
-      allow create: if isTeacher() && request.resource.data.authorId == uid();
-      allow delete: if isAdmin() || (isTeacher() && resource.data.authorId == uid());
+      allow create: if classDeletionClientWritesOpen()
+                    && isTeacher() && request.resource.data.authorId == uid();
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || (isTeacher() && resource.data.authorId == uid()));
     }
 
     // ── 키워드 — 읽기 모두, 생성/수정/삭제는 교사 (전체 공유) ──
     match /keywords/{kId} {
       allow read: if signedIn();
-      allow create, update, delete: if isTeacher();
+      allow create, update, delete: if classDeletionClientWritesOpen() && isTeacher();
     }
 
     // ── meta/keywordsSeeded — 기본 키워드를 이미 한 번 심었는지 기록 ──
@@ -336,7 +353,7 @@ service cloud.firestore {
     //    키워드를 심고, 있으면 비워 둔 채로 둡니다.
     match /meta/{docId} {
       allow read: if signedIn();
-      allow write: if isTeacher();
+      allow write: if classDeletionClientWritesOpen() && isTeacher();
     }
 
     // ── 반(클래스) ────────────────────────────────────────────
@@ -347,11 +364,17 @@ service cloud.firestore {
       allow read: if signedIn() && (isAdmin() || ownsClass(cId)
                     || (resource.data.get('accessVersion', 0) == 2
                         && resource.data.get('archived', true) == false));
-      allow create: if isAdmin() && request.resource.data.createdBy == uid()
+      allow create: if classDeletionClientWritesOpen()
+                       && isAdmin() && request.resource.data.createdBy == uid()
                        && validClassMetadata();
-      allow update: if (isAdmin() && validClassMetadata())
-                       || (ownsClass(cId) && validOwnedClassUpdate());
-      allow delete: if isAdmin();
+      allow update: if classDeletionClientWritesOpen()
+                       && (
+                            (isAdmin() && validClassMetadata())
+                            || (ownsClass(cId) && validOwnedClassUpdate())
+                          );
+      allow delete: if classDeletionClientWritesOpen()
+                       && isAdmin()
+                       && resource.data.get('archived', false) == true;
 
       // ── 언제든 질문하기(손들기) ─────────────────────────────
       //  · 경로 = classes/{classId}/questionSignals/{uid}
@@ -371,7 +394,8 @@ service cloud.firestore {
           isAdmin()
           || ownsClass(cId)
         );
-        allow create: if signedIn()
+        allow create: if classDeletionClientWritesOpen()
+                      && signedIn()
                       && studentUid == uid()
                       && request.resource.data.uid == uid()
                       && request.resource.data.classId == cId
@@ -379,7 +403,8 @@ service cloud.firestore {
                       && request.resource.data.createdAt == request.time
                       && validNote()
                       && request.resource.data.updatedAt == request.time;
-        allow update: if signedIn()
+        allow update: if classDeletionClientWritesOpen()
+                      && signedIn()
                       && studentUid == uid()
                       && resource.data.uid == uid()
                       && request.resource.data.uid == resource.data.uid
@@ -388,7 +413,7 @@ service cloud.firestore {
                       && isClassMember(cId)
                       && validNote()
                       && request.resource.data.updatedAt == request.time;
-        allow delete: if signedIn() && (
+        allow delete: if classDeletionClientWritesOpen() && signedIn() && (
           (studentUid == uid() && isClassMember(cId))
           || isAdmin()
           || ownsClassEditable(cId)
@@ -400,7 +425,10 @@ service cloud.firestore {
       // 클라이언트에서는 새 기록을 만들거나 수정·삭제할 수 없습니다.
       match /attendanceRecords/{recordId} {
         allow read: if isAdmin();
-        allow create, update, delete: if false;
+        allow create, update: if false;
+        allow delete: if classDeletionClientWritesOpen()
+                      && isAdmin()
+                      && isClassArchived(cId);
       }
 
       // ── 참여 전광판 자리표 ─────────────────────────────────
@@ -408,32 +436,40 @@ service cloud.firestore {
       //  · daily_YYYY-MM-DD: 발표 중 임시 이동한 당일 자리표
       match /seatLayouts/{layoutId} {
         allow read: if signedIn() && (isAdmin() || ownsClass(cId));
-        allow create, update: if signedIn()
+        allow create, update: if classDeletionClientWritesOpen()
+                              && signedIn()
                               && (isAdmin() || ownsClassEditable(cId))
                               && request.resource.data.classId == cId
                               && request.resource.data.layoutId == layoutId
                               && request.resource.data.seats is list
                               && request.resource.data.seats.size() <= 30;
-        allow delete: if signedIn() && (isAdmin() || ownsClassEditable(cId));
+        allow delete: if classDeletionClientWritesOpen()
+                      && signedIn()
+                      && (isAdmin() || ownsClassEditable(cId));
       }
 
       // ── 참여 전광판 기본 모둠 구성 ─────────────────────────
       //  · 반 단위 장기 모둠입니다. 참여 전광판의 모둠별 보기에서만 씁니다.
       match /groupAssignments/{assignmentId} {
         allow read: if signedIn() && (isAdmin() || ownsClass(cId));
-        allow create, update: if signedIn()
+        allow create, update: if classDeletionClientWritesOpen()
+                              && signedIn()
                               && (isAdmin() || ownsClassEditable(cId))
                               && assignmentId == 'default'
                               && request.resource.data.classId == cId
                               && request.resource.data.groups is list
                               && request.resource.data.groups.size() <= 6;
-        allow delete: if signedIn() && (isAdmin() || ownsClassEditable(cId));
+        allow delete: if classDeletionClientWritesOpen()
+                      && signedIn()
+                      && (isAdmin() || ownsClassEditable(cId));
       }
     }
 
     match /classJoinSecrets/{cId} {
-      allow read, delete: if isAdmin();
-      allow create, update: if isAdmin()
+      allow read: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen() && isAdmin();
+      allow create, update: if classDeletionClientWritesOpen()
+                            && isAdmin()
                             && request.resource.data.keys().hasOnly(['joinCode'])
                             && validJoinCode(request.resource.data.joinCode);
     }
@@ -441,15 +477,19 @@ service cloud.firestore {
       allow get: if isAdmin() || (signedIn() && validJoinCode(code)
                     && resource.data.keys().hasOnly(['classId'])
                     && isClassJoinOpen(resource.data.classId, code));
-      allow list, delete: if isAdmin();
-      allow create, update: if isAdmin() && validJoinCode(code)
+      allow list: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen() && isAdmin();
+      allow create, update: if classDeletionClientWritesOpen()
+                            && isAdmin() && validJoinCode(code)
                             && request.resource.data.keys().hasOnly(['classId'])
                             && request.resource.data.classId is string
                             && request.resource.data.classId.size() > 0;
     }
     match /classJoinClaims/{claimUid} {
-      allow read, delete: if isAdmin();
-      allow create, update: if signedIn() && claimUid == uid()
+      allow read: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen() && isAdmin();
+      allow create, update: if classDeletionClientWritesOpen()
+                            && signedIn() && claimUid == uid()
                             && request.resource.data.keys().hasOnly(['uid', 'classId', 'joinCode', 'createdAt'])
                             && request.resource.data.uid == uid()
                             && request.resource.data.classId is string
@@ -470,16 +510,17 @@ service cloud.firestore {
             && isClassActive(resource.data.classId))
       );
       allow list: if isAdmin() || ownsClass(resource.data.classId);
-      allow create: if signedIn()
+      allow create: if classDeletionClientWritesOpen()
+                    && signedIn()
                     && (
                          validCodeMembershipCreate(mId)
                          || validInheritedMembershipCreate(mId)
                        );
       // 학생 본인의 직접 '반 나가기'는 허용하지 않습니다. 소속 변경은
       // 담당 교사/관리자가 관리합니다.
-      allow delete: if signedIn() && (
-        isAdmin() || ownsClassEditable(resource.data.classId)
-      );
+      allow delete: if classDeletionClientWritesOpen()
+                    && signedIn()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
     }
 
     // ── 수업 자료(수업하기) — 만든 선생님 본인만. 학생은 읽지 않습니다. ──
@@ -489,9 +530,13 @@ service cloud.firestore {
     //    '현재 장 이미지 URL' 하나뿐입니다.
     match /lessons/{lId} {
       allow read: if isAdmin() || (isTeacher() && resource.data.ownerId == uid());
-      allow create: if isTeacher() && request.resource.data.ownerId == uid();
-      allow update, delete: if isAdmin()
-                            || (isTeacher() && resource.data.ownerId == uid());
+      allow create: if classDeletionClientWritesOpen()
+                    && isTeacher() && request.resource.data.ownerId == uid();
+      allow update, delete: if classDeletionClientWritesOpen()
+                            && (
+                                 isAdmin()
+                                 || (isTeacher() && resource.data.ownerId == uid())
+                               );
     }
 
     // ── 발표 강제 전환(방송) — 문서 ID = classId. 있으면 방송 중, 없으면 아님. ──
@@ -499,7 +544,8 @@ service cloud.firestore {
     //  · 문서 ID가 곧 classId라 get() 없이 바로 판정합니다.
     match /broadcasts/{classId} {
       allow read: if isAdmin() || ownsClass(classId) || isClassMember(classId);
-      allow create, update, delete: if isAdmin() || ownsClassEditable(classId);
+      allow create, update, delete: if classDeletionClientWritesOpen()
+                                    && (isAdmin() || ownsClassEditable(classId));
     }
 
     // ── 참여 상태 — 발표 중 학생 화면이 보이는지(교사 전광판용) ──
@@ -507,36 +553,48 @@ service cloud.firestore {
     //  · 화면이 보이는지(visible)와 갱신 시각뿐이라 실명·내용은 담지 않습니다.
     match /presence/{pId} {
       allow read: if isAdmin() || ownsClass(resource.data.classId);
-      allow create, update: if signedIn()
+      allow create, update: if classDeletionClientWritesOpen()
+                            && signedIn()
                             && request.resource.data.uid == uid()
                             && pId == (uid() + '_' + request.resource.data.classId)
                             && request.resource.data.visible is bool
                             && isClassMember(request.resource.data.classId);
-      allow delete: if isAdmin()
-                    || (resource.data.uid == uid() && isClassMember(resource.data.classId))
-                    || ownsClassEditable(resource.data.classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (
+                         isAdmin()
+                         || (resource.data.uid == uid() && isClassMember(resource.data.classId))
+                         || ownsClassEditable(resource.data.classId)
+                       );
     }
 
     // ── 누가기록(학생 관찰 메모) — 반 소유 교사/관리자 전용 (학생 열람 불가) ──
     match /studentNotes/{noteId} {
       allow read: if isAdmin()
                   || (resource.data.classId != null && ownsClass(resource.data.classId));
-      allow create: if (isAdmin()
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin()
                         || (request.resource.data.classId != null
                             && ownsClassEditable(request.resource.data.classId)))
                     && request.resource.data.teacherId == uid()
                     && request.resource.data.studentUid is string;
-      allow update, delete: if isAdmin()
-                            || (resource.data.classId != null && ownsClassEditable(resource.data.classId));
+      allow update, delete: if classDeletionClientWritesOpen()
+                            && (
+                                 isAdmin()
+                                 || (resource.data.classId != null && ownsClassEditable(resource.data.classId))
+                               );
     }
 
     // ── 공부방 보드 — 읽기는 로그인 사용자(메타데이터), 쓰기는 반 소유 교사/관리자 ──
     match /studyBoards/{bId} {
       allow read: if signedIn() && (isAdmin() || ownsClass(resource.data.classId)
                                     || isClassMember(resource.data.classId));
-      allow create: if isAdmin()
-                    || (isTeacher() && ownsClassEditable(request.resource.data.classId));
-      allow update, delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow create: if classDeletionClientWritesOpen()
+                    && (
+                         isAdmin()
+                         || (isTeacher() && ownsClassEditable(request.resource.data.classId))
+                       );
+      allow update, delete: if classDeletionClientWritesOpen()
+                            && (isAdmin() || ownsClassEditable(resource.data.classId));
 
       match /cards/{cardId} {
         // 읽기 — 본인 카드(0 get, 최우선) / 관리자 / 반 소유 교사 / 반 멤버.
@@ -555,7 +613,8 @@ service cloud.firestore {
         );
         // 생성 — 관리자/소유 교사는 자유(모둠 카드도 교사가 생성. 단, 보관 중엔 불가).
         //   학생은 (문서ID=uid) + 반 멤버 + 잠금 아님 + notice 아님 + 모둠 보드 아님.
-        allow create: if signedIn()
+        allow create: if classDeletionClientWritesOpen()
+                      && signedIn()
                       && request.resource.data.authorId == uid()
                       && (
                            isAdmin()
@@ -569,7 +628,7 @@ service cloud.firestore {
         // 수정 — 관리자/소유 교사(보관 중엔 불가), 본인 카드(작성자 불변·멤버·
         //   잠금 아님·notice 아님), 또는 내 모둠 카드(내용 필드만 — 모둠
         //   명단·대표·작성자는 교사만 변경).
-        allow update: if signedIn() && (
+        allow update: if classDeletionClientWritesOpen() && signedIn() && (
           isAdmin()
           || ownsBoardEditable(bId)
           || (cardId == uid()
@@ -585,7 +644,9 @@ service cloud.firestore {
         // 삭제 — 관리자 또는 반 소유 교사만(보관 중엔 불가). 학생은 자기
         //   카드도 수정만 가능하고 삭제는 못 합니다(실수로 지운 제출물을
         //   되살릴 방법이 없어 삭제 권한을 교사에게만 둡니다).
-        allow delete: if signedIn() && (isAdmin() || ownsBoardEditable(bId));
+        allow delete: if classDeletionClientWritesOpen()
+                      && signedIn()
+                      && (isAdmin() || ownsBoardEditable(bId));
       }
     }
 
@@ -850,9 +911,11 @@ service cloud.firestore {
       allow read: if signedIn() && (
         isAdmin() || ownsClass(classId) || isClassMember(classId)
       );
-      allow create, update: if (isAdmin() || ownsClassEditable(classId))
+      allow create, update: if classDeletionClientWritesOpen()
+                            && (isAdmin() || ownsClassEditable(classId))
                             && validBookProject(classId);
-      allow delete: if isAdmin() || ownsClassEditable(classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(classId));
     }
 
     match /bookResources/{resourceId} {
@@ -861,13 +924,16 @@ service cloud.firestore {
         || ownsClass(resource.data.classId)
         || isClassMember(resource.data.classId)
       );
-      allow create: if (isAdmin() || ownsClassEditable(request.resource.data.classId))
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(request.resource.data.classId))
                     && validBookResource(resourceId);
-      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+      allow update: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId))
                     && request.resource.data.classId == resource.data.classId
                     && request.resource.data.projectId == resource.data.projectId
                     && validBookResource(resourceId);
-      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
     }
 
     match /bookHelpNotes/{noteId} {
@@ -876,11 +942,14 @@ service cloud.firestore {
         || ownsClass(resource.data.classId)
         || isClassMember(resource.data.classId)
       );
-      allow create: if (isAdmin() || ownsClassEditable(request.resource.data.classId))
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(request.resource.data.classId))
                     && validBookHelpNote(request.resource.data.classId);
-      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+      allow update: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId))
                     && validBookHelpNoteUpdate();
-      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
     }
 
     match /bookActivities/{aId} {
@@ -889,32 +958,39 @@ service cloud.firestore {
         || ownsClass(resource.data.classId)
         || isClassMember(resource.data.classId)
       );
-      allow create: if (isAdmin()
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin()
                     || (isTeacher() && ownsClassEditable(request.resource.data.classId)))
                     && validBookImages(request.resource.data);
-      allow update: if (isAdmin() || ownsClassEditable(resource.data.classId))
+      allow update: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId))
                     && validBookImages(request.resource.data);
-      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
 
       match /entries/{sId} {
         allow read: if signedIn() && (
           isAdmin() || ownsBookActivity(aId) || (sId == uid() && isBookActivityMember(aId))
         );
-        allow create, update: if signedIn()
+        allow create, update: if classDeletionClientWritesOpen()
+                      && signedIn()
                       && sId == uid()
                       && request.resource.data.authorId == uid()
                       && isBookActivityMember(aId)
                       && !isBookActivityLocked(aId);
-        allow delete: if isAdmin() || ownsBookActivityEditable(aId);
+        allow delete: if classDeletionClientWritesOpen()
+                      && (isAdmin() || ownsBookActivityEditable(aId));
       }
 
       match /groups/{gId} {
         allow read: if isAdmin() || ownsBookActivity(aId);
-        allow delete: if isAdmin() || ownsBookActivityEditable(aId);
+        allow delete: if classDeletionClientWritesOpen()
+                      && (isAdmin() || ownsBookActivityEditable(aId));
 
         match /words/{wordId} {
           allow read: if isAdmin() || ownsBookActivity(aId);
-          allow delete: if isAdmin() || ownsBookActivityEditable(aId);
+          allow delete: if classDeletionClientWritesOpen()
+                        && (isAdmin() || ownsBookActivityEditable(aId));
         }
       }
     }
@@ -926,18 +1002,37 @@ service cloud.firestore {
         || (resource.data.authorId == uid()
             && isClassMember(resource.data.classId))
       );
-      allow create: if signedIn()
+      allow create: if classDeletionClientWritesOpen()
+                    && signedIn()
                     && validBookConfirmation()
                     && validBookConfirmationId(confirmationId)
                     && isClassMember(request.resource.data.classId)
                     && canConfirmBookItem();
-      allow update: if signedIn()
+      allow update: if classDeletionClientWritesOpen()
+                    && signedIn()
                     && validBookConfirmation()
                     && validBookConfirmationId(confirmationId)
                     && keepsBookConfirmationOwner()
                     && isClassMember(request.resource.data.classId)
                     && canConfirmBookItem();
-      allow delete: if isAdmin() || ownsClassEditable(resource.data.classId);
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
+    }
+
+    match /rewards/{rewardId} {
+      allow read: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen()
+                    && isAdmin()
+                    && resource.data.classId != null
+                    && isClassArchived(resource.data.classId);
+    }
+
+    match /kwl/{kwlId} {
+      allow read: if isAdmin();
+      allow delete: if classDeletionClientWritesOpen()
+                    && isAdmin()
+                    && resource.data.classId != null
+                    && isClassArchived(resource.data.classId);
     }
 
     // ── 컬렉션 그룹 쿼리 규칙 ─────────────────────────────────
@@ -951,6 +1046,9 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
     match /{path=**}/entries/{entryId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/words/{wordId} {
       allow read: if isAdmin();
     }
     match /{path=**}/attendanceRecords/{recordId} {

@@ -34,6 +34,7 @@ async function loadModules(firebase = false, { uploadFails = false } = {}) {
     "./classPurpose": stub({ CLASS_PURPOSE_INTERNAL: "internal", getClassPurpose: () => "internal", normalizeClassPurpose: () => "internal" }),
     "./user": stub({ getCurrentUser: () => null, isAdmin: () => false }),
     "./storageUpload": stub({ deleteAttachedFiles: async () => {} }),
+    "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Unexpected class deletion during image test"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => {
@@ -44,7 +45,10 @@ async function loadModules(firebase = false, { uploadFails = false } = {}) {
     } }),
   };
   const store = new vm.SourceTextModule(storeSource, { context });
-  await store.link((specifier) => dependencies[specifier]);
+  await store.link((specifier) => {
+    if (!dependencies[specifier]) throw new Error(`Unexpected store dependency: ${specifier}`);
+    return dependencies[specifier];
+  });
   await store.evaluate();
   const exports = new vm.SourceTextModule(source("bookProjectExport"), { context });
   await exports.link((specifier) => dependencies[specifier]);

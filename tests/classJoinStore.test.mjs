@@ -14,6 +14,7 @@ async function loadStore(configured = true, initial = {}, generatedCodes = []) {
   const reads = [];
   const writes = [];
   const listeners = [];
+  const classDeletionClientCalls = [];
   const deleted = Symbol("delete");
   let sequence = 0;
   const ref = (base, ...parts) => {
@@ -95,13 +96,18 @@ async function loadStore(configured = true, initial = {}, generatedCodes = []) {
       ? { db: {}, isFirebaseConfigured: configured } : specifier === "./user"
         ? { isAdmin: (user) => user?.role === "admin", getCurrentUser: () => student }
         : specifier === "./classPurpose"
-          ? { CLASS_PURPOSE_INTERNAL: "internal", normalizeClassPurpose: (purpose) => purpose ?? "internal" } : {};
+          ? { CLASS_PURPOSE_INTERNAL: "internal", normalizeClassPurpose: (purpose) => purpose ?? "internal" }
+          : specifier === "./classDeletionClient"
+            ? { deleteClassInBrowser: async (classId) => {
+              classDeletionClientCalls.push(classId);
+              return { status: "completed", retainedFiles: 0 };
+            } } : {};
     return new vm.SyntheticModule(names, function () {
       for (const name of names) this.setExport(name, name in overrides ? overrides[name] : () => {});
     }, { context });
   });
   await module.evaluate();
-  return { api: module.namespace, data, reads, writes, listeners, snapshot };
+  return { api: module.namespace, classDeletionClientCalls, data, reads, writes, listeners, snapshot };
 }
 
 test("code join reads one lookup and creates a private claim with a code-free membership atomically", async () => {
@@ -224,16 +230,18 @@ test("colliding codes fail without partial changes and addClass creates three sa
   assert.deepEqual(plain(h.data.get(`classJoinLookup/${created.joinCode}`)), { classId: created.id });
 });
 
-test("deleteClass removes owned private access documents without deleting someone else's lookup", async () => {
+test("deleteClass delegates configured production deletion to the browser client", async () => {
   const h = await loadStore(true, {
     "classes/a": { ...activeClass, joinCode: "111111" },
     "classJoinSecrets/a": { joinCode: "222222" },
     "classJoinLookup/111111": { classId: "b" }, "classJoinLookup/222222": { classId: "a" },
   });
-  await h.api.deleteClass("a");
-  assert.equal(h.data.has("classes/a"), false);
-  assert.equal(h.data.has("classJoinSecrets/a"), false);
-  assert.equal(h.data.has("classJoinLookup/222222"), false);
+  const result = await h.api.deleteClass("a");
+  assert.deepEqual(h.classDeletionClientCalls, ["a"]);
+  assert.equal(result.status, "completed");
+  assert.equal(h.data.has("classes/a"), true);
+  assert.equal(h.data.has("classJoinSecrets/a"), true);
+  assert.equal(h.data.has("classJoinLookup/222222"), true);
   assert.equal(h.data.get("classJoinLookup/111111").classId, "b");
 });
 

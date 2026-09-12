@@ -11,6 +11,8 @@ export default function ConfirmModal({
   confirmLabel = "확인",
   cancelLabel = "취소",
   danger = false,
+  confirmDisabled = false,
+  cancelDisabled = false,
   onConfirm,
   onClose,
 }) {
@@ -45,6 +47,7 @@ export default function ConfirmModal({
             type="button"
             className="btn-ghost confirm-cancel"
             onClick={onClose}
+            disabled={cancelDisabled}
             autoFocus
           >
             {cancelLabel}
@@ -53,6 +56,7 @@ export default function ConfirmModal({
             type="button"
             className={`confirm-confirm${danger ? " danger" : ""}`}
             onClick={onConfirm}
+            disabled={confirmDisabled}
           >
             {confirmLabel}
           </button>

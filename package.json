@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "next start",
     "test:rules": "npm --prefix tests/rules test",
-    "test:checklist": "node --experimental-vm-modules --test tests/activityChecklist.test.mjs tests/bookConfirmations.test.mjs"
+    "test:checklist": "node --experimental-vm-modules --test tests/activityChecklist.test.mjs tests/bookConfirmations.test.mjs",
+    "test:deletion:unit": "node --experimental-vm-modules --test tests/classDeletion/*.test.mjs",
+    "test:deletion:rules": "node tests/rules/node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --only firestore,storage --project demo-class-deletion --config firebase.deletion-tests.json \"node --experimental-vm-modules --test --test-force-exit --test-concurrency=1 --test-timeout=180000 tests/rules/browserClassDeletion.test.mjs tests/rules/classDeletionLock.test.mjs tests/rules/bookProjectStorageRules.test.mjs\""
   },
   "dependencies": {
     "firebase": "^11.9.0",
@@ -20,5 +22,8 @@
   },
   "overrides": {
     "postcss": "^8.5.10"
+  },
+  "devDependencies": {
+    "firebase-admin": "^12.7.0"
   }
 }

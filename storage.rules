@@ -34,6 +34,9 @@ service firebase.storage {
     function classDoc(classId) {
       return firestore.get(/databases/(default)/documents/classes/$(classId));
     }
+    function isStorageClassArchived(classId) {
+      return classDoc(classId).data.get('archived', false) == true;
+    }
     function membershipExists(classId) {
       return firestore.exists(/databases/(default)/documents/memberships/$(uid() + '_' + classId));
     }
@@ -65,10 +68,19 @@ service firebase.storage {
                   : isSystemAdmin()
                 );
     }
+    function canMaintainArchivedClassImages(classId) {
+      return isSystemAdmin() && isStorageClassArchived(classId);
+    }
 
     match /book-project-images/{classId}/{ownerUid}/{imageName} {
       allow read: if canReadClassImage(classId, ownerUid);
-      allow write: if resource == null && canWriteClassImage(classId, ownerUid, imageName);
+      allow create: if resource == null && canWriteClassImage(classId, ownerUid, imageName);
+      allow delete: if canMaintainArchivedClassImages(classId);
+      allow update: if false;
+    }
+
+    match /book-project-images/{classId}/{allPaths=**} {
+      allow list: if canMaintainArchivedClassImages(classId);
     }
 
     match /{allPaths=**} {

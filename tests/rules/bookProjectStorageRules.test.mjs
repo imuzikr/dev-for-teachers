@@ -1,4 +1,5 @@
 import { describe, it, before, after, beforeEach } from "node:test";
+import assert from "node:assert/strict";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
 import { doc, setDoc } from "firebase/firestore";
 import { readFileSync } from "node:fs";
@@ -8,7 +9,8 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const firestoreRules = readFileSync(resolve(here, "../../firestore.rules"), "utf8");
 const storageRules = readFileSync(resolve(here, "../../storage.rules"), "utf8");
-const projectId = "demo-rules-test";
+const projectId = process.env.GCLOUD_PROJECT || "demo-rules-test";
+assert.match(projectId, /^demo-/, "Rules tests must run against a demo project");
 const bucketUrl = `gs://${projectId}`;
 const image = "data:image/jpeg;base64,YWJj";
 const hash = "a".repeat(64);
@@ -128,5 +130,21 @@ describe("개발자실 프로젝트 Storage 이미지 규칙", { skip: !process.
     await assertFails(asTeacher(env, "teacherA").storage(bucketUrl).ref(projectImagePath("cA", "teacherA", "b".repeat(64))).putString("data:image/png;base64,YWJj", "data_url", { contentType: "image/png" }));
     await assertFails(asTeacher(env, "teacherA").storage(bucketUrl).ref(projectImagePath("cA", "teacherA", "c".repeat(64))).putString("data:image/jpeg;base64," + "a".repeat(900000), "data_url", { contentType: "image/jpeg" }));
     await assertFails(asTeacher(env, "teacherA").storage(bucketUrl).ref("book-project-images/cA/teacherA/not-a-hash.jpg").putString(image, "data_url", { contentType: "image/jpeg" }));
+  });
+
+  it("allows only the registered admin to list and delete archived class images", async () => {
+    const archivedImagePath = projectImagePath("cA", "teacherA", hashFor("2"));
+    const ownerRef = asTeacher(env, "teacherA").storage(bucketUrl).ref(archivedImagePath);
+    await assertSucceeds(ownerRef.putString(image, "data_url", { contentType: "image/jpeg" }));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "classes", "cA"), { createdBy: "teacherA", archived: true });
+    });
+
+    await assertFails(storageRef(env, "studentA", archivedImagePath).delete());
+    await assertFails(storageRef(env, "teacherA", archivedImagePath, { role: "teacher" }).delete());
+    await assertFails(storageRef(env, "otherAdmin", archivedImagePath, { role: "admin" }).delete());
+    await assertFails(storageRef(env, "studentA", "book-project-images/cA").listAll());
+    await assertSucceeds(storageRef(env, "adminA", "book-project-images/cA").listAll());
+    await assertSucceeds(storageRef(env, "adminA", archivedImagePath).delete());
   });
 });

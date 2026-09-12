@@ -35,6 +35,9 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     app = admin.initializeApp({ projectId: PROJECT_ID }, "purge-test");
     db = app.firestore();
 
+    const reset = await fetch(`http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`, { method: "DELETE" });
+    assert.equal(reset.ok, true, "The isolated demo project must reset before seeding.");
+
     // ── 지울 반에 딸린 자료를 빠짐없이 심습니다 ──
     await db.doc(`classes/${GONE}`).set({ createdBy: "teacherA", archived: true, name: "지울 반" });
 

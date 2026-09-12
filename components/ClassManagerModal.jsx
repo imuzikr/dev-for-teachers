@@ -36,6 +36,7 @@ export default function ClassManagerModal({
   onCreated,
   onViewClass,
   onToast,
+  deleteClassAction = deleteClass,
 }) {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -193,27 +194,35 @@ export default function ClassManagerModal({
   async function handleDelete() {
     if (!confirmDelete || busyId) return;
     const { id, name } = confirmDelete;
-    setConfirmDelete(null);
     setBusyId(id);
     setError("");
     try {
-      await deleteClass(id);
-      onToast?.(`${unitLabel} '${name}' 삭제를 완료했어요.`);
-    } catch {
-      setError(`${unitLabel} 삭제에 실패했어요. 다시 시도해 주세요.`);
+      const result = await deleteClassAction(id);
+      setConfirmDelete(null);
+      const retained = Number(result?.retainedFiles ?? 0);
+      const retainedNote = retained > 0 ? ` 공유 중이거나 확인이 필요한 파일 ${retained}개는 보존했어요.` : "";
+      onToast?.(`${unitLabel} '${name}' 삭제를 완료했어요.${retainedNote}`);
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : `${unitLabel} 삭제에 실패했어요. 다시 시도해 주세요.`;
+      setError(message);
+      setConfirmDelete(null);
     } finally {
       setBusyId(null);
     }
   }
 
   if (!canManageJoinAccess) return null;
+  const deleting = confirmDelete && busyId === confirmDelete.id;
+  const closeManager = () => {
+    if (!busyId) onClose();
+  };
 
   return (
-    <div className="modal-backdrop" {...backdropClose(onClose)}>
+    <div className="modal-backdrop" {...backdropClose(closeManager)}>
       <div className="modal modal-class-manager" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h3>{unitLabel} 관리하기 <span className="class-mgr-purpose-badge">{purposeLabel}</span></h3>
-          <button className="btn-close" onClick={onClose} aria-label="닫기">
+          <button className="btn-close" onClick={closeManager} aria-label="닫기" disabled={Boolean(busyId)}>
             ×
           </button>
         </div>
@@ -237,7 +246,7 @@ export default function ClassManagerModal({
           </p>
         )}
 
-        {error && <p className="form-error">{error}</p>}
+        {error && <p className="form-error" role="alert" style={{ wordBreak: "keep-all" }}>{error}</p>}
 
         <div className="class-mgr-section">
           <div className="class-mgr-section-title">운영 중인 {unitLabel} ({active.length})</div>
@@ -293,11 +302,19 @@ export default function ClassManagerModal({
         <ConfirmModal
           title={`${unitLabel} 삭제`}
           preview={confirmDelete.name}
-          description={<span style={{ wordBreak: "keep-all" }}>프로젝트, 활동과 답변, 자료, 참여 정보가 삭제됩니다. 되돌릴 수 없어요.</span>}
-          confirmLabel="삭제"
+          description={<span style={{ wordBreak: "keep-all" }}>
+            {deleting
+              ? "삭제 작업을 진행하고 있어요. 창을 닫지 말고 완료될 때까지 기다려 주세요."
+              : `보관된 ${unitLabel} 기록과 사용하지 않는 이미지가 삭제됩니다. 되돌릴 수 없어요. 공유 중인 파일은 보존됩니다. 완료될 때까지 이 창을 열어 두고, 다른 탭에서 같은 ${unitLabel}을 수정하지 마세요.`}
+          </span>}
+          confirmLabel={deleting ? "삭제 중..." : "삭제"}
+          confirmDisabled={Boolean(deleting)}
+          cancelDisabled={Boolean(deleting)}
           danger
           onConfirm={handleDelete}
-          onClose={() => setConfirmDelete(null)}
+          onClose={() => {
+            if (!deleting) setConfirmDelete(null);
+          }}
         />
       )}
     </div>

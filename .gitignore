@@ -10,3 +10,7 @@ install.log
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
+
+artifacts/class-deletion-ui/
+tests/classDeletion/*.log
+tests/rules/deletion-*.log
