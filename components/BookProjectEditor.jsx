@@ -6,6 +6,7 @@ import { assertBookProjectSize, normalizeBookItemImages } from "@/lib/bookProjec
 import { backdropClose } from "@/lib/modal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
+import { orderedStepItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
 
@@ -14,7 +15,7 @@ function newStep(index) {
 }
 
 function newItem(kind = "activity") {
-  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "", ...(kind === "activity" ? { requiresAnswer: false } : {}) };
+  return { id: crypto.randomUUID(), title: "", content: "", url: "", bookUrl: "", locked: false, ...(kind === "activity" ? { requiresAnswer: false } : {}) };
 }
 
 function orderKey(kind, id) {
@@ -163,6 +164,19 @@ export default function BookProjectEditor({
     setActiveStepId(step.id);
   }
 
+  function moveStep(stepId, direction) {
+    setSteps((current) => {
+      const fromIndex = current.findIndex((step) => step.id === stepId);
+      const toIndex = fromIndex + direction;
+      if (fromIndex < 0 || toIndex < 0 || toIndex >= current.length) return current;
+      const nextSteps = [...current];
+      const [moved] = nextSteps.splice(fromIndex, 1);
+      nextSteps.splice(toIndex, 0, moved);
+      return nextSteps;
+    });
+    setActiveStepId(stepId);
+  }
+
   function removeStep(stepId) {
     const nextSteps = steps.filter((step) => step.id !== stepId);
     setSteps((current) => current.filter((step) => step.id !== stepId));
@@ -293,6 +307,89 @@ export default function BookProjectEditor({
     );
   }
 
+  function renderOrderingStepContent(step) {
+    const items = orderedStepItems(step);
+    return (
+      <div className="book-step-order-panel">
+        {items.length > 0 ? (
+          <ol className="book-step-order-list" aria-label={`${step.title || "Step"} 활동과 자료 순서`}>
+            {items.map((item, index) => (
+              <li key={`${item.kind}:${item.id}`}>
+                <span>{index + 1}</span>
+                <strong>{item.title || (item.kind === "activity" ? "제목 없는 활동" : "제목 없는 자료")}</strong>
+                <small>{item.label}</small>
+                <div className="book-step-item-reorder-actions" aria-label={`${item.title || item.label} 순서 이동`}>
+                  <button
+                    type="button"
+                    className="book-step-order-btn"
+                    aria-label={`${item.label} ${index + 1} 위로 이동`}
+                    title="위로 이동"
+                    disabled={saving || index <= 0}
+                    onClick={() => {
+                      const target = items[index - 1];
+                      if (target) moveItem(step.id, orderKey(item.kind, item.id), orderKey(target.kind, target.id));
+                    }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="book-step-order-btn"
+                    aria-label={`${item.label} ${index + 1} 아래로 이동`}
+                    title="아래로 이동"
+                    disabled={saving || index >= items.length - 1}
+                    onClick={() => {
+                      const target = items[index + 1];
+                      if (target) moveItem(step.id, orderKey(item.kind, item.id), orderKey(target.kind, target.id));
+                    }}
+                  >
+                    ↓
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="book-step-order-empty">등록된 활동과 자료가 없습니다.</p>
+        )}
+      </div>
+    );
+  }
+
+  function renderStepOrderAction(step) {
+    const index = steps.findIndex((item) => item.id === step.id);
+    return (
+      <div className="book-step-reorder-actions" aria-label={`${step.title || "Step"} 순서 이동`}>
+        <button
+          type="button"
+          className="book-step-order-btn"
+          aria-label={`Step ${index + 1} 위로 이동`}
+          title="위로 이동"
+          disabled={saving || index <= 0}
+          onClick={(event) => {
+            event.stopPropagation();
+            moveStep(step.id, -1);
+          }}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className="book-step-order-btn"
+          aria-label={`Step ${index + 1} 아래로 이동`}
+          title="아래로 이동"
+          disabled={saving || index < 0 || index >= steps.length - 1}
+          onClick={(event) => {
+            event.stopPropagation();
+            moveStep(step.id, 1);
+          }}
+        >
+          ↓
+        </button>
+      </div>
+    );
+  }
+
   const draftProject = useMemo(() => ({ ...project, title, steps }), [project, steps, title]);
   const addingStep = addingItem ? steps.find((step) => step.id === addingItem.stepId) ?? null : null;
 
@@ -300,7 +397,31 @@ export default function BookProjectEditor({
     onDraftChange?.(draftProject);
   }, [draftProject, onDraftChange]);
 
-  const editor = (
+  const sidebarEditor = (
+    <div className="book-project-editor book-project-editor--ordering">
+      {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
+      <BookProjectSidebarTools
+        project={draftProject}
+        participantCount={participantCount}
+        activeStepId={activeStepId}
+        editing={false}
+        openStepIds={openIds}
+        onPickStep={toggleStep}
+        renderStepContent={renderOrderingStepContent}
+        renderStepAction={renderStepOrderAction}
+      />
+      <button
+        type="button"
+        className="btn-primary book-project-save book-project-order-save"
+        disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0}
+        onClick={saveProject}
+      >
+        {saving ? "저장 중..." : "순서 저장"}
+      </button>
+    </div>
+  );
+
+  const fullEditor = (
       <div className="book-project-editor">
         {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <BookProjectSidebarTools
@@ -333,7 +454,7 @@ export default function BookProjectEditor({
   return (
     <>
       <button ref={expandRef} type="button" className="btn-outline book-project-expand" onClick={() => setExpanded(true)}>프로젝트 크게 편집</button>
-      {!expanded && editor}
+      {!expanded && sidebarEditor}
       {mounted && expanded && createPortal(
         <div className="modal-backdrop book-project-edit-backdrop" {...backdropClose(() => setExpanded(false))}>
           <section ref={dialogRef} inert={addingItem ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">
@@ -341,7 +462,7 @@ export default function BookProjectEditor({
               <h3 id="book-project-dialog-title">{project ? "프로젝트 편집" : "프로젝트 만들기"}</h3>
               <button type="button" className="btn-close" aria-label="패널로 돌아가기" onClick={() => setExpanded(false)}>×</button>
             </header>
-            <div className="book-step-edit-modal-body">{editor}</div>
+            <div className="book-step-edit-modal-body">{fullEditor}</div>
             <footer className="book-item-edit-footer">
               <button type="button" className="btn-outline" onClick={() => setExpanded(false)}>패널에서 계속 편집</button>
               <button type="button" className="btn-primary" disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0} onClick={saveProject}>{saving ? "저장 중..." : "프로젝트 저장"}</button>

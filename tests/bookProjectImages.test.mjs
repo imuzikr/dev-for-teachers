@@ -83,17 +83,64 @@ test("mock save, reload, edit and export retain separate activity and resource i
   assert.deepEqual(Array.from(project.steps[0].resources[0].images), [image]);
   assert.deepEqual(Array.from(project.steps[0].activities[0].imageSizes), ["large", "small"]);
   assert.deepEqual(Array.from(project.steps[0].resources[0].imageSizes), ["medium"]);
+  assert.equal(project.steps[0].activities[0].locked, false);
+  assert.equal(project.steps[0].resources[0].locked, false);
   const cloned = api.cloneBookProjectStep(project.steps[0]);
   assert.deepEqual(Array.from(cloned.activities[0].images), draft().steps[0].activities[0].images);
   assert.deepEqual(Array.from(cloned.resources[0].images), [image]);
   assert.deepEqual(Array.from(cloned.activities[0].imageSizes), ["large", "small"]);
   assert.deepEqual(Array.from(cloned.resources[0].imageSizes), ["medium"]);
+  assert.equal(cloned.activities[0].locked, false);
+  assert.equal(cloned.resources[0].locked, false);
   assert.notEqual(cloned.activities[0].imageSizes, project.steps[0].activities[0].imageSizes);
   assert.notEqual(cloned.activities[0].images, project.steps[0].activities[0].images);
   project.steps[0].activities[0].title = "다른 제목";
   await api.saveBookProject(user, { ...project, classId: "image-class" });
   project = await api.getBookProject("image-class");
   assert.equal(project.steps[0].activities[0].images.length, 2);
+});
+
+test("existing explicit activity and resource locks survive saves that omit lock fields", async () => {
+  const api = await loadModules();
+  const project = draft();
+  project.steps[0].activities[0].locked = true;
+  project.steps[0].resources[0].locked = true;
+  await api.saveBookProject(user, project);
+  const edited = JSON.parse(JSON.stringify(await api.getBookProject("image-class")));
+  delete edited.steps[0].activities[0].locked;
+  delete edited.steps[0].resources[0].locked;
+  await api.saveBookProject(user, { ...edited, classId: "image-class" });
+  const reloaded = await api.getBookProject("image-class");
+  assert.equal(reloaded.steps[0].activities[0].locked, true);
+  assert.equal(reloaded.steps[0].resources[0].locked, true);
+
+  const defaultClone = api.cloneBookProjectStep({
+    id: "step-unlocked",
+    title: "복사본",
+    activities: [{ id: "act-open", title: "활동" }],
+    resources: [{ id: "res-open", title: "자료" }],
+  });
+  assert.equal(defaultClone.activities[0].locked, false);
+  assert.equal(defaultClone.resources[0].locked, false);
+
+  const lockedClone = api.cloneBookProjectStep({
+    id: "step-locked",
+    title: "잠금 복사본",
+    activities: [{ id: "act-locked", title: "활동", locked: true }],
+    resources: [{ id: "res-locked", title: "자료", locked: true }],
+  });
+  assert.equal(lockedClone.activities[0].locked, true);
+  assert.equal(lockedClone.resources[0].locked, true);
+});
+
+test("standalone book activity creation defaults unlocked", async () => {
+  const api = await loadModules();
+  const emissions = [];
+  const unsubscribe = api.subscribeBookActivities("image-class", (items) => emissions.push(items));
+  const id = await api.addBookActivity(user, { classId: "image-class", title: "새 활동" });
+  const activity = emissions.at(-1).find((item) => item.id === id);
+  unsubscribe();
+  assert.equal(activity.locked, false);
 });
 
 test("aggregate oversized project is rejected without replacing existing mock data", async () => {
@@ -117,8 +164,12 @@ test("Firestore batch writes images to project and flattened documents and never
   assert.deepEqual(Array.from(resource.images), ["https://example.com/storage/res1/0.jpg"]);
   assert.deepEqual(Array.from(activity.imageSizes), ["large", "small"]);
   assert.deepEqual(Array.from(resource.imageSizes), ["medium"]);
+  assert.equal(activity.locked, false);
+  assert.equal(resource.locked, false);
   assert.deepEqual(Array.from(project.steps[0].activities[0].imageSizes), ["large", "small"]);
   assert.equal(project.steps[0].activities[0].images.length, 2);
+  assert.equal(project.steps[0].activities[0].locked, false);
+  assert.equal(project.steps[0].resources[0].locked, false);
   const oversized = draft();
   oversized.steps[0].activities[0].content = "한".repeat(300000);
   await assert.rejects(api.saveBookProject(user, oversized), { code: "book-project/size-limit" });

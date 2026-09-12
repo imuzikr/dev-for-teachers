@@ -21,6 +21,7 @@ function newItem(kind = "activity") {
     content: "",
     url: "",
     bookUrl: "",
+    locked: false,
     ...(kind === "activity" ? { requiresAnswer: false } : {}),
   };
 }

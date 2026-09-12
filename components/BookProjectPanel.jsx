@@ -2,22 +2,14 @@
 
 import { useEffect, useState } from "react";
 import BookProjectEditor from "./BookProjectEditor";
-import BookProjectItemEditModal from "./BookProjectItemEditModal";
-import BookStepEditModal from "./BookStepEditModal";
-import { ProjectDisplayItem, ProjectSection, stepPreviewItems } from "./BookProjectPreview";
+import { stepPreviewItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
-import { IconAddFeature } from "./StatusIcons";
 
-function IconExpandStep({ size = 15 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 9 4.8 4.8M15 9l4.2-4.2M15 15l4.2 4.2M9 15l-4.2 4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
-}
-
-export default function BookProjectPanel({ project, editing, expandRequest, appendStep, initialOpenStepId, saving, exporting, participantCount = 0, currentClassId = "", exportTargets = [], loadProject, onSave, onEdit, onDelete, onToggleActivityLock, onToggleProjectItemLock, onDraftChange, onExportProjectItem }) {
+export default function BookProjectPanel({ project, editing, expandRequest, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onDraftChange }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
-  const [editingItem, setEditingItem] = useState(null);
-  const [editingStepId, setEditingStepId] = useState(null);
-  const [draggingKey, setDraggingKey] = useState(null);
+  const [orderSaving, setOrderSaving] = useState(false);
+  const [orderError, setOrderError] = useState("");
   const stepIdentity = (project?.steps ?? []).map((step) => step.id).join("|");
 
   useEffect(() => {
@@ -44,57 +36,6 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
     setActiveStepId(open ? stepId : null);
   }
 
-  function itemKey(kind, id) {
-    return `${kind}:${id}`;
-  }
-
-  function collectionKey(kind) {
-    return kind === "resource" ? "resources" : "activities";
-  }
-
-  function orderFromItems(items) {
-    return items.map((item) => ({ kind: item.kind, id: item.id }));
-  }
-
-  async function moveStepItem(step, fromKey, toKey) {
-    if (!onSave || fromKey === toKey) return;
-    const items = stepPreviewItems(step);
-    const fromIndex = items.findIndex((item) => itemKey(item.kind, item.id) === fromKey);
-    const toIndex = items.findIndex((item) => itemKey(item.kind, item.id) === toKey);
-    if (fromIndex < 0 || toIndex < 0) return;
-    const nextItems = [...items];
-    const [moved] = nextItems.splice(fromIndex, 1);
-    nextItems.splice(toIndex, 0, moved);
-    const nextSteps = (project.steps ?? []).map((candidate) => (
-      candidate.id === step.id
-        ? { ...candidate, itemOrder: orderFromItems(nextItems) }
-        : candidate
-    ));
-    try {
-      await onSave({ title: project.title, steps: nextSteps });
-    } catch (error) {
-      console.error("프로젝트 순서를 저장하지 못했어요:", error);
-    }
-  }
-
-  async function saveProjectItem(stepId, kind, itemId, patch) {
-    if (!onSave) return;
-    const key = collectionKey(kind);
-    const nextSteps = (project.steps ?? []).map((step) => (
-      step.id === stepId
-        ? {
-            ...step,
-            [key]: (step[key] ?? []).map((item) => (
-              item.id === itemId ? { ...item, ...patch } : item
-            )),
-          }
-        : step
-    ));
-    const saved = await onSave({ title: project.title, steps: nextSteps });
-    if (saved !== false) setEditingItem(null);
-    return saved;
-  }
-
   if (editing) {
     return (
       <BookProjectEditor
@@ -112,53 +53,128 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
 
   if (!project) return <div className="book-library-empty">오른쪽 위의 프로젝트 만들기 버튼으로 수업 흐름을 준비하세요.</div>;
 
-  const editingStep = (project.steps ?? []).find((step) => step.id === editingItem?.stepId);
-  const activeStepEditor = (project.steps ?? []).find((step) => step.id === editingStepId) ?? null;
-  const editingItems = editingStep ? stepPreviewItems(editingStep) : [];
-  const activeEditingItem = editingItems.find((item) => item.kind === editingItem?.kind && item.id === editingItem?.itemId) ?? null;
   const stepIndexById = new Map((project.steps ?? []).map((step, index) => [step.id, index]));
+
+  async function saveOrder(nextSteps, failureMessage) {
+    if (!onSave || saving || orderSaving) return;
+    setOrderSaving(true);
+    setOrderError("");
+    try {
+      const saved = await onSave({ title: project.title, steps: nextSteps });
+      if (saved === false) setOrderError(failureMessage);
+    } catch (error) {
+      console.error(failureMessage, error);
+      setOrderError(error instanceof Error ? error.message : failureMessage);
+    } finally {
+      setOrderSaving(false);
+    }
+  }
+
+  async function moveProjectStep(stepId, direction) {
+    if (!onSave || saving || orderSaving) return;
+    const currentSteps = project.steps ?? [];
+    const fromIndex = currentSteps.findIndex((step) => step.id === stepId);
+    const toIndex = fromIndex + direction;
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= currentSteps.length) return;
+    const nextSteps = [...currentSteps];
+    const [moved] = nextSteps.splice(fromIndex, 1);
+    nextSteps.splice(toIndex, 0, moved);
+    setActiveStepId(stepId);
+    await saveOrder(nextSteps, "Step 순서를 저장하지 못했어요. 다시 시도해 주세요.");
+  }
+
+  async function moveStepItem(stepId, itemIndex, direction) {
+    if (!onSave || saving || orderSaving) return;
+    const currentSteps = project.steps ?? [];
+    const step = currentSteps.find((candidate) => candidate.id === stepId);
+    if (!step) return;
+    const items = stepPreviewItems(step);
+    const toIndex = itemIndex + direction;
+    if (itemIndex < 0 || toIndex < 0 || toIndex >= items.length) return;
+    const nextItems = [...items];
+    const [moved] = nextItems.splice(itemIndex, 1);
+    nextItems.splice(toIndex, 0, moved);
+    const nextSteps = currentSteps.map((candidate) => (
+      candidate.id === stepId
+        ? { ...candidate, itemOrder: nextItems.map((item) => ({ kind: item.kind, id: item.id })) }
+        : candidate
+    ));
+    await saveOrder(nextSteps, "활동과 자료 순서를 저장하지 못했어요. 다시 시도해 주세요.");
+  }
 
   function renderStepContent(step) {
     const items = stepPreviewItems(step);
     return (
-      <div className="book-step-content">
-        <ProjectSection title="활동과 자료" empty="등록된 활동과 자료가 없습니다.">
-          {items.map((entry) => (
-            <ProjectDisplayItem
-              key={`${entry.kind}:${entry.id}`}
-              item={entry.source}
-              kind={entry.kind}
-              onEdit={onSave ? () => setEditingItem({ stepId: step.id, kind: entry.kind, itemId: entry.id }) : null}
-              onDelete={onDelete ? () => onDelete({ kind: entry.kind, item: entry.source, stepId: step.id }) : null}
-              onToggleLock={onToggleProjectItemLock
-                ? (locked) => onToggleProjectItemLock(entry, locked)
-                : entry.kind === "activity" && onToggleActivityLock
-                  ? (locked) => onToggleActivityLock(entry.source, locked)
-                  : null}
-              dragging={draggingKey === itemKey(entry.kind, entry.id)}
-              dragProps={onEdit ? {
-                onDragStart: (event) => {
-                  const key = itemKey(entry.kind, entry.id);
-                  event.dataTransfer.setData("text/plain", key);
-                  event.dataTransfer.effectAllowed = "move";
-                  setDraggingKey(key);
-                },
-                onDragEnd: () => setDraggingKey(null),
-                onDragOver: (event) => event.preventDefault(),
-                onDrop: (event) => {
-                  event.preventDefault();
-                  moveStepItem(step, event.dataTransfer.getData("text/plain"), itemKey(entry.kind, entry.id));
-                  setDraggingKey(null);
-                },
-              } : null}
-            />
-          ))}
-        </ProjectSection>
-        {onEdit && (
-          <button type="button" className="btn-ghost book-step-flow-edit" onClick={() => onEdit(false, step.id)}>
-            Step 편집
-          </button>
+      <div className="book-step-order-panel">
+        {items.length > 0 ? (
+          <ol className="book-step-order-list" aria-label={`${step.title || "Step"} 활동과 자료 순서`}>
+            {items.map((entry, index) => (
+              <li key={`${entry.kind}:${entry.id}`}>
+                <span>{index + 1}</span>
+                <strong>{entry.title || (entry.kind === "activity" ? "제목 없는 활동" : "제목 없는 자료")}</strong>
+                <small>{entry.label}</small>
+                <div className="book-step-item-reorder-actions" aria-label={`${entry.title || entry.label} 순서 이동`}>
+                  <button
+                    type="button"
+                    className="book-step-order-btn"
+                    aria-label={`${entry.label} ${index + 1} 위로 이동`}
+                    title="위로 이동"
+                    disabled={saving || orderSaving || !onSave || index <= 0}
+                    onClick={() => moveStepItem(step.id, index, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="book-step-order-btn"
+                    aria-label={`${entry.label} ${index + 1} 아래로 이동`}
+                    title="아래로 이동"
+                    disabled={saving || orderSaving || !onSave || index >= items.length - 1}
+                    onClick={() => moveStepItem(step.id, index, 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="book-step-order-empty">등록된 활동과 자료가 없습니다.</p>
         )}
+      </div>
+    );
+  }
+
+  function renderStepOrderAction(step, displayIndex) {
+    const index = stepIndexById.get(step.id) ?? displayIndex;
+    return (
+      <div className="book-step-reorder-actions" aria-label={`${step.title || "Step"} 순서 이동`}>
+        <button
+          type="button"
+          className="book-step-order-btn"
+          aria-label={`Step ${index + 1} 위로 이동`}
+          title="위로 이동"
+          disabled={saving || orderSaving || !onSave || index <= 0}
+          onClick={(event) => {
+            event.stopPropagation();
+            moveProjectStep(step.id, -1);
+          }}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className="book-step-order-btn"
+          aria-label={`Step ${index + 1} 아래로 이동`}
+          title="아래로 이동"
+          disabled={saving || orderSaving || !onSave || index >= (project.steps?.length ?? 0) - 1}
+          onClick={(event) => {
+            event.stopPropagation();
+            moveProjectStep(step.id, 1);
+          }}
+        >
+          ↓
+        </button>
       </div>
     );
   }
@@ -168,8 +184,9 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
     <div className="book-project-view">
       <header>
         <span><strong>{project.title}</strong><small>{project.steps?.length ?? 0} Steps</small></span>
-        {onEdit && <button type="button" className="btn-ghost book-project-edit" onClick={() => onEdit(false)}>프로젝트 편집</button>}
+        {onEdit && <button type="button" className="btn-ghost book-project-edit" onClick={() => onEdit(false)}>프로젝트 크게 편집</button>}
       </header>
+      {orderError && <p className="book-item-images-error" role="alert">{orderError}</p>}
       <BookProjectSidebarTools
         project={project}
         participantCount={participantCount}
@@ -178,59 +195,10 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
         openStepIds={viewOpenIds}
         onPickStep={toggleStep}
         renderStepContent={renderStepContent}
-        renderStepAction={onSave ? (step, displayIndex) => (
-          <button
-            type="button"
-            className="btn-ghost book-step-expand-action"
-            title={`Step ${displayIndex + 1} 크게 편집`}
-            aria-label={`Step ${displayIndex + 1} 크게 편집`}
-            onClick={(event) => {
-              event.stopPropagation();
-              setEditingStepId(step.id);
-            }}
-          >
-            <IconExpandStep />
-          </button>
-        ) : null}
+        renderStepAction={renderStepOrderAction}
         stepIndexById={stepIndexById}
       />
-      {onEdit && (
-        <button type="button" className="btn-outline book-step-add" onClick={() => onEdit(true)}>
-          <IconAddFeature size={17} /> Step 추가
-        </button>
-      )}
     </div>
-	    {activeEditingItem && (
-	      <BookProjectItemEditModal
-	        project={project}
-	        step={editingStep}
-	        item={activeEditingItem.source}
-	        kind={activeEditingItem.kind}
-	        saving={saving}
-	        exporting={exporting}
-	        currentClassId={currentClassId}
-	        exportTargets={exportTargets}
-	        loadProject={loadProject}
-	        onSave={(patch) => saveProjectItem(editingStep.id, activeEditingItem.kind, activeEditingItem.id, patch)}
-	        onExport={(request) => onExportProjectItem?.({
-	          ...request,
-	          sourceStepId: editingStep.id,
-	          sourceItemKind: activeEditingItem.kind,
-	          sourceItemId: activeEditingItem.id,
-	        })}
-	        onClose={() => setEditingItem(null)}
-	      />
-	    )}
-        {activeStepEditor && (
-          <BookStepEditModal
-            project={project}
-            step={activeStepEditor}
-            stepNumber={(stepIndexById.get(activeStepEditor.id) ?? 0) + 1}
-            saving={saving}
-            onSave={onSave}
-            onClose={() => setEditingStepId(null)}
-          />
-        )}
     </>
   );
 }
