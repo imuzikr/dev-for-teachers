@@ -6,6 +6,10 @@
   overflow-x: auto;
 }
 
+.book-library-layout {
+  scrollbar-color: #888 transparent;
+}
+
 .books-main--split .book-library-side,
 .books-main--split .book-library-side.is-collapsed,
 .books-main--split .book-help-drawer,

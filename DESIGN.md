@@ -73,6 +73,8 @@
 
 ## 5. States
 
+- Workspace scrollbars use a transparent track with a visible neutral-gray thumb; native scrollbar width and scrolling behavior remain unchanged.
+
 - Presentation scrolling follows the teacher's visible content block on desktop student screens. Narrow screens (767px or less) and primary touch-pointer devices retain independent scrolling. Each slide has a distinct scroll session so late updates cannot affect a different slide or restart an ended broadcast.
 
 - Activating an activity or resource replaces the active selection across the entire project, including other Steps. Clicking the active item again clears it. A stale inactive command must not clear a newer selection.
