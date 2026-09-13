@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
-import { startBroadcast, stopBroadcast, subscribeBroadcast } from "@/lib/store";
+import { startBroadcast, stopBroadcast, subscribeBroadcast, updateBookBroadcastScroll } from "@/lib/store";
 import { safeDisplayHtml } from "@/lib/html";
 import BookPresentationModal, { bookPresentationPayload } from "./BookPresentationModal";
 import { safeBookImageUrl } from "./BookItemImages";
 
-const defaultBroadcastClient = { startBroadcast, stopBroadcast, subscribeBroadcast };
+const defaultBroadcastClient = { startBroadcast, stopBroadcast, subscribeBroadcast, updateBookBroadcastScroll };
 
 export const BookImagePresentationContext = createContext(null);
 
@@ -33,6 +33,14 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
   const pending = useRef(false);
   const retryRef = useRef(null);
   const openRef = useRef(false);
+  const scrollTimer = useRef(null);
+  const latestScroll = useRef(null);
+  const scrollGeneration = useRef(0);
+  useEffect(() => () => {
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = null;
+    scrollGeneration.current += 1;
+  }, [classId]);
   const items = useMemo(() => sections.flatMap((section) => section.items), [sections]);
   const activeItem = target ? items.find((item) => itemKey(item) === target.key) ?? null : null;
   const image = target?.images?.[target.slideIndex - 1];
@@ -51,18 +59,22 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
   async function present(item, nextTarget) {
     if (!isTeacher || !classId || !user?.uid || !item?.id || pending.current) return;
     pending.current = true;
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = null;
+    scrollGeneration.current += 1;
     setBusy(true);
     setError("");
     if (!target) setTarget(nextTarget);
     const payload = bookPresentationPayload(item, { projectId, projectTitle, itemIndex: nextTarget.slideIndex, itemTotal: nextTarget.images.length + 1 });
-    Object.assign(payload, { content: nextTarget.textHtml, images: [], slideIndex: nextTarget.slideIndex, slideTotal: nextTarget.images.length + 1 });
+    const scrollSessionId = crypto.randomUUID();
+    Object.assign(payload, { content: nextTarget.textHtml, images: [], slideIndex: nextTarget.slideIndex, slideTotal: nextTarget.images.length + 1, scrollSessionId, scrollPosition: { ratio: 0, anchor: -1, offset: 0 } });
     const selectedImage = nextTarget.images[nextTarget.slideIndex - 1];
     if (selectedImage) {
       Object.assign(payload, { imageUrl: selectedImage.src, imageAlt: selectedImage.alt, imageSize: selectedImage.size ?? "medium", imageIndex: nextTarget.slideIndex - 1, imageTotal: nextTarget.images.length, content: "" });
     }
     try {
       await broadcastClient.startBroadcast(user, classId, payload);
-      setTarget(nextTarget);
+      setTarget({ ...nextTarget, scrollSessionId });
     } catch {
       retryRef.current = () => present(item, nextTarget);
       setError("화면을 방송하지 못했어요. 다시 시도해 주세요.");
@@ -91,6 +103,9 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
   async function close() {
     if (pending.current) return;
     pending.current = true;
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = null;
+    scrollGeneration.current += 1;
     setBusy(true);
     try {
       await broadcastClient.stopBroadcast(classId);
@@ -98,6 +113,29 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
       setError("");
     } catch { retryRef.current = close; setError("발표를 종료하지 못했어요. 다시 시도해 주세요."); }
     finally { pending.current = false; setBusy(false); }
+  }
+
+  function broadcastScroll(position) {
+    if (pending.current || !target?.scrollSessionId || !broadcastClient.updateBookBroadcastScroll) return;
+    latestScroll.current = { ...position, sequence: Date.now() };
+    if (scrollTimer.current !== null) return;
+    const generation = scrollGeneration.current;
+    const write = async () => {
+      scrollTimer.current = null;
+      if (generation !== scrollGeneration.current) return;
+      try {
+        await broadcastClient.updateBookBroadcastScroll(classId, target.scrollSessionId, latestScroll.current);
+        if (generation === scrollGeneration.current) {
+          setError("");
+          retryRef.current = null;
+        }
+      } catch {
+        if (generation !== scrollGeneration.current) return;
+        retryRef.current = write;
+        setError("스크롤 위치를 방송하지 못했어요. 다시 시도해 주세요.");
+      }
+    };
+    scrollTimer.current = setTimeout(write, 180);
   }
 
   return {
@@ -117,6 +155,8 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
         error={error}
         onRetry={() => retryRef.current?.()}
         audienceLabel="발표 모드"
+        onScrollPosition={broadcastScroll}
+        scrollSessionId={target.scrollSessionId}
       />
     ) : null,
   };

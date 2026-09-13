@@ -58,6 +58,22 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
 
 const user = { uid: "teacherA" };
 
+test("scroll updates reject old slides, out-of-order writes and ended broadcasts", async () => {
+  const api = await loadStore();
+  let broadcast;
+  const unsubscribe = api.subscribeBroadcast("classA", value => { broadcast = value; });
+  await api.startBroadcast(user, "classA", { mode: "bookItem", scrollSessionId: "new" });
+  await api.updateBookBroadcastScroll("classA", "old", { ratio: 0.5, sequence: 1 });
+  assert.equal(broadcast.scrollPosition, undefined);
+  await api.updateBookBroadcastScroll("classA", "new", { ratio: 0.7, sequence: 3 });
+  await api.updateBookBroadcastScroll("classA", "new", { ratio: 0.2, sequence: 2 });
+  assert.equal(broadcast.scrollPosition.ratio, 0.7);
+  await api.stopBroadcast("classA");
+  await api.updateBookBroadcastScroll("classA", "new", { ratio: 1, sequence: 4 });
+  assert.equal(broadcast, null);
+  unsubscribe();
+});
+
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 function twoStepProject() {
@@ -81,7 +97,7 @@ function twoStepProject() {
   };
 }
 
-test("setBookActiveItem switches one step from activity to resource without changing another step", async () => {
+test("setBookActiveItem replaces selections across the entire project", async () => {
   const api = await loadStore();
   await api.saveBookProject(user, twoStepProject());
   let project = await api.getBookProject("classA");
@@ -94,7 +110,6 @@ test("setBookActiveItem switches one step from activity to resource without chan
   project = await api.getBookProject("classA");
   assert.deepEqual(plain(project.activeItemByStep), {
     step1: "resource:res1",
-    step2: "resource:res2",
   });
 });
 
@@ -182,7 +197,7 @@ test("old projects default to no active item and saveBookProject preserves activ
   });
 });
 
-test("Firestore setBookActiveItem uses a transaction and preserves other step selections", async () => {
+test("Firestore setBookActiveItem transaction replaces all previous step selections", async () => {
   const api = await loadStore(true);
 
   await api.setBookActiveItem("classA", "step1", "resource", "res1");
@@ -190,7 +205,6 @@ test("Firestore setBookActiveItem uses a transaction and preserves other step se
   assert.equal(api.transactions(), 1);
   assert.deepEqual(plain(api.projectPatch().activeItemByStep), {
     step1: "resource:res1",
-    step2: "activity:act2",
   });
 });
 

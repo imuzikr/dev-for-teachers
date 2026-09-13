@@ -73,6 +73,10 @@
 
 ## 5. States
 
+- Presentation scrolling follows the teacher's visible content block on desktop student screens. Narrow screens (767px or less) and primary touch-pointer devices retain independent scrolling. Each slide has a distinct scroll session so late updates cannot affect a different slide or restart an ended broadcast.
+
+- Activating an activity or resource replaces the active selection across the entire project, including other Steps. Clicking the active item again clears it. A stale inactive command must not clear a newer selection.
+
 - Teacher main activity/resource cards omit lock controls and lock-state icons. Their compact header retains editing, resource copying, image indication and expansion; activation and presentation remain independent. This overrides earlier teacher header lock-control descriptions and does not migrate persisted legacy lock values.
 
 - Teacher main-card ordering uses the existing number badge as a draggable handle, without adding width to the header. The handle keeps the badge typography, uses a grab cursor and visible keyboard focus, and supports arrow-key moves. A drop target uses a dashed primary outline without changing card dimensions. Drops reorder only the current Step and save through project saving; failures retain the saved order. Student cards have no ordering controls.

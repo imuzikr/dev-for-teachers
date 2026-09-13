@@ -6,6 +6,7 @@ import { safeBookImageUrl } from "./BookItemImages";
 import { useEffect, useRef, useState } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
+import { applyPresentationScroll, presentationScrollPosition } from "./bookPresentationScroll";
 
 function presentationKindLabel(kind) {
   return kind === "resource" ? "자료" : "활동";
@@ -90,6 +91,9 @@ export default function BookPresentationModal({
   busy = false,
   error,
   onRetry,
+  onScrollPosition,
+  scrollPosition,
+  scrollSessionId,
 }) {
   const kind = item?.kind === "resource" || item?.itemKind === "resource" ? "resource" : "activity";
   const title = presentationTitle({ ...item, kind });
@@ -109,7 +113,27 @@ export default function BookPresentationModal({
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0, left: 0 });
-  }, [item?.id, kind, image?.src]);
+  }, [item?.id, kind, image?.src, scrollSessionId]);
+
+  useEffect(() => {
+    if (!scrollPosition || onScrollPosition) return;
+    const mobile = window.matchMedia("(max-width: 767px), (pointer: coarse)");
+    const apply = () => { if (!mobile.matches) applyPresentationScroll(bodyRef.current, scrollPosition); };
+    apply();
+    mobile.addEventListener("change", apply);
+    const observer = new ResizeObserver(apply);
+    if (bodyRef.current) {
+      observer.observe(bodyRef.current);
+      [...bodyRef.current.children].forEach(child => observer.observe(child));
+      bodyRef.current.addEventListener("load", apply, true);
+    }
+    const body = bodyRef.current;
+    return () => {
+      mobile.removeEventListener("change", apply);
+      observer.disconnect();
+      body?.removeEventListener("load", apply, true);
+    };
+  }, [scrollPosition, scrollSessionId, onScrollPosition]);
 
   if (typeof document === "undefined") return null;
   return createPortal(
@@ -139,7 +163,7 @@ export default function BookPresentationModal({
           </div>
         </header>
 
-        <div className={`book-presentation-body${image ? " is-image" : ""}`} ref={bodyRef} aria-busy={busy}>
+        <div className={`book-presentation-body${image ? " is-image" : ""}`} ref={bodyRef} aria-busy={busy} onScroll={onScrollPosition && !busy ? event => onScrollPosition(presentationScrollPosition(event.currentTarget)) : undefined}>
           {image ? (imageFailed ? <p role="alert">이미지를 불러오지 못했어요.</p> : <img key={image.src} className={`book-presentation-image book-presentation-image--${["large", "medium", "small"].includes(image.size) ? image.size : "medium"}`} src={safeBookImageUrl(image.src)} alt={image.alt || "발표 이미지"} onError={() => setImageFailed(true)} />) : <>
 
           {href ? (
