@@ -105,7 +105,12 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
               <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} onClick={() => onRemove(entry.kind, source.id)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">
-              {!resource && <ActivityTemplateSetting enabled={source.templateEnabled === true} content={source.content} onChange={(templateEnabled) => onChange(entry.kind, source.id, { templateEnabled })} />}
+              <div className="book-item-kind-settings">
+                {!resource && <ActivityTemplateSetting enabled={source.templateEnabled === true} content={source.content} onChange={(templateEnabled) => onChange(entry.kind, source.id, { templateEnabled })} />}
+                <button type="button" className="btn-outline" disabled={disabled} onClick={() => onChange(entry.kind, source.id, {}, resource ? "activity" : "resource")}>
+                  {resource ? "활동으로 변환" : "자료로 변환"}
+                </button>
+              </div>
               <BasicFormatEditor
                 templateEnabled={!resource && source.templateEnabled === true}
                 value={source.content || ""}

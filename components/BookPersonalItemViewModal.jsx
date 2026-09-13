@@ -27,7 +27,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, hideResponse = false, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
@@ -69,7 +69,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
             />
           )}
           {!locked && isTeacher && <BookItemImages images={item.images} onPresent={onPresent} />}
-          {requiresAnswer && !locked && (
+          {requiresAnswer && !locked && !hideResponse && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
               {!isTeacher && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving} /> : <p>{response || "아직 입력한 내용이 없습니다."}</p>}

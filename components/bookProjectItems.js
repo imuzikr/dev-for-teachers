@@ -8,6 +8,23 @@ function orderEntry(item) {
   return { kind: item.kind, id: item.id };
 }
 
+export function updateBookProjectItem(step, kind, id, patch, nextKind = kind) {
+  const from = kind === "resource" ? "resources" : "activities";
+  const to = nextKind === "resource" ? "resources" : "activities";
+  const original = step[from]?.find(item => item.id === id);
+  if (!original) return step;
+  const updated = { ...original, ...patch, id };
+  if (from === to) return { ...step, [from]: step[from].map(item => item.id === id ? updated : item) };
+  if (step[to]?.some(item => item.id === id)) throw new Error("같은 ID의 항목이 있어 변환할 수 없습니다.");
+  const url = kind === "activity" ? updated.bookUrl || updated.url || "" : updated.url || "";
+  return {
+    ...step,
+    [from]: step[from].filter(item => item.id !== id),
+    [to]: [...(step[to] ?? []), { ...updated, url, bookUrl: url, requiresAnswer: updated.requiresAnswer === true }],
+    itemOrder: orderedStepItems(step).map(item => ({ kind: item.kind === kind && item.id === id ? nextKind : item.kind, id: item.id })),
+  };
+}
+
 function fallbackActivityItems(activities) {
   return activities.map((activity) => ({
     id: activity.id,

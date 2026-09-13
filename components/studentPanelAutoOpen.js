@@ -10,6 +10,21 @@ export function studentPanelLockState(sections) {
   )));
 }
 
+export function panelActiveState(sections) {
+  return new Map(sections.flatMap(section => section.items.map(item => [panelItemKey(item), item.isActive === true])));
+}
+
+export function latestActivatedPanelItem(previous, sections) {
+  if (!previous) return null;
+  let activated = null;
+  sections.forEach(section => section.items.forEach(item => {
+    if (item.isActive === true && previous.get(panelItemKey(item)) !== true) {
+      activated = { key: panelItemKey(item), stepId: item.stepId || section.id };
+    }
+  }));
+  return activated;
+}
+
 export function latestUnlockedPanelItem(previousLockState, sections) {
   if (!previousLockState) return null;
 
@@ -28,6 +43,7 @@ export function latestUnlockedPanelItem(previousLockState, sections) {
 export function useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready = true, scope }) {
   const [autoOpenRequest, setAutoOpenRequest] = useState(null);
   const previousLockState = useRef({ scope: "", lockState: null });
+  const previousActiveState = useRef({ scope: "", state: null });
   const scopeGeneration = useRef({ identity: "", generation: 0 });
   const scopeIdentity = `${scope}:${isTeacher ? "teacher" : "student"}:${ready ? "ready" : "pending"}`;
 
@@ -43,6 +59,7 @@ export function useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectSt
     const lockScope = scopeIdentity;
     const generation = scopeGeneration.current.generation;
     if (!ready) {
+      previousActiveState.current = { scope: lockScope, state: null };
       previousLockState.current = { scope: lockScope, lockState: null };
       setAutoOpenRequest(null);
       return;
@@ -51,9 +68,10 @@ export function useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectSt
       ? previousLockState.current.lockState
       : null;
     previousLockState.current = { scope: lockScope, lockState: nextLockState };
-    if (isTeacher) return;
-
-    const unlocked = latestUnlockedPanelItem(previous, sections);
+    const previousActive = previousActiveState.current.scope === lockScope ? previousActiveState.current.state : null;
+    previousActiveState.current = { scope: lockScope, state: panelActiveState(sections) };
+    const unlocked = latestActivatedPanelItem(previousActive, sections)
+      || (!isTeacher ? latestUnlockedPanelItem(previous, sections) : null);
     if (!unlocked) return;
     onSelectStep?.(unlocked.stepId);
     setAutoOpenRequest((current) => ({

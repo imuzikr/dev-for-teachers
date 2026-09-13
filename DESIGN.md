@@ -73,6 +73,8 @@
 
 ## 5. States
 
+- Teacher main activity/resource cards omit lock controls and lock-state icons. Their compact header retains editing, resource copying, image indication and expansion; activation and presentation remain independent. This overrides earlier teacher header lock-control descriptions and does not migrate persisted legacy lock values.
+
 - Teacher main-card ordering uses the existing number badge as a draggable handle, without adding width to the header. The handle keeps the badge typography, uses a grab cursor and visible keyboard focus, and supports arrow-key moves. A drop target uses a dashed primary outline without changing card dimensions. Drops reorder only the current Step and save through project saving; failures retain the saved order. Student cards have no ordering controls.
 
 - Active-card highlight is shared by teacher and student activity/resource cards: both use the existing `is-current-activity` border and static soft glow. Changing the active selection removes the previous card highlight in both views; confirmation and lock styles remain independent.

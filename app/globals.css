@@ -8845,6 +8845,26 @@ pre code {
   transition: opacity 120ms ease, transform 120ms ease, visibility 0s 120ms;
 }
 
+.teacher-active-detail {
+  min-width: 0;
+  margin-top: 20px;
+}
+
+.book-item-kind-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.book-item-kind-settings > button {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .student-activity-detail {
   min-width: 0;
   padding: 16px;
@@ -8928,11 +8948,13 @@ pre code {
   width: 100%;
   min-width: 0;
   min-height: 32px;
-  padding: 4px 12px;
+  padding: 4px 6px;
   border-radius: 999px;
   font-size: 12px;
   line-height: 20px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 @media (pointer: coarse) {

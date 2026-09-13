@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { latestUnlockedPanelItem, studentPanelLockState } from "../components/studentPanelAutoOpen.js";
+import { latestActivatedPanelItem, panelActiveState, latestUnlockedPanelItem, studentPanelLockState } from "../components/studentPanelAutoOpen.js";
+
+test("live activation opens the new item but initial, unchanged and inactive states do not", () => {
+  const before = [{ id: "s", items: [{ kind: "activity", id: "a", isActive: true }, { kind: "resource", id: "r", isActive: false }] }];
+  const after = [{ id: "s", items: [{ kind: "activity", id: "a", isActive: false }, { kind: "resource", id: "r", isActive: true }] }];
+  assert.equal(latestActivatedPanelItem(null, before), null);
+  assert.equal(latestActivatedPanelItem(panelActiveState(before), before), null);
+  assert.deepEqual(latestActivatedPanelItem(panelActiveState(before), after), { key: "resource:r", stepId: "s" });
+  assert.equal(latestActivatedPanelItem(panelActiveState(after), [{ id: "s", items: after[0].items.map(item => ({ ...item, isActive: false })) }]), null);
+});
 
 function item(kind, id, locked, stepId) {
   return { kind, id, stepId, source: { locked } };

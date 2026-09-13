@@ -12,7 +12,8 @@ import { BookImagePresentationContext, useBookPresentationMode } from "./BookPre
 import BookProjectPanel from "./BookProjectPanel";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
-import { bookDetailSections, reorderBookProjectStepItem } from "./bookProjectItems";
+import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
+import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
@@ -63,6 +64,8 @@ export default function BookWorkspace({
   const [confirmations, setConfirmations] = useState([]);
   const saveQueues = useRef(new Map());
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [teacherDetailTarget, setTeacherDetailTarget] = useState(null);
+  const [teacherDetailExpanded, setTeacherDetailExpanded] = useState(false);
   const [helpCollapsed, setHelpCollapsed] = useState(false);
   const [draftProject, setDraftProject] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
@@ -93,10 +96,10 @@ export default function BookWorkspace({
   const editingCardCollection = editingCard?.kind === "resource" ? "resources" : "activities";
   const editingCardItem = editingCardStep?.[editingCardCollection]?.find((item) => item.id === editingCard.id);
 
-  async function saveCardItem(patch) {
+  async function saveCardItem(patch, nextKind = editingCard?.kind) {
     if (!editingCardItem || !onSaveProject) return false;
     const nextSteps = previewProject.steps.map((step) => step.id === editingCardStep.id
-      ? { ...step, [editingCardCollection]: step[editingCardCollection].map((item) => item.id === editingCardItem.id ? { ...item, ...patch } : item) }
+      ? updateBookProjectItem(step, editingCard.kind, editingCardItem.id, patch, nextKind)
       : step);
     const saved = await onSaveProject({ title: previewProject.title, steps: nextSteps });
     if (saved !== false) setEditingCard(null);
@@ -154,6 +157,14 @@ export default function BookWorkspace({
     sections,
   });
   const studentPanelAutoOpen = useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready: liveProjectReady, scope });
+  const teacherDetailSection = isTeacher && sections.find(section => section.id === studentPanelAutoOpen?.stepId);
+  const teacherDetailIndex = teacherDetailSection ? teacherDetailSection.items.findIndex(item => `${item.kind}:${item.id}` === studentPanelAutoOpen?.key) : -1;
+  const teacherDetailItem = teacherDetailIndex >= 0 ? teacherDetailSection.items[teacherDetailIndex] : null;
+  useEffect(() => {
+    if (!isTeacher || !studentPanelAutoOpen) return;
+    setLibraryCollapsed(false);
+    setTeacherDetailExpanded(false);
+  }, [isTeacher, studentPanelAutoOpen]);
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
@@ -330,6 +341,15 @@ export default function BookWorkspace({
               onExportProjectItem={onExportProjectItem}
             />
           )}
+          {teacherDetailItem && <div className="teacher-active-detail" ref={setTeacherDetailTarget} />}
+          {teacherDetailItem && teacherDetailTarget && <BookPersonalItemViewModal
+            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+            panelTarget={teacherDetailTarget} onExpand={() => setTeacherDetailExpanded(true)}
+          />}
+          {teacherDetailItem && teacherDetailExpanded && <BookPersonalItemViewModal
+            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+            onClose={() => setTeacherDetailExpanded(false)}
+          />}
         </div>
       </aside>
       )}

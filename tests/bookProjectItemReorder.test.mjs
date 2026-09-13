@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-async function loadHelper() {
+async function loadHelper(name = "reorderBookProjectStepItem") {
   const context = vm.createContext({ console });
   const source = readFileSync(new URL("../components/bookProjectItems.js", import.meta.url), "utf8");
   const preview = new vm.SyntheticModule(["orderedStepItems"], function defineExports() {
@@ -32,8 +32,25 @@ async function loadHelper() {
     return preview;
   });
   await module.evaluate();
-  return module.namespace.reorderBookProjectStepItem;
+  return module.namespace[name];
 }
+
+test("conversion preserves content, images, URL and mixed ordering in both directions", async () => {
+  const update = await loadHelper("updateBookProjectItem");
+  const source = { id: "a", title: "Title", content: "<p>Content</p>", bookUrl: "https://example.com", images: ["image.png"], imageSizes: { "image.png": 50 } };
+  const step = { activities: [source], resources: [{ id: "r", title: "Resource" }], itemOrder: [{kind: "activity", id: "a"}, {kind: "resource", id: "r"}] };
+  const resourceStep = update(step, "activity", "a", { title: "Edited" }, "resource");
+  assert.equal(resourceStep.activities.length, 0);
+  assert.equal(resourceStep.resources[1].url, source.bookUrl);
+  assert.equal(resourceStep.resources[1].content, source.content);
+  assert.deepEqual(plain(resourceStep.resources[1].images), source.images);
+  assert.deepEqual(plain(resourceStep.itemOrder), [{kind: "resource", id: "a"}, {kind: "resource", id: "r"}]);
+  const activityStep = update(resourceStep, "resource", "a", {}, "activity");
+  assert.equal(activityStep.activities[0].title, "Edited");
+  assert.equal(activityStep.activities[0].bookUrl, source.bookUrl);
+  assert.deepEqual(plain(activityStep.itemOrder), step.itemOrder);
+  assert.equal(step.activities[0].title, "Title");
+});
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));

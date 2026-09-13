@@ -147,7 +147,8 @@ export default function BookProjectItemEditModal({
   onExport,
   onClose,
 }) {
-  const itemLabel = kind === "resource" ? "자료" : "활동";
+  const [draftKind, setDraftKind] = useState(kind);
+  const itemLabel = draftKind === "resource" ? "자료" : "활동";
   const isCreating = !item?.id;
   const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState(item?.title ?? "");
@@ -166,6 +167,7 @@ export default function BookProjectItemEditModal({
 
   useEffect(() => {
     setTitle(item?.title ?? "");
+    setDraftKind(kind);
     setContent(item?.content ?? "");
     setImages(item?.images ?? []);
     setImageSizes(item?.imageSizes);
@@ -187,10 +189,10 @@ export default function BookProjectItemEditModal({
         content,
         images,
         imageSizes,
-        ...(kind === "resource"
-          ? { url: trimmedUrl }
+        ...(draftKind === "resource"
+          ? { url: trimmedUrl, bookUrl: trimmedUrl }
           : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
-      });
+      }, draftKind);
       if (saved === false) setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -229,7 +231,7 @@ export default function BookProjectItemEditModal({
                   type="url"
                 />
               </label>
-              {kind === "activity" && (
+              {draftKind === "activity" && (
                 <div className="book-answer-setting book-answer-setting--modal" role="group" aria-label="학생 답변 설정">
                   <div className="book-answer-setting-copy">
                     <strong>학생 답변</strong>
@@ -259,12 +261,17 @@ export default function BookProjectItemEditModal({
               />
             )}
           </div>
-          {kind === "activity" && <ActivityTemplateSetting enabled={templateEnabled} content={content} onChange={setTemplateEnabled} />}
+          <div className="book-item-kind-settings">
+            {draftKind === "activity" && <ActivityTemplateSetting enabled={templateEnabled} content={content} onChange={setTemplateEnabled} />}
+            <button type="button" className="btn-outline" disabled={saving || imagesBusy} onClick={() => setDraftKind(current => current === "activity" ? "resource" : "activity")}>
+              {draftKind === "activity" ? "자료로 변환" : "활동으로 변환"}
+            </button>
+          </div>
           <BasicFormatEditor
-            templateEnabled={kind === "activity" && templateEnabled}
+            templateEnabled={draftKind === "activity" && templateEnabled}
             value={content}
             onChange={setContent}
-            placeholder={kind === "activity" ? "활동 안내사항" : ""}
+            placeholder={draftKind === "activity" ? "활동 안내사항" : ""}
             ariaLabel={`${itemLabel} 내용`}
           />
           <BookItemImageEditor key={`${kind}:${item?.id || "new"}`} images={images} imageSizes={imageSizes} onChange={(nextImages, nextSizes) => { setImages(nextImages); setImageSizes(nextSizes); }} onBusyChange={setImagesBusy} disabled={saving} />

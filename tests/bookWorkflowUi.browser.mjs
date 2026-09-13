@@ -247,7 +247,9 @@ async function attemptCrossStepDrop(page) {
 async function captureVisibleSidebarConfirm(page, screenshotRoot, name, width, height) {
   await page.setViewportSize({ width, height });
   const confirm = page.locator(".student-activity-detail").getByRole("button", { name: "확인", exact: true });
+  await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));
   await confirm.scrollIntoViewIfNeeded();
+  await confirm.evaluate(button => button.scrollIntoView({ block: "center", behavior: "instant" }));
   const geometry = await confirm.evaluate((button) => {
     const buttonRect = button.getBoundingClientRect();
     const panel = button.closest(".student-activity-panel-content");
@@ -262,7 +264,7 @@ async function captureVisibleSidebarConfirm(page, screenshotRoot, name, width, h
   assert.ok(geometry.button.bottom <= geometry.panel.bottom, `${name} confirm bottom is clipped by panel`);
   assert.ok(geometry.button.left >= geometry.panel.left, `${name} confirm left is clipped by panel`);
   assert.ok(geometry.button.right <= geometry.panel.right, `${name} confirm right is clipped by panel`);
-  assert.ok(geometry.button.top >= 0 && geometry.button.bottom <= geometry.viewport.height, `${name} confirm is outside viewport vertically`);
+  assert.ok(geometry.button.top >= 0 && geometry.button.bottom <= geometry.viewport.height, `${name} confirm is outside viewport vertically: ${JSON.stringify(geometry)}`);
   assert.ok(geometry.button.left >= 0 && geometry.button.right <= geometry.viewport.width, `${name} confirm is outside viewport horizontally`);
   await screenshotApp(page, path.join(screenshotRoot, name));
 }
@@ -329,9 +331,22 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherFooterGeometry(teacherResource);
   await assertTeacherFooterGeometry(teacherActivity);
   await clickTeacherActivation(teacherActivity, false);
+  const teacherPanel = page.getByRole("complementary", { name: "선생님이 준비한 활동과 자료" });
+  await teacherPanel.locator(".teacher-active-detail").getByRole("heading", { name: "생각 정리 활동", exact: true }).waitFor();
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await teacherPanel.locator(".teacher-active-detail").scrollIntoViewIfNeeded();
+    await screenshotApp(page, path.join(screenshotRoot, `teacher-auto-open-${width}.png`));
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  assert.equal(await teacherPanel.getByRole("button", { name: "개발자실 패널 접기", exact: true }).getAttribute("aria-expanded"), "true");
+  await teacherPanel.getByRole("button", { name: "개발자실 패널 접기", exact: true }).click();
   await assertTeacherActiveButton(teacherActivity, true);
   await assertTeacherActiveButton(teacherResource, false);
   await clickTeacherActivation(teacherResource, false);
+  await teacherPanel.locator(".teacher-active-detail").getByRole("heading", { name: "체크리스트 자료", exact: true }).waitFor();
+  await teacherPanel.locator(".teacher-active-detail").getByRole("button", { name: "확대", exact: true }).click();
+  await page.getByRole("dialog", { name: "체크리스트 자료", exact: true }).getByRole("button", { name: "닫기", exact: true }).click();
   await assertTeacherActiveButton(teacherResource, true);
   await assertTeacherActiveButton(teacherActivity, false);
   await page.getByRole("button", { name: "다음 활동중 저장 실패" }).click();
@@ -340,10 +355,10 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherActiveButton(teacherResource, true);
   await assertTeacherActiveButton(teacherActivity, false);
   await teacherResource.getByRole("button", { name: "자료 복사" }).waitFor();
-  await teacherResource.getByRole("button", { name: "자료 잠그기" }).click();
-  await teacherResource.getByRole("button", { name: "자료 잠금 해제" }).waitFor();
-  await teacherResource.getByRole("button", { name: "자료 잠금 해제" }).click();
-  await teacherResource.getByRole("button", { name: "자료 잠그기" }).waitFor();
+  for (const card of [teacherResource, teacherActivity]) {
+    assert.equal(await card.getByRole("button", { name: /잠그기|잠금 해제/ }).count(), 0);
+    assert.equal(await card.getByRole("img", { name: /잠김|열림/ }).count(), 0);
+  }
   await assertDetailOrder(page, ["activity:activity-1", "resource:resource-1"], ["생각 정리 활동", "체크리스트 자료"]);
   await assertSidebarOrder(page, "최종 행동 확인", ["생각 정리 활동", "체크리스트 자료"]);
   assert.equal(await reorderHandle(page, "생각 정리 활동").getAttribute("draggable"), "true");
@@ -435,6 +450,50 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await capture("student-active-1280.png", 1280, 900);
   await capture("student-active-768.png", 768, 900);
   await capture("student-active-375.png", 375, 812);
+  await page.getByRole("button", { name: "원격 활동 활성화", exact: true }).click();
+  const livePanel = page.getByRole("complementary", { name: "선택한 활동과 자료", exact: true });
+  await livePanel.getByRole("heading", { name: "생각 정리 활동", exact: true }).waitFor();
+  await livePanel.getByRole("button", { name: "활동 패널 접기", exact: true }).click();
+  await page.getByRole("button", { name: "원격 자료 활성화", exact: true }).click();
+  await livePanel.getByRole("heading", { name: "체크리스트 자료", exact: true }).waitFor();
+  assert.equal(await livePanel.getByRole("button", { name: "활동 패널 접기", exact: true }).getAttribute("aria-expanded"), "true");
+  await capture("student-auto-open-375.png", 375, 812);
+  await page.getByRole("button", { name: "교사 보기" }).click();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).click();
+  const editDialog = page.locator(".book-item-edit-modal");
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await editDialog.getByRole("button", { name: "자료로 변환", exact: true }).scrollIntoViewIfNeeded();
+    await screenshotApp(page, path.join(screenshotRoot, `item-kind-activity-${width}.png`));
+  }
+  await editDialog.getByRole("button", { name: "자료로 변환", exact: true }).click();
+  await editDialog.getByRole("textbox", { name: "자료 링크 URL", exact: true }).fill("https://example.com/converted");
+  await editDialog.getByRole("button", { name: "자료 저장", exact: true }).waitFor();
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await editDialog.getByRole("button", { name: "활동으로 변환", exact: true }).scrollIntoViewIfNeeded();
+    await screenshotApp(page, path.join(screenshotRoot, `item-kind-conversion-${width}.png`));
+  }
+  await editDialog.getByRole("button", { name: "자료 저장", exact: true }).click();
+  await editDialog.waitFor({ state: "detached" });
+  const converted = cardWithText(page, ".book-personal-resource-card", "생각 정리 활동");
+  await converted.getByRole("button", { name: "자료 수정", exact: true }).click();
+  assert.equal(await editDialog.getByRole("textbox", { name: "자료 링크 URL", exact: true }).inputValue(), "https://example.com/converted");
+  await editDialog.getByRole("button", { name: "활동으로 변환", exact: true }).click();
+  await editDialog.getByRole("button", { name: "활동 저장", exact: true }).click();
+  await editDialog.waitFor({ state: "detached" });
+  await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).waitFor();
+  assert.deepEqual(await detailOrderTitles(page), ["체크리스트 자료", "생각 정리 활동"]);
+  await page.getByRole("button", { name: "다음 프로젝트 저장 실패", exact: true }).click();
+  await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).click();
+  await editDialog.getByRole("button", { name: "자료로 변환", exact: true }).click();
+  await editDialog.getByRole("button", { name: "자료 저장", exact: true }).click();
+  await editDialog.getByRole("alert").getByText("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.").waitFor();
+  await editDialog.locator(".book-item-edit-footer").getByRole("button", { name: "닫기", exact: true }).click();
+  await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).waitFor();
+  await page.getByRole("button", { name: "학생 하나 개인 카드 열기", exact: true }).click();
+  await activityCard.getByRole("img", { name: "확인됨", exact: true }).waitFor();
   assert.deepEqual(errors, []);
   return {
     passed: true,
@@ -450,7 +509,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
       "teacher active item preserves another step selection",
       "failed active item save keeps the previous selection and shows a toast",
       "student selected active card is marked current while confirmations remain",
-      "teacher header resource lock toggles through existing callback",
+      "teacher activity and resource headers omit lock controls",
     ],
     screenshots: [
       "student-main-1280.png",

@@ -6,6 +6,7 @@ import { assertBookProjectSize, normalizeBookItemImages } from "@/lib/bookProjec
 import { backdropClose } from "@/lib/modal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
+import { updateBookProjectItem } from "./bookProjectItems";
 import { orderedStepItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
@@ -203,20 +204,17 @@ export default function BookProjectEditor({
     setAddingItem({ stepId, kind });
   }
 
-  async function saveAddedItem(patch) {
+  async function saveAddedItem(patch, nextKind = addingItem?.kind) {
     if (!addingItem) return false;
-    addItem(addingItem.stepId, addingItem.kind === "resource" ? "resources" : "activities", patch);
+    addItem(addingItem.stepId, nextKind === "resource" ? "resources" : "activities", patch);
     setAddingItem(null);
     return true;
   }
 
-  function updateItem(stepId, kind, itemId, patch) {
+  function updateItem(stepId, kind, itemId, patch, nextKind = kind) {
     const step = steps.find((item) => item.id === stepId);
     if (!step) return;
-    const key = collectionKey(kind);
-    updateStep(stepId, {
-      [key]: step[key].map((item) => item.id === itemId ? { ...item, ...patch } : item),
-    });
+    updateStep(stepId, updateBookProjectItem(step, kind, itemId, patch, nextKind));
   }
 
   function removeItem(stepId, kind, itemId) {
@@ -278,7 +276,7 @@ export default function BookProjectEditor({
         </div>
         <BookProjectEditorItems
           step={step}
-          disabled={saving}
+          disabled={saving || busyImages.size > 0}
           onImageBusyChange={(key, busy) => setBusyImages((current) => {
             const next = new Set(current);
             const itemKey = `${step.id}:${key}`;
@@ -286,7 +284,7 @@ export default function BookProjectEditor({
             else next.delete(itemKey);
             return next;
           })}
-          onChange={(kind, id, patch) => updateItem(step.id, kind, id, patch)}
+          onChange={(kind, id, patch, nextKind) => updateItem(step.id, kind, id, patch, nextKind)}
           onRemove={(kind, id) => removeItem(step.id, kind, id)}
           onMove={(fromKey, toKey) => moveItem(step.id, fromKey, toKey)}
           onAdd={(kind) => openAddItemModal(step.id, kind)}
