@@ -56,6 +56,16 @@ function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+test("converting a legacy locked activity opens the resulting resource", async () => {
+  const update = await loadHelper("updateBookProjectItem");
+  const step = { activities: [{ id: "locked", title: "Legacy", locked: true }], resources: [] };
+  const converted = update(step, "activity", "locked", {}, "resource");
+  assert.equal(converted.resources[0].locked, false);
+  assert.equal(step.activities[0].locked, true);
+  const reversed = update({ activities: [], resources: [{ id: "locked", title: "Legacy", locked: true }] }, "resource", "locked", {}, "activity");
+  assert.equal(reversed.activities[0].locked, false);
+});
+
 function sampleStep() {
   return {
     id: "step-1",

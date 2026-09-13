@@ -114,6 +114,7 @@ export default function BookWorkflowPage() {
       title: patch.title ?? current.title,
       steps: patch.steps ?? current.steps,
     }));
+    if (patch.steps) setLocks(Object.fromEntries(patch.steps.flatMap(step => [...step.activities, ...step.resources].map(item => [item.id, item.locked === true]))));
     return true;
   };
   const setActiveItem = async (classId, stepId, kind, itemId, active = true) => {
@@ -124,7 +125,7 @@ export default function BookWorkflowPage() {
     }
     const activeValue = `${kind}:${itemId}`;
     setActiveItemByStep((current) => {
-      if (active) return { ...current, [stepId]: activeValue };
+      if (active) return { [stepId]: activeValue };
       if (current[stepId] !== activeValue) return current;
       const next = { ...current };
       delete next[stepId];
@@ -137,8 +138,9 @@ export default function BookWorkflowPage() {
       <div className="qa-workflow-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: 12, position: "sticky", top: 0, zIndex: 20, background: "#fbfaf3", borderBottom: "1px solid #ded8bf" }}>
         <button type="button" onClick={() => setMode("student")}>학생 보기</button>
         <button type="button" onClick={() => setMode("teacher")}>교사 보기</button>
-        <button type="button" onClick={() => setActiveItemByStep(current => ({ ...current, "step-1": "activity:activity-1" }))}>원격 활동 활성화</button>
-        <button type="button" onClick={() => setActiveItemByStep(current => ({ ...current, "step-1": "resource:resource-1" }))}>원격 자료 활성화</button>
+        <button type="button" onClick={() => setLocks(current => ({ ...current, "activity-1": true }))}>이전 활동 잠금 재현</button>
+        <button type="button" onClick={() => setActiveItemByStep({ "step-1": "activity:activity-1" })}>원격 활동 활성화</button>
+        <button type="button" onClick={() => setActiveItemByStep({ "step-1": "resource:resource-1" })}>원격 자료 활성화</button>
         <button type="button" onClick={() => setSelectedStepId("step-1")}>Step 열기</button>
         <button type="button" onClick={() => setSelectedStepId("step-2")}>Step 2 열기</button>
         <button type="button" onClick={() => setFailNextActiveSave(true)}>다음 활동중 저장 실패</button>

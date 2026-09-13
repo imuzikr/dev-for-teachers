@@ -8858,6 +8858,30 @@ pre code {
   margin-bottom: 12px;
 }
 
+.book-main-add-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0;
+}
+
+.book-main-add-row > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-backdrop.book-item-type-backdrop { align-items: center; padding: 16px; }
+.book-item-type-modal { width: min(420px, 100%); border-radius: 20px; }
+.book-item-type-options {
+  display: flex;
+  gap: 24px;
+  border: 0;
+  padding: 16px 0;
+  margin: 0;
+}
+.book-item-type-options label { display: flex; flex: 1; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer; }
+.book-item-type-options input { width: auto; flex: none; }
+
 .book-item-kind-settings > button {
   min-height: 32px;
   padding: 4px 12px;
@@ -10213,6 +10237,9 @@ pre code {
   padding: 0;
 }
 .book-project-copy-action {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   flex: 0 0 22px;
   width: 22px;
   min-height: 22px;
@@ -11907,6 +11934,9 @@ button.book-project-flow-pill:focus-visible {
   min-height: 0;
 }
 .book-personal-copy-btn {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   width: 44px;
   min-width: 44px;
   min-height: 44px;

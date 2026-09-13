@@ -20,7 +20,7 @@ export function updateBookProjectItem(step, kind, id, patch, nextKind = kind) {
   return {
     ...step,
     [from]: step[from].filter(item => item.id !== id),
-    [to]: [...(step[to] ?? []), { ...updated, url, bookUrl: url, requiresAnswer: updated.requiresAnswer === true }],
+    [to]: [...(step[to] ?? []), { ...updated, locked: false, url, bookUrl: url, requiresAnswer: updated.requiresAnswer === true }],
     itemOrder: orderedStepItems(step).map(item => ({ kind: item.kind === kind && item.id === id ? nextKind : item.kind, id: item.id })),
   };
 }

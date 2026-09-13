@@ -12,6 +12,8 @@ import { BookImagePresentationContext, useBookPresentationMode } from "./BookPre
 import BookProjectPanel from "./BookProjectPanel";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
+import { orderedStepItems } from "./BookProjectPreview";
+import { IconAddFeature } from "./StatusIcons";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
@@ -69,6 +71,8 @@ export default function BookWorkspace({
   const [helpCollapsed, setHelpCollapsed] = useState(false);
   const [draftProject, setDraftProject] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
+  const [addingCard, setAddingCard] = useState(null);
+  const addingPending = useRef(false);
   const showLibraryPanel = isTeacher;
   const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
@@ -95,6 +99,26 @@ export default function BookWorkspace({
     : null;
   const editingCardCollection = editingCard?.kind === "resource" ? "resources" : "activities";
   const editingCardItem = editingCardStep?.[editingCardCollection]?.find((item) => item.id === editingCard.id);
+  const addingCardStep = isTeacher && addingCard?.scope === scope
+    ? previewProject?.steps?.find(step => step.id === addingCard.stepId) : null;
+  const currentStep = previewProject?.steps?.find(step => step.id === selectedStepId) ?? previewProject?.steps?.[0];
+
+  async function saveNewCard(patch, kind) {
+    if (!addingCardStep || !onSaveProject || addingPending.current || !["activity", "resource"].includes(kind)) return false;
+    addingPending.current = true;
+    try {
+      const id = addingCard.id;
+      const collection = kind === "resource" ? "resources" : "activities";
+      const steps = previewProject.steps.map(step => step.id === addingCardStep.id ? {
+        ...step,
+        [collection]: [...(step[collection] ?? []), { ...patch, id, locked: false }],
+        itemOrder: [...orderedStepItems(step).map(item => ({ kind: item.kind, id: item.id })), { kind, id }],
+      } : step);
+      const saved = await onSaveProject({ title: previewProject.title, steps });
+      if (saved !== false && activeScope.current === scope) setAddingCard(null);
+      return saved;
+    } finally { addingPending.current = false; }
+  }
 
   async function saveCardItem(patch, nextKind = editingCard?.kind) {
     if (!editingCardItem || !onSaveProject) return false;
@@ -356,6 +380,11 @@ export default function BookWorkspace({
 
       <section className="book-library-main" aria-label="개발자실 메인 화면">
         {header}
+        {isTeacher && onSaveProject && <div className="book-main-add-row">
+          <button type="button" className="btn-outline" disabled={!currentStep || editingProject || savingProject} onClick={() => setAddingCard({ scope, stepId: currentStep.id, id: crypto.randomUUID() })}>
+            <IconAddFeature size={16} /> 추가하기
+          </button>
+        </div>}
         <BookPersonalDashboard
           participants={participants}
           activities={previewActivities}
@@ -379,6 +408,10 @@ export default function BookWorkspace({
           onSelectStep={onSelectStep}
         />
         {bookPresentation.modal}
+        {addingCardStep && <BookProjectItemEditModal
+          key={addingCard.id} project={previewProject} step={addingCardStep} kind={null}
+          saving={savingProject} onSave={saveNewCard} onClose={() => { if (!addingPending.current) setAddingCard(null); }}
+        />}
         {editingCardItem && <BookProjectItemEditModal
           key={`${scope}:${editingCard.kind}:${editingCard.id}`}
           project={previewProject}

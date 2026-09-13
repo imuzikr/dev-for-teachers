@@ -178,6 +178,22 @@ export default function BookProjectItemEditModal({
 
   if (!mounted) return null;
 
+  if (isCreating && !draftKind) return createPortal(
+    <div className="modal-backdrop book-item-edit-backdrop book-item-type-backdrop" {...backdropClose(onClose)}>
+      <section className="modal book-item-type-modal" role="dialog" aria-modal="true" aria-label="항목 추가" onClick={event => event.stopPropagation()}>
+        <header className="modal-head">
+          <div><span>{step?.title ?? "Step"}</span><h3>항목 추가</h3></div>
+          <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>
+        </header>
+        <fieldset className="book-item-type-options">
+          <legend>유형 선택</legend>
+          <label><input type="radio" name="new-item-kind" value="activity" onChange={() => setDraftKind("activity")} />활동</label>
+          <label><input type="radio" name="new-item-kind" value="resource" onChange={() => setDraftKind("resource")} />자료</label>
+        </fieldset>
+      </section>
+    </div>, document.body,
+  );
+
   async function save() {
     const trimmedTitle = title.trim();
     if (!trimmedTitle || imagesBusy) return;
@@ -185,6 +201,7 @@ export default function BookProjectItemEditModal({
     setSaveError("");
     try {
       const saved = await onSave({
+        locked: false,
         title: trimmedTitle,
         content,
         images,

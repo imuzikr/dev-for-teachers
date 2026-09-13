@@ -409,12 +409,14 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherActiveButton(teacherStepTwoActivity, true);
   await assertTeacherActiveButton(teacherStepTwoResource, false);
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await assertTeacherActiveButton(teacherResource, false);
+  await clickTeacherActivation(teacherResource, false);
   await assertTeacherActiveButton(teacherResource, true);
   await clickTeacherActivation(teacherResource, true);
   await assertTeacherActiveButton(teacherResource, false);
   await assertTeacherActiveButton(teacherActivity, false);
   await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
-  await assertTeacherActiveButton(teacherStepTwoActivity, true);
+  await assertTeacherActiveButton(teacherStepTwoActivity, false);
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await page.getByRole("button", { name: "학생 보기" }).click();
   await page.getByTestId("mode").getByText("student").waitFor();
@@ -435,7 +437,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByRole("button", { name: "다음 활동중 저장 실패" }).click();
   await clickTeacherActivation(teacherStepTwoResource, false);
   await page.getByTestId("toast").getByText("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.").waitFor();
-  await assertTeacherActiveButton(teacherStepTwoActivity, true);
+  await assertTeacherActiveButton(teacherStepTwoActivity, false);
   await assertTeacherActiveButton(teacherStepTwoResource, false);
 
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
@@ -459,6 +461,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   assert.equal(await livePanel.getByRole("button", { name: "활동 패널 접기", exact: true }).getAttribute("aria-expanded"), "true");
   await capture("student-auto-open-375.png", 375, 812);
   await page.getByRole("button", { name: "교사 보기" }).click();
+  await page.getByRole("button", { name: "이전 활동 잠금 재현", exact: true }).click();
   await page.setViewportSize({ width: 1280, height: 900 });
   await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).click();
   const editDialog = page.locator(".book-item-edit-modal");
@@ -478,6 +481,17 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await editDialog.getByRole("button", { name: "자료 저장", exact: true }).click();
   await editDialog.waitFor({ state: "detached" });
   const converted = cardWithText(page, ".book-personal-resource-card", "생각 정리 활동");
+  const copyBorder = () => converted.getByRole("button", { name: "자료 복사", exact: true }).evaluate(button => getComputedStyle(button).borderTopWidth);
+  assert.equal(await copyBorder(), "0px");
+  await page.getByRole("button", { name: "학생 보기", exact: true }).click();
+  assert.equal(await copyBorder(), "0px");
+  assert.equal(await converted.getByRole("button", { name: "자료 복사", exact: true }).isEnabled(), true);
+  assert.equal(await converted.getByRole("img", { name: "잠김", exact: true }).count(), 0);
+  await converted.getByRole("button", { name: "자료 복사", exact: true }).click();
+  await converted.getByRole("button", { name: "자료를 복사했습니다", exact: true }).waitFor();
+  assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes("생각 정리 활동"));
+  await capture("converted-resource-copy-375.png", 375, 900);
+  await page.getByRole("button", { name: "교사 보기", exact: true }).click();
   await converted.getByRole("button", { name: "자료 수정", exact: true }).click();
   assert.equal(await editDialog.getByRole("textbox", { name: "자료 링크 URL", exact: true }).inputValue(), "https://example.com/converted");
   await editDialog.getByRole("button", { name: "활동으로 변환", exact: true }).click();
@@ -492,6 +506,32 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await editDialog.getByRole("alert").getByText("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.").waitFor();
   await editDialog.locator(".book-item-edit-footer").getByRole("button", { name: "닫기", exact: true }).click();
   await teacherActivity.getByRole("button", { name: "활동 수정", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
+  await page.getByRole("button", { name: "추가하기", exact: true }).click();
+  const typeDialog = page.getByRole("dialog", { name: "항목 추가", exact: true });
+  await typeDialog.waitFor();
+  assert.equal(await typeDialog.getByRole("textbox").count(), 0);
+  await page.screenshot({ path: path.join(screenshotRoot, "add-item-type-375.png") });
+  await typeDialog.getByRole("radio", { name: "자료", exact: true }).click();
+  await editDialog.getByRole("textbox", { name: "자료 제목", exact: true }).fill("새로 추가한 자료");
+  assert.equal(await editDialog.getByRole("group", { name: "학생 답변 설정" }).count(), 0);
+  await editDialog.getByRole("button", { name: "자료 추가", exact: true }).click();
+  await editDialog.waitFor({ state: "detached" });
+  await cardWithText(page, ".book-personal-resource-card", "새로 추가한 자료").waitFor();
+  await page.getByRole("button", { name: "추가하기", exact: true }).click();
+  await typeDialog.getByRole("radio", { name: "활동", exact: true }).click();
+  await editDialog.getByRole("textbox", { name: "활동 제목", exact: true }).fill("새로 추가한 활동");
+  await editDialog.getByRole("group", { name: "학생 답변 설정" }).waitFor();
+  await editDialog.getByRole("button", { name: "활동 추가", exact: true }).click();
+  await editDialog.waitFor({ state: "detached" });
+  await cardWithText(page, ".book-personal-activity-card", "새로 추가한 활동").waitFor();
+  assert.deepEqual(await detailOrderTitles(page), ["두 번째 활동", "두 번째 자료", "새로 추가한 자료", "새로 추가한 활동"]);
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByRole("button", { name: "추가하기", exact: true }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(screenshotRoot, `main-add-item-${width}.png`) });
+  }
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await page.getByRole("button", { name: "학생 하나 개인 카드 열기", exact: true }).click();
   await activityCard.getByRole("img", { name: "확인됨", exact: true }).waitFor();
   assert.deepEqual(errors, []);
@@ -506,7 +546,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
       "student resource copy icon works",
       "teacher card footer exposes active and presentation actions",
       "teacher active item switches activity to resource per step",
-      "teacher active item preserves another step selection",
+      "teacher active item clears selections in every other step",
       "failed active item save keeps the previous selection and shows a toast",
       "student selected active card is marked current while confirmations remain",
       "teacher activity and resource headers omit lock controls",
@@ -565,6 +605,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await writeFile(path.join(testRoot, "next.config.mjs"), "/** @type {import('next').NextConfig} */\nconst nextConfig = { devIndicators: false };\nexport default nextConfig;\n");
     await writeFile(path.join(testRoot, "app", "layout.js"), 'import "../app/globals.css";\nimport "../app/book-sidebar.css";\nexport default function RootLayout({ children }) { return <html lang="ko"><body>{children}</body></html>; }\n');
     await writeFile(path.join(route, "page.jsx"), 'export { default } from "@/tests/fixtures/BookWorkflowPage";\n');
+    await mkdir(path.join(testRoot, "app", "qa-scroll"), { recursive: true });
+    await writeFile(path.join(testRoot, "app", "qa-scroll", "page.jsx"), 'export { default } from "@/tests/fixtures/BookScrollPage";\n');
     server = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "dev", "--port", String(port), "--hostname", "127.0.0.1"], {
       cwd: testRoot,
       windowsHide: true,
@@ -583,6 +625,39 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseUrl });
     const page = await context.newPage();
     const result = await verifyBookWorkflowUi(page, baseUrl);
+    const teacherPage = await context.newPage();
+    const studentPage = await context.newPage();
+    const mobilePage = await context.newPage();
+    await teacherPage.setViewportSize({ width: 1280, height: 900 });
+    await studentPage.setViewportSize({ width: 1024, height: 768 });
+    await mobilePage.setViewportSize({ width: 375, height: 812 });
+    await studentPage.goto(`${baseUrl}/qa-scroll`);
+    await mobilePage.goto(`${baseUrl}/qa-scroll`);
+    await teacherPage.goto(`${baseUrl}/qa-scroll?teacher=1`);
+    await teacherPage.getByRole("button", { name: "스크롤 방송 시작" }).click();
+    await studentPage.locator(".book-presentation-body").waitFor();
+    await mobilePage.locator(".book-presentation-body").waitFor();
+    await teacherPage.locator(".book-presentation-body").evaluate(body => { body.scrollTop = 1000; });
+    await studentPage.waitForFunction(() => document.querySelector(".book-presentation-body")?.scrollTop > 400);
+    assert.equal(await mobilePage.locator(".book-presentation-body").evaluate(body => body.scrollTop), 0);
+    await mobilePage.locator(".book-presentation-body").evaluate(body => { body.scrollTop = 200; });
+    await teacherPage.locator(".book-presentation-body").evaluate(body => { body.scrollTop = 1600; });
+    await studentPage.waitForFunction(() => document.querySelector(".book-presentation-body")?.scrollTop > 900);
+    const teacherAnchor = await teacherPage.locator(".book-presentation-body").evaluate(body => {
+      const top = body.getBoundingClientRect().top;
+      return [...body.querySelectorAll(".book-presentation-rich > *")].findLastIndex(block => block.getBoundingClientRect().top <= top + 1);
+    });
+    await studentPage.waitForFunction(expected => {
+      const body = document.querySelector(".book-presentation-body");
+      const top = body.getBoundingClientRect().top;
+      return [...body.querySelectorAll(".book-presentation-rich > *")].findLastIndex(block => block.getBoundingClientRect().top <= top + 1) === expected;
+    }, teacherAnchor);
+    assert.equal(await mobilePage.locator(".book-presentation-body").evaluate(body => body.scrollTop), 200);
+    await studentPage.screenshot({ path: path.join(outputDir, "desktop-scroll-follow.png") });
+    await mobilePage.screenshot({ path: path.join(outputDir, "mobile-independent-scroll.png") });
+    await teacherPage.getByRole("button", { name: "발표 종료", exact: true }).click();
+    await studentPage.locator(".book-presentation-body").waitFor({ state: "detached" });
+    await mobilePage.locator(".book-presentation-body").waitFor({ state: "detached" });
     await writeFile(path.join(outputDir, "results.json"), JSON.stringify({ ...result, fixtureUrl: `${baseUrl}/qa-book-workflow` }, null, 2));
     console.log(JSON.stringify({ ...result, fixtureUrl: `${baseUrl}/qa-book-workflow` }));
   } finally {
