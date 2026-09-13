@@ -73,6 +73,8 @@
 
 ## 5. States
 
+- Teacher main-card ordering uses the existing number badge as a draggable handle, without adding width to the header. The handle keeps the badge typography, uses a grab cursor and visible keyboard focus, and supports arrow-key moves. A drop target uses a dashed primary outline without changing card dimensions. Drops reorder only the current Step and save through project saving; failures retain the saved order. Student cards have no ordering controls.
+
 - Active-card highlight is shared by teacher and student activity/resource cards: both use the existing `is-current-activity` border and static soft glow. Changing the active selection removes the previous card highlight in both views; confirmation and lock styles remain independent.
 
 - The teacher activation command is a toggle: inactive items show `비활동`, selected items show `활동중`. Clicking the selected item clears that step's selection and removes its highlight in both views; each step can have zero or one active item. Activating another item replaces the previous selection. A stale deactivate request must not clear a newer selection of a different item.

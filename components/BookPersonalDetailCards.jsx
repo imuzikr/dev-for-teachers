@@ -60,6 +60,12 @@ function TeacherCardActions({ item, onPresent, onActivate, disabled }) {
   );
 }
 
+function CardOrder({ children, reorderProps }) {
+  return reorderProps
+    ? <button type="button" className="book-personal-activity-order book-card-order-handle" {...reorderProps.handle}>{children}</button>
+    : <span className="book-personal-activity-order">{children}</span>;
+}
+
 export function BookPersonalResourceCard({
   detailItem,
   index,
@@ -74,6 +80,7 @@ export function BookPersonalResourceCard({
   onToggleResourceLock,
   onActivate,
   activationDisabled,
+  reorderProps,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
@@ -93,9 +100,9 @@ export function BookPersonalResourceCard({
   const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
 
   return (
-    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
+    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
-        <span className="book-personal-activity-order">R{index + 1}</span>
+        <CardOrder reorderProps={reorderProps}>R{index + 1}</CardOrder>
         <div className="book-personal-activity-copy">
           <span>자료 {index + 1}</span>
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
@@ -172,6 +179,7 @@ export function BookPersonalActivityCard({
   onEdit,
   onActivate,
   activationDisabled,
+  reorderProps,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
@@ -195,9 +203,9 @@ export function BookPersonalActivityCard({
   const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
 
   return (
-    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
+    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
-        <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
+        <CardOrder reorderProps={reorderProps}>{String(index + 1).padStart(2, "0")}</CardOrder>
         <div className="book-personal-activity-copy">
           <span>활동 {index + 1}</span>
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>

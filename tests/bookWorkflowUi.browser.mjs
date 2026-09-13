@@ -139,6 +139,111 @@ async function collapseTeacherSidebars(page) {
   if (await helpToggle.count()) await helpToggle.click();
 }
 
+function reorderCard(page, key) {
+  return page.locator(`.book-project-flow-detail-list > article[data-reorder-key="${key}"]`).first();
+}
+
+function reorderHandle(page, title) {
+  return page.getByRole("button", { name: `${title} 순서 이동`, exact: true });
+}
+
+async function detailOrderKeys(page) {
+  return page.locator(".book-project-flow-detail-list > article[data-reorder-key]").evaluateAll((cards) => (
+    cards.map((card) => card.dataset.reorderKey)
+  ));
+}
+
+async function detailOrderTitles(page) {
+  return page.locator(".book-personal-detail-list:visible > article.book-personal-activity-card").evaluateAll((cards) => (
+    cards.map((card) => card.querySelector(".book-personal-activity-copy strong")?.textContent.trim())
+  ));
+}
+
+async function assertDetailOrder(page, expectedKeys, expectedTitles) {
+  assert.deepEqual(await detailOrderKeys(page), expectedKeys);
+  assert.deepEqual(await detailOrderTitles(page), expectedTitles);
+}
+
+async function assertSidebarOrder(page, stepTitle, expectedTitles) {
+  const nav = page.getByRole("navigation", { name: "프로젝트 Step 흐름", exact: true });
+  const stepButton = nav.getByRole("button", { name: new RegExp(stepTitle) }).first();
+  await stepButton.waitFor();
+  if (await stepButton.getAttribute("aria-expanded") !== "true") await stepButton.click({ position: { x: 20, y: 20 } });
+  const list = page.getByRole("list", { name: `${stepTitle} 활동과 자료 순서`, exact: true }).first();
+  await list.waitFor();
+  const titles = await list.locator("li strong").evaluateAll((items) => items.map((item) => item.textContent.trim()));
+  assert.deepEqual(titles, expectedTitles);
+}
+
+async function assertStudentHasNoReorderControls(page) {
+  assert.equal(await page.locator(".book-card-order-handle").count(), 0);
+  assert.equal(await page.locator(".book-project-flow-detail-list > article[data-reorder-key]").count(), 0);
+}
+
+async function dragByHandleToCard(page, title, targetKey) {
+  await reorderHandle(page, title).dragTo(reorderCard(page, targetKey));
+}
+
+async function pointerMoveHandleToCard(page, title, targetKey) {
+  const handle = reorderHandle(page, title);
+  const target = reorderCard(page, targetKey);
+  await handle.evaluate((button) => button.scrollIntoView({ block: "center", inline: "center" }));
+  const handleBox = await handle.boundingBox();
+  const targetBox = await target.boundingBox();
+  assert.ok(handleBox, `Missing handle box for ${title}`);
+  assert.ok(targetBox, `Missing target box for ${targetKey}`);
+  const client = await page.context().newCDPSession(page);
+  const start = { x: handleBox.x + handleBox.width / 2, y: handleBox.y + handleBox.height / 2 };
+  const end = { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 };
+  await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ ...start, id: 1 }] });
+  await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...end, id: 1 }] });
+  await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await client.detach();
+}
+
+async function showTouchDropIndicator(page, title, targetKey) {
+  const handle = reorderHandle(page, title);
+  const target = reorderCard(page, targetKey);
+  await handle.evaluate((button) => button.scrollIntoView({ block: "center", inline: "center" }));
+  const handleBox = await handle.boundingBox();
+  const targetBox = await target.boundingBox();
+  assert.ok(handleBox, `Missing handle box for ${title}`);
+  assert.ok(targetBox, `Missing target box for ${targetKey}`);
+  const client = await page.context().newCDPSession(page);
+  const start = {
+    x: handleBox.x + handleBox.width / 2,
+    y: handleBox.y + handleBox.height / 2,
+  };
+  const point = {
+    x: targetBox.x + targetBox.width / 2,
+    y: targetBox.y + targetBox.height / 2,
+  };
+  await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ ...start, id: 2 }] });
+  await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ ...point, id: 2 }] });
+  assert.equal(await target.getAttribute("data-drop-target"), "true");
+  return async () => {
+    await client.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+    await client.detach();
+  };
+}
+
+async function attemptCrossStepDrop(page) {
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await assertDetailOrder(page, ["activity:activity-1", "resource:resource-1"], ["생각 정리 활동", "체크리스트 자료"]);
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  try {
+    await reorderHandle(page, "체크리스트 자료").dispatchEvent("dragstart", { dataTransfer });
+    await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
+    await reorderCard(page, "activity:activity-2").dispatchEvent("dragover", { dataTransfer });
+    await reorderCard(page, "activity:activity-2").dispatchEvent("drop", { dataTransfer });
+  } finally {
+    await dataTransfer.dispose();
+  }
+  await assertDetailOrder(page, ["activity:activity-2", "resource:resource-2"], ["두 번째 활동", "두 번째 자료"]);
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await assertDetailOrder(page, ["activity:activity-1", "resource:resource-1"], ["생각 정리 활동", "체크리스트 자료"]);
+}
+
 async function captureVisibleSidebarConfirm(page, screenshotRoot, name, width, height) {
   await page.setViewportSize({ width, height });
   const confirm = page.locator(".student-activity-detail").getByRole("button", { name: "확인", exact: true });
@@ -214,6 +319,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.locator(".student-activity-detail").getByRole("button", { name: "확인", exact: true }).click();
   await activityCard.getByRole("button", { name: "확인됨", exact: true }).waitFor();
 
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole("button", { name: "교사 보기" }).click();
   await page.getByTestId("mode").getByText("teacher").waitFor();
   const teacherResource = cardWithText(page, ".book-personal-resource-card", "체크리스트 자료");
@@ -238,9 +344,41 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await teacherResource.getByRole("button", { name: "자료 잠금 해제" }).waitFor();
   await teacherResource.getByRole("button", { name: "자료 잠금 해제" }).click();
   await teacherResource.getByRole("button", { name: "자료 잠그기" }).waitFor();
+  await assertDetailOrder(page, ["activity:activity-1", "resource:resource-1"], ["생각 정리 활동", "체크리스트 자료"]);
+  await assertSidebarOrder(page, "최종 행동 확인", ["생각 정리 활동", "체크리스트 자료"]);
+  assert.equal(await reorderHandle(page, "생각 정리 활동").getAttribute("draggable"), "true");
+  assert.equal(await reorderHandle(page, "체크리스트 자료").getAttribute("draggable"), "true");
+  assert.equal(await reorderCard(page, "activity:activity-1").getAttribute("data-drop-target"), null);
+  await attemptCrossStepDrop(page);
+  await dragByHandleToCard(page, "체크리스트 자료", "activity:activity-1");
+  await assertDetailOrder(page, ["resource:resource-1", "activity:activity-1"], ["체크리스트 자료", "생각 정리 활동"]);
+  await assertSidebarOrder(page, "최종 행동 확인", ["체크리스트 자료", "생각 정리 활동"]);
+  await assertTeacherActiveButton(teacherResource, true);
+  await assertTeacherActiveButton(teacherActivity, false);
+  await reorderHandle(page, "체크리스트 자료").press("ArrowDown");
+  await assertDetailOrder(page, ["activity:activity-1", "resource:resource-1"], ["생각 정리 활동", "체크리스트 자료"]);
+  await assertSidebarOrder(page, "최종 행동 확인", ["생각 정리 활동", "체크리스트 자료"]);
+  await assertTeacherActiveButton(teacherResource, true);
+  await pointerMoveHandleToCard(page, "체크리스트 자료", "activity:activity-1");
+  await assertDetailOrder(page, ["resource:resource-1", "activity:activity-1"], ["체크리스트 자료", "생각 정리 활동"]);
+  await assertSidebarOrder(page, "최종 행동 확인", ["체크리스트 자료", "생각 정리 활동"]);
+  const cancelDropIndicator = await showTouchDropIndicator(page, "체크리스트 자료", "activity:activity-1");
+  await capture("teacher-drop-indicator-375.png", 375, 812);
+  await cancelDropIndicator();
+  assert.equal(await reorderCard(page, "activity:activity-1").getAttribute("data-drop-target"), null);
+  await assertDetailOrder(page, ["resource:resource-1", "activity:activity-1"], ["체크리스트 자료", "생각 정리 활동"]);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "다음 프로젝트 저장 실패" }).click();
+  await dragByHandleToCard(page, "체크리스트 자료", "activity:activity-1");
+  await page.getByTestId("toast").getByText("활동과 자료 순서를 저장하지 못했어요. 다시 시도해 주세요.").waitFor();
+  await assertDetailOrder(page, ["resource:resource-1", "activity:activity-1"], ["체크리스트 자료", "생각 정리 활동"]);
+  await assertSidebarOrder(page, "최종 행동 확인", ["체크리스트 자료", "생각 정리 활동"]);
   await capture("teacher-main-1280.png", 1280, 900);
   await capture("teacher-main-768.png", 768, 900);
   await capture("teacher-main-375.png", 375, 812);
+  await capture("teacher-reorder-1280.png", 1280, 900);
+  await capture("teacher-reorder-768.png", 768, 900);
+  await capture("teacher-reorder-375.png", 375, 812);
   await collapseTeacherSidebars(page);
   await capture("teacher-controls-1280.png", 1280, 900, { teacherControls: true });
   await capture("teacher-controls-768.png", 768, 900, { teacherControls: true });
@@ -265,6 +403,8 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await page.getByRole("button", { name: "학생 보기" }).click();
   await page.getByTestId("mode").getByText("student").waitFor();
+  await assertStudentHasNoReorderControls(page);
+  assert.deepEqual(await detailOrderTitles(page), ["체크리스트 자료", "생각 정리 활동"]);
   await assertCurrentActivity(resourceCard, false);
   await assertCurrentActivity(activityCard, false);
   await page.getByRole("button", { name: "교사 보기" }).click();
@@ -286,6 +426,8 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await page.getByRole("button", { name: "학생 보기" }).click();
   await page.getByTestId("mode").getByText("student").waitFor();
+  await assertStudentHasNoReorderControls(page);
+  assert.deepEqual(await detailOrderTitles(page), ["체크리스트 자료", "생각 정리 활동"]);
   await assertCurrentActivity(resourceCard, true);
   await assertCurrentActivity(activityCard, false);
   await assertFooterButtons(resourceCard, ["확인됨", "패널에서 열기"]);

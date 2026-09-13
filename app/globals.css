@@ -11712,6 +11712,23 @@ button.book-project-flow-pill:focus-visible {
   font-size: 11px;
   font-weight: 900;
 }
+.book-card-order-handle {
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  cursor: grab;
+  touch-action: none;
+}
+.book-card-order-handle:active { cursor: grabbing; }
+.book-card-order-handle:disabled { cursor: default; opacity: .6; }
+.book-card-order-handle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.book-personal-activity-card[data-drop-target="true"] {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+}
 .book-personal-activity-copy { display: contents; }
 .book-personal-activity-copy > span { color: var(--primary-dark); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .book-personal-activity-card strong {

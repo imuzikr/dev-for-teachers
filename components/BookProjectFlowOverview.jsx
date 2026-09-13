@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { stripHtml } from "@/lib/html";
 import { BookPersonalActivityCard, BookPersonalResourceCard } from "./BookPersonalDetailCards";
 import { IconLock, IconUnlock } from "./StatusIcons";
@@ -33,6 +33,9 @@ export default function BookProjectFlowOverview({
   onActivateItem,
   activationDisabled,
   onEditItem,
+  onReorderItem,
+  reorderDisabled,
+  reorderError,
 }) {
   const selectedIndex = sections.findIndex((section) => section.id === selectedStepId);
   const visibleEntries = selectedIndex >= 0
@@ -44,6 +47,82 @@ export default function BookProjectFlowOverview({
   const sectionIdentity = visibleSections.map((section) => section.id).join("|");
   const [openStepId, setOpenStepId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const dragItem = useRef(null);
+  const [dropKey, setDropKey] = useState(null);
+  const reorderScope = `${project?.classId}:${selectedStepId}:${isTeacher}`;
+
+  useEffect(() => {
+    dragItem.current = null;
+    setDropKey(null);
+  }, [reorderScope, reorderDisabled]);
+
+  function reorderProps(item) {
+    if (!isTeacher || !onReorderItem) return undefined;
+    const key = `${item.kind}:${item.id}`;
+    const reset = () => { dragItem.current = null; setDropKey(null); };
+    const validSource = () => !reorderDisabled && dragItem.current?.scope === reorderScope
+      && dragItem.current.item.stepId === item.stepId;
+    return {
+      card: {
+        "data-reorder-key": key,
+        "data-drop-target": dropKey === key ? "true" : undefined,
+        onDragOver: (event) => {
+          if (!validSource()) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          setDropKey(key);
+        },
+        onDragLeave: (event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setDropKey(null);
+        },
+        onDrop: (event) => {
+          if (!validSource()) return;
+          event.preventDefault();
+          const source = dragItem.current.item;
+          reset();
+          onReorderItem(source, item);
+        },
+      },
+      handle: {
+        "aria-label": `${item.title} 순서 이동`,
+        title: "드래그하여 순서 이동 · 방향키로 이동",
+        disabled: reorderDisabled,
+        draggable: !reorderDisabled,
+        onDragStart: (event) => {
+          dragItem.current = { item, scope: reorderScope };
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", key);
+          event.dataTransfer.setDragImage(event.currentTarget.closest("article"), 20, 20);
+        },
+        onDragEnd: reset,
+        onKeyDown: (event) => {
+          const direction = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key];
+          if (!direction || reorderDisabled) return;
+          event.preventDefault();
+          onReorderItem(item, direction);
+        },
+        onPointerDown: (event) => {
+          if (event.pointerType === "mouse" || reorderDisabled) return;
+          dragItem.current = { item, scope: reorderScope };
+          event.currentTarget.setPointerCapture(event.pointerId);
+        },
+        onPointerMove: (event) => {
+          if (event.pointerType === "mouse" || !validSource()) return;
+          const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-reorder-key]");
+          setDropKey(target?.dataset.reorderKey ?? null);
+        },
+        onPointerUp: (event) => {
+          if (event.pointerType === "mouse" || !validSource()) return;
+          const targetKey = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-reorder-key]")?.dataset.reorderKey;
+          const target = sections.find((section) => section.id === item.stepId)?.items
+            .find((entry) => `${entry.kind}:${entry.id}` === targetKey);
+          reset();
+          if (target) onReorderItem(item, target);
+        },
+        onPointerCancel: (event) => { if (event.pointerType !== "mouse") reset(); },
+      },
+    };
+  }
 
   useEffect(() => {
     setOpenStepId((current) => {
@@ -71,6 +150,7 @@ export default function BookProjectFlowOverview({
 
   return (
     <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
+      {reorderError && <p role="alert">{reorderError}</p>}
       {selectedIndex >= 0 ? (
         <div className="book-project-flow-selected">
           {visibleEntries.map(({ section }) => (
@@ -82,6 +162,7 @@ export default function BookProjectFlowOverview({
                       <BookPersonalResourceCard
                         key={`resource:${detailItem.id ?? `${section.id}-${index}`}`}
                         detailItem={detailItem}
+                        reorderProps={reorderProps(detailItem)}
                         index={index}
                         isTeacher={isTeacher}
                         selectedProgress={detailSelectedProgress}
@@ -99,6 +180,7 @@ export default function BookProjectFlowOverview({
                       <BookPersonalActivityCard
                         key={`activity:${detailItem.id}`}
                         detailItem={detailItem}
+                        reorderProps={reorderProps(detailItem)}
                         index={index}
                         response=""
                         isTeacher={isTeacher}

@@ -1,5 +1,13 @@
 import { orderedStepItems } from "./BookProjectPreview";
 
+function orderKey(kind, id) {
+  return `${kind}:${id}`;
+}
+
+function orderEntry(item) {
+  return { kind: item.kind, id: item.id };
+}
+
 function fallbackActivityItems(activities) {
   return activities.map((activity) => ({
     id: activity.id,
@@ -10,6 +18,23 @@ function fallbackActivityItems(activities) {
     stepId: "activities",
     stepTitle: "활동",
   }));
+}
+
+export function reorderBookProjectStepItem(step, item, target) {
+  const items = orderedStepItems(step);
+  const fromKey = orderKey(item?.kind, item?.id);
+  const fromIndex = items.findIndex((entry) => orderKey(entry.kind, entry.id) === fromKey);
+  if (fromIndex < 0) return step;
+
+  const toIndex = typeof target === "number"
+    ? fromIndex + target
+    : items.findIndex((entry) => orderKey(entry.kind, entry.id) === orderKey(target?.kind, target?.id));
+  if (toIndex < 0 || toIndex >= items.length || toIndex === fromIndex) return step;
+
+  const nextItems = [...items];
+  const [moved] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, moved);
+  return { ...step, itemOrder: nextItems.map(orderEntry) };
 }
 
 export function bookDetailSections(project, activities) {

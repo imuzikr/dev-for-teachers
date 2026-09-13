@@ -12,7 +12,7 @@ import { BookImagePresentationContext, useBookPresentationMode } from "./BookPre
 import BookProjectPanel from "./BookProjectPanel";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
-import { bookDetailSections } from "./bookProjectItems";
+import { bookDetailSections, reorderBookProjectStepItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
@@ -56,6 +56,9 @@ export default function BookWorkspace({
 }) {
   const [activatingScope, setActivatingScope] = useState(null);
   const activationPending = useRef(new Set());
+  const [reorderingScope, setReorderingScope] = useState(null);
+  const reorderPending = useRef(new Set());
+  const [reorderError, setReorderError] = useState("");
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
   const saveQueues = useRef(new Map());
@@ -69,6 +72,7 @@ export default function BookWorkspace({
   const scope = `${classId}:${projectId}:${user?.uid}`;
   const activeScope = useRef(scope);
   activeScope.current = scope;
+  useEffect(() => { setReorderError(""); }, [scope]);
   async function activateItem(item) {
     if (!isTeacher || !classId || editingProject || savingProject || activationPending.current.has(scope)) return;
     activationPending.current.add(scope);
@@ -97,6 +101,35 @@ export default function BookWorkspace({
     const saved = await onSaveProject({ title: previewProject.title, steps: nextSteps });
     if (saved !== false) setEditingCard(null);
     return saved;
+  }
+
+  async function reorderProjectItem(item, target) {
+    if (!isTeacher || !onSaveProject || !previewProject?.steps?.length || editingProject || savingProject || !item?.stepId) return;
+    if (target && typeof target !== "number" && target.stepId !== item.stepId) return;
+    const pendingScope = scope;
+    if (reorderPending.current.has(pendingScope)) return;
+    const step = previewProject.steps.find((candidate) => candidate.id === item.stepId);
+    if (!step) return;
+    const nextStep = reorderBookProjectStepItem(step, item, target);
+    if (nextStep === step) return;
+    const nextSteps = previewProject.steps.map((candidate) => (candidate.id === item.stepId ? nextStep : candidate));
+
+    reorderPending.current.add(pendingScope);
+    setReorderingScope(pendingScope);
+    setReorderError("");
+    try {
+      const saved = await onSaveProject({ title: previewProject.title, steps: nextSteps });
+      if (saved === false) throw new Error("활동과 자료 순서를 저장하지 못했어요. 다시 시도해 주세요.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "활동과 자료 순서를 저장하지 못했어요. 다시 시도해 주세요.";
+      if (activeScope.current === scope) {
+        setReorderError(message);
+        onToast?.(message);
+      }
+    } finally {
+      reorderPending.current.delete(pendingScope);
+      setReorderingScope((current) => (current === pendingScope ? null : current));
+    }
   }
   const previewActivities = useMemo(() => {
     const projectActivities = projectStepActivities(previewProject);
@@ -319,6 +352,9 @@ export default function BookWorkspace({
           onActivateItem={isTeacher ? activateItem : null}
           activationDisabled={editingProject || savingProject || activatingScope === scope}
           onEditItem={isTeacher && onSaveProject ? (item) => setEditingCard({ scope, stepId: item.stepId, kind: item.kind, id: item.id }) : null}
+          onReorderItem={isTeacher && onSaveProject ? reorderProjectItem : null}
+          reorderDisabled={editingProject || savingProject || reorderingScope === scope}
+          reorderError={reorderError}
           selectedStepId={selectedStepId}
           onSelectStep={onSelectStep}
         />

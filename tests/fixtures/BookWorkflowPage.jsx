@@ -79,19 +79,21 @@ export default function BookWorkflowPage() {
   const [selectedStepId, setSelectedStepId] = useState("step-1");
   const [toast, setToast] = useState("");
   const [locks, setLocks] = useState({});
+  const [projectSnapshot, setProjectSnapshot] = useState(project);
   const [activeItemByStep, setActiveItemByStep] = useState({});
   const [failNextActiveSave, setFailNextActiveSave] = useState(false);
+  const [failNextProjectSave, setFailNextProjectSave] = useState(false);
   const user = mode === "teacher" ? teacher : student;
   const participants = useMemo(() => [student], []);
   const liveProject = useMemo(() => ({
-    ...project,
+    ...projectSnapshot,
     activeItemByStep,
-    steps: project.steps.map((step) => ({
+    steps: projectSnapshot.steps.map((step) => ({
       ...step,
       activities: step.activities.map((activity) => ({ ...activity, locked: locks[activity.id] === true })),
       resources: step.resources.map((resource) => ({ ...resource, locked: locks[resource.id] === true })),
     })),
-  }), [activeItemByStep, locks]);
+  }), [activeItemByStep, locks, projectSnapshot]);
   const activities = useMemo(() => liveProject.steps.flatMap((step) => step.activities.map((activity) => ({
     ...activity,
     classId: liveProject.classId,
@@ -101,8 +103,21 @@ export default function BookWorkflowPage() {
     if (!id) return;
     setLocks((current) => ({ ...current, [id]: locked === true }));
   };
+  const saveProject = async (patch) => {
+    if (failNextProjectSave) {
+      setFailNextProjectSave(false);
+      setToast("프로젝트 순서를 저장하지 못했습니다. 다시 시도해 주세요.");
+      return false;
+    }
+    setProjectSnapshot((current) => ({
+      ...current,
+      title: patch.title ?? current.title,
+      steps: patch.steps ?? current.steps,
+    }));
+    return true;
+  };
   const setActiveItem = async (classId, stepId, kind, itemId, active = true) => {
-    if (classId !== project.classId) throw new Error("Unexpected class id");
+    if (classId !== projectSnapshot.classId) throw new Error("Unexpected class id");
     if (failNextActiveSave) {
       setFailNextActiveSave(false);
       throw new Error("Simulated active item save failure");
@@ -125,6 +140,7 @@ export default function BookWorkflowPage() {
         <button type="button" onClick={() => setSelectedStepId("step-1")}>Step 열기</button>
         <button type="button" onClick={() => setSelectedStepId("step-2")}>Step 2 열기</button>
         <button type="button" onClick={() => setFailNextActiveSave(true)}>다음 활동중 저장 실패</button>
+        <button type="button" onClick={() => setFailNextProjectSave(true)}>다음 프로젝트 저장 실패</button>
         <output data-testid="mode">{mode}</output>
         <output data-testid="toast">{toast || "no-toast"}</output>
       </div>
@@ -144,6 +160,7 @@ export default function BookWorkflowPage() {
           liveProjectReady
           onToggleActivityLock={toggleLock}
           onToggleProjectItemLock={toggleLock}
+          onSaveProject={saveProject}
           onToast={setToast}
           selectedStepId={selectedStepId}
           onSelectStep={setSelectedStepId}
