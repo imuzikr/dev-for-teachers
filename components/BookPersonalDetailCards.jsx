@@ -49,6 +49,17 @@ function IconExpand({ size = 14 }) {
   );
 }
 
+function TeacherCardActions({ item, onPresent, onActivate, disabled }) {
+  return (
+    <footer className="book-personal-card-actions book-teacher-card-actions">
+      <button type="button" className={item.isActive ? "btn-primary" : "btn-outline"}
+        aria-pressed={item.isActive === true} title={`${item.title} 활동중으로 지정`}
+        disabled={!onActivate || disabled} onClick={() => onActivate(item)}>활동중</button>
+      <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(item)}>발표 모드</button>
+    </footer>
+  );
+}
+
 export function BookPersonalResourceCard({
   detailItem,
   index,
@@ -61,6 +72,8 @@ export function BookPersonalResourceCard({
   onPresent,
   onEdit,
   onToggleResourceLock,
+  onActivate,
+  activationDisabled,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
@@ -80,7 +93,7 @@ export function BookPersonalResourceCard({
   const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
 
   return (
-    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive && !isTeacher ? " is-current-activity" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
@@ -106,11 +119,7 @@ export function BookPersonalResourceCard({
         {detailUrlSlot(locked ? "" : linkHref, linkLabel)}
       </div>
       {isTeacher && onPresent ? (
-        <footer className="book-personal-card-actions">
-          {onPresent && <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
-            발표 모드
-          </button>}
-        </footer>
+        <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher && (
         <footer className="book-personal-card-actions">
           <button type="button" className="btn-outline" disabled={locked || !save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
@@ -161,6 +170,8 @@ export function BookPersonalActivityCard({
   onToggleActivityLock,
   onPresent,
   onEdit,
+  onActivate,
+  activationDisabled,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
@@ -184,7 +195,7 @@ export function BookPersonalActivityCard({
   const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
 
   return (
-    <article onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}`}>
+    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive && !isTeacher ? " is-current-activity" : ""}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">
@@ -206,13 +217,7 @@ export function BookPersonalActivityCard({
         {detailUrlSlot(locked && !isTeacher ? "" : activityHref, activityLinkLabel)}
       </div>
       {isTeacher && onPresent ? (
-        <footer className="book-personal-card-actions">
-          {onPresent && (
-            <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(detailItem)}>
-              발표 모드
-            </button>
-          )}
-        </footer>
+        <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
           <button type="button" className="btn-outline" disabled={locked || !save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {

@@ -30,6 +30,8 @@ export default function BookProjectFlowOverview({
   onToggleItemLock,
   selectedStepId,
   onPresentItem,
+  onActivateItem,
+  activationDisabled,
   onEditItem,
 }) {
   const selectedIndex = sections.findIndex((section) => section.id === selectedStepId);
@@ -89,6 +91,8 @@ export default function BookProjectFlowOverview({
                         onToggleResourceLock={onToggleItemLock}
                         onConfirm={null}
                         onPresent={onPresentItem}
+                        onActivate={onActivateItem}
+                        activationDisabled={activationDisabled}
                         onEdit={onEditItem}
                       />
                     ) : (
@@ -110,6 +114,8 @@ export default function BookProjectFlowOverview({
                         }, locked) : null}
                         onConfirm={null}
                         onPresent={onPresentItem}
+                        onActivate={onActivateItem}
+                        activationDisabled={activationDisabled}
                         onEdit={onEditItem}
                       />
                     )

@@ -667,8 +667,8 @@ service cloud.firestore {
     }
     function validBookProject(classId) {
       return request.resource.data.keys().hasOnly([
-               'classId', 'title', 'version', 'steps', 'confirmableItemKeys', 'createdBy', 'updatedAt'
-             ])
+               'classId', 'title', 'version', 'steps', 'confirmableItemKeys', 'activeItemByStep', 'createdBy', 'updatedAt'
+              ])
              && request.resource.data.classId == classId
              && request.resource.data.title is string
              && request.resource.data.title.size() > 0
@@ -679,8 +679,23 @@ service cloud.firestore {
              && request.resource.data.steps.size() <= 30
              && request.resource.data.confirmableItemKeys is list
              && request.resource.data.confirmableItemKeys.size() <= 300
-             && request.resource.data.createdBy == uid()
+             && validBookActiveItemByStep(request.resource.data)
              && request.resource.data.updatedAt == request.time;
+    }
+    function validBookProjectCreate(classId) {
+      return validBookProject(classId)
+             && request.resource.data.createdBy == uid();
+    }
+    function validBookProjectUpdate(classId) {
+      return validBookProject(classId)
+             && request.resource.data.createdBy == resource.data.createdBy;
+    }
+    function validBookActiveItemByStep(data) {
+      return !('activeItemByStep' in data)
+             || (
+               data.activeItemByStep is map
+               && data.activeItemByStep.keys().size() <= 300
+             );
     }
     function validBookHelpNote(classId) {
       return request.resource.data.keys().hasOnly([
@@ -911,9 +926,12 @@ service cloud.firestore {
       allow read: if signedIn() && (
         isAdmin() || ownsClass(classId) || isClassMember(classId)
       );
-      allow create, update: if classDeletionClientWritesOpen()
-                            && (isAdmin() || ownsClassEditable(classId))
-                            && validBookProject(classId);
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(classId))
+                    && validBookProjectCreate(classId);
+      allow update: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(classId))
+                    && validBookProjectUpdate(classId);
       allow delete: if classDeletionClientWritesOpen()
                     && (isAdmin() || ownsClassEditable(classId));
     }

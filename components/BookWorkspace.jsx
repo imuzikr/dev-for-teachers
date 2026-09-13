@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
+import { setBookActiveItem, subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
 import { currentChecklistConfirmation } from "@/lib/activityChecklist";
 import { safeDisplayHtml } from "@/lib/html";
@@ -52,7 +52,10 @@ export default function BookWorkspace({
   selectedStepId,
   onSelectStep,
   onToast,
+  setActiveItem = setBookActiveItem,
 }) {
+  const [activatingScope, setActivatingScope] = useState(null);
+  const activationPending = useRef(new Set());
   const [entriesByActivity, setEntriesByActivity] = useState({});
   const [confirmations, setConfirmations] = useState([]);
   const saveQueues = useRef(new Map());
@@ -66,6 +69,19 @@ export default function BookWorkspace({
   const scope = `${classId}:${projectId}:${user?.uid}`;
   const activeScope = useRef(scope);
   activeScope.current = scope;
+  async function activateItem(item) {
+    if (!isTeacher || !classId || editingProject || savingProject || activationPending.current.has(scope)) return;
+    activationPending.current.add(scope);
+    setActivatingScope(scope);
+    try {
+      await setActiveItem(classId, item.stepId, item.kind, item.id);
+    } catch {
+      if (activeScope.current === scope) onToast?.("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.");
+    } finally {
+      activationPending.current.delete(scope);
+      setActivatingScope((current) => current === scope ? null : current);
+    }
+  }
   const previewProject = editingProject && draftProject ? draftProject : project;
   const editingCardStep = editingCard?.scope === scope && isTeacher
     ? previewProject?.steps?.find((step) => step.id === editingCard.stepId)
@@ -300,6 +316,8 @@ export default function BookWorkspace({
           onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
           onPresentItem={isTeacher ? bookPresentation.presentItem : null}
+          onActivateItem={isTeacher ? activateItem : null}
+          activationDisabled={editingProject || savingProject || activatingScope === scope}
           onEditItem={isTeacher && onSaveProject ? (item) => setEditingCard({ scope, stepId: item.stepId, kind: item.kind, id: item.id }) : null}
           selectedStepId={selectedStepId}
           onSelectStep={onSelectStep}

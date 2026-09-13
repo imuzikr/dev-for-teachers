@@ -25,7 +25,12 @@ export function bookDetailSections(project, activities) {
     const stepTitle = step.title || `Step ${index + 1}`;
     const items = orderedStepItems(step)
       .filter((item) => item.kind === "resource" || activityIds.has(item.id))
-      .map((item) => ({ ...item, stepId, stepTitle }));
+      .map((item) => ({
+        ...item,
+        stepId,
+        stepTitle,
+        isActive: project.activeItemByStep?.[stepId] === `${item.kind}:${item.id}`,
+      }));
     return {
       id: stepId,
       title: stepTitle,

@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
-import { makeEnv, asTeacher, seed } from "./helpers.mjs";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
 const projectPayload = (uid, overrides = {}) => ({
   classId: "cA",
@@ -94,6 +94,48 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     const db = asTeacher(env, "teacherB").firestore();
 
     await assertFails(setDoc(doc(db, "bookProjects", "cA"), projectPayload("teacherB", { createdBy: "teacherB" })));
+  });
+
+  it("담당 교사는 단계별 활성 항목 맵을 저장하고 기존 createdBy를 유지해 수정할 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), projectPayload("originalAdmin", { updatedAt: new Date(0) }));
+    });
+    const db = asTeacher(env, "teacherA").firestore();
+
+    await assertSucceeds(updateDoc(doc(db, "bookProjects", "cA"), {
+      activeItemByStep: { step1: "activity:act1", staleDeletedStep: "resource:old" },
+      updatedAt: serverTimestamp(),
+    }));
+  });
+
+  it("활성 항목 맵은 300개를 넘길 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), projectPayload("teacherA", { updatedAt: new Date(0) }));
+    });
+    const db = asTeacher(env, "teacherA").firestore();
+    const activeItemByStep = Object.fromEntries(Array.from({ length: 301 }, (_, index) => [`step${index}`, "activity:act1"]));
+
+    await assertFails(updateDoc(doc(db, "bookProjects", "cA"), {
+      activeItemByStep,
+      updatedAt: serverTimestamp(),
+    }));
+  });
+
+  it("학생은 활성 항목을 쓸 수 없고 등록된 학생은 프로젝트를 읽을 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), projectPayload("teacherA", {
+        activeItemByStep: { step1: "resource:res1" },
+        updatedAt: new Date(0),
+      }));
+      await setDoc(doc(db, "memberships", "studentA_cA"), { uid: "studentA", classId: "cA", accessVersion: 2 });
+    });
+    const db = asStudent(env, "studentA").firestore();
+
+    await assertSucceeds(getDoc(doc(db, "bookProjects", "cA")));
+    await assertFails(updateDoc(doc(db, "bookProjects", "cA"), {
+      activeItemByStep: { step1: "activity:act1" },
+      updatedAt: serverTimestamp(),
+    }));
   });
 
   it("보관된 반에는 담당 교사도 프로젝트를 저장할 수 없다", async () => {

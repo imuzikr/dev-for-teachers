@@ -31,25 +31,47 @@ const project = {
   id: "qa-book-project",
   classId: "qa-class",
   title: "책방 QA 프로젝트",
-  steps: [{
-    id: "step-1",
-    title: "최종 행동 확인",
-    activities: [{
-      id: "activity-1",
-      kind: "activity",
-      title: "생각 정리 활동",
-      content: "<p>읽은 내용을 한 문장으로 정리하세요.</p>",
-      url: "https://example.com/activity",
-      requiresAnswer: false,
-    }],
-    resources: [{
-      id: "resource-1",
-      kind: "resource",
-      title: "체크리스트 자료",
-      content: checklistHtml,
-      url: "https://example.com/resource",
-    }],
-  }],
+  activeItemByStep: {},
+  steps: [
+    {
+      id: "step-1",
+      title: "최종 행동 확인",
+      activities: [{
+        id: "activity-1",
+        kind: "activity",
+        title: "생각 정리 활동",
+        content: "<p>읽은 내용을 한 문장으로 정리하세요.</p>",
+        url: "https://example.com/activity",
+        requiresAnswer: false,
+      }],
+      resources: [{
+        id: "resource-1",
+        kind: "resource",
+        title: "체크리스트 자료",
+        content: checklistHtml,
+        url: "https://example.com/resource",
+      }],
+    },
+    {
+      id: "step-2",
+      title: "확장 행동 확인",
+      activities: [{
+        id: "activity-2",
+        kind: "activity",
+        title: "두 번째 활동",
+        content: "<p>다음 장면에서 시도할 행동을 고르세요.</p>",
+        url: "https://example.com/activity-2",
+        requiresAnswer: false,
+      }],
+      resources: [{
+        id: "resource-2",
+        kind: "resource",
+        title: "두 번째 자료",
+        content: "<p>두 번째 자료를 읽고 핵심을 표시하세요.</p>",
+        url: "https://example.com/resource-2",
+      }],
+    },
+  ],
 };
 
 export default function BookWorkflowPage() {
@@ -57,16 +79,19 @@ export default function BookWorkflowPage() {
   const [selectedStepId, setSelectedStepId] = useState("step-1");
   const [toast, setToast] = useState("");
   const [locks, setLocks] = useState({});
+  const [activeItemByStep, setActiveItemByStep] = useState({});
+  const [failNextActiveSave, setFailNextActiveSave] = useState(false);
   const user = mode === "teacher" ? teacher : student;
   const participants = useMemo(() => [student], []);
   const liveProject = useMemo(() => ({
     ...project,
+    activeItemByStep,
     steps: project.steps.map((step) => ({
       ...step,
       activities: step.activities.map((activity) => ({ ...activity, locked: locks[activity.id] === true })),
       resources: step.resources.map((resource) => ({ ...resource, locked: locks[resource.id] === true })),
     })),
-  }), [locks]);
+  }), [activeItemByStep, locks]);
   const activities = useMemo(() => liveProject.steps.flatMap((step) => step.activities.map((activity) => ({
     ...activity,
     classId: liveProject.classId,
@@ -76,13 +101,23 @@ export default function BookWorkflowPage() {
     if (!id) return;
     setLocks((current) => ({ ...current, [id]: locked === true }));
   };
+  const setActiveItem = async (classId, stepId, kind, itemId) => {
+    if (classId !== project.classId) throw new Error("Unexpected class id");
+    if (failNextActiveSave) {
+      setFailNextActiveSave(false);
+      throw new Error("Simulated active item save failure");
+    }
+    setActiveItemByStep((current) => ({ ...current, [stepId]: `${kind}:${itemId}` }));
+  };
 
   return (
     <main style={{ minHeight: "100vh" }}>
-      <div className="qa-workflow-toolbar" style={{ display: "flex", gap: 8, padding: 12, position: "sticky", top: 0, zIndex: 20, background: "#fbfaf3", borderBottom: "1px solid #ded8bf" }}>
+      <div className="qa-workflow-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: 12, position: "sticky", top: 0, zIndex: 20, background: "#fbfaf3", borderBottom: "1px solid #ded8bf" }}>
         <button type="button" onClick={() => setMode("student")}>학생 보기</button>
         <button type="button" onClick={() => setMode("teacher")}>교사 보기</button>
         <button type="button" onClick={() => setSelectedStepId("step-1")}>Step 열기</button>
+        <button type="button" onClick={() => setSelectedStepId("step-2")}>Step 2 열기</button>
+        <button type="button" onClick={() => setFailNextActiveSave(true)}>다음 활동중 저장 실패</button>
         <output data-testid="mode">{mode}</output>
         <output data-testid="toast">{toast || "no-toast"}</output>
       </div>
@@ -105,6 +140,7 @@ export default function BookWorkflowPage() {
           onToast={setToast}
           selectedStepId={selectedStepId}
           onSelectStep={setSelectedStepId}
+          setActiveItem={setActiveItem}
         />
       </main>
     </main>

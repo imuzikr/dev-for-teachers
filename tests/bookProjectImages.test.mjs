@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import vm from "node:vm";
 
-async function loadModules(firebase = false, { uploadFails = false } = {}) {
+async function loadModules(firebase = false, { existingProject = null, uploadFails = false } = {}) {
   const context = vm.createContext({ console, Date, Map, Set, TextEncoder, crypto: { randomUUID } });
   const source = (file) => readFileSync(new URL(`../lib/${file}.js`, import.meta.url), "utf8");
   const imageModule = new vm.SourceTextModule(source("bookProjectImages"), { context });
@@ -23,7 +23,7 @@ async function loadModules(firebase = false, { uploadFails = false } = {}) {
   Object.assign(firestore, {
     collection: (_db, name) => ({ path: name }),
     doc: (dbOrCollection, collectionOrId, explicitId) => ({ id: explicitId ?? collectionOrId ?? `id${++id}`, path: `${dbOrCollection?.path ?? collectionOrId}/${explicitId ?? ""}` }),
-    getDoc: async () => ({ exists: () => false }),
+    getDoc: async () => ({ exists: () => existingProject !== null, data: () => existingProject }),
     serverTimestamp: () => new Date(0),
     deleteField: () => null,
     writeBatch: () => ({ set: (...args) => writes.push(args), delete: () => {}, commit: async () => { commits += 1; } }),
@@ -175,6 +175,25 @@ test("Firestore batch writes images to project and flattened documents and never
   await assert.rejects(api.saveBookProject(user, oversized), { code: "book-project/size-limit" });
   assert.equal(api.commits(), 1);
   assert.equal(api.uploads(), 1);
+});
+
+test("Firestore project saves omit activeItemByStep so merge preserves concurrent active selections", async () => {
+  const api = await loadModules(true, {
+    existingProject: {
+      classId: "image-class",
+      title: "기존 프로젝트",
+      version: "version1",
+      activeItemByStep: { step1: "resource:res1" },
+      createdBy: "teacher",
+      steps: [],
+    },
+  });
+
+  await api.saveBookProject(user, draft());
+
+  const projectWrite = api.writes.find(([ref]) => ref.path.startsWith("bookProjects"));
+  assert.equal("activeItemByStep" in projectWrite[1], false);
+  assert.deepEqual(JSON.parse(JSON.stringify(projectWrite[2])), { merge: true });
 });
 
 test("Firestore saves a project whose inline images together exceed one document", async () => {

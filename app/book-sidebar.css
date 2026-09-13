@@ -103,7 +103,7 @@
 }
 
 @container book-main (max-width: 520px) {
-  .book-personal-activity-card footer.book-personal-card-actions {
+  .book-personal-activity-card footer.book-personal-card-actions:not(.book-teacher-card-actions) {
     grid-template-columns: 1fr;
   }
 

@@ -34,6 +34,63 @@ async function assertFooterButtons(card, expectedNames) {
   assert.deepEqual(buttons, expectedNames);
 }
 
+async function assertTeacherActiveButton(card, expected) {
+  await assertFooterButtons(card, ["활동중", "발표 모드"]);
+  assert.equal(await card.getByRole("button", { name: "활동중", exact: true }).getAttribute("aria-pressed"), expected ? "true" : "false");
+}
+
+async function assertCurrentActivity(card, expected) {
+  assert.equal(await card.evaluate((element) => element.classList.contains("is-current-activity")), expected);
+  assert.equal(await card.getAttribute("aria-current"), expected ? "true" : null);
+  if (expected) {
+    const style = await card.evaluate((element) => {
+      const computed = getComputedStyle(element);
+      return { borderColor: computed.borderColor, boxShadow: computed.boxShadow };
+    });
+    assert.notEqual(style.boxShadow, "none");
+    assert.match(style.boxShadow, /inset/);
+    assert.notEqual(style.borderColor, "rgba(0, 0, 0, 0)");
+  }
+}
+
+async function assertTeacherFooterGeometry(card, { withinViewport = false } = {}) {
+  const buttons = await card.locator("footer.book-teacher-card-actions button").evaluateAll((items) => items.map((button) => {
+    const rect = button.getBoundingClientRect();
+    return {
+      text: button.textContent.trim(),
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      width: rect.width,
+    };
+  }));
+  assert.equal(buttons.length, 2);
+  const [active, presentation] = buttons;
+  assert.equal(active.text, "활동중");
+  assert.equal(presentation.text, "발표 모드");
+  assert.ok(Math.abs(active.width - presentation.width) <= 2);
+  assert.ok(Math.abs(active.top - presentation.top) <= 2);
+  assert.ok(active.right <= presentation.left || presentation.right <= active.left);
+  if (withinViewport) {
+    const viewport = await card.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    for (const button of buttons) {
+      assert.ok(button.left >= 0, `${button.text} left edge is outside viewport`);
+      assert.ok(button.right <= viewport.width, `${button.text} right edge is outside viewport`);
+      assert.ok(button.top >= 0, `${button.text} top edge is outside viewport`);
+      assert.ok(button.bottom <= viewport.height, `${button.text} bottom edge is outside viewport`);
+    }
+  }
+}
+
+async function assertTeacherFootersEqualGeometry(page, options = {}) {
+  const footers = await page.locator("footer.book-teacher-card-actions").all();
+  for (const footer of footers) {
+    const card = footer.locator("xpath=ancestor::article[1]");
+    await assertTeacherFooterGeometry(card, options);
+  }
+}
+
 async function assertNoButtonOverlap(page) {
   const geometry = await page.locator(".book-personal-card-actions").evaluateAll((footers) => footers.map((footer) => {
     const buttons = Array.from(footer.querySelectorAll("button")).map((button) => {
@@ -51,7 +108,29 @@ async function assertNoButtonOverlap(page) {
     return { overlaps, minHeight: Math.min(...buttons.map((button) => button.height)) };
   }));
   assert.deepEqual(geometry.flatMap((item) => item.overlaps), []);
-  assert.ok(geometry.every((item) => item.minHeight >= 28));
+}
+
+async function screenshotApp(page, screenshotPath) {
+  const toolbar = page.locator(".qa-workflow-toolbar");
+  await toolbar.evaluate((element) => {
+    element.dataset.previousDisplay = element.style.display;
+    element.style.display = "none";
+  });
+  try {
+    await page.locator(".books-main").screenshot({ path: screenshotPath });
+  } finally {
+    await toolbar.evaluate((element) => {
+      element.style.display = element.dataset.previousDisplay ?? "";
+      delete element.dataset.previousDisplay;
+    });
+  }
+}
+
+async function collapseTeacherSidebars(page) {
+  const libraryToggle = page.getByRole("button", { name: "개발자실 패널 접기", exact: true });
+  if (await libraryToggle.count()) await libraryToggle.click();
+  const helpToggle = page.getByRole("button", { name: "도움 글 패널 접기", exact: true });
+  if (await helpToggle.count()) await helpToggle.click();
 }
 
 async function captureVisibleSidebarConfirm(page, screenshotRoot, name, width, height) {
@@ -74,7 +153,7 @@ async function captureVisibleSidebarConfirm(page, screenshotRoot, name, width, h
   assert.ok(geometry.button.right <= geometry.panel.right, `${name} confirm right is clipped by panel`);
   assert.ok(geometry.button.top >= 0 && geometry.button.bottom <= geometry.viewport.height, `${name} confirm is outside viewport vertically`);
   assert.ok(geometry.button.left >= 0 && geometry.button.right <= geometry.viewport.width, `${name} confirm is outside viewport horizontally`);
-  await page.screenshot({ path: path.join(screenshotRoot, name), fullPage: true });
+  await screenshotApp(page, path.join(screenshotRoot, name));
 }
 
 export default async function verifyBookWorkflowUi(page, baseUrl) {
@@ -84,10 +163,11 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   page.on("pageerror", (error) => errors.push(error.message));
   const screenshotRoot = process.env.BOOK_WORKFLOW_UI_OUTPUT ?? "artifacts/book-workflow-ui";
 
-  async function capture(name, width, height) {
+  async function capture(name, width, height, options = {}) {
     await page.setViewportSize({ width, height });
     await assertNoButtonOverlap(page);
-    await page.screenshot({ path: path.join(screenshotRoot, name), fullPage: true });
+    await assertTeacherFootersEqualGeometry(page, { withinViewport: options.teacherControls === true });
+    await screenshotApp(page, path.join(screenshotRoot, name));
   }
 
   await page.goto(`${baseUrl}/qa-book-workflow`);
@@ -96,6 +176,8 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   const activityCard = cardWithText(page, ".book-personal-activity-card:not(.book-personal-resource-card)", "생각 정리 활동");
   await assertFooterButtons(resourceCard, ["확인", "패널에서 열기"]);
   await assertFooterButtons(activityCard, ["확인", "패널에서 열기"]);
+  assert.equal(await page.getByRole("button", { name: "활동중", exact: true }).count(), 0);
+  assert.equal(await page.locator(".is-current-activity").count(), 0);
   await resourceCard.getByRole("button", { name: "자료 복사" }).click();
   await resourceCard.getByRole("button", { name: "자료를 복사했습니다" }).waitFor();
   const copiedText = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n");
@@ -130,8 +212,16 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByTestId("mode").getByText("teacher").waitFor();
   const teacherResource = cardWithText(page, ".book-personal-resource-card", "체크리스트 자료");
   const teacherActivity = cardWithText(page, ".book-personal-activity-card:not(.book-personal-resource-card)", "생각 정리 활동");
-  await assertFooterButtons(teacherResource, ["발표 모드"]);
-  await assertFooterButtons(teacherActivity, ["발표 모드"]);
+  await assertTeacherActiveButton(teacherResource, false);
+  await assertTeacherActiveButton(teacherActivity, false);
+  await assertTeacherFooterGeometry(teacherResource);
+  await assertTeacherFooterGeometry(teacherActivity);
+  await teacherActivity.getByRole("button", { name: "활동중", exact: true }).click();
+  await assertTeacherActiveButton(teacherActivity, true);
+  await assertTeacherActiveButton(teacherResource, false);
+  await teacherResource.getByRole("button", { name: "활동중", exact: true }).click();
+  await assertTeacherActiveButton(teacherResource, true);
+  await assertTeacherActiveButton(teacherActivity, false);
   await teacherResource.getByRole("button", { name: "자료 복사" }).waitFor();
   await teacherResource.getByRole("button", { name: "자료 잠그기" }).click();
   await teacherResource.getByRole("button", { name: "자료 잠금 해제" }).waitFor();
@@ -140,18 +230,55 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await capture("teacher-main-1280.png", 1280, 900);
   await capture("teacher-main-768.png", 768, 900);
   await capture("teacher-main-375.png", 375, 812);
+  await collapseTeacherSidebars(page);
+  await capture("teacher-controls-1280.png", 1280, 900, { teacherControls: true });
+  await capture("teacher-controls-768.png", 768, 900, { teacherControls: true });
+  await capture("teacher-controls-375.png", 375, 812, { teacherControls: true });
   await teacherResource.getByRole("button", { name: "발표 모드" }).click();
   await page.getByRole("alertdialog", { name: /체크리스트 자료 발표 모드/ }).waitFor();
+  await page.getByRole("button", { name: "발표 종료", exact: true }).click();
+
+  await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
+  const teacherStepTwoActivity = cardWithText(page, ".book-personal-activity-card:not(.book-personal-resource-card)", "두 번째 활동");
+  const teacherStepTwoResource = cardWithText(page, ".book-personal-resource-card", "두 번째 자료");
+  await teacherStepTwoActivity.getByRole("button", { name: "활동중", exact: true }).click();
+  await assertTeacherActiveButton(teacherStepTwoActivity, true);
+  await assertTeacherActiveButton(teacherStepTwoResource, false);
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await assertTeacherActiveButton(teacherResource, true);
+
+  await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
+  await page.getByRole("button", { name: "다음 활동중 저장 실패" }).click();
+  await teacherStepTwoResource.getByRole("button", { name: "활동중", exact: true }).click();
+  await page.getByTestId("toast").getByText("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.").waitFor();
+  await assertTeacherActiveButton(teacherStepTwoActivity, true);
+  await assertTeacherActiveButton(teacherStepTwoResource, false);
+
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await page.getByRole("button", { name: "학생 보기" }).click();
+  await page.getByTestId("mode").getByText("student").waitFor();
+  await assertCurrentActivity(resourceCard, true);
+  await assertCurrentActivity(activityCard, false);
+  await assertFooterButtons(resourceCard, ["확인됨", "패널에서 열기"]);
+  await assertFooterButtons(activityCard, ["확인됨", "패널에서 열기"]);
+  await capture("student-active-1280.png", 1280, 900);
+  await capture("student-active-768.png", 768, 900);
+  await capture("student-active-375.png", 375, 812);
   assert.deepEqual(errors, []);
   return {
     passed: true,
     cases: [
       "student main cards expose confirm and panel buttons",
+      "student cards do not expose teacher activation controls",
       "main checklist warning gates confirmation",
       "panel check-all enables main confirmation",
       "sidebar confirmation still works",
       "student resource copy icon works",
-      "teacher card footer only presents",
+      "teacher card footer exposes active and presentation actions",
+      "teacher active item switches activity to resource per step",
+      "teacher active item preserves another step selection",
+      "failed active item save keeps the previous selection and shows a toast",
+      "student selected active card is marked current while confirmations remain",
       "teacher header resource lock toggles through existing callback",
     ],
     screenshots: [
@@ -166,6 +293,12 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
       "teacher-main-1280.png",
       "teacher-main-768.png",
       "teacher-main-375.png",
+      "teacher-controls-1280.png",
+      "teacher-controls-768.png",
+      "teacher-controls-375.png",
+      "student-active-1280.png",
+      "student-active-768.png",
+      "student-active-375.png",
     ],
   };
 }

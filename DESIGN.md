@@ -73,6 +73,8 @@
 
 ## 5. States
 
+- `book-active-item`: Teacher activity/resource cards share an equal-width two-column footer: `활동중` and `발표 모드`. The active command uses the existing primary fill and `aria-pressed`; inactive commands use the outline style. Selection is exclusive within each saved step, independent of locks, presentation, and student confirmation. Student active cards retain their geometry with a 3px visual forest border (1px border plus 2px inset ring) and a static soft green glow (0 0 18px at 18% opacity). No pulsing animation. The current card exposes `aria-current`; switching removes the previous ring and glow. Both teacher footer columns remain side by side on mobile, with matching typography and minimum 44px targets. Pending writes disable activation commands without changing the saved selection.
+
 - Sidebar items have one edit command: the pencil opens single-item editing. Remove the duplicate expand-edit command; retain separate Step expansion and student enlargement. Right-side actions use 22px slots and 4px gaps in copy (resources only), image indicator, edit, delete order.
 
 - The overall progress table uses the shared student palette in participant order. All unlocked cells retain the same 14% student-colored fill; unchecked cells have a 1px 42% border, while checked cells have a 2px solid border with no central dot. The legend shows the same border distinction on a shared neutral background. Locked cells retain neutral hatching; latest completion retains its separate green corner marker. Cell dimensions stay unchanged.

@@ -11783,6 +11783,10 @@ button.book-project-flow-pill:focus-visible {
   border-color: rgba(60, 113, 65, 0.62);
   box-shadow: inset 0 0 0 1px rgba(60, 113, 65, 0.08);
 }
+.book-personal-activity-card.is-current-activity {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 2px var(--primary), 0 0 18px rgba(60, 113, 65, 0.18);
+}
 .book-personal-activity-card.does-not-require-answer,
 .book-personal-activity-card.uses-answer-modal {
   height: auto;
@@ -12424,7 +12428,7 @@ button.book-project-flow-pill:focus-visible {
     height: 400px;
     padding: 15px;
   }
-  .book-personal-activity-card footer.book-personal-card-actions { grid-template-columns: 1fr; }
+  .book-personal-activity-card footer.book-personal-card-actions:not(.book-teacher-card-actions) { grid-template-columns: 1fr; }
   .book-answer-edit-modal {
     width: calc(100vw - 28px);
     max-height: 88dvh;
