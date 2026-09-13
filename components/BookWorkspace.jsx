@@ -101,7 +101,6 @@ export default function BookWorkspace({
   const editingCardItem = editingCardStep?.[editingCardCollection]?.find((item) => item.id === editingCard.id);
   const addingCardStep = isTeacher && addingCard?.scope === scope
     ? previewProject?.steps?.find(step => step.id === addingCard.stepId) : null;
-  const currentStep = previewProject?.steps?.find(step => step.id === selectedStepId) ?? previewProject?.steps?.[0];
 
   async function saveNewCard(patch, kind) {
     if (!addingCardStep || !onSaveProject || addingPending.current || !["activity", "resource"].includes(kind)) return false;
@@ -380,11 +379,6 @@ export default function BookWorkspace({
 
       <section className="book-library-main" aria-label="개발자실 메인 화면">
         {header}
-        {isTeacher && onSaveProject && <div className="book-main-add-row">
-          <button type="button" className="btn-outline" disabled={!currentStep || editingProject || savingProject} onClick={() => setAddingCard({ scope, stepId: currentStep.id, id: crypto.randomUUID() })}>
-            <IconAddFeature size={16} /> 추가하기
-          </button>
-        </div>}
         <BookPersonalDashboard
           participants={participants}
           activities={previewActivities}
@@ -401,6 +395,11 @@ export default function BookWorkspace({
           onActivateItem={isTeacher ? activateItem : null}
           activationDisabled={editingProject || savingProject || activatingScope === scope}
           onEditItem={isTeacher && onSaveProject ? (item) => setEditingCard({ scope, stepId: item.stepId, kind: item.kind, id: item.id }) : null}
+          renderAddItem={isTeacher && onSaveProject ? (stepId) => (
+            <button type="button" className="btn-outline book-main-add-item" disabled={editingProject || savingProject} onClick={() => setAddingCard({ scope, stepId, id: crypto.randomUUID() })}>
+              <IconAddFeature size={16} /> 추가하기
+            </button>
+          ) : null}
           onReorderItem={isTeacher && onSaveProject ? reorderProjectItem : null}
           reorderDisabled={editingProject || savingProject || reorderingScope === scope}
           reorderError={reorderError}

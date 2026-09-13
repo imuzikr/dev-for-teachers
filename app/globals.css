@@ -8858,15 +8858,16 @@ pre code {
   margin-bottom: 12px;
 }
 
-.book-main-add-row {
-  display: flex;
-  justify-content: flex-end;
-  margin: 12px 0;
-}
-
-.book-main-add-row > button {
+.book-main-add-item {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-height: 120px;
+  width: 100%;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
   gap: 6px;
 }
 

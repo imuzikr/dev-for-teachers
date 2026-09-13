@@ -529,7 +529,14 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   for (const width of [1280, 768, 375]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole("button", { name: "추가하기", exact: true }).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(screenshotRoot, `main-add-item-${width}.png`) });
+    const addButton = page.getByRole("button", { name: "추가하기", exact: true });
+    assert.equal(await addButton.evaluate(button => button === button.parentElement.lastElementChild), true);
+    assert.equal(await addButton.evaluate(button => getComputedStyle(button).borderTopStyle), "dashed");
+    await addButton.click();
+    await typeDialog.getByRole("button", { name: "닫기", exact: true }).click();
+    await addButton.focus();
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.screenshot({ path: path.join(screenshotRoot, `main-add-item-${width}.png`), animations: "disabled" });
   }
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await page.getByRole("button", { name: "학생 하나 개인 카드 열기", exact: true }).click();

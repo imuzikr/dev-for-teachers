@@ -33,6 +33,7 @@ export default function BookProjectFlowOverview({
   onActivateItem,
   activationDisabled,
   onEditItem,
+  renderAddItem,
   onReorderItem,
   reorderDisabled,
   reorderError,
@@ -155,7 +156,7 @@ export default function BookProjectFlowOverview({
         <div className="book-project-flow-selected">
           {visibleEntries.map(({ section }) => (
             <section className="book-personal-step-section" key={section.id}>
-              {section.items.length > 0 ? (
+              {section.items.length > 0 || renderAddItem ? (
                 <div className="book-personal-detail-list book-project-flow-detail-list" aria-label={`${section.title} 활동과 자료`}>
                   {section.items.map((detailItem, index) => (
                     detailItem.kind === "resource" ? (
@@ -202,6 +203,7 @@ export default function BookProjectFlowOverview({
                       />
                     )
                   ))}
+                  {renderAddItem?.(section.id)}
                 </div>
               ) : (
                 <div className="book-dashboard-empty">이 Step에는 아직 활동이나 자료가 없습니다.</div>
@@ -259,6 +261,7 @@ export default function BookProjectFlowOverview({
                       </Tag>
                     );
                   })}
+                  {renderAddItem?.(section.id)}
                 </div>
               </details>
             ))}
