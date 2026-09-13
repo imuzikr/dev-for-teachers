@@ -53,8 +53,8 @@ function TeacherCardActions({ item, onPresent, onActivate, disabled }) {
   return (
     <footer className="book-personal-card-actions book-teacher-card-actions">
       <button type="button" className={item.isActive ? "btn-primary" : "btn-outline"}
-        aria-pressed={item.isActive === true} title={`${item.title} 활동중으로 지정`}
-        disabled={!onActivate || disabled} onClick={() => onActivate(item)}>활동중</button>
+        aria-pressed={item.isActive === true} title={`${item.title} ${item.isActive ? "비활동으로 전환" : "활동중으로 지정"}`}
+        disabled={!onActivate || disabled} onClick={() => onActivate(item)}>{item.isActive ? "활동중" : "비활동"}</button>
       <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(item)}>발표 모드</button>
     </footer>
   );
@@ -93,7 +93,7 @@ export function BookPersonalResourceCard({
   const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
 
   return (
-    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive && !isTeacher ? " is-current-activity" : ""}`}>
+    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
         <span className="book-personal-activity-order">R{index + 1}</span>
         <div className="book-personal-activity-copy">
@@ -195,7 +195,7 @@ export function BookPersonalActivityCard({
   const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
 
   return (
-    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive && !isTeacher ? " is-current-activity" : ""}`}>
+    <article aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
         <span className="book-personal-activity-order">{String(index + 1).padStart(2, "0")}</span>
         <div className="book-personal-activity-copy">

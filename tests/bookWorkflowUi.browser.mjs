@@ -35,8 +35,14 @@ async function assertFooterButtons(card, expectedNames) {
 }
 
 async function assertTeacherActiveButton(card, expected) {
-  await assertFooterButtons(card, ["활동중", "발표 모드"]);
-  assert.equal(await card.getByRole("button", { name: "활동중", exact: true }).getAttribute("aria-pressed"), expected ? "true" : "false");
+  const label = expected ? "활동중" : "비활동";
+  await assertFooterButtons(card, [label, "발표 모드"]);
+  assert.equal(await card.getByRole("button", { name: label, exact: true }).getAttribute("aria-pressed"), expected ? "true" : "false");
+  await assertCurrentActivity(card, expected);
+}
+
+async function clickTeacherActivation(card, expected) {
+  await card.getByRole("button", { name: expected ? "활동중" : "비활동", exact: true }).click();
 }
 
 async function assertCurrentActivity(card, expected) {
@@ -67,7 +73,7 @@ async function assertTeacherFooterGeometry(card, { withinViewport = false } = {}
   }));
   assert.equal(buttons.length, 2);
   const [active, presentation] = buttons;
-  assert.equal(active.text, "활동중");
+  assert.ok(["비활동", "활동중"].includes(active.text));
   assert.equal(presentation.text, "발표 모드");
   assert.ok(Math.abs(active.width - presentation.width) <= 2);
   assert.ok(Math.abs(active.top - presentation.top) <= 2);
@@ -216,10 +222,15 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherActiveButton(teacherActivity, false);
   await assertTeacherFooterGeometry(teacherResource);
   await assertTeacherFooterGeometry(teacherActivity);
-  await teacherActivity.getByRole("button", { name: "활동중", exact: true }).click();
+  await clickTeacherActivation(teacherActivity, false);
   await assertTeacherActiveButton(teacherActivity, true);
   await assertTeacherActiveButton(teacherResource, false);
-  await teacherResource.getByRole("button", { name: "활동중", exact: true }).click();
+  await clickTeacherActivation(teacherResource, false);
+  await assertTeacherActiveButton(teacherResource, true);
+  await assertTeacherActiveButton(teacherActivity, false);
+  await page.getByRole("button", { name: "다음 활동중 저장 실패" }).click();
+  await clickTeacherActivation(teacherResource, true);
+  await page.getByTestId("toast").getByText("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.").waitFor();
   await assertTeacherActiveButton(teacherResource, true);
   await assertTeacherActiveButton(teacherActivity, false);
   await teacherResource.getByRole("button", { name: "자료 복사" }).waitFor();
@@ -241,15 +252,33 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
   const teacherStepTwoActivity = cardWithText(page, ".book-personal-activity-card:not(.book-personal-resource-card)", "두 번째 활동");
   const teacherStepTwoResource = cardWithText(page, ".book-personal-resource-card", "두 번째 자료");
-  await teacherStepTwoActivity.getByRole("button", { name: "활동중", exact: true }).click();
+  await clickTeacherActivation(teacherStepTwoActivity, false);
   await assertTeacherActiveButton(teacherStepTwoActivity, true);
   await assertTeacherActiveButton(teacherStepTwoResource, false);
   await page.getByRole("button", { name: "Step 열기", exact: true }).click();
   await assertTeacherActiveButton(teacherResource, true);
+  await clickTeacherActivation(teacherResource, true);
+  await assertTeacherActiveButton(teacherResource, false);
+  await assertTeacherActiveButton(teacherActivity, false);
+  await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
+  await assertTeacherActiveButton(teacherStepTwoActivity, true);
+  await page.getByRole("button", { name: "Step 열기", exact: true }).click();
+  await page.getByRole("button", { name: "학생 보기" }).click();
+  await page.getByTestId("mode").getByText("student").waitFor();
+  await assertCurrentActivity(resourceCard, false);
+  await assertCurrentActivity(activityCard, false);
+  await page.getByRole("button", { name: "교사 보기" }).click();
+  await page.getByTestId("mode").getByText("teacher").waitFor();
+  await clickTeacherActivation(teacherResource, false);
+  await assertTeacherActiveButton(teacherResource, true);
+  await collapseTeacherSidebars(page);
+  await capture("teacher-controls-1280.png", 1280, 900, { teacherControls: true });
+  await capture("teacher-controls-768.png", 768, 900, { teacherControls: true });
+  await capture("teacher-controls-375.png", 375, 812, { teacherControls: true });
 
   await page.getByRole("button", { name: "Step 2 열기", exact: true }).click();
   await page.getByRole("button", { name: "다음 활동중 저장 실패" }).click();
-  await teacherStepTwoResource.getByRole("button", { name: "활동중", exact: true }).click();
+  await clickTeacherActivation(teacherStepTwoResource, false);
   await page.getByTestId("toast").getByText("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.").waitFor();
   await assertTeacherActiveButton(teacherStepTwoActivity, true);
   await assertTeacherActiveButton(teacherStepTwoResource, false);

@@ -101,13 +101,20 @@ export default function BookWorkflowPage() {
     if (!id) return;
     setLocks((current) => ({ ...current, [id]: locked === true }));
   };
-  const setActiveItem = async (classId, stepId, kind, itemId) => {
+  const setActiveItem = async (classId, stepId, kind, itemId, active = true) => {
     if (classId !== project.classId) throw new Error("Unexpected class id");
     if (failNextActiveSave) {
       setFailNextActiveSave(false);
       throw new Error("Simulated active item save failure");
     }
-    setActiveItemByStep((current) => ({ ...current, [stepId]: `${kind}:${itemId}` }));
+    const activeValue = `${kind}:${itemId}`;
+    setActiveItemByStep((current) => {
+      if (active) return { ...current, [stepId]: activeValue };
+      if (current[stepId] !== activeValue) return current;
+      const next = { ...current };
+      delete next[stepId];
+      return next;
+    });
   };
 
   return (

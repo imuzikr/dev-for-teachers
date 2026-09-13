@@ -73,6 +73,10 @@
 
 ## 5. States
 
+- Active-card highlight is shared by teacher and student activity/resource cards: both use the existing `is-current-activity` border and static soft glow. Changing the active selection removes the previous card highlight in both views; confirmation and lock styles remain independent.
+
+- The teacher activation command is a toggle: inactive items show `비활동`, selected items show `활동중`. Clicking the selected item clears that step's selection and removes its highlight in both views; each step can have zero or one active item. Activating another item replaces the previous selection. A stale deactivate request must not clear a newer selection of a different item.
+
 - `book-active-item`: Teacher activity/resource cards share an equal-width two-column footer: `활동중` and `발표 모드`. The active command uses the existing primary fill and `aria-pressed`; inactive commands use the outline style. Selection is exclusive within each saved step, independent of locks, presentation, and student confirmation. Student active cards retain their geometry with a 3px visual forest border (1px border plus 2px inset ring) and a static soft green glow (0 0 18px at 18% opacity). No pulsing animation. The current card exposes `aria-current`; switching removes the previous ring and glow. Both teacher footer columns remain side by side on mobile, with matching typography and minimum 44px targets. Pending writes disable activation commands without changing the saved selection.
 
 - Sidebar items have one edit command: the pencil opens single-item editing. Remove the duplicate expand-edit command; retain separate Step expansion and student enlargement. Right-side actions use 22px slots and 4px gaps in copy (resources only), image indicator, edit, delete order.

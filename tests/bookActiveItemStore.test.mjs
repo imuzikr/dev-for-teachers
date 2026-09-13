@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-async function loadStore(firebase = false) {
+async function loadStore(firebase = false, { initialActiveItemByStep = { step2: "activity:act2" } } = {}) {
   const context = vm.createContext({ console, Date, Map, Set, TextEncoder, crypto: { randomUUID } });
   const source = (file) => readFileSync(new URL(`../lib/${file}.js`, import.meta.url), "utf8");
   const stub = (exports) => new vm.SyntheticModule(Object.keys(exports), function defineExports() {
@@ -31,7 +31,7 @@ async function loadStore(firebase = false) {
       transactions += 1;
       const project = twoStepProject();
       await callback({
-        get: async () => ({ exists: () => true, data: () => ({ ...project, activeItemByStep: { step2: "activity:act2" } }) }),
+        get: async () => ({ exists: () => true, data: () => ({ ...project, activeItemByStep: initialActiveItemByStep }) }),
         update: (_ref, patch) => { projectPatch = patch; },
       });
     },
@@ -124,6 +124,44 @@ test("mock setBookActiveItem notifies subscribers with a new project object refe
   assert.deepEqual(plain(after.activeItemByStep), { step1: "resource:res1" });
 });
 
+test("setBookActiveItem can clear a matching active item without changing other steps", async () => {
+  const api = await loadStore();
+  await api.saveBookProject(user, twoStepProject());
+  await api.setBookActiveItem("classA", "step1", "resource", "res1");
+  await api.setBookActiveItem("classA", "step2", "resource", "res2");
+
+  await api.setBookActiveItem("classA", "step1", "resource", "res1", false);
+
+  assert.deepEqual(plain((await api.getBookProject("classA")).activeItemByStep), {
+    step2: "resource:res2",
+  });
+});
+
+test("setBookActiveItem allows off then on for the same step", async () => {
+  const api = await loadStore();
+  await api.saveBookProject(user, twoStepProject());
+  await api.setBookActiveItem("classA", "step1", "resource", "res1");
+  await api.setBookActiveItem("classA", "step1", "resource", "res1", false);
+  await api.setBookActiveItem("classA", "step1", "activity", (await api.getBookProject("classA")).steps[0].activities[0].id);
+
+  const project = await api.getBookProject("classA");
+  assert.match(project.activeItemByStep.step1, /^activity:/);
+});
+
+test("stale inactive commands do not clear a newer active target", async () => {
+  const api = await loadStore();
+  await api.saveBookProject(user, twoStepProject());
+  const act1 = (await api.getBookProject("classA")).steps[0].activities[0].id;
+  await api.setBookActiveItem("classA", "step1", "activity", act1);
+  await api.setBookActiveItem("classA", "step1", "resource", "res1");
+
+  await api.setBookActiveItem("classA", "step1", "activity", act1, false);
+
+  assert.deepEqual(plain((await api.getBookProject("classA")).activeItemByStep), {
+    step1: "resource:res1",
+  });
+});
+
 test("old projects default to no active item and saveBookProject preserves active selections", async () => {
   const api = await loadStore();
   await api.saveBookProject(user, twoStepProject());
@@ -150,6 +188,38 @@ test("Firestore setBookActiveItem uses a transaction and preserves other step se
   await api.setBookActiveItem("classA", "step1", "resource", "res1");
 
   assert.equal(api.transactions(), 1);
+  assert.deepEqual(plain(api.projectPatch().activeItemByStep), {
+    step1: "resource:res1",
+    step2: "activity:act2",
+  });
+});
+
+test("Firestore setBookActiveItem clears a matching active item transactionally", async () => {
+  const api = await loadStore(true, {
+    initialActiveItemByStep: {
+      step1: "resource:res1",
+      step2: "activity:act2",
+    },
+  });
+
+  await api.setBookActiveItem("classA", "step1", "resource", "res1", false);
+
+  assert.equal(api.transactions(), 1);
+  assert.deepEqual(plain(api.projectPatch().activeItemByStep), {
+    step2: "activity:act2",
+  });
+});
+
+test("Firestore stale inactive commands preserve newer transaction state", async () => {
+  const api = await loadStore(true, {
+    initialActiveItemByStep: {
+      step1: "resource:res1",
+      step2: "activity:act2",
+    },
+  });
+
+  await api.setBookActiveItem("classA", "step1", "activity", "act1", false);
+
   assert.deepEqual(plain(api.projectPatch().activeItemByStep), {
     step1: "resource:res1",
     step2: "activity:act2",

@@ -74,7 +74,7 @@ export default function BookWorkspace({
     activationPending.current.add(scope);
     setActivatingScope(scope);
     try {
-      await setActiveItem(classId, item.stepId, item.kind, item.id);
+      await setActiveItem(classId, item.stepId, item.kind, item.id, !item.isActive);
     } catch {
       if (activeScope.current === scope) onToast?.("활성 상태를 저장하지 못했습니다. 다시 시도해 주세요.");
     } finally {
