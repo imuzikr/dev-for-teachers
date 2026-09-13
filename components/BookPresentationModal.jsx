@@ -1,6 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import { backdropClose } from "@/lib/modal";
 import { safeBookImageUrl } from "./BookItemImages";
 import { useEffect, useRef, useState } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
@@ -112,7 +113,7 @@ export default function BookPresentationModal({
 
   if (typeof document === "undefined") return null;
   return createPortal(
-    <div ref={modalRef} tabIndex={-1} onKeyDown={(event) => {
+    <div ref={modalRef} tabIndex={-1} {...backdropClose(() => { if (onClose && !busy) onClose(); })} onKeyDown={(event) => {
       event.stopPropagation();
       if (event.key === "Escape" && onClose && !busy) { event.preventDefault(); onClose(); }
       if (event.key === "ArrowLeft" && onPrevious && !busy && !previousDisabled) { event.preventDefault(); onPrevious(); }
