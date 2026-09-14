@@ -9,8 +9,10 @@ import { IconStudent, IconTrash } from "@/components/StatusIcons";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { isAdmin } from "@/lib/user";
+import { groupUsersByClass } from "@/lib/adminUserGroups";
 import {
   deleteStudent,
+  subscribeAdminUserGroups,
   subscribeUserActivity,
   subscribeUserDirectory,
 } from "@/lib/store";
@@ -32,6 +34,10 @@ export default function AdminDashboardPage() {
   useRequireAuth();
   const admin = user ? isAdmin(user) : false;
   const [directory, setDirectory] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [memberships, setMemberships] = useState(null);
+  const [classFilter, setClassFilter] = useState("all");
+  const [membershipError, setMembershipError] = useState("");
   const [activityEvents, setActivityEvents] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [query, setQuery] = useState("");
@@ -48,7 +54,19 @@ export default function AdminDashboardPage() {
     return subscribeUserDirectory(setDirectory);
   }, [admin]);
 
-  const users = useMemo(() => {
+  useEffect(() => {
+    if (!admin) return;
+    return subscribeAdminUserGroups((data) => {
+      setClasses(data.classes);
+      setMemberships(data.memberships);
+      setMembershipError("");
+    }, () => {
+      setMemberships(null);
+      setMembershipError("반 소속 정보를 불러오지 못했습니다. 새로고침해 주세요.");
+    });
+  }, [admin]);
+
+  const matchingUsers = useMemo(() => {
     const term = query.trim().toLocaleLowerCase("ko");
     return directory
       .filter((entry) => entry.uid !== user?.uid)
@@ -60,6 +78,14 @@ export default function AdminDashboardPage() {
       })
       .sort((a, b) => userName(a).localeCompare(userName(b), "ko"));
   }, [directory, query, user?.uid]);
+
+  const groups = useMemo(() => groupUsersByClass(matchingUsers, classes, memberships ?? []), [matchingUsers, classes, memberships]);
+  const visibleGroups = groups.filter((group) => classFilter === "all" || group.id === classFilter);
+  const users = useMemo(() => classFilter === "all" ? matchingUsers : groups.find((group) => group.id === classFilter)?.users ?? [], [classFilter, matchingUsers, groups]);
+
+  useEffect(() => {
+    if (classFilter !== "all" && classFilter !== "unassigned" && !classes.some((entry) => entry.id === classFilter)) setClassFilter("all");
+  }, [classes, classFilter]);
 
   useEffect(() => {
     if (users.length === 0) {
@@ -113,11 +139,21 @@ export default function AdminDashboardPage() {
               placeholder="학교명 또는 이름 검색"
             />
           </label>
-          {users.length === 0 ? (
+          <label className="admin-user-search">
+            <span className="sr-only">반 선택</span>
+            <select aria-label="반 선택" value={classFilter} onChange={(event) => setClassFilter(event.target.value)}>
+              <option value="all">전체 반</option>
+              {groups.map((group) => <option key={group.id} value={group.id}>{group.name}{group.archived ? " (보관)" : ""} · {group.users.length}명</option>)}
+            </select>
+          </label>
+          {membershipError ? <p role="alert" className="admin-warning">{membershipError}</p> : memberships === null ? <div className="admin-empty">반 소속 불러오는 중...</div> : users.length === 0 ? (
             <div className="admin-empty">조회할 사용자가 없습니다.</div>
           ) : (
             <div className="student-list">
-              {users.map((entry) => (
+              {visibleGroups.filter((group) => group.users.length > 0).map((group) => (
+                <section className="admin-class-group" key={group.id} aria-label={group.name}>
+                  <h3>{group.name}{group.archived ? " (보관)" : ""}<span>{group.users.length}명</span></h3>
+              {group.users.map((entry) => (
                 <div className={`student-row ${entry.uid === selectedId ? "active" : ""}`} key={entry.uid}>
                   <button type="button" className="student-row-main" onClick={() => setSelectedId(entry.uid)}>
                     <span className="avatar avatar-sm"><IconStudent size={19} /></span>
@@ -136,6 +172,8 @@ export default function AdminDashboardPage() {
                     <IconTrash size={17} />
                   </button>
                 </div>
+              ))}
+                </section>
               ))}
             </div>
           )}
