@@ -8859,6 +8859,7 @@ pre code {
 }
 
 .book-main-add-item {
+  color: var(--text-sub);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8870,6 +8871,8 @@ pre code {
   background: transparent;
   gap: 6px;
 }
+
+.book-main-add-item svg [stroke] { stroke: currentColor; }
 
 .modal-backdrop.book-item-type-backdrop { align-items: center; padding: 16px; }
 .book-item-type-modal { width: min(420px, 100%); border-radius: 20px; }
