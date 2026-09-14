@@ -19,6 +19,8 @@ const confirmation = (uid, overrides = {}) => ({
 });
 
 const confirmationId = (kind, itemId, uid) => `cA|cA|${kind}|${itemId}|${uid}`;
+const confirmationIdFor = ({ classId = "cA", projectId = classId, kind, itemId, uid }) =>
+  `${classId}|${projectId}|${kind}|${itemId}|${uid}`;
 
 describe("책방 활동·자료 확인 규칙", () => {
   let env;
@@ -151,19 +153,63 @@ describe("책방 활동·자료 확인 규칙", () => {
     ));
   });
 
-  it("학생은 잠긴 활동을 확인할 수 없다", async () => {
+  it("학생은 legacy locked=true 활동도 확인할 수 있다", async () => {
     const db = asStudent(env, "stu1").firestore();
-    await assertFails(setDoc(
+    await assertSucceeds(setDoc(
       doc(db, "bookConfirmations", confirmationId("activity", "locked1", "stu1")),
       confirmation("stu1", { itemKind: "activity", itemId: "locked1", itemTitle: "잠긴 활동" })
     ));
   });
 
-  it("학생은 잠긴 자료를 확인할 수 없다", async () => {
+  it("학생은 legacy locked=true 자료도 확인할 수 있다", async () => {
     const db = asStudent(env, "stu1").firestore();
-    await assertFails(setDoc(
+    await assertSucceeds(setDoc(
       doc(db, "bookConfirmations", confirmationId("resource", "lockedRes1", "stu1")),
       confirmation("stu1", { itemId: "lockedRes1", itemTitle: "잠긴 자료" })
+    ));
+  });
+
+  it("반 밖의 사람은 legacy locked=true 자료를 확인할 수 없다", async () => {
+    const db = asStudent(env, "outsider").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "lockedRes1", "outsider")),
+      confirmation("outsider", { itemId: "lockedRes1", itemTitle: "잠긴 자료" })
+    ));
+  });
+
+  it("보관된 반에서는 legacy locked=true 활동 확인도 쓸 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "classes", "cArchived"), { createdBy: "teacherA", accessVersion: 2, archived: true });
+      await setDoc(doc(db, "memberships", "stu1_cArchived"), { uid: "stu1", classId: "cArchived" });
+      await setDoc(doc(db, "bookProjects", "cArchived"), {
+        classId: "cArchived",
+        title: "보관된 책방 프로젝트",
+        version: "v1",
+        steps: [],
+        confirmableItemKeys: ["activity:lockedArchived"],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(db, "bookActivities", "lockedArchived"), {
+        classId: "cArchived", projectId: "cArchived", type: "book", title: "보관된 잠긴 활동", locked: true,
+      });
+    });
+
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationIdFor({
+        classId: "cArchived",
+        kind: "activity",
+        itemId: "lockedArchived",
+        uid: "stu1",
+      })),
+      confirmation("stu1", {
+        classId: "cArchived",
+        projectId: "cArchived",
+        itemKind: "activity",
+        itemId: "lockedArchived",
+        itemTitle: "보관된 잠긴 활동",
+      })
     ));
   });
 
@@ -208,7 +254,7 @@ describe("책방 활동·자료 확인 규칙", () => {
     await assertSucceeds(setDoc(doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")), confirmation("stu1")));
   });
 
-  it("기존 프로젝트 경로에서도 잠긴 자료는 확인할 수 없다", async () => {
+  it("기존 프로젝트 경로에서도 legacy locked=true 자료를 확인할 수 있다", async () => {
     await seed(env, async (db) => {
       await setDoc(doc(db, "bookProjects", "cA"), {
         classId: "cA",
@@ -221,7 +267,7 @@ describe("책방 활동·자료 확인 규칙", () => {
     });
 
     const db = asStudent(env, "stu1").firestore();
-    await assertFails(setDoc(
+    await assertSucceeds(setDoc(
       doc(db, "bookConfirmations", confirmationId("resource", "lockedRes1", "stu1")),
       confirmation("stu1", { itemId: "lockedRes1", itemTitle: "잠긴 자료" })
     ));

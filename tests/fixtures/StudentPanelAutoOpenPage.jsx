@@ -5,7 +5,7 @@ import StudentActivityPanel, { useStudentActivityPanel } from "@/components/Stud
 import { useStudentPanelAutoOpenRequest } from "@/components/studentPanelAutoOpen";
 import BookPersonalItemViewModal from "@/components/BookPersonalItemViewModal";
 
-function AutoOpenContent({ activeStep, unlockResource, unlockActivity, renameItem, switchScope, returnScope, scope }) {
+function AutoOpenContent({ activeStep, unlockResource, activateResource, activateActivity, renameItem, switchScope, returnScope, scope }) {
   const panel = useStudentActivityPanel();
   const [answerDraft, setAnswerDraft] = useState("");
   const [checklistValues, setChecklistValues] = useState({});
@@ -32,7 +32,8 @@ function AutoOpenContent({ activeStep, unlockResource, unlockActivity, renameIte
   return (
     <main>
       <button type="button" onClick={unlockResource}>자료 잠금 해제</button>
-      <button type="button" onClick={unlockActivity}>활동 잠금 해제</button>
+      <button type="button" onClick={activateResource}>자료 활성화</button>
+      <button type="button" onClick={activateActivity}>활동 활성화</button>
       <button type="button" onClick={renameItem}>자료 제목 수정</button>
       <button type="button" onClick={switchScope}>다른 학습자 보기</button>
       <button type="button" onClick={returnScope}>원래 학습자 보기</button>
@@ -66,26 +67,26 @@ export default function StudentPanelAutoOpenPage() {
   const [ready, setReady] = useState(false);
   const [initialResourceLocked, setInitialResourceLocked] = useState(true);
   const [resourceLocked, setResourceLocked] = useState(true);
-  const [activityLocked, setActivityLocked] = useState(true);
+  const [activeItemKey, setActiveItemKey] = useState("activity:a1");
   const [titleVersion, setTitleVersion] = useState(0);
   const sections = useMemo(() => [
     {
       id: "step-0",
-      items: [{ kind: "resource", id: "initial", stepId: "step-0", source: { id: "initial", locked: initialResourceLocked } }],
+      items: [{ kind: "resource", id: "initial", isActive: false, stepId: "step-0", source: { id: "initial", locked: initialResourceLocked } }],
     },
     {
       id: "step-1",
-      items: [{ kind: "activity", id: "a1", stepId: "step-1", source: { id: "a1", locked: false } }],
+      items: [{ kind: "activity", id: "a1", isActive: activeItemKey === "activity:a1", stepId: "step-1", source: { id: "a1", locked: true } }],
     },
     {
       id: "step-2",
-      items: [{ kind: "resource", id: "r1", stepId: "step-2", source: { id: "r1", locked: resourceLocked, titleVersion } }],
+      items: [{ kind: "resource", id: "r1", isActive: activeItemKey === "resource:r1", stepId: "step-2", source: { id: "r1", locked: resourceLocked, titleVersion } }],
     },
     {
       id: "step-3",
-      items: [{ kind: "activity", id: "a2", stepId: "step-3", source: { id: "a2", locked: activityLocked } }],
+      items: [{ kind: "activity", id: "a2", isActive: activeItemKey === "activity:a2", stepId: "step-3", source: { id: "a2", locked: true } }],
     },
-  ], [activityLocked, initialResourceLocked, resourceLocked, titleVersion]);
+  ], [activeItemKey, initialResourceLocked, resourceLocked, titleVersion]);
   const itemKeys = useMemo(() => {
     if (activeStep === "step-2") return new Set(["resource:r1"]);
     if (activeStep === "step-3") return new Set(["activity:a2"]);
@@ -103,8 +104,12 @@ export default function StudentPanelAutoOpenPage() {
     setResourceLocked(false);
   }
 
-  function unlockActivity() {
-    setActivityLocked(false);
+  function activateResource() {
+    setActiveItemKey("resource:r1");
+  }
+
+  function activateActivity() {
+    setActiveItemKey("activity:a2");
   }
 
   function renameItem() {
@@ -114,12 +119,14 @@ export default function StudentPanelAutoOpenPage() {
   function switchScope() {
     setScope("other-scope");
     setActiveStep("step-2");
+    setActiveItemKey("resource:r1");
     setTitleVersion((current) => current + 1);
   }
 
   function returnScope() {
     setScope("auto-open-fixture");
     setActiveStep("step-2");
+    setActiveItemKey("resource:r1");
     setTitleVersion((current) => current + 1);
   }
 
@@ -135,7 +142,8 @@ export default function StudentPanelAutoOpenPage() {
             <AutoOpenContent
               activeStep={activeStep}
               unlockResource={unlockResource}
-              unlockActivity={unlockActivity}
+              activateResource={activateResource}
+              activateActivity={activateActivity}
               renameItem={renameItem}
               switchScope={switchScope}
               returnScope={returnScope}

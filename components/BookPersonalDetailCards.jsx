@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, IconEdit, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
-import { IconCheckSquare, IconLock } from "./StatusIcons";
+import { IconCheckSquare } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
 import ChecklistWarningModal from "./ChecklistWarningModal";
@@ -95,11 +95,10 @@ export function BookPersonalResourceCard({
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
-  const locked = !isTeacher && resource.locked === true;
   const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
 
   return (
-    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
+    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
         <CardOrder reorderProps={reorderProps}>R{index + 1}</CardOrder>
         <div className="book-personal-activity-copy">
@@ -107,9 +106,9 @@ export function BookPersonalResourceCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
-          {!isTeacher && <em role="img" className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : confirmed ? "확인됨" : "미확인"} title={locked ? "잠김" : confirmed ? "확인됨" : "미확인"}>{locked ? <IconLock size={16} /> : <IconCheckSquare checked={confirmed} />}</em>}
+          {!isTeacher && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="자료 수정" aria-label="자료 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
-          {onCopy && <button type="button" className="btn-ghost book-personal-copy-btn" title={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} disabled={locked && !isTeacher} onClick={() => onCopy(resource)}>
+          {onCopy && <button type="button" className="btn-ghost book-personal-copy-btn" title={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
           </button>}
           {isTeacher && <BookItemImageIndicator images={resource.images} />}
@@ -119,13 +118,13 @@ export function BookPersonalResourceCard({
         </div>
       </header>
       <div className="book-personal-card-body">
-        {detailUrlSlot(locked ? "" : linkHref, linkLabel)}
+        {detailUrlSlot(linkHref, linkLabel)}
       </div>
       {isTeacher && onPresent ? (
         <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher && (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={locked || !save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{confirmState.pendingKey === confirmationKey ? "저장 중..." : confirmed ? "확인됨" : "확인"}</button>
@@ -191,14 +190,13 @@ export function BookPersonalActivityCard({
   const openPanel = () => panel?.open(panelKey);
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
-  const locked = !isTeacher && activity.locked === true;
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const requiresAnswer = activity.requiresAnswer !== false;
   const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
 
   return (
-    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${locked ? " is-locked" : ""}${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
+    <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
       <header>
         <CardOrder reorderProps={reorderProps}>{String(index + 1).padStart(2, "0")}</CardOrder>
         <div className="book-personal-activity-copy">
@@ -206,7 +204,7 @@ export function BookPersonalActivityCard({
           <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
-          {(!isTeacher || !onPresent) && <em role="img" className={locked ? "is-locked" : confirmed ? "is-done" : ""} aria-label={locked ? "잠김" : confirmed ? "확인됨" : "미확인"} title={locked ? "잠김" : confirmed ? "확인됨" : "미확인"}>{locked ? <IconLock size={16} /> : <IconCheckSquare checked={confirmed} />}</em>}
+          {(!isTeacher || !onPresent) && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="활동 수정" aria-label="활동 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
           {isTeacher && <BookItemImageIndicator images={activity.images} />}
           <button type="button" className="btn-ghost book-personal-expand-btn book-card-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
@@ -215,13 +213,13 @@ export function BookPersonalActivityCard({
         </div>
       </header>
       <div className="book-personal-card-body">
-        {detailUrlSlot(locked && !isTeacher ? "" : activityHref, activityLinkLabel)}
+        {detailUrlSlot(activityHref, activityLinkLabel)}
       </div>
       {isTeacher && onPresent ? (
         <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={locked || !save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "확인"}</button>

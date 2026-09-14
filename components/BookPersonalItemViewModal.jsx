@@ -38,7 +38,6 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
   const url = isResource ? item.url : item.bookUrl || item.url;
   const href = resourceHref(url);
   const linkLabel = resourceLinkLabel(url);
-  const locked = !isTeacher && item.locked === true;
   const requiresAnswer = !isResource && item.requiresAnswer !== false;
 
   if (typeof document === "undefined") return null;
@@ -51,10 +50,8 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {panelTarget ? <button type="button" className="btn-outline" onClick={onExpand}>확대</button> : <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>}
         </header>
         <div className="book-personal-expand-body">
-          {modalUrlSlot(locked && !isTeacher ? "" : href, linkLabel)}
-          {locked ? (
-            <p className="book-personal-expand-locked">교사가 {itemLabel}를 열면 확인할 수 있습니다.</p>
-          ) : !isTeacher && !isResource && item.templateEnabled === true ? (
+          {modalUrlSlot(href, linkLabel)}
+          {!isTeacher && !isResource && item.templateEnabled === true ? (
             <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
           ) : (
             <RichTextDisplay
@@ -68,14 +65,14 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
-          {!locked && isTeacher && <BookItemImages images={item.images} onPresent={onPresent} />}
-          {requiresAnswer && !locked && !hideResponse && (
+          {isTeacher && <BookItemImages images={item.images} onPresent={onPresent} />}
+          {requiresAnswer && !hideResponse && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
               {!isTeacher && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving} /> : <p>{response || "아직 입력한 내용이 없습니다."}</p>}
             </section>
           )}
-          {!isTeacher && !locked && (
+          {!isTeacher && (
             <div className="student-activity-detail-actions">
               {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && hasChecklist && onCheckAll && <div className="student-checklist-bulk-actions">
@@ -95,7 +92,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
             </div>
           )}
-          {!locked && !isTeacher && <BookItemImages images={item.images} previewImages />}
+          {!isTeacher && <BookItemImages images={item.images} previewImages />}
         </div>
       </section>
   );

@@ -662,9 +662,6 @@ service cloud.firestore {
     function isBookActivityMember(aId) {
       return isClassMember(bookActivityClassId(aId));
     }
-    function isBookActivityLocked(aId) {
-      return get(/databases/$(database)/documents/bookActivities/$(aId)).data.get('locked', false) == true;
-    }
     function validBookProject(classId) {
       return request.resource.data.keys().hasOnly([
                'classId', 'title', 'version', 'steps', 'confirmableItemKeys', 'activeItemByStep', 'createdBy', 'updatedAt'
@@ -896,7 +893,6 @@ service cloud.firestore {
                       && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
                       && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
                       && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
-                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.get('locked', false) != true
                     )
                     || (
                       !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
@@ -906,7 +902,6 @@ service cloud.firestore {
                            || (
                                 get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
                                 && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
-                                && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.get('locked', false) != true
                               )
                          )
                     )
@@ -918,7 +913,6 @@ service cloud.firestore {
                exists(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId))
                && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
                && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
-               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.get('locked', false) != true
              );
     }
 
@@ -994,8 +988,7 @@ service cloud.firestore {
                       && signedIn()
                       && sId == uid()
                       && request.resource.data.authorId == uid()
-                      && isBookActivityMember(aId)
-                      && !isBookActivityLocked(aId);
+                      && isBookActivityMember(aId);
         allow delete: if classDeletionClientWritesOpen()
                       && (isAdmin() || ownsBookActivityEditable(aId));
       }

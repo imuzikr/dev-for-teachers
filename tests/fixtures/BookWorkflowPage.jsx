@@ -140,6 +140,7 @@ export default function BookWorkflowPage() {
         <button type="button" onClick={() => setMode("teacher")}>교사 보기</button>
         <button type="button" onClick={() => setLocks(current => ({ ...current, "activity-1": true }))}>이전 활동 잠금 재현</button>
         <button type="button" onClick={() => setLocks(current => ({ ...current, "resource-1": !current["resource-1"] }))}>이전 자료 잠금 전환</button>
+        <button type="button" onClick={() => setLocks(current => ({ ...current, "activity-1": !current["activity-1"] }))}>이전 활동 잠금 전환</button>
         <button type="button" onClick={() => setActiveItemByStep({ "step-1": "activity:activity-1" })}>원격 활동 활성화</button>
         <button type="button" onClick={() => setActiveItemByStep({ "step-1": "resource:resource-1" })}>원격 자료 활성화</button>
         <button type="button" onClick={() => setSelectedStepId("step-1")}>Step 열기</button>

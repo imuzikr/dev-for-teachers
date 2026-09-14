@@ -11,8 +11,8 @@ import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
-const entry = (uid, answers = { K: "안다" }) => ({
-  activityId: "act1", authorId: uid, authorName: "학생A", answers,
+const entry = (uid, answers = { K: "안다" }, overrides = {}) => ({
+  activityId: "act1", authorId: uid, authorName: "학생A", answers, ...overrides,
 });
 
 describe("개인 활동 제출물 규칙", () => {
@@ -37,6 +37,11 @@ describe("개인 활동 제출물 규칙", () => {
       await setDoc(doc(db, "bookActivities", "locked1"), {
         classId: "cA", type: "kwls", title: "잠긴 활동", locked: true,
       });
+      await setDoc(doc(db, "classes", "cArchived"), { createdBy: "teacherA", accessVersion: 2, archived: true });
+      await setDoc(doc(db, "memberships", "stu1_cArchived"), { uid: "stu1", classId: "cArchived" });
+      await setDoc(doc(db, "bookActivities", "lockedArchived"), {
+        classId: "cArchived", type: "kwls", title: "보관된 잠긴 활동", locked: true,
+      });
     });
   });
 
@@ -53,9 +58,28 @@ describe("개인 활동 제출물 규칙", () => {
     await assertFails(setDoc(doc(db, "bookActivities", "act1", "entries", "stu2"), entry("stu2")));
   });
 
-  it("활동이 잠기면 학생은 쓸 수 없다", async () => {
+  it("학생은 legacy locked=true 활동에도 자기 답변을 쓸 수 있다", async () => {
     const db = asStudent(env, "stu1").firestore();
-    await assertFails(setDoc(doc(db, "bookActivities", "locked1", "entries", "stu1"), entry("stu1")));
+    await assertSucceeds(setDoc(
+      doc(db, "bookActivities", "locked1", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "locked1" })
+    ));
+  });
+
+  it("반 밖의 사람은 legacy locked=true 활동에 답변을 쓸 수 없다", async () => {
+    const db = asStudent(env, "outsider").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookActivities", "locked1", "entries", "outsider"),
+      entry("outsider", { K: "안다" }, { activityId: "locked1" })
+    ));
+  });
+
+  it("보관된 반에서는 legacy locked=true 활동 답변도 쓸 수 없다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookActivities", "lockedArchived", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "lockedArchived" })
+    ));
   });
 
   it("같은 반이어도 남의 제출물은 읽을 수 없다", async () => {

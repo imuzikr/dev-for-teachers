@@ -27,6 +27,16 @@ export default async function verifyStudentPanelAutoOpen(page, baseUrl = "http:/
   }
 
   await page.getByRole("button", { name: "자료 잠금 해제" }).click();
+  const afterLegacyUnlock = await page.evaluate(() => ({
+    collapsed: document.querySelector(".student-activity-side")?.classList.contains("is-collapsed"),
+    selected: document.querySelector('[aria-label="선택된 패널 항목"]')?.textContent,
+    step: document.querySelector('[aria-label="현재 스텝"]')?.textContent,
+  }));
+  if (!afterLegacyUnlock.collapsed || afterLegacyUnlock.selected !== "none" || afterLegacyUnlock.step !== "step-1") {
+    throw new Error(`Legacy lock transition auto-opened the panel: ${JSON.stringify(afterLegacyUnlock)}`);
+  }
+
+  await page.getByRole("button", { name: "자료 활성화" }).click();
   await page.locator(".student-activity-detail").waitFor({ state: "visible" });
   const opened = await page.evaluate(() => ({
     collapsed: document.querySelector(".student-activity-side")?.classList.contains("is-collapsed"),
@@ -70,7 +80,7 @@ export default async function verifyStudentPanelAutoOpen(page, baseUrl = "http:/
     throw new Error(`Old auto-open request replayed after returning to original scope: ${JSON.stringify(afterScopeReturn)}`);
   }
 
-  await page.getByRole("button", { name: "활동 잠금 해제" }).click();
+  await page.getByRole("button", { name: "활동 활성화" }).click();
   await page.getByLabel("답변 내용").fill("draft survives panel collapse");
   await page.locator('.student-activity-detail input[type="checkbox"]').first().check();
   await page.getByRole("button", { name: "활동 패널 접기" }).click();
@@ -86,5 +96,5 @@ export default async function verifyStudentPanelAutoOpen(page, baseUrl = "http:/
     throw new Error(`Activity panel draft/checklist state was not preserved: ${JSON.stringify(preserved)}`);
   }
 
-  return { passed: true, initial, afterInitialReady, opened, afterTitleChange, afterScopeSwitch, afterScopeReturn, preserved };
+  return { passed: true, initial, afterInitialReady, afterLegacyUnlock, opened, afterTitleChange, afterScopeSwitch, afterScopeReturn, preserved };
 }

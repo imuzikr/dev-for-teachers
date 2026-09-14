@@ -4,12 +4,6 @@ function panelItemKey(item) {
   return `${item.kind}:${item.id}`;
 }
 
-export function studentPanelLockState(sections) {
-  return new Map(sections.flatMap((section) => (
-    section.items.map((item) => [panelItemKey(item), item.source?.locked === true])
-  )));
-}
-
 export function panelActiveState(sections) {
   return new Map(sections.flatMap(section => section.items.map(item => [panelItemKey(item), item.isActive === true])));
 }
@@ -25,24 +19,8 @@ export function latestActivatedPanelItem(previous, sections) {
   return activated;
 }
 
-export function latestUnlockedPanelItem(previousLockState, sections) {
-  if (!previousLockState) return null;
-
-  let unlocked = null;
-  sections.forEach((section) => {
-    section.items.forEach((item) => {
-      const key = panelItemKey(item);
-      if (previousLockState.get(key) === true && item.source?.locked !== true) {
-        unlocked = { key, stepId: item.stepId || section.id };
-      }
-    });
-  });
-  return unlocked;
-}
-
 export function useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready = true, scope }) {
   const [autoOpenRequest, setAutoOpenRequest] = useState(null);
-  const previousLockState = useRef({ scope: "", lockState: null });
   const previousActiveState = useRef({ scope: "", state: null });
   const scopeGeneration = useRef({ identity: "", generation: 0 });
   const scopeIdentity = `${scope}:${isTeacher ? "teacher" : "student"}:${ready ? "ready" : "pending"}`;
@@ -55,28 +33,21 @@ export function useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectSt
   }
 
   useEffect(() => {
-    const nextLockState = studentPanelLockState(sections);
-    const lockScope = scopeIdentity;
+    const activeScope = scopeIdentity;
     const generation = scopeGeneration.current.generation;
     if (!ready) {
-      previousActiveState.current = { scope: lockScope, state: null };
-      previousLockState.current = { scope: lockScope, lockState: null };
+      previousActiveState.current = { scope: activeScope, state: null };
       setAutoOpenRequest(null);
       return;
     }
-    const previous = previousLockState.current.scope === lockScope
-      ? previousLockState.current.lockState
-      : null;
-    previousLockState.current = { scope: lockScope, lockState: nextLockState };
-    const previousActive = previousActiveState.current.scope === lockScope ? previousActiveState.current.state : null;
-    previousActiveState.current = { scope: lockScope, state: panelActiveState(sections) };
-    const unlocked = latestActivatedPanelItem(previousActive, sections)
-      || (!isTeacher ? latestUnlockedPanelItem(previous, sections) : null);
-    if (!unlocked) return;
-    onSelectStep?.(unlocked.stepId);
+    const previousActive = previousActiveState.current.scope === activeScope ? previousActiveState.current.state : null;
+    previousActiveState.current = { scope: activeScope, state: panelActiveState(sections) };
+    const activated = latestActivatedPanelItem(previousActive, sections);
+    if (!activated) return;
+    onSelectStep?.(activated.stepId);
     setAutoOpenRequest((current) => ({
-      key: unlocked.key,
-      stepId: unlocked.stepId,
+      key: activated.key,
+      stepId: activated.stepId,
       scope,
       generation,
       requestId: (current?.requestId ?? 0) + 1,

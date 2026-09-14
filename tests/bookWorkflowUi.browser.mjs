@@ -331,6 +331,35 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherFooterGeometry(teacherResource);
   await assertTeacherFooterGeometry(teacherActivity);
   await page.getByRole("button", { name: "이전 자료 잠금 전환", exact: true }).click();
+  await page.getByRole("button", { name: "이전 활동 잠금 전환", exact: true }).click();
+  await page.getByRole("button", { name: "학생 보기", exact: true }).click();
+  const legacyStudentResource = cardWithText(page, ".book-personal-resource-card", "체크리스트 자료");
+  assert.equal(await legacyStudentResource.getByRole("button", { name: "자료 복사", exact: true }).isDisabled(), false);
+  await legacyStudentResource.getByRole("button", { name: "자료 복사", exact: true }).click();
+  await legacyStudentResource.getByRole("button", { name: "자료를 복사했습니다", exact: true }).waitFor();
+  await legacyStudentResource.getByRole("button", { name: "패널에서 열기", exact: true }).click();
+  await page.locator(".student-activity-detail").getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await screenshotApp(page, path.join(screenshotRoot, `student-legacy-resource-${width}.png`));
+  }
+  await legacyStudentResource.getByRole("button", { name: "자료 확대", exact: true }).click();
+  const legacyStudentDialog = page.getByRole("dialog", { name: "체크리스트 자료", exact: true });
+  await legacyStudentDialog.getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await legacyStudentDialog.getByRole("button", { name: "닫기", exact: true }).click();
+  await activityCard.getByRole("button", { name: "패널에서 열기", exact: true }).click();
+  await page.locator(".student-activity-detail").getByText("읽은 내용을 한 문장으로 정리하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await activityCard.getByRole("button", { name: "활동 확대", exact: true }).click();
+  const legacyActivityDialog = page.getByRole("dialog", { name: "생각 정리 활동", exact: true });
+  await legacyActivityDialog.getByText("읽은 내용을 한 문장으로 정리하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await legacyActivityDialog.getByRole("button", { name: "닫기", exact: true }).click();
+  await page.getByRole("button", { name: "이전 자료 잠금 전환", exact: true }).click();
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.locator(".student-activity-detail").getByText("읽은 내용을 한 문장으로 정리하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await page.getByRole("button", { name: "이전 자료 잠금 전환", exact: true }).click();
+  await page.getByRole("button", { name: "이전 활동 잠금 전환", exact: true }).click();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "교사 보기", exact: true }).click();
   await teacherResource.getByRole("button", { name: "자료 확대", exact: true }).click();
   const legacyResourceDialog = page.getByRole("dialog", { name: "체크리스트 자료", exact: true });
   await legacyResourceDialog.getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
@@ -641,6 +670,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
     browser = await chromium.launch({ channel: "chrome", headless: true });
     const context = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"], baseURL: baseUrl });
+    context.setDefaultNavigationTimeout(120000);
     await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseUrl });
     const page = await context.newPage();
     const result = await verifyBookWorkflowUi(page, baseUrl);
