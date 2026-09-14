@@ -330,6 +330,18 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await assertTeacherActiveButton(teacherActivity, false);
   await assertTeacherFooterGeometry(teacherResource);
   await assertTeacherFooterGeometry(teacherActivity);
+  await page.getByRole("button", { name: "이전 자료 잠금 전환", exact: true }).click();
+  await teacherResource.getByRole("button", { name: "자료 확대", exact: true }).click();
+  const legacyResourceDialog = page.getByRole("dialog", { name: "체크리스트 자료", exact: true });
+  await legacyResourceDialog.getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  assert.equal(await legacyResourceDialog.locator(".book-personal-expand-locked").count(), 0);
+  await legacyResourceDialog.getByRole("button", { name: "닫기", exact: true }).click();
+  await clickTeacherActivation(teacherResource, false);
+  await page.locator(".teacher-active-detail").getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await screenshotApp(page, path.join(screenshotRoot, "teacher-legacy-resource-visible.png"));
+  await clickTeacherActivation(teacherResource, true);
+  await page.locator(".teacher-active-detail").waitFor({ state: "detached", timeout: 5000 });
+  await page.getByRole("button", { name: "이전 자료 잠금 전환", exact: true }).click();
   await clickTeacherActivation(teacherActivity, false);
   const teacherPanel = page.getByRole("complementary", { name: "선생님이 준비한 활동과 자료" });
   await teacherPanel.locator(".teacher-active-detail").getByRole("heading", { name: "생각 정리 활동", exact: true }).waitFor();

@@ -38,7 +38,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
   const url = isResource ? item.url : item.bookUrl || item.url;
   const href = resourceHref(url);
   const linkLabel = resourceLinkLabel(url);
-  const locked = item.locked === true;
+  const locked = !isTeacher && item.locked === true;
   const requiresAnswer = !isResource && item.requiresAnswer !== false;
 
   if (typeof document === "undefined") return null;

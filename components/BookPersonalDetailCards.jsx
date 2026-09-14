@@ -95,7 +95,7 @@ export function BookPersonalResourceCard({
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
-  const locked = resource.locked === true;
+  const locked = !isTeacher && resource.locked === true;
   const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
 
   return (
@@ -191,7 +191,7 @@ export function BookPersonalActivityCard({
   const openPanel = () => panel?.open(panelKey);
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
-  const locked = !!activity.locked;
+  const locked = !isTeacher && activity.locked === true;
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const requiresAnswer = activity.requiresAnswer !== false;

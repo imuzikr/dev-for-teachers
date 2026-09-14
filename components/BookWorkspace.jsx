@@ -180,8 +180,8 @@ export default function BookWorkspace({
     sections,
   });
   const studentPanelAutoOpen = useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready: liveProjectReady, scope });
-  const teacherDetailSection = isTeacher && sections.find(section => section.id === studentPanelAutoOpen?.stepId);
-  const teacherDetailIndex = teacherDetailSection ? teacherDetailSection.items.findIndex(item => `${item.kind}:${item.id}` === studentPanelAutoOpen?.key) : -1;
+  const teacherDetailSection = isTeacher && sections.find(section => section.items.some(item => item.isActive));
+  const teacherDetailIndex = teacherDetailSection ? teacherDetailSection.items.findIndex(item => item.isActive) : -1;
   const teacherDetailItem = teacherDetailIndex >= 0 ? teacherDetailSection.items[teacherDetailIndex] : null;
   useEffect(() => {
     if (!isTeacher || !studentPanelAutoOpen) return;
