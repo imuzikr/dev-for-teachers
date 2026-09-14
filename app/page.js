@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { backdropClose } from "@/lib/modal";
 import {
-  signInAsGuestTeacher,
+  signInWithPin,
   signInAsAdminWithGoogle,
   onAuthChange,
 } from "@/lib/auth";
-import { getGuestTeacherSession, saveGuestTeacherSession } from "@/lib/user";
+import { getGuestTeacherSession } from "@/lib/user";
+import { requestPinAuth, pinErrorMessage } from "@/lib/pinAuthClient";
+import PinAuthModal from "@/components/PinAuthModal";
 import { IconLogo } from "@/components/StatusIcons";
 
 // Firebase 인증 오류 코드를 한국어 메시지로
@@ -16,8 +18,6 @@ function authErrorMessage(code) {
   const map = {
     "auth/popup-closed-by-user": "구글 로그인 창이 닫혔습니다.",
     "auth/too-many-requests": "잠시 후 다시 시도해 주세요.",
-    "auth/admin-restricted-operation":
-      "일반 선생님 입장이 아직 활성화되지 않았습니다. Firebase Authentication에서 익명 로그인을 켜 주세요.",
     "auth/admin-email-unverified": "확인된 Google 계정으로 로그인해 주세요.",
     "auth/admin-already-claimed": "이미 등록된 관리자 Google 계정으로 로그인해 주세요.",
     "auth/profile-create-failed": "관리자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -47,6 +47,7 @@ export default function LandingPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [entryBusy, setEntryBusy] = useState(false);
+  const [pinFlow, setPinFlow] = useState(null);
 
   useEffect(() => {
     const saved = getGuestTeacherSession();
@@ -84,20 +85,11 @@ export default function LandingPage() {
     setEntryError("");
     setEntryBusy(true);
     try {
-      if (isFirebaseConfigured) {
-        await signInAsGuestTeacher({
-          schoolName: nextSchoolName,
-          teacherName: nextTeacherName,
-        });
-      } else {
-        saveGuestTeacherSession({
-          schoolName: nextSchoolName,
-          teacherName: nextTeacherName,
-        });
-      }
-      router.push("/books");
+      const result = await requestPinAuth({ action: "begin", schoolName: nextSchoolName, realName: nextTeacherName });
+      if (!["register", "login", "enroll"].includes(result.mode)) throw new Error("로그인 단계를 확인하지 못했습니다.");
+      setPinFlow({ mode: result.mode, schoolName: nextSchoolName, realName: nextTeacherName });
     } catch (err) {
-      setEntryError(authErrorMessage(err?.code));
+      setEntryError(pinErrorMessage(err));
     } finally {
       setEntryBusy(false);
     }
@@ -147,7 +139,7 @@ export default function LandingPage() {
           required
         />
         <button className="btn-primary" type="submit" disabled={entryBusy}>
-          {entryBusy ? "입장 중" : "시작하기"}
+          {entryBusy ? "확인 중" : "시작하기"}
         </button>
         <button
           className="btn-outline"
@@ -176,6 +168,12 @@ export default function LandingPage() {
         </div>
       </section>
     </main>
+
+      {pinFlow && <PinAuthModal {...pinFlow} onClose={() => setPinFlow(null)} onSubmit={async (values) => {
+        await signInWithPin({ ...pinFlow, ...values });
+        setPinFlow(null);
+        router.push("/books");
+      }} />}
 
       {authOpen && (
         <div className="modal-backdrop" {...backdropClose(() => setAuthOpen(false))}>

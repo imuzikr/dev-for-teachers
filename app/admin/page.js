@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import ConfirmModal from "@/components/ConfirmModal";
+import PinAuthModal from "@/components/PinAuthModal";
+import { requestPinAuth } from "@/lib/pinAuthClient";
 import { IconStudent, IconTrash } from "@/components/StatusIcons";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import { useRequireAuth } from "@/lib/useRequireAuth";
@@ -44,6 +46,8 @@ export default function AdminDashboardPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pinTarget, setPinTarget] = useState(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (user && !admin) router.replace("/books");
@@ -181,6 +185,7 @@ export default function AdminDashboardPage() {
 
         <main className="admin-main">
           {error && <p className="admin-warning" role="alert">{error}</p>}
+          {notice && <p role="status">{notice}</p>}
           {selected ? (
             <>
               <header className="admin-hero admin-heatmap-heading">
@@ -191,9 +196,12 @@ export default function AdminDashboardPage() {
                     <p>{selected.schoolName || "학교 미입력"}</p>
                   </div>
                 </div>
+                <div className="admin-user-actions">
+                <button type="button" className="btn-outline" onClick={() => { setNotice(""); setPinTarget(selected); }}>PIN 설정·재설정</button>
                 <button type="button" className="btn-ghost role-danger-btn" onClick={() => setDeleteTarget(selected)}>
                   <IconTrash size={17} /> 탈퇴 처리
                 </button>
+                </div>
               </header>
               <ActivityHeatmap events={activityEvents} />
             </>
@@ -202,6 +210,12 @@ export default function AdminDashboardPage() {
           )}
         </main>
       </div>
+
+      {pinTarget && <PinAuthModal mode="reset" schoolName={pinTarget.schoolName} realName={userName(pinTarget)} onClose={() => setPinTarget(null)} onSubmit={async (values) => {
+        await requestPinAuth({ action: "reset", uid: pinTarget.uid, ...values });
+        setNotice(`${userName(pinTarget)}의 PIN을 저장했습니다.`);
+        setPinTarget(null);
+      }} />}
 
       {deleteTarget && (
         <ConfirmModal

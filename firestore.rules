@@ -29,24 +29,14 @@ service cloud.firestore {
              ? request.auth.token.get('role', '')
              : profileRole();
     }
-    function isGuestTeacher() {
-      return signedIn()
-             && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    function isPinAuthenticated() {
+      return signedIn() && request.auth.token.get('pinAuthenticated', false) == true;
     }
-    function isGuestUserProfile(userId) {
-      return isGuestTeacher()
-             && userId == uid()
-             && request.resource.data.keys().hasOnly([
-                  'realName', 'role', 'requestedRole', 'schoolName', 'createdAt'
-                ])
-             && request.resource.data.role == 'student'
-             && request.resource.data.realName is string
-             && request.resource.data.schoolName is string
-             && request.resource.data.createdAt == request.time;
-    }
-
     function adminPath() {
       return /databases/$(database)/documents/system/admin;
+    }
+    function pinCredentialPath(userId) {
+      return /databases/$(database)/documents/pinCredentials/$(userId);
     }
     function classDeletionLockPath() {
       return /databases/$(database)/documents/system/classDeletionLock;
@@ -73,7 +63,9 @@ service cloud.firestore {
     // 운영 기능 접근 관문 — 최고 관리자와 승인된 교사를 허용합니다.
     // 반 단위 쓰기는 ownsClassEditable()에서 소유권과 보관 상태를 다시 좁힙니다.
     function isTeacher() {
-      return isAdmin() || userRole() == 'teacher';
+      return isAdmin()
+             || request.auth.token.get('role', '') == 'teacher'
+             || (!isPinAuthenticated() && profileRole() == 'teacher');
     }
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
@@ -82,6 +74,13 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).addedKeys().hasOnly(keys)
              && request.resource.data.diff(resource.data).changedKeys().hasOnly(keys)
              && request.resource.data.diff(resource.data).removedKeys().hasOnly(removableKeys);
+    }
+    function keepsPinBoundIdentity(userId) {
+      return !exists(pinCredentialPath(userId))
+             || (
+                  request.resource.data.get('schoolName', '') == resource.data.get('schoolName', '')
+                  && request.resource.data.get('realName', '') == resource.data.get('realName', '')
+                );
     }
 
     match /system/{docId} {
@@ -96,6 +95,15 @@ service cloud.firestore {
       allow list, update, delete: if false;
     }
     match /classDeletionJobs/{classId} {
+      allow read, write: if false;
+    }
+    match /pinCredentials/{userId} {
+      allow read, write: if false;
+    }
+    match /pinIdentities/{identityHash} {
+      allow read, write: if false;
+    }
+    match /pinLoginAttempts/{attemptId} {
       allow read, write: if false;
     }
 
@@ -245,10 +253,10 @@ service cloud.firestore {
     // (질문 게시판은 전체 공유라 교사가 타 반 학생 실명도 확인해야 하므로 교사 전체 허용)
     match /users/{userId} {
       allow read: if signedIn() && (userId == uid() || isTeacher());
-      // 일반 사용자는 익명 프로필만, 지정 Google 계정은 관리자 프로필만 생성합니다.
+      // 지정 Google 계정은 관리자 프로필만 생성합니다.
+      // 일반 사용자/PIN 프로필은 서버(Admin SDK)가 생성해 규칙을 우회합니다.
       allow create: if classDeletionClientWritesOpen() && signedIn() && userId == uid() && (
-        isGuestUserProfile(userId)
-        || (isAdminAfterWrite() && request.resource.data.role == 'admin')
+        isAdminAfterWrite() && request.resource.data.role == 'admin'
       );
       // 쓰기 범위 — '누가' 뿐 아니라 '어떤 필드를' 쓰는지까지 제한합니다.
       //  · 최고 관리자: 전체. 역할 부여와 부트스트랩 자가 치유(lib/auth.js가
@@ -264,6 +272,7 @@ service cloud.firestore {
         || (userId == uid() && isAdminAfterWrite()
             && request.resource.data.role == 'admin')
         || (userId == uid()
+            && keepsPinBoundIdentity(userId)
             && writesProfileOnly(
               ['schoolName','realName','fcmTokens','requestedRole',
                'withdrawRequested','withdrawRequestedAt'],
@@ -271,6 +280,7 @@ service cloud.firestore {
             ))
         || (isTeacher()
             && (userId == uid() || resource.data.get('role', 'student') == 'student')
+            && keepsPinBoundIdentity(userId)
             && writesProfileOnly(
               ['schoolName','realName','withdrawRequested','withdrawRequestedAt'],
               ['displayName','emoji','email','studentId']

@@ -76,12 +76,14 @@ describe("개발자실 프로젝트 Storage 이미지 규칙", { skip: !process.
       const db = ctx.firestore();
       await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", archived: false });
       await setDoc(doc(db, "classes", "cProfile"), { createdBy: "teacherProfile", archived: false });
+      await setDoc(doc(db, "classes", "cPinProfile"), { createdBy: "pinProfileTeacher", archived: false });
       await setDoc(doc(db, "classes", "archived"), { createdBy: "teacherA", archived: true });
       await setDoc(doc(db, "classes", "adminClass"), { createdBy: "teacherA", archived: false });
       await setDoc(doc(db, "classes", "rootOwned"), { createdBy: "rootAdmin", archived: false });
       await setDoc(doc(db, "classes", "demotedOwned"), { createdBy: "demotedTeacher", archived: false });
       await setDoc(doc(db, "memberships", "studentA_cA"), { uid: "studentA", classId: "cA" });
       await setDoc(doc(db, "users", "teacherProfile"), { role: "teacher" });
+      await setDoc(doc(db, "users", "pinProfileTeacher"), { role: "teacher" });
       await setDoc(doc(db, "users", "rootAdmin"), { role: "admin" });
       await setDoc(doc(db, "users", "demotedTeacher"), { role: "student" });
       await setDoc(doc(db, "system", "admin"), { uid: "adminA" });
@@ -100,6 +102,17 @@ describe("개발자실 프로젝트 Storage 이미지 규칙", { skip: !process.
     await assertSucceeds(
       storageRef(env, "teacherProfile", projectImagePath("cProfile", "teacherProfile", hashFor("b")))
         .putString(image, "data_url", { contentType: "image/jpeg" })
+    );
+  });
+
+  it("denies teacher role fallback from users profile for PIN custom tokens", async () => {
+    await assertFails(
+      storageRef(
+        env,
+        "pinProfileTeacher",
+        projectImagePath("cPinProfile", "pinProfileTeacher", hashFor("9")),
+        { pinAuthenticated: true, firebase: { sign_in_provider: "custom" } }
+      ).putString(image, "data_url", { contentType: "image/jpeg" })
     );
   });
 

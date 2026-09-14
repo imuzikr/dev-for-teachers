@@ -8869,6 +8869,36 @@ pre code {
   font-size: 12px;
 }
 
+.admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pin-auth-modal {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.pin-auth-identity {
+  margin: 0 0 16px;
+  color: var(--text-sub);
+  overflow-wrap: anywhere;
+}
+
+.pin-auth-modal input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--landing-control-bg);
+}
+
 .admin-shell .heatmap-right {
   min-width: 728px;
 }

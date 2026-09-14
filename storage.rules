@@ -11,6 +11,9 @@ service firebase.storage {
     function authRole() {
       return request.auth.token.get('role', '');
     }
+    function isPinAuthenticated() {
+      return signedIn() && request.auth.token.get('pinAuthenticated', false) == true;
+    }
     function adminPath() {
       return /databases/(default)/documents/system/admin;
     }
@@ -29,7 +32,11 @@ service firebase.storage {
     }
     function hasApprovedOwnerRole() {
       return authRole() in ['teacher', 'admin']
-             || (authRole() == '' && profileRole() in ['teacher', 'admin']);
+             || (
+                  !isPinAuthenticated()
+                  && authRole() == ''
+                  && profileRole() in ['teacher', 'admin']
+                );
     }
     function classDoc(classId) {
       return firestore.get(/databases/(default)/documents/classes/$(classId));

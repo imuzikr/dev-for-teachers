@@ -234,6 +234,20 @@ describe("사용자 프로필 규칙", () => {
       );
     });
 
+    it("익명 사용자는 클라이언트에서 프로필을 만들 수 없다", async () => {
+      const db = env.authenticatedContext("anonymousUser", {
+        firebase: { sign_in_provider: "anonymous" },
+      }).firestore();
+      await assertFails(
+        setDoc(doc(db, "users", "anonymousUser"), {
+          realName: "익명",
+          role: "student",
+          schoolName: "한성고",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
     it("등록된 관리자 문서는 수정하거나 삭제할 수 없다", async () => {
       const db = asRegisteredAdmin(env).firestore();
       await assertFails(updateDoc(doc(db, "system", "admin"), { uid: "other" }));
