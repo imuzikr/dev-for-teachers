@@ -84,6 +84,7 @@ export function BookPersonalResourceCard({
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const resource = detailItem.source;
+  const [templateValues, setTemplateValues] = useState({});
   const checklist = useStudentChecklist(detailItem);
   const checklistValues = checklist.values;
   const setChecklistValues = checklist.change;
@@ -134,13 +135,15 @@ export function BookPersonalResourceCard({
       {!isTeacher && confirmState.failedKey === confirmationKey && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
       {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
           index={index}
           response=""
+          templateValues={templateValues}
+          onTemplateChange={setTemplateValues}
           isTeacher={isTeacher}
           confirmed={confirmed}
           saving={confirmState.pendingKey === confirmationKey}
@@ -192,7 +195,7 @@ export function BookPersonalActivityCard({
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
-  const requiresAnswer = activity.requiresAnswer !== false;
+  const requiresAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
   const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
 
   return (

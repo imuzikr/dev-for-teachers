@@ -158,7 +158,7 @@ export default function BookProjectItemEditModal({
   const [imagesBusy, setImagesBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [url, setUrl] = useState(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
-  const [requiresAnswer, setRequiresAnswer] = useState(item?.requiresAnswer !== false && !isCreating);
+  const [requiresAnswer, setRequiresAnswer] = useState(kind === "activity" && item?.requiresAnswer !== false && !isCreating);
   const [templateEnabled, setTemplateEnabled] = useState(item?.templateEnabled === true);
 
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function BookProjectItemEditModal({
     setImages(item?.images ?? []);
     setImageSizes(item?.imageSizes);
     setUrl(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
-    setRequiresAnswer(item?.requiresAnswer !== false && !isCreating);
+    setRequiresAnswer(kind === "activity" && item?.requiresAnswer !== false && !isCreating);
     setTemplateEnabled(item?.templateEnabled === true);
   }, [isCreating, item?.id, item?.title, item?.content, item?.images, item?.imageSizes, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
 
@@ -206,9 +206,10 @@ export default function BookProjectItemEditModal({
         content,
         images,
         imageSizes,
+        templateEnabled,
         ...(draftKind === "resource"
           ? { url: trimmedUrl, bookUrl: trimmedUrl }
-          : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer, templateEnabled }),
+          : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer }),
       }, draftKind);
       if (saved === false) setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
     } catch (error) {
@@ -248,7 +249,7 @@ export default function BookProjectItemEditModal({
                   type="url"
                 />
               </label>
-              {draftKind === "activity" && (
+              {draftKind === "activity" && !templateEnabled && (
                 <div className="book-answer-setting book-answer-setting--modal" role="group" aria-label="학생 답변 설정">
                   <div className="book-answer-setting-copy">
                     <strong>학생 답변</strong>
@@ -279,13 +280,13 @@ export default function BookProjectItemEditModal({
             )}
           </div>
           <div className="book-item-kind-settings">
-            {draftKind === "activity" && <ActivityTemplateSetting enabled={templateEnabled} content={content} onChange={setTemplateEnabled} />}
+            <ActivityTemplateSetting enabled={templateEnabled} content={content} onChange={setTemplateEnabled} />
             <button type="button" className="btn-outline" disabled={saving || imagesBusy} onClick={() => setDraftKind(current => current === "activity" ? "resource" : "activity")}>
               {draftKind === "activity" ? "자료로 변환" : "활동으로 변환"}
             </button>
           </div>
           <BasicFormatEditor
-            templateEnabled={draftKind === "activity" && templateEnabled}
+            templateEnabled={templateEnabled}
             value={content}
             onChange={setContent}
             placeholder={draftKind === "activity" ? "활동 안내사항" : ""}

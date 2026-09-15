@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import verifyResourceTemplate from "./resourceTemplate.browser.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
@@ -15,6 +16,7 @@ try {
   await mkdir(path.join(fixture, "app"), { recursive: true });
   for (const dir of ["components", "lib", "tests/fixtures"]) await cp(path.join(root, dir), path.join(fixture, dir), { recursive: true });
   for (const file of ["package.json", "jsconfig.json", "app/globals.css", "app/book-sidebar.css"]) await cp(path.join(root, file), path.join(fixture, file));
+  await writeFile(path.join(fixture, "lib/firebase.js"), "export const isFirebaseConfigured = false; export const db = null; export const auth = null; export const storage = null;");
   await writeFile(path.join(fixture, "app/page.jsx"), 'export { default } from "@/tests/fixtures/BookWorkflowPage";');
   await writeFile(path.join(fixture, "app/layout.jsx"), 'import "./globals.css"; import "./book-sidebar.css"; export default function Layout({children}) { return <html lang="ko"><body>{children}</body></html>; }');
   server = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3251"], { cwd: fixture, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
@@ -73,6 +75,7 @@ try {
   }
   await page.getByRole("button", { name: "학생 보기", exact: true }).click();
   assert.equal(await cards.count(), 0);
+  await verifyResourceTemplate(page, output);
   assert.deepEqual(errors, []);
   console.log(`PASS: card body/title drag, saved order after switching steps, keyboard reorder, interactive controls excluded, student guard. ${output}`);
 } finally {

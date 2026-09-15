@@ -44,7 +44,7 @@ export default function BookPersonalDetail({
     setSavedId(null);
     setFailedId(null);
     try {
-      if (activity.requiresAnswer !== false) await saveDashboardText(activity.id, user, answerText);
+      if (activity.templateEnabled !== true && activity.requiresAnswer !== false) await saveDashboardText(activity.id, user, answerText);
       await onConfirmItem?.(detailItem, checklistState);
       setDrafts((current) => ({ ...current, [activity.id]: answerText }));
       if (checklistState.confirmed) setSavedId(activity.id);

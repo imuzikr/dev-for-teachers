@@ -818,10 +818,11 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
                'resourceId', 'classId', 'projectId', 'projectVersion',
                'stepId', 'stepOrder', 'resourceOrder',
-               'title', 'content', 'url', 'images', 'imageSizes', 'locked', 'createdBy', 'createdAt', 'updatedAt'
+               'title', 'content', 'url', 'images', 'imageSizes', 'locked', 'templateEnabled', 'createdBy', 'createdAt', 'updatedAt'
              ])
              && validBookImages(request.resource.data)
              && request.resource.data.resourceId == resourceId
+             && (!('templateEnabled' in request.resource.data) || request.resource.data.templateEnabled is bool)
              && request.resource.data.classId is string
              && request.resource.data.classId.size() > 0
              && request.resource.data.projectId == request.resource.data.classId

@@ -38,7 +38,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
   const url = isResource ? item.url : item.bookUrl || item.url;
   const href = resourceHref(url);
   const linkLabel = resourceLinkLabel(url);
-  const requiresAnswer = !isResource && item.requiresAnswer !== false;
+  const requiresAnswer = !isResource && item.templateEnabled !== true && item.requiresAnswer !== false;
 
   if (typeof document === "undefined") return null;
 
@@ -51,7 +51,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
         </header>
         <div className="book-personal-expand-body">
           {modalUrlSlot(href, linkLabel)}
-          {!isTeacher && !isResource && item.templateEnabled === true ? (
+          {!isTeacher && item.templateEnabled === true ? (
             <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
           ) : (
             <RichTextDisplay
@@ -74,7 +74,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           )}
           {!isTeacher && (
             <div className="student-activity-detail-actions">
-              {onCopy && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
+              {onCopy && !item.templateEnabled && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && hasChecklist && onCheckAll && <div className="student-checklist-bulk-actions">
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}

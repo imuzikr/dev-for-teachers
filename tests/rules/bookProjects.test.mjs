@@ -90,6 +90,16 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     await assertSucceeds(batch.commit());
   });
 
+  it("resource templates accept booleans only and retain teacher-only writes", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    for (const templateEnabled of [true, false]) {
+      await assertSucceeds(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { templateEnabled })));
+    }
+    await assertFails(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { templateEnabled: "true" })));
+    await assertFails(setDoc(doc(asStudent(env, "studentA").firestore(), "bookResources", "res1"), resourcePayload("studentA", { templateEnabled: true })));
+    await assertFails(setDoc(doc(asTeacher(env, "teacherB").firestore(), "bookResources", "res1"), resourcePayload("teacherB", { templateEnabled: true })));
+  });
+
   it("다른 반 교사는 프로젝트를 저장할 수 없다", async () => {
     const db = asTeacher(env, "teacherB").firestore();
 
