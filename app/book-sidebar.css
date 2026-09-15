@@ -92,6 +92,10 @@
   align-self: start;
 }
 
+.book-library-main .book-project-flow-detail-list > .book-personal-activity-card.is-compact {
+  align-self: stretch;
+}
+
 .book-personal-dashboard[hidden],
 .book-personal-step-section[hidden] {
   display: none;

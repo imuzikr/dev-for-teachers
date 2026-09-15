@@ -8940,10 +8940,11 @@ pre code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  align-self: start;
-  height: 120px;
+  align-self: stretch;
+  height: auto;
   min-height: 120px;
   width: 100%;
+  max-width: 340px;
   border: 1px dashed var(--border);
   border-radius: 8px;
   background: transparent;
@@ -11349,6 +11350,7 @@ pre code {
 
 .book-project-flow-detail-list {
   grid-auto-columns: minmax(300px, 330px);
+  grid-auto-rows: 1fr;
 }
 
 .book-project-flow-step {

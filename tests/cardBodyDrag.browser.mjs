@@ -64,6 +64,11 @@ try {
   await page.getByRole("dialog").waitFor({ state: "hidden" });
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
+    const itemBox = await activity.boundingBox();
+    const addTile = page.locator(".book-project-flow-detail-list > .book-main-add-item");
+    const addBox = await addTile.boundingBox();
+    assert(Math.abs(addBox.height - itemBox.height) < 1, `Add tile and real card heights must match at ${width}px`);
+    assert(Math.abs(addBox.width - itemBox.width) < 1, `Add tile and real card widths must match at ${width}px`);
     await page.screenshot({ path: path.join(output, `${width}.png`), fullPage: true });
   }
   await page.getByRole("button", { name: "학생 보기", exact: true }).click();
