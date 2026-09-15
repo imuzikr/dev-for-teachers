@@ -11850,6 +11850,11 @@ button.book-project-flow-pill:focus-visible {
   cursor: grab;
   touch-action: none;
 }
+.book-personal-activity-card[data-reorder-key][draggable="true"] {
+  cursor: grab;
+  user-select: none;
+}
+.book-personal-activity-card[data-reorder-key][draggable="true"]:active,
 .book-card-order-handle:active { cursor: grabbing; }
 .book-card-order-handle:disabled { cursor: default; opacity: .6; }
 .book-card-order-handle:focus-visible {

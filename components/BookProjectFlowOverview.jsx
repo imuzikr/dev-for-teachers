@@ -49,6 +49,7 @@ export default function BookProjectFlowOverview({
   const [openStepId, setOpenStepId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const dragItem = useRef(null);
+  const dragBlocked = useRef(false);
   const [dropKey, setDropKey] = useState(null);
   const reorderScope = `${project?.classId}:${selectedStepId}:${isTeacher}`;
 
@@ -65,6 +66,21 @@ export default function BookProjectFlowOverview({
       && dragItem.current.item.stepId === item.stepId;
     return {
       card: {
+        draggable: !reorderDisabled,
+        onPointerDownCapture: (event) => {
+          dragBlocked.current = Boolean(event.target.closest("button:not(.book-card-order-handle), a, input, textarea, select, [contenteditable='true']"));
+        },
+        onDragStart: (event) => {
+          if (reorderDisabled || dragBlocked.current || event.target.closest("a, input, textarea, select, [contenteditable='true']")) {
+            event.preventDefault();
+            return;
+          }
+          dragItem.current = { item, scope: reorderScope };
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", key);
+          event.dataTransfer.setDragImage(event.currentTarget, 20, 20);
+        },
+        onDragEnd: reset,
         "data-reorder-key": key,
         "data-drop-target": dropKey === key ? "true" : undefined,
         onDragOver: (event) => {
@@ -89,13 +105,6 @@ export default function BookProjectFlowOverview({
         title: "드래그하여 순서 이동 · 방향키로 이동",
         disabled: reorderDisabled,
         draggable: !reorderDisabled,
-        onDragStart: (event) => {
-          dragItem.current = { item, scope: reorderScope };
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", key);
-          event.dataTransfer.setDragImage(event.currentTarget.closest("article"), 20, 20);
-        },
-        onDragEnd: reset,
         onKeyDown: (event) => {
           const direction = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key];
           if (!direction || reorderDisabled) return;
