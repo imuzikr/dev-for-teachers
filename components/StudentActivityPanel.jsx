@@ -59,6 +59,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
 
   const value = enabled ? {
     selectedKey: visibleKey, scope, records, saveChecklist, target,
+    isOpen: !collapsed && !switching && visibleKey !== null && target !== null,
     open(key) {
       if (!itemKeys.has(key)) return;
       setRequestedKey(key);

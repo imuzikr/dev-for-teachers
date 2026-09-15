@@ -87,7 +87,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 const saved = await onSave();
                 if (saved !== false && !panelTarget) onClose();
               }}>{saving ? "저장 중..." : requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인"}</button>}
-              {checklistStatus && checklistStatus !== "loading" && <small role="status">{checklistStatus === "saving" ? "자동 저장 중..." : checklistStatus === "failed" ? "체크 상태를 저장하지 못했어요." : "자동 저장됨"}</small>}
+              {checklistStatus === "failed" && <small role="alert">체크 상태를 저장하지 못했어요.</small>}
               {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
               {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
             </div>

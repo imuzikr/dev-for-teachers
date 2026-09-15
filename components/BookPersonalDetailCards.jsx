@@ -53,8 +53,8 @@ function TeacherCardActions({ item, onPresent, onActivate, disabled }) {
   return (
     <footer className="book-personal-card-actions book-teacher-card-actions">
       <button type="button" className={item.isActive ? "btn-primary" : "btn-outline"}
-        aria-pressed={item.isActive === true} title={`${item.title} ${item.isActive ? "비활동으로 전환" : "활동중으로 지정"}`}
-        disabled={!onActivate || disabled} onClick={() => onActivate(item)}>{item.isActive ? "활동중" : "비활동"}</button>
+        aria-pressed={item.isActive === true} title={`${item.title} ${item.isActive ? "활동 전으로 전환" : "활동중으로 지정"}`}
+        disabled={!onActivate || disabled} onClick={() => onActivate(item)}>{item.isActive ? "활동중" : "활동 전"}</button>
       <button type="button" className="btn-primary book-presentation-card-btn" onClick={() => onPresent(item)}>발표 모드</button>
     </footer>
   );
@@ -124,10 +124,10 @@ export function BookPersonalResourceCard({
         <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher && (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
-          }}>{confirmState.pendingKey === confirmationKey ? "저장 중..." : confirmed ? "확인됨" : "확인"}</button>
+          }}>{confirmState.pendingKey === confirmationKey ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
           <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       )}
@@ -219,10 +219,10 @@ export function BookPersonalActivityCard({
         <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
-          }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "확인"}</button>
+          }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
           <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       ) : null}
