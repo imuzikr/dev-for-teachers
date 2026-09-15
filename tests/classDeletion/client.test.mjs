@@ -29,6 +29,8 @@ function makeHarness(initial = {}, objects = [], options = {}) {
     })
     .map(([path, value]) => snap(path, value));
   const firestore = {
+    deleteField: () => ({ delete: true }),
+    FieldPath: class { constructor(...segments) { this.segments = segments; } },
     collection: (base, ...parts) => ref([base?.path, ...parts].filter(Boolean).join("/")),
     collectionGroup: (_db, name) => ({ path: `collectionGroup:${name}`, group: name }),
     doc: (base, ...parts) => ref([base?.path, ...parts].filter(Boolean).join("/")),

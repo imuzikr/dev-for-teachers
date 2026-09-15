@@ -294,6 +294,41 @@ describe("class deletion engine", () => {
     assert.deepEqual(bucket.deletedNames(), [exclusivePath].sort());
   });
 
+  it("unlinks lesson sources before removing publications and preserves other class usage", async () => {
+    const sourcePath = "lessonFiles/teacherA/files/shared-original";
+    const onlyPath = "lessonFiles/teacherB/files/only-original";
+    const stalePath = "lessonFiles/teacherA/files/stale-original";
+    const untouchedPath = "lessonFiles/teacherA/files/unrelated-original";
+    const source = { ownerId: "teacherA", name: "lesson.txt", storagePath: "lesson-files/teacherA/shared-original.txt",
+      sharedClasses: { [GONE]: "Delete Me", [KEEP]: "Keep Me" }, deleting: false };
+    await setMany(db, [
+      [`classes/${GONE}`, { archived: true, createdBy: "teacherA" }],
+      [`classes/${KEEP}`, { archived: false, createdBy: "teacherA" }],
+      [sourcePath, source],
+      [onlyPath, { ...source, ownerId: "teacherB", sharedClasses: { [GONE]: "Delete Me" } }],
+      [stalePath, { ...source, sharedClasses: { [GONE]: "Delete Me" } }],
+      [untouchedPath, { ...source, sharedClasses: { [KEEP]: "Keep Me" } }],
+      [`classes/${GONE}/lessonFiles/shared-original`, { id: "shared-original", ownerId: "teacherA" }],
+      [`classes/${GONE}/lessonFiles/only-original`, { id: "only-original", ownerId: "teacherB" }],
+      [`classes/${KEEP}/lessonFiles/shared-original`, { id: "shared-original", ownerId: "teacherA" }],
+    ]);
+    const untouchedBefore = await db.doc(untouchedPath).get();
+    const original = new FakeFile(source.storagePath, 99);
+    const bucket = new FakeBucket([original]);
+    const status = await drainDeletion(db, bucket);
+    assert.equal(status.status, "completed");
+    assert.equal(await exists(db, `classes/${GONE}/lessonFiles/shared-original`), false);
+    assert.equal(await exists(db, `classes/${KEEP}/lessonFiles/shared-original`), true);
+    assert.deepEqual((await db.doc(sourcePath).get()).data(), { ...source,
+      sharedClasses: { [KEEP]: "Keep Me" }, lastSharedClassId: GONE });
+    assert.deepEqual((await db.doc(onlyPath).get()).data().sharedClasses, {});
+    assert.deepEqual((await db.doc(stalePath).get()).data().sharedClasses, {});
+    assert.equal((await db.doc(untouchedPath).get()).updateTime.isEqual(untouchedBefore.updateTime), true);
+    assert.equal(original.deleted, 0);
+    assert.equal((await advanceClassDeletion(db, bucket, GONE, "root")).status, "completed");
+    assert.deepEqual((await db.doc(sourcePath).get()).data().sharedClasses, { [KEEP]: "Keep Me" });
+  });
+
   it("keeps the global lock after a storage failure and resumes without duplicating deletes", async () => {
     const exclusivePath = imagePath(GONE, "teacherA", HASH_A);
     await setMany(db, [

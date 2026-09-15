@@ -163,7 +163,23 @@ async function scanTask(db, classId, context) {
     return;
   }
   const ref = db.doc(task.path);
-  const snapshot = await ref.get();
+  let snapshot = await ref.get();
+  const [collection, ownerId, child, fileId, extra] = task.path.split("/");
+  if (collection === "lessonFiles" && ownerId && child === "files" && fileId && !extra
+      && Object.hasOwn(snapshot.data()?.sharedClasses || {}, classId)) {
+    await db.runTransaction(async (tx) => {
+      const [job, lock, source] = await tx.getAll(context.jobRef, context.lockRef, ref);
+      if (job.data()?.lease !== context.lease || lock.data()?.active !== true || lock.data()?.classId !== classId) {
+        throw failure("lease-lost", "Deletion maintenance lock changed.");
+      }
+      const sharedClasses = { ...source.data()?.sharedClasses };
+      if (source.exists && Object.hasOwn(sharedClasses, classId)) {
+        delete sharedClasses[classId];
+        tx.update(ref, { sharedClasses, lastSharedClassId: classId });
+      }
+    });
+    snapshot = await ref.get();
+  }
   const owned = ownedDocument(task.path, snapshot.data(), classId, task.owned);
   const children = await ref.listCollections();
   await writeTasks(db, context, children.map((child) => ({ path: child.path, type: "collection", owned })));

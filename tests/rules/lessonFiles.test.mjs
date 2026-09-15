@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, setDoc, getDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 test("teacher distribution files preserve originals, enforce ownership, and force downloads", async () => {
   const projectId = process.env.GCLOUD_PROJECT;
@@ -44,6 +44,8 @@ test("teacher distribution files preserve originals, enforce ownership, and forc
     await assertFails(getDoc(doc(other.firestore(), "lessonFiles", "teacher", "files", id)));
     await assertFails(getDoc(doc(student.firestore(), "lessonFiles", "teacher", "files", id)));
     await assertFails(setDoc(record, { ...payload, name: "overwrite" }));
+    await assertFails(deleteDoc(record));
+    await assertSucceeds(updateDoc(record, { deleting: true }));
     await assertSucceeds(deleteDoc(record));
     await assertFails(setDoc(record, { ...payload, size: 52428801 }));
     await assertFails(setDoc(record, { ...payload, storagePath: "another/path" }));

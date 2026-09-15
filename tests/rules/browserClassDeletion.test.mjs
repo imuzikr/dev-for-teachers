@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
-import { initializeTestEnvironment } from "@firebase/rules-unit-testing";
+import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import * as firestoreSdk from "firebase/firestore";
 import * as storageSdk from "firebase/storage";
 
@@ -46,6 +46,84 @@ before(async () => {
 });
 
 after(async () => { await env?.cleanup(); });
+
+test("browser deletion atomically unlinks all owners while retaining originals and other class shares", { skip: !enabled }, async () => {
+  await env.clearFirestore();
+  await env.clearStorage();
+  const ids = ["12345678-1234-1234-1234-123456789abc", "22345678-1234-1234-1234-123456789abc"];
+  const owners = ["root", "teacher"];
+  await env.withSecurityRulesDisabled(async ctx => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, "system/admin"), { uid: "root" });
+    await setDoc(doc(db, "classes/target"), { createdBy: "teacher", archived: true, accessVersion: 2, name: "Target" });
+    await setDoc(doc(db, "classes/other"), { createdBy: "teacher", archived: false, accessVersion: 2, name: "Other" });
+    for (const [index, id] of ids.entries()) {
+      const ownerId = owners[index];
+      const storagePath = `lesson-files/${ownerId}/${id}.txt`;
+      const source = { ownerId, name: "original.txt", size: 8, extension: "txt", storagePath,
+        sharedClasses: index === 0 ? { target: "Target", other: "Other" } : { target: "Target" }, deleting: false };
+      await setDoc(doc(db, `lessonFiles/${ownerId}/files/${id}`), source);
+      await setDoc(doc(db, `classes/target/lessonFiles/${id}`), { id, ownerId, storagePath });
+      if (index === 0) await setDoc(doc(db, `classes/other/lessonFiles/${id}`), { id, ownerId, storagePath });
+      await ctx.storage(bucketUrl).ref(storagePath).putString("original", "raw", { contentType: "application/octet-stream" });
+    }
+  });
+  const admin = env.authenticatedContext("root", { email_verified: true, firebase: { sign_in_provider: "google.com" } });
+  const db = admin.firestore();
+  const services = { db, storage: admin.storage(bucketUrl), auth: { currentUser: { uid: "root", getIdToken: async () => "rules-test-context" } } };
+  const otherSource = doc(db, `lessonFiles/teacher/files/${ids[1]}`);
+  await assertFails(getDoc(otherSource));
+  await assertFails(firestoreSdk.updateDoc(otherSource, { sharedClasses: {}, lastSharedClassId: "target" }));
+  const unlink = (actorDb, extra = {}) => {
+    const batch = firestoreSdk.writeBatch(actorDb);
+    batch.update(doc(actorDb, `lessonFiles/teacher/files/${ids[1]}`), { sharedClasses: {}, lastSharedClassId: "target", ...extra });
+    batch.delete(doc(actorDb, `classes/target/lessonFiles/${ids[1]}`));
+    return batch.commit();
+  };
+  await assertFails(unlink(db, { name: "tampered.txt" }));
+  await assertFails(unlink(db, { deleting: true }));
+  await assertFails(unlink(env.authenticatedContext("outsider", { role: "teacher" }).firestore()));
+  await env.withSecurityRulesDisabled(ctx => firestoreSdk.updateDoc(doc(ctx.firestore(), "classes/target"), { archived: false }));
+  await assertFails(unlink(db));
+  await env.withSecurityRulesDisabled(ctx => firestoreSdk.updateDoc(doc(ctx.firestore(), "classes/target"), { archived: true }));
+  const result = await deleteClassInBrowser("target", services);
+  assert.equal(result.status, "completed");
+  await env.withSecurityRulesDisabled(async ctx => {
+    const checked = ctx.firestore();
+    assert.equal((await getDoc(doc(checked, "classes/target"))).exists(), false);
+    assert.equal((await getDocs(collection(checked, "classes/target/lessonFiles"))).size, 0);
+    assert.equal((await getDoc(doc(checked, `classes/other/lessonFiles/${ids[0]}`))).exists(), true);
+    assert.deepEqual((await getDoc(doc(checked, `lessonFiles/root/files/${ids[0]}`))).data().sharedClasses, { other: "Other" });
+    assert.deepEqual((await getDoc(doc(checked, `lessonFiles/teacher/files/${ids[1]}`))).data().sharedClasses, {});
+    for (const [index, id] of ids.entries()) {
+      assert.equal((await ctx.storage(bucketUrl).ref(`lesson-files/${owners[index]}/${id}.txt`).getMetadata()).size, 8);
+    }
+  });
+  const teacher = env.authenticatedContext("teacher", { role: "teacher" });
+  await assertSucceeds(firestoreSdk.updateDoc(doc(teacher.firestore(), `lessonFiles/teacher/files/${ids[1]}`), { deleting: true }));
+  await assertSucceeds(teacher.storage(bucketUrl).ref(`lesson-files/teacher/${ids[1]}.txt`).delete());
+  await assertSucceeds(firestoreSdk.deleteDoc(doc(teacher.firestore(), `lessonFiles/teacher/files/${ids[1]}`)));
+  await assertFails(firestoreSdk.updateDoc(doc(db, `lessonFiles/root/files/${ids[0]}`), { deleting: true }));
+});
+
+test("browser deletion stops before deleting class records if a publication cannot be unlinked", { skip: !enabled }, async () => {
+  await env.clearFirestore();
+  await env.clearStorage();
+  await env.withSecurityRulesDisabled(async ctx => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, "system/admin"), { uid: "root" });
+    await setDoc(doc(db, "classes/target"), { createdBy: "root", archived: true, accessVersion: 2, name: "Target" });
+    await setDoc(doc(db, "classes/target/lessonFiles/missing-source"), { ownerId: "teacher" });
+    await setDoc(doc(db, "classes/target/attendanceRecords/keep"), { classId: "target" });
+  });
+  const admin = env.authenticatedContext("root", { email_verified: true, firebase: { sign_in_provider: "google.com" } });
+  const db = admin.firestore();
+  await assert.rejects(deleteClassInBrowser("target", { db, storage: admin.storage(bucketUrl),
+    auth: { currentUser: { uid: "root", getIdToken: async () => "rules-test-context" } } }), { code: "class-deletion/lesson-unlink-failed" });
+  assert.equal((await getDoc(doc(db, "classes/target"))).exists(), true);
+  assert.equal((await getDoc(doc(db, "classes/target/lessonFiles/missing-source"))).exists(), true);
+  assert.equal((await getDoc(doc(db, "classes/target/attendanceRecords/keep"))).exists(), true);
+});
 
 test("real browser SDK deletes archived class records and exclusive files without server credentials", { skip: !enabled }, async () => {
   await env.clearFirestore();

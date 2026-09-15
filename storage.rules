@@ -94,7 +94,14 @@ service firebase.storage {
       function ownsFiles() {
         return signedIn() && uid() == ownerUid && (hasApprovedOwnerRole() || isSystemAdmin());
       }
-      allow read, delete: if ownsFiles();
+      function canDeleteSource() {
+        let sourcePath = /databases/(default)/documents/lessonFiles/$(ownerUid)/files/$(fileName.split('[.]')[0]);
+        return !firestore.exists(sourcePath)
+          || (firestore.get(sourcePath).data.get('deleting', false) == true
+            && firestore.get(sourcePath).data.get('sharedClasses', {}).size() == 0);
+      }
+      allow read: if ownsFiles();
+      allow delete: if ownsFiles() && canDeleteSource();
       allow create: if resource == null && ownsFiles()
         && fileName.matches('^[a-f0-9-]{36}\\.(jpg|jpeg|jfif|png|apng|gif|webp|avif|bmp|tif|tiff|ico|svg|heic|heif|txt|pdf|pptx|xlsx|csv|zip|html|htm|json|doc|docx|hwp|hwpx)$')
         && request.resource.size > 0 && request.resource.size <= 52428800

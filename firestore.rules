@@ -542,7 +542,9 @@ service cloud.firestore {
       function ownsFiles() { return signedIn() && uid() == ownerId && isTeacher(); }
       allow read: if ownsFiles();
       allow create: if classDeletionClientWritesOpen() && ownsFiles()
-        && request.resource.data.keys().hasOnly(['ownerId', 'name', 'size', 'extension', 'storagePath', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['ownerId', 'name', 'size', 'extension', 'storagePath', 'createdAt', 'sharedClasses', 'deleting'])
+        && request.resource.data.get('sharedClasses', {}) == {}
+        && request.resource.data.get('deleting', false) == false
         && request.resource.data.ownerId == ownerId
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 240
@@ -550,8 +552,79 @@ service cloud.firestore {
         && request.resource.data.extension in ['jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'avif', 'bmp', 'tif', 'tiff', 'ico', 'svg', 'heic', 'heif', 'txt', 'pdf', 'pptx', 'xlsx', 'csv', 'zip', 'html', 'htm', 'json', 'doc', 'docx', 'hwp', 'hwpx']
         && request.resource.data.storagePath == 'lesson-files/' + ownerId + '/' + fileId + '.' + request.resource.data.extension
         && request.resource.data.createdAt == request.time;
-      allow delete: if classDeletionClientWritesOpen() && ownsFiles();
+      allow delete: if classDeletionClientWritesOpen() && ownsFiles()
+        && resource.data.get('deleting', false) == true
+        && resource.data.get('sharedClasses', {}).size() == 0;
+      allow update: if classDeletionClientWritesOpen()
+        && ((ownsFiles() && beginDeletion())
+          || ((ownsFiles() || (isAdmin() && isClassArchived(request.resource.data.lastSharedClassId)))
+            && changeDistribution()));
+
+      function beginDeletion() {
+        return changedOnly(['deleting'])
+          && request.resource.data.deleting == true
+          && resource.data.get('sharedClasses', {}).size() == 0;
+      }
+      function changeDistribution() {
+        let before = resource.data.get('sharedClasses', {});
+        let after = request.resource.data.sharedClasses;
+        let classId = request.resource.data.lastSharedClassId;
+        let sharePath = /databases/$(database)/documents/classes/$(classId)/lessonFiles/$(fileId);
+        return resource.data.get('deleting', false) == false
+          && changedOnly(['sharedClasses', 'lastSharedClassId'])
+          && classId is string && classId.size() > 0
+          && after is map
+          && after.diff(before).affectedKeys().hasOnly([classId])
+          && after.diff(before).affectedKeys().size() == 1
+          && (
+            (!(classId in before) && classId in after
+              && after[classId] is string && after[classId].size() > 0 && after[classId].size() <= 240
+              && canPublishLessonFile(classId)
+              && !exists(sharePath) && existsAfter(sharePath)
+              && getAfter(sharePath).data.ownerId == ownerId)
+            || (classId in before && !(classId in after)
+              && (isAdmin() || ownsClass(classId))
+              && exists(sharePath) && get(sharePath).data.ownerId == ownerId
+              && !existsAfter(sharePath))
+          );
+      }
+    }
+
+    function canPublishLessonFile(classId) {
+      return isClassActive(classId) && (isAdmin() || ownsClassEditable(classId));
+    }
+
+    match /classes/{classId}/lessonFiles/{fileId} {
+      function sourcePath() {
+        return /databases/$(database)/documents/lessonFiles/$(uid())/files/$(fileId);
+      }
+      function publishedSourcePath() {
+        return /databases/$(database)/documents/lessonFiles/$(resource.data.ownerId)/files/$(fileId);
+      }
+      function validPublication() {
+        let source = get(sourcePath()).data;
+        let after = getAfter(sourcePath()).data;
+        let share = request.resource.data;
+        return share.keys().hasOnly(['id', 'ownerId', 'name', 'size', 'extension', 'storagePath', 'downloadUrl'])
+          && share.id == fileId && share.ownerId == uid()
+          && share.name == source.name && share.size == source.size
+          && share.extension == source.extension && share.storagePath == source.storagePath
+          && share.downloadUrl is string && share.downloadUrl.size() > 0 && share.downloadUrl.size() <= 4096
+          && source.get('deleting', false) == false && after.get('deleting', false) == false
+          && !(classId in source.get('sharedClasses', {}))
+          && classId in after.sharedClasses && after.lastSharedClassId == classId;
+      }
+      allow read: if signedIn() && (isAdmin() || ownsClass(classId) || isClassMember(classId));
+      allow create: if classDeletionClientWritesOpen() && signedIn()
+        && canPublishLessonFile(classId) && validPublication();
       allow update: if false;
+      allow delete: if classDeletionClientWritesOpen() && signedIn()
+        && ((resource.data.ownerId == uid() && (isAdmin() || ownsClass(classId)))
+          || (isAdmin() && isClassArchived(classId)))
+        && classId in get(publishedSourcePath()).data.get('sharedClasses', {})
+        && existsAfter(publishedSourcePath())
+        && !(classId in getAfter(publishedSourcePath()).data.sharedClasses)
+        && getAfter(publishedSourcePath()).data.lastSharedClassId == classId;
     }
 
     match /lessons/{lId} {
