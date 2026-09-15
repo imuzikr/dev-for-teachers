@@ -5,7 +5,7 @@ import BookProjectEditor from "./BookProjectEditor";
 import { stepPreviewItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 
-export default function BookProjectPanel({ project, editing, expandRequest, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onDraftChange }) {
+export default function BookProjectPanel({ project, classPurpose, editing, expandRequest, appendStep, initialOpenStepId, saving, participantCount = 0, onSave, onEdit, onDraftChange }) {
   const [viewOpenIds, setViewOpenIds] = useState(new Set());
   const [activeStepId, setActiveStepId] = useState(null);
   const [orderSaving, setOrderSaving] = useState(false);
@@ -41,6 +41,7 @@ export default function BookProjectPanel({ project, editing, expandRequest, appe
       <BookProjectEditor
         expandRequest={expandRequest}
         project={project}
+        classPurpose={classPurpose}
         appendStep={appendStep}
         initialOpenStepId={initialOpenStepId}
         saving={saving}

@@ -36,6 +36,7 @@ export default function BookWorkspace({
   isTeacher,
   hasClass,
   activeClassId,
+  classPurpose,
   project,
   liveProjectReady = true,
   editingProject,
@@ -347,6 +348,7 @@ export default function BookWorkspace({
               expandRequest={projectEditorKey}
               project={project}
               editing={editingProject}
+              classPurpose={classPurpose}
               appendStep={appendProjectStep}
               initialOpenStepId={projectEditorStepId}
               saving={savingProject}

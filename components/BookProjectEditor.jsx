@@ -10,6 +10,7 @@ import { updateBookProjectItem } from "./bookProjectItems";
 import { orderedStepItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
+import { initialBookProject } from "@/lib/internalProjectTemplate.mjs";
 
 function newStep(index) {
   return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [], itemOrder: [] };
@@ -78,6 +79,7 @@ function initialDraft(project, appendStep, initialOpenStepId) {
 
 export default function BookProjectEditor({
   project,
+  classPurpose,
   expandRequest,
   appendStep,
   initialOpenStepId,
@@ -86,7 +88,11 @@ export default function BookProjectEditor({
   onSave,
   onDraftChange,
 }) {
-  const [draft] = useState(() => initialDraft(project, appendStep, initialOpenStepId));
+  const [draft] = useState(() => initialDraft(
+    initialBookProject(project, classPurpose),
+    appendStep && (project != null || classPurpose !== "internal"),
+    initialOpenStepId,
+  ));
   const [title, setTitle] = useState(draft.title);
   const [steps, setSteps] = useState(draft.steps);
   const [openIds, setOpenIds] = useState(draft.openIds);

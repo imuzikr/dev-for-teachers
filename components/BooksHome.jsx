@@ -151,6 +151,7 @@ export default function BooksHome(props) {
         isTeacher={admin}
         hasClass={!!classId}
         activeClassId={classId}
+        classPurpose={classPurpose}
         project={displayedProject}
         editingProject={editingProject}
         projectEditorKey={projectEditorKey}
