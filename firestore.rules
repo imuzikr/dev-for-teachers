@@ -538,6 +538,22 @@ service cloud.firestore {
     //    학생에게 절대 노출되면 안 되므로 읽기를 소유 교사로 좁힙니다.
     //  · 학생이 수업 중 보는 슬라이드는 방송 문서(broadcasts)에 실린
     //    '현재 장 이미지 URL' 하나뿐입니다.
+    match /lessonFiles/{ownerId}/files/{fileId} {
+      function ownsFiles() { return signedIn() && uid() == ownerId && isTeacher(); }
+      allow read: if ownsFiles();
+      allow create: if classDeletionClientWritesOpen() && ownsFiles()
+        && request.resource.data.keys().hasOnly(['ownerId', 'name', 'size', 'extension', 'storagePath', 'createdAt'])
+        && request.resource.data.ownerId == ownerId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 240
+        && request.resource.data.size is int && request.resource.data.size > 0 && request.resource.data.size <= 52428800
+        && request.resource.data.extension in ['jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'avif', 'bmp', 'tif', 'tiff', 'ico', 'svg', 'heic', 'heif', 'txt', 'pdf', 'pptx', 'xlsx', 'csv', 'zip', 'html', 'htm', 'json', 'doc', 'docx', 'hwp', 'hwpx']
+        && request.resource.data.storagePath == 'lesson-files/' + ownerId + '/' + fileId + '.' + request.resource.data.extension
+        && request.resource.data.createdAt == request.time;
+      allow delete: if classDeletionClientWritesOpen() && ownsFiles();
+      allow update: if false;
+    }
+
     match /lessons/{lId} {
       allow read: if isAdmin() || (isTeacher() && resource.data.ownerId == uid());
       allow create: if classDeletionClientWritesOpen()

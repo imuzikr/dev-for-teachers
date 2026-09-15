@@ -90,6 +90,19 @@ service firebase.storage {
       allow list: if canMaintainArchivedClassImages(classId);
     }
 
+    match /lesson-files/{ownerUid}/{fileName} {
+      function ownsFiles() {
+        return signedIn() && uid() == ownerUid && (hasApprovedOwnerRole() || isSystemAdmin());
+      }
+      allow read, delete: if ownsFiles();
+      allow create: if resource == null && ownsFiles()
+        && fileName.matches('^[a-f0-9-]{36}\\.(jpg|jpeg|jfif|png|apng|gif|webp|avif|bmp|tif|tiff|ico|svg|heic|heif|txt|pdf|pptx|xlsx|csv|zip|html|htm|json|doc|docx|hwp|hwpx)$')
+        && request.resource.size > 0 && request.resource.size <= 52428800
+        && request.resource.contentType == 'application/octet-stream'
+        && request.resource.contentDisposition.matches('^attachment; filename\\*=UTF-8.*');
+      allow update: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
