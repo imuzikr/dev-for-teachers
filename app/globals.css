@@ -8940,7 +8940,8 @@ pre code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  align-self: stretch;
+  align-self: start;
+  height: 120px;
   min-height: 120px;
   width: 100%;
   border: 1px dashed var(--border);
