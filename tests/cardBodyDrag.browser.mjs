@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import verifyResourceTemplate from "./resourceTemplate.browser.mjs";
+import verifyClassManagerLayout from "./classManagerLayout.browser.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
@@ -18,6 +19,8 @@ try {
   for (const file of ["package.json", "jsconfig.json", "app/globals.css", "app/book-sidebar.css"]) await cp(path.join(root, file), path.join(fixture, file));
   await writeFile(path.join(fixture, "lib/firebase.js"), "export const isFirebaseConfigured = false; export const db = null; export const auth = null; export const storage = null;");
   await writeFile(path.join(fixture, "app/page.jsx"), 'export { default } from "@/tests/fixtures/BookWorkflowPage";');
+  await mkdir(path.join(fixture, "app/qa-class"), { recursive: true });
+  await writeFile(path.join(fixture, "app/qa-class/page.jsx"), 'export { default } from "@/tests/fixtures/ClassManagerLayoutPage";');
   await writeFile(path.join(fixture, "app/layout.jsx"), 'import "./globals.css"; import "./book-sidebar.css"; export default function Layout({children}) { return <html lang="ko"><body>{children}</body></html>; }');
   server = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3251"], { cwd: fixture, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
   server.stdout.on("data", value => { logs += value; });
@@ -76,6 +79,7 @@ try {
   await page.getByRole("button", { name: "학생 보기", exact: true }).click();
   assert.equal(await cards.count(), 0);
   await verifyResourceTemplate(page, output);
+  await verifyClassManagerLayout(page, output);
   assert.deepEqual(errors, []);
   console.log(`PASS: card body/title drag, saved order after switching steps, keyboard reorder, interactive controls excluded, student guard. ${output}`);
 } finally {

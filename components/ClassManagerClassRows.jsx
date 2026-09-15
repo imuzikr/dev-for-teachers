@@ -20,7 +20,7 @@ export function ActiveClassRow({
   onDelete,
 }) {
   return (
-    <li className="class-mgr-row">
+    <li className="class-mgr-row class-mgr-row--active">
       <div className="class-mgr-row-main">
         {renaming ? (
           <input
@@ -43,15 +43,6 @@ export function ActiveClassRow({
         ) : (
           <span className="class-mgr-name">{classItem.name}</span>
         )}
-        <ClassManagerJoinControls
-          classItem={classItem}
-          busy={busy}
-          onToggleJoinAccess={onToggleJoinAccess}
-          onRefreshJoinCode={onRefreshJoinCode}
-          onSaveJoinCode={onSaveJoinCode}
-          onToast={onToast}
-        />
-      </div>
       <div className="class-mgr-actions">
         <button
           type="button"
@@ -81,6 +72,15 @@ export function ActiveClassRow({
           <IconTrash size={15} /> 삭제
         </button>
       </div>
+      </div>
+      <ClassManagerJoinControls
+        classItem={classItem}
+        busy={busy}
+        onToggleJoinAccess={onToggleJoinAccess}
+        onRefreshJoinCode={onRefreshJoinCode}
+        onSaveJoinCode={onSaveJoinCode}
+        onToast={onToast}
+      />
     </li>
   );
 }

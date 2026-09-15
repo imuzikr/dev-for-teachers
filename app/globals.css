@@ -2101,6 +2101,38 @@ body:has(.modal-backdrop) .landing {
   padding: 5px 9px;
   font-size: 12.5px;
 }
+.class-mgr-row.class-mgr-row--active {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.class-mgr-row--active .class-mgr-row-main {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.class-mgr-row--active .class-mgr-name,
+.class-mgr-row--active .class-mgr-rename-input { min-width: 0; }
+.class-mgr-row--active .class-mgr-actions {
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+.class-mgr-row--active .class-mgr-join-controls {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+}
+.class-mgr-row--active .class-mgr-join-controls > * { flex-shrink: 0; }
+.class-mgr-row--active .class-mgr-join-code-form {
+  grid-template-columns: auto 96px auto;
+  align-items: center;
+}
+.class-mgr-row--active .class-mgr-join-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+}
+.class-mgr-row--active .btn-ghost { width: auto; white-space: nowrap; }
 .class-code-preview-backdrop {
   position: fixed;
   inset: 0;
@@ -8870,10 +8902,22 @@ pre code {
 }
 
 .admin-user-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 320px;
+  max-width: 100%;
   gap: 8px;
+}
+.admin-user-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: var(--radius-btn);
 }
 
 .pin-auth-modal {
