@@ -739,6 +739,18 @@
   border-radius: 16px;
 }
 
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .books-main--split .book-library-side,
+  .books-main--split .book-library-side.is-collapsed,
+  .books-main--split .book-help-drawer,
+  .books-main--split .book-help-drawer.is-collapsed {
+    align-self: start;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+  }
+}
+
 .books-class-change {
   min-height: 36px;
   padding: 0 14px;

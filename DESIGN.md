@@ -30,7 +30,8 @@
 
 - 도움 글의 3선 표시 오른쪽에는 기존 선형 확대 아이콘과 44px 높이의 독립 버튼을 배치한다. 본문과 제목별 항목은 기존 도움 글 모달에서 전체 높이로 읽고 닫기, Escape, 배경 클릭, 포커스 복귀를 유지한다.
 - 도움 글 상위에는 제목과 URL만 둔다. 모든 본문은 들여쓴 하위 항목으로 표시하며 각 항목은 제목, 서식 본문, 링크와 개별 편집·저장·삭제 기능을 가진다. 이전 상위 본문은 첫 번째 ‘기존 내용’ 항목으로 보존하고, 항목 변경 시 원본과 함께 원자적으로 저장한다. 새 도움 글의 항목은 상위 저장 시 함께 저장한다.
-- 767px 이하 책방 화면은 콘텐츠에 맞춰 전체 페이지 높이가 늘어나고 문서 자체를 세로 스크롤할 수 있다. 기존 패널의 가로 접근은 유지하며 768px 이상에서는 기존 고정 높이와 내부 스크롤을 유지한다. 모달을 열 때의 문서 스크롤 잠금은 변경하지 않는다.
+- BooksHome at widths up to 768px, and devices with no hover and a coarse pointer in either orientation, grows with its content: the document scrolls the top navigation, page header, Step controls, dashboard and selected-Step activities together. Fine-pointer desktop retains its fixed-height, independently scrolling panels. Horizontal access to side panels remains available; side panels stay viewport-height with their own scrolling. Modal document-scroll locks remain unchanged. This mobile rule takes precedence over older fixed-height workspace descriptions below.
+- Teacher distribution reads and errors appear only inside the `수업 준비` modal, without a global teacher error banner. Student distribution subscriptions remain proactive so newly published downloads become available without opening a modal.
 
 ## 1. Direction
 
