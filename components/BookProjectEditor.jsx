@@ -13,7 +13,7 @@ import { IconAddFeature, IconTrash } from "./StatusIcons";
 import { initialBookProject } from "@/lib/internalProjectTemplate.mjs";
 
 function newStep(index) {
-  return { id: crypto.randomUUID(), title: `Step ${index + 1}`, activities: [], resources: [], itemOrder: [] };
+  return { id: crypto.randomUUID(), title: `Step ${index + 1}`, description: "", activities: [], resources: [], itemOrder: [] };
 }
 
 function newItem(kind = "activity") {
@@ -273,6 +273,17 @@ export default function BookProjectEditor({
             onChange={(event) => updateStep(step.id, { title: event.target.value })}
             aria-label={`Step ${stepNumber} 제목`}
           />
+        </label>
+        <label className="book-step-description-field">
+          <span>Step {stepNumber} 안내</span>
+          <textarea
+            rows={4}
+            value={step.description ?? ""}
+            onChange={(event) => updateStep(step.id, { description: event.target.value })}
+            aria-label={`Step ${stepNumber} 안내`}
+            disabled={saving}
+          />
+          <small>이 Step의 활동과 자료를 소개해 주세요. 비워 두어도 됩니다.</small>
         </label>
         <div className="book-step-edit-meta">
           <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>

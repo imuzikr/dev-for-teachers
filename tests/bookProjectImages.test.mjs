@@ -247,3 +247,53 @@ test("reordered and removed image-size pairs survive save and export", async () 
   assert.deepEqual(Array.from(reloaded.steps[0].activities[0].images), [image]);
   assert.deepEqual(Array.from(reloaded.steps[0].activities[0].imageSizes), ["large"]);
 });
+
+test("step introductions survive mock save and reload, and can be cleared independently", async () => {
+  const api = await loadModules();
+  const project = draft();
+  const description = "  활동 전에 자료를 읽어 주세요.\n\n두 번째 줄을 확인하세요.  ";
+  project.steps[0].description = description;
+  project.steps.push({ id: "step2", title: "두 번째 단계", description: "다음 활동 안내", activities: [], resources: [] });
+  await api.saveBookProject(user, project);
+  const saved = await api.getBookProject(project.classId);
+  assert.equal(saved.steps[0].description, description);
+  assert.equal(saved.steps[1].description, "다음 활동 안내");
+
+  await api.saveBookProject(user, {
+    ...saved,
+    steps: saved.steps.map((step, index) => index === 0 ? { ...step, description: "" } : step),
+  });
+  const cleared = await api.getBookProject(project.classId);
+  assert.equal(cleared.steps[0].description, "");
+  assert.equal(cleared.steps[1].description, "다음 활동 안내");
+
+  await api.saveBookProject(user, draft());
+  assert.equal((await api.getBookProject(project.classId)).steps[0].description, "");
+});
+
+test("Firestore step introductions preserve formatting and explicit empty values", async () => {
+  const api = await loadModules(true);
+  const description = "  먼저 자료를 살펴보세요.\n활동은 두 번째 줄부터 시작합니다.  ";
+  for (const value of [description, "", undefined]) {
+    const project = draft();
+    if (value !== undefined) project.steps[0].description = value;
+    await api.saveBookProject(user, project);
+    const saved = api.writes.filter(([ref]) => ref.path.startsWith("bookProjects")).at(-1)[1];
+    assert.equal(saved.steps[0].description, value ?? "");
+  }
+  assert.equal(api.commits(), 3);
+});
+
+test("whole-project and single-step exports retain introductions without replacing blanks", async () => {
+  const api = await loadModules();
+  for (const description of ["  준비 안내\n\n자료를 읽어 주세요.  ", "", undefined]) {
+    const project = draft();
+    if (description !== undefined) project.steps[0].description = description;
+    const step = project.steps[0];
+    const cloned = api.cloneBookProjectStep(step);
+    assert.equal(cloned.description, description ?? "");
+    assert.notEqual(cloned.id, step.id);
+    assert.equal(api.appendClonedBookProjectStep(null, project, step).steps[0].description, description ?? "");
+    assert.equal(api.appendClonedBookProjectSteps(null, project).steps[0].description, description ?? "");
+  }
+});

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import BookPersonalDetail from "./BookPersonalDetail";
 import BookProjectFlowOverview from "./BookProjectFlowOverview";
+import BookStepGuidance from "./BookStepGuidance";
 import { STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from "./BookProgressBars";
 import { participantName } from "./BookPersonalDetailCards";
@@ -48,6 +49,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
           </div>
         </nav>
         <div className="book-personal-selected-view" hidden={!activeStepSection}>
+          <BookStepGuidance step={activeStepSection} />
           <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} showNavigation={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
         </div>
         <section className="book-personal-dashboard" hidden={!!activeStepSection} aria-label="나의 Step 카드">
@@ -75,6 +77,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
 
     return (
       <div className="book-personal-selected-view">
+        <BookStepGuidance step={activeStepSection} />
         <BookPersonalDetail
           selected={selected}
           sections={visibleSections}
@@ -102,6 +105,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
 
   return (
     <section className="book-personal-dashboard" aria-label={isTeacher ? "참여자 개인 카드" : "나의 Step 카드"}>
+      <BookStepGuidance step={activeStepSection} />
       {isTeacher && (
         <BookProjectFlowOverview
           project={project}

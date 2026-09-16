@@ -76,6 +76,7 @@ export function bookDetailSections(project, activities) {
     return {
       id: stepId,
       title: stepTitle,
+      description: typeof step.description === "string" ? step.description : "",
       activities: items.filter((item) => item.kind === "activity"),
       resources: items.filter((item) => item.kind === "resource"),
       items,

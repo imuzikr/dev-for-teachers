@@ -26,7 +26,9 @@ export default function BooksHome(props) {
     () => (allTeacherClasses ?? myClassesAll).filter((classItem) => !classItem.archived),
     [allTeacherClasses, myClassesAll]
   );
-  const [selectedStepId, setSelectedStepId] = useState(null);
+  const stepScope = JSON.stringify([classId, displayedProject?.id, user?.uid, admin]);
+  const [stepSelection, setStepSelection] = useState({ scope: stepScope, id: undefined });
+  const setSelectedStepId = useCallback((id) => setStepSelection({ scope: stepScope, id }), [stepScope]);
   const [changingClass, setChangingClass] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const closeProgress = useCallback(() => setProgressOpen(false), []);
@@ -34,25 +36,19 @@ export default function BooksHome(props) {
   const closeClassChange = useCallback(() => setChangingClass(false), []);
 
   useEffect(() => {
-    if (stepTabs.length === 0) {
-      setSelectedStepId(null);
-      return;
-    }
-
-    if (admin) {
-      setSelectedStepId((current) => (
-        current && stepTabs.some((step) => step.id === current) ? current : stepTabs[0].id
-      ));
-      return;
-    }
-
-    setSelectedStepId((current) => (
-      current && stepTabs.some((step) => step.id === current) ? current : null
-    ));
-  }, [admin, stepTabs]);
-  const activeStepId = admin && !selectedStepId
-    ? stepTabs[0]?.id ?? null
-    : selectedStepId;
+    setStepSelection((current) => {
+      if (current.scope === stepScope && (
+        (!admin && current.id === null) || stepTabs.some((step) => step.id === current.id)
+      )) return current;
+      const id = stepTabs[0]?.id;
+      return current.scope === stepScope && current.id === id ? current : { scope: stepScope, id };
+    });
+  }, [admin, stepScope, stepTabs]);
+  const activeStepId = stepSelection.scope === stepScope && !admin && stepSelection.id === null
+    ? null
+    : stepSelection.scope === stepScope && stepTabs.some((step) => step.id === stepSelection.id)
+      ? stepSelection.id
+      : stepTabs[0]?.id ?? null;
   const classroomTools = (
     <BookClassroomTools user={user} isTeacher={admin} classId={classId} currentClass={currentClass}
       classes={myClassesAll} allClasses={allTeacherClasses ?? myClassesAll} classPurpose={classPurpose}

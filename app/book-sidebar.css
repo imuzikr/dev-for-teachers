@@ -739,6 +739,50 @@
   border-radius: 16px;
 }
 
+.book-step-guidance {
+  flex-shrink: 0;
+  min-width: 0;
+  min-height: 64px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.book-step-description-field {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.book-step-description-field > span {
+  font-weight: 700;
+}
+
+.book-step-description-field > textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.7;
+}
+
+.book-step-description-field > small {
+  color: var(--text-sub);
+  font-size: 12px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   .books-main--split .book-library-side,
   .books-main--split .book-library-side.is-collapsed,
