@@ -8815,6 +8815,34 @@ pre code {
   overflow-wrap: anywhere;
 }
 
+.books-student-class-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.books-student-class-actions .btn-outline { min-height: 44px; white-space: nowrap; }
+.book-student-navigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  min-width: 0;
+  padding: 0 28px 16px;
+}
+.book-student-navigation > button { min-height: 44px; white-space: nowrap; }
+.book-student-navigation .books-step-tabs--student {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px;
+}
+.books-step-tabs--student > button { flex: none; min-height: 44px; }
+@media (max-width: 768px) {
+  .book-student-navigation { padding: 0 12px 16px; gap: 8px; }
+}
+
 .books-project-create {
   flex: 0 0 auto;
   margin-left: auto;

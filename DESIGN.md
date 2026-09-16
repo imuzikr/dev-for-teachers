@@ -32,6 +32,7 @@
 - 도움 글 상위에는 제목과 URL만 둔다. 모든 본문은 들여쓴 하위 항목으로 표시하며 각 항목은 제목, 서식 본문, 링크와 개별 편집·저장·삭제 기능을 가진다. 이전 상위 본문은 첫 번째 ‘기존 내용’ 항목으로 보존하고, 항목 변경 시 원본과 함께 원자적으로 저장한다. 새 도움 글의 항목은 상위 저장 시 함께 저장한다.
 - BooksHome at widths up to 768px, and devices with no hover and a coarse pointer in either orientation, grows with its content: the document scrolls the top navigation, page header, Step controls, dashboard and selected-Step activities together. Fine-pointer desktop retains its fixed-height, independently scrolling panels. Horizontal access to side panels remains available; side panels stay viewport-height with their own scrolling. Modal document-scroll locks remain unchanged. This mobile rule takes precedence over older fixed-height workspace descriptions below.
 - Teacher distribution reads and errors appear only inside the `수업 준비` modal, without a global teacher error banner. Student distribution subscriptions remain proactive so newly published downloads become available without opening a modal.
+- Student header commands place `자료 내려받기` immediately to the right of `반 변경` when published files exist. Student Step tabs live below the header beside the `개인 카드` button, remain available in both overview and selected-Step views, and scroll horizontally within their row on narrow screens. Teacher header and Step placement stay unchanged.
 
 ## 1. Direction
 

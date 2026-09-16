@@ -11,6 +11,7 @@ const root = process.cwd();
 const output = path.join(root, "artifacts", `mobile-page-scroll-${Date.now()}`);
 const fixture = path.join(output, "fixture");
 const report = { cases: [], externalRequests: [], errors: [] };
+const navigationLayout = process.env.NAVIGATION_LAYOUT === "1";
 let server, browser, page, logs = "";
 async function metrics() {
   return page.evaluate(() => {
@@ -53,6 +54,7 @@ try {
   browser = await chromium.launch({ channel: "chrome", headless: true });
   for (const role of ["teacher", "student"]) for (const [width, height, touch] of [[375, 900, true], [768, 900, true], [1280, 900, false], [1024, 600, true], [820, 1180, true], [1024, 1366, true]]) {
     if (process.env.SCROLL_VIEWPORT_WIDTH && width !== Number(process.env.SCROLL_VIEWPORT_WIDTH)) continue;
+    if (navigationLayout && ![375, 768, 1280].includes(width)) continue;
     const name = `${role}-${width}x${height}${touch ? "-touch" : ""}`;
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: touch, serviceWorkers: "block" });
     await context.route("**/*", route => {
@@ -67,7 +69,43 @@ try {
     });
     page = await context.newPage();
     page.on("pageerror", error => report.errors.push(error.message));
-    await page.goto(`${origin}?role=${role}`, { timeout: 120000 });
+    await page.goto(`${origin}?role=${role}${navigationLayout ? "&published=1" : ""}`, { timeout: 120000 });
+    if (navigationLayout && role === "student") {
+      const navigation = page.locator(".book-student-navigation");
+      await navigation.waitFor();
+      assert.equal(await page.locator(".books-content-head .books-step-tabs").count(), 0);
+      assert.equal(await page.locator(".books-step-tabs:visible").count(), 1);
+      const change = page.getByRole("button", { name: "반 변경", exact: true });
+      const downloads = page.getByRole("button", { name: "자료 내려받기", exact: true });
+      await downloads.waitFor();
+      const changeBox = await change.boundingBox(), downloadBox = await downloads.boundingBox();
+      assert(Math.abs(changeBox.y - downloadBox.y) < 2 && downloadBox.x >= changeBox.x + changeBox.width, `${name}: downloads must sit immediately right of class change`);
+      assert(downloadBox.x + downloadBox.width <= width + 1, `${name}: paired commands must fit`);
+      const back = navigation.getByRole("button", { name: "← 개인 카드", exact: true });
+      const tabs = navigation.locator(".books-step-tabs");
+      const backBox = await back.boundingBox(), tabsBox = await tabs.boundingBox();
+      assert(tabsBox.x >= backBox.x + backBox.width && Math.abs(tabsBox.y - backBox.y) < 4, `${name}: tabs must share personal-card row`);
+      await page.screenshot({ path: path.join(output, `${name}-overview.png`) });
+      await tabs.getByRole("button", { name: "STEP 24", exact: true }).click();
+      assert(await tabs.evaluate(node => node.scrollLeft > 0), `${name}: last Step must be reachable through horizontal scrolling`);
+      await page.locator(".book-personal-step-section:visible").filter({ hasText: "Step 24" }).waitFor();
+      await page.screenshot({ path: path.join(output, `${name}-step24.png`) });
+      await back.click();
+      await page.locator(".book-student-step-grid:visible").waitFor();
+      assert.equal(await page.locator(".books-step-tabs:visible").count(), 1);
+      await downloads.click();
+      const downloadModal = page.getByRole("dialog", { name: "자료 내려받기" });
+      await downloadModal.getByText("학습 자료.txt", { exact: true }).waitFor();
+      await page.screenshot({ path: path.join(output, `${name}-downloads.png`) });
+      const event = page.waitForEvent("download");
+      await downloadModal.getByRole("button", { name: "다운로드", exact: true }).click();
+      assert.equal((await event).suggestedFilename(), "학습 자료.txt");
+      await downloadModal.getByRole("button", { name: "닫기", exact: true }).click();
+    } else if (navigationLayout) {
+      await page.locator(".books-step-tabs--teacher").waitFor();
+      assert.equal(await page.locator(".book-student-navigation").count(), 0);
+      assert.equal(await page.locator(".books-content-head .books-step-tabs--teacher").count(), 1);
+    }
     await page.locator(".books-step-tabs button").first().click();
     await page.locator(".book-personal-activity-card").first().waitFor();
     await page.evaluate(() => document.fonts.ready);
@@ -171,6 +209,19 @@ try {
       await page.screenshot({ path: path.join(output, `${name}-help-return.png`) });
     }
     report.cases.at(-1).help = helpMetrics;
+    if (navigationLayout && role === "student") {
+      await page.getByRole("button", { name: "반 변경", exact: true }).click();
+      const changeModal = page.getByRole("dialog", { name: "반 변경", exact: true });
+      await changeModal.getByLabel("새 반 참여 코드").fill("123456");
+      await page.screenshot({ path: path.join(output, `${name}-class-change.png`) });
+      await changeModal.getByRole("button", { name: "참여하기", exact: true }).click();
+      await changeModal.waitFor({ state: "hidden" });
+      await page.getByText("Next classroom", { exact: true }).waitFor();
+      await page.getByRole("button", { name: "자료 내려받기", exact: true }).waitFor({ state: "hidden" });
+      await page.locator(".book-student-navigation").getByRole("button", { name: "STEP 2", exact: true }).click();
+      await page.locator(".book-personal-step-section:visible").filter({ hasText: "Step 2" }).waitFor();
+      report.cases.at(-1).navigation = "overview, last Step, back, paired downloads, download modal, class change, Step after class change";
+    }
     await context.close();
     page = null;
   }

@@ -37,8 +37,18 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   if (!isTeacher && ownParticipant) {
     return (
       <>
+        <nav className="book-student-navigation" aria-label="개인 카드와 Step 선택">
+          <button type="button" className="btn-outline" aria-pressed={!activeStepSection} onClick={() => onSelectStep?.(null)}>← 개인 카드</button>
+          <div className="books-step-tabs books-step-tabs--student" aria-label="프로젝트 Step 선택">
+            {sections.map((section, index) => <button type="button" key={section.id}
+              className={activeStepSection?.id === section.id ? "is-active" : ""}
+              aria-pressed={activeStepSection?.id === section.id} onClick={() => onSelectStep?.(section.id)}>
+              STEP {index + 1}
+            </button>)}
+          </div>
+        </nav>
         <div className="book-personal-selected-view" hidden={!activeStepSection}>
-          <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
+          <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} showNavigation={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
         </div>
         <section className="book-personal-dashboard" hidden={!!activeStepSection} aria-label="나의 Step 카드">
           <div className="book-dashboard-head"><h2>STEP 카드</h2></div>

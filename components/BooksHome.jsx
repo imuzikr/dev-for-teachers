@@ -53,6 +53,12 @@ export default function BooksHome(props) {
   const activeStepId = admin && !selectedStepId
     ? stepTabs[0]?.id ?? null
     : selectedStepId;
+  const classroomTools = (
+    <BookClassroomTools user={user} isTeacher={admin} classId={classId} currentClass={currentClass}
+      classes={myClassesAll} allClasses={allTeacherClasses ?? myClassesAll} classPurpose={classPurpose}
+      roster={roster} onSelectClass={onSelectTeacherClass} onToast={onToast}
+      onOpenProgress={() => setProgressOpen(true)} />
+  );
 
   return (
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
@@ -78,38 +84,10 @@ export default function BooksHome(props) {
                       {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
                     </select>
                   ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
-                  {!admin && onJoinClass && <button type="button" className="btn-outline books-class-change" onClick={() => setChangingClass(true)}>반 변경</button>}
-                  {!admin && stepTabs.length > 0 && (
-                    <div className="books-step-tabs" aria-label="프로젝트 Step 선택">
-                      {stepTabs.map((step) => {
-                        const stepId = step.id;
-                        return (
-                          <button
-                            type="button"
-                            className={activeStepId === stepId ? "is-active" : ""}
-                            key={stepId}
-                            aria-pressed={activeStepId === stepId}
-                            onClick={() => setSelectedStepId(stepId)}
-                          >
-                            STEP {step.index + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <BookClassroomTools
-                    user={user}
-                    isTeacher={admin}
-                    classId={classId}
-                    currentClass={currentClass}
-                    classes={myClassesAll}
-                    allClasses={allTeacherClasses ?? myClassesAll}
-                    classPurpose={classPurpose}
-                    roster={roster}
-                    onSelectClass={onSelectTeacherClass}
-                    onToast={onToast}
-                    onOpenProgress={() => setProgressOpen(true)}
-                  />
+                  {admin ? classroomTools : <div className="books-student-class-actions">
+                    {onJoinClass && <button type="button" className="btn-outline books-class-change" onClick={() => setChangingClass(true)}>반 변경</button>}
+                    {classroomTools}
+                  </div>}
                 </div>
                 {admin && classId && (
                   <button type="button" className="btn-primary books-project-create" onClick={() => onEditProject(false)}>

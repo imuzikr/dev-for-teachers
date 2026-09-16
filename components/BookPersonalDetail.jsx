@@ -21,6 +21,7 @@ export default function BookPersonalDetail({
   saveDashboardText = saveBookDashboardText,
   backLabel = "← 개인 카드",
   visibleStepId,
+  showNavigation = true,
 }) {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
@@ -81,7 +82,7 @@ export default function BookPersonalDetail({
 
   return (
     <section className={`book-personal-dashboard book-personal-detail${isTeacher ? " book-personal-detail--teacher" : ""}`} aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
-      <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
+      {showNavigation && <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
         <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
         {isTeacher && (
           <div>
@@ -90,7 +91,7 @@ export default function BookPersonalDetail({
               <p>{selected.schoolName || "학교 미입력"} · {selectedProgress.size}/{itemCount} 확인</p>
           </div>
         )}
-      </header>
+      </header>}
       {sections.length === 0 ? (
         <div className="book-dashboard-empty">선생님이 활동을 준비하고 있습니다.</div>
       ) : (

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BooksHome from "@/components/BooksHome";
 import { addBookHelpNote } from "@/lib/bookHelpNotes";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { addLessonFile, setLessonFileDistribution, subscribeLessonFiles } from "@/lib/lessonFiles";
 
 const student = { uid: "scroll-student", displayName: "Scroll student", realName: "Scroll student" };
 const classroom = { id: "scroll-class", name: "Scroll classroom" };
@@ -20,15 +21,24 @@ const project = {
 const noop = () => {};
 let helpSeed;
 
-function seedHelp() {
+async function seedHelp() {
   if (isFirebaseConfigured) throw new Error("Scroll fixture requires the Firebase stub");
-  return Promise.all(Array.from({ length: 32 }, (_, index) => addBookHelpNote(
+  await Promise.all(Array.from({ length: 32 }, (_, index) => addBookHelpNote(
     { uid: "scroll-teacher" }, classroom.id, { title: `Help note ${index + 1}`, sections: [] }
   )));
+  if (new URLSearchParams(location.search).has("published")) {
+    const owner = { uid: "scroll-teacher" };
+    await addLessonFile(owner, new File(["Local classroom worksheet"], "학습 자료.txt", { type: "text/plain" }));
+    let files = [];
+    const stop = subscribeLessonFiles(owner.uid, value => { files = value; });
+    stop();
+    await setLessonFileDistribution(owner, { classId: classroom.id, className: classroom.name, file: files[0], published: true });
+  }
 }
 
 export default function MobilePageScrollPage() {
   const [role, setRole] = useState(null);
+  const [activeClass, setActiveClass] = useState(classroom);
   useEffect(() => {
     helpSeed ??= seedHelp();
     helpSeed.then(() => setRole(new URLSearchParams(location.search).get("role") || "student"));
@@ -39,10 +49,15 @@ export default function MobilePageScrollPage() {
     <BooksHome
       topNav={<header className="topbar"><div className="topbar-left"><strong className="logo">Scroll classroom</strong></div></header>}
       admin={admin} user={admin ? { uid: "scroll-teacher", displayName: "Teacher" } : student}
-      classId={classroom.id} classes={[classroom]} currentClass={classroom}
+      classId={activeClass.id} classes={[activeClass]} currentClass={activeClass}
       myClasses={[classroom]} myClassesAll={[classroom]} allTeacherClasses={[classroom]}
-      membershipIds={[classroom.id]} roster={[student]} participants={[student]}
-      project={project} displayedProject={project} visibleActivities={project.steps.flatMap(step => step.activities)}
+      membershipIds={[activeClass.id]} roster={[student]} participants={[student]}
+      project={{ ...project, classId: activeClass.id }} displayedProject={{ ...project, classId: activeClass.id }} visibleActivities={project.steps.flatMap(step => step.activities)}
+      onJoinClass={async code => {
+        if (code !== "123456") return false;
+        setActiveClass({ id: "scroll-next-class", name: "Next classroom" });
+        return true;
+      }}
       liveProjectReady onSelectTeacherClass={noop} onToast={noop} onEditProject={noop}
       onSaveProject={async () => true} onToggleActivityLock={noop} onToggleProjectItemLock={noop}
     />
