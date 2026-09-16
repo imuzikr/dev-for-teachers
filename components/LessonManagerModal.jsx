@@ -11,7 +11,7 @@ import ConfirmModal from "./ConfirmModal";
 import { IconAddFeature, IconDuplicate, IconTrash } from "./StatusIcons";
 import { LessonFileDistributionToolbar, useLessonFileSelection } from "./LessonFileDistribution";
 
-export default function LessonManagerModal({ user, classId, className, sharedFiles = [], distributionLoading = false, onClose }) {
+export default function LessonManagerModal({ user, classId, className, sharedFiles = [], distributionLoading = false, distributionError = "", onClose }) {
   const me = user ?? getCurrentUser();
   const [files, setFiles] = useState([]);
   const [legacy, setLegacy] = useState([]);
@@ -134,6 +134,7 @@ export default function LessonManagerModal({ user, classId, className, sharedFil
       </div>
       <p className="lesson-file-formats">이미지 · TXT · PDF · PPTX · XLSX · CSV · ZIP · HTML · JSON · DOC/DOCX · HWP/HWPX <span>파일당 최대 50MB</span></p>
       {classId && <LessonFileDistributionToolbar className={className} selection={selection} disabled={working || loading || distributionLoading} />}
+      {distributionError && <p role="alert" className="lesson-error">{distributionError}</p>}
       {busy && <div role="status" className="lesson-file-progress"><span>{busy}</span><progress max="1" value={progress} aria-label="업로드 진행률" /></div>}
       {error && <p role="alert" className="lesson-error">{error}</p>}
       {notice && <p role="status" className="lesson-file-notice">{notice}</p>}

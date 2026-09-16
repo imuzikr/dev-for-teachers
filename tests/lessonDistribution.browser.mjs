@@ -76,6 +76,18 @@ try {
   for (const file of ["package.json", "jsconfig.json", "app/globals.css", "app/book-sidebar.css", "tests/fixtures/LessonDistributionPage.jsx"])
     await cp(path.join(root, file), path.join(fixture, file));
   await writeFile(path.join(fixture, "lib/firebase.js"), "export const isFirebaseConfigured = false; export const db = null; export const auth = null; export const storage = null;");
+  const lessonApiPath = path.join(fixture, "lib/lessonFiles.js");
+  const lessonApi = await readFile(lessonApiPath, "utf8");
+  await writeFile(lessonApiPath, lessonApi.replace("export function subscribeClassLessonFiles(", "function subscribeActualClassLessonFiles(") + `
+export function subscribeClassLessonFiles(classId, onFiles, onError) {
+  window.__lessonSubscriptions = (window.__lessonSubscriptions || 0) + 1;
+  if (window.__lessonPermissionDenied) {
+    onError({ code: "permission-denied" });
+    return () => {};
+  }
+  return subscribeActualClassLessonFiles(classId, onFiles, onError);
+}
+`);
   await writeFile(path.join(fixture, "next.config.mjs"), "export default { devIndicators: false };");
   await writeFile(path.join(fixture, "app/page.jsx"), 'export { default } from "@/tests/fixtures/LessonDistributionPage";');
   await writeFile(path.join(fixture, "app/layout.jsx"), 'import "./globals.css"; import "./book-sidebar.css"; export default function Layout({children}) { return <html lang="ko"><body>{children}</body></html>; }');
@@ -110,6 +122,22 @@ try {
   report.checks.push("student entry hidden before publication");
 
   await role("teacher");
+  await page.evaluate(() => { window.__lessonPermissionDenied = true; window.__lessonSubscriptions = 0; });
+  await switchClass("qa-class-b");
+  assert.equal(await page.evaluate(() => window.__lessonSubscriptions), 0, "teacher must not query distribution before opening lesson preparation");
+  assert.equal(await page.locator(".lesson-error[role='alert']").count(), 0);
+  await openTeacher();
+  await page.getByRole("dialog").getByRole("alert").waitFor();
+  await capture("teacher-permission");
+  assert(await page.getByRole("button", { name: "배포 목록 저장", exact: true }).isDisabled());
+  await closeModal();
+  assert.equal(await page.locator(".lesson-error[role='alert']").count(), 0);
+  await page.evaluate(() => { window.__lessonPermissionDenied = false; });
+  await openTeacher();
+  assert.equal(await page.locator(".lesson-error[role='alert']").count(), 0);
+  await closeModal();
+  await switchClass("qa-class-a");
+  report.checks.push("teacher distribution permission errors stay inside preparation and reopening retries");
   await openTeacher();
   await page.getByLabel("자료 파일", { exact: true }).setInputFiles([
     { name: firstName, mimeType: "text/plain", buffer: Buffer.from(firstContent) },

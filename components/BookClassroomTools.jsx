@@ -22,16 +22,19 @@ export default function BookClassroomTools({
   const active = distribution.scope === scope ? distribution : { files: [], loading: true, error: "" };
   useEffect(() => {
     setLessonPicker(false); setDownloadsOpen(false);
-    if (!user?.uid || !classId || currentClass?.archived) {
+  }, [scope, currentClass?.archived]);
+  useEffect(() => {
+    if (!user?.uid || !classId || currentClass?.archived || (isTeacher && !lessonPicker)) {
       setDistribution({ scope, files: [], loading: false, error: "" });
       return;
     }
+    setDistribution({ scope, files: [], loading: true, error: "" });
     let mounted = true;
     const stop = subscribeClassLessonFiles(classId,
       files => { if (mounted) setDistribution({ scope, files, loading: false, error: "" }); },
       reason => { if (mounted) setDistribution({ scope, files: [], loading: false, error: lessonFileError(reason) }); });
     return () => { mounted = false; stop(); };
-  }, [scope, user?.uid, classId, currentClass?.archived]);
+  }, [scope, user?.uid, classId, currentClass?.archived, isTeacher, lessonPicker]);
   const unitLabel = normalizeClassPurpose(classPurpose) === CLASS_PURPOSE_INTERNAL ? "차시" : "반";
 
   function selectClass(id) {
@@ -50,8 +53,8 @@ export default function BookClassroomTools({
     {classManagerOpen && <ClassManagerModal classes={classes} allClasses={allClasses ?? classes}
       classPurpose={classPurpose} user={user ?? getCurrentUser()} onClose={() => setClassManagerOpen(false)}
       onCreated={selectClass} onViewClass={selectClass} onToast={onToast} />}
-    {active.error && <span role="alert" className="lesson-error">{active.error}</span>}
-    {lessonPicker && <LessonManagerModal key={scope} user={user} classId={classId} className={currentClass?.name} sharedFiles={active.files} distributionLoading={active.loading || !!active.error} onClose={() => setLessonPicker(false)} />}
+    {!isTeacher && active.error && <span role="alert" className="lesson-error">{active.error}</span>}
+    {lessonPicker && <LessonManagerModal key={scope} user={user} classId={classId} className={currentClass?.name} sharedFiles={active.files} distributionLoading={active.loading || !!active.error} distributionError={active.error} onClose={() => setLessonPicker(false)} />}
     {downloadsOpen && <LessonDownloadsModal key={scope} files={active.files} className={currentClass?.name} onClose={() => setDownloadsOpen(false)} />}
   </>;
 }
