@@ -33,6 +33,7 @@ import Toast from "@/components/Toast";
 import BooksHome from "@/components/BooksHome";
 import ClassJoinPanel from "@/components/ClassJoinPanel";
 import ProjectItemDeleteModal from "@/components/ProjectItemDeleteModal";
+import { useBookProjectDeletion } from "@/components/useBookProjectDeletion";
 
 export default function BooksPage() {
   return <BooksPageInner />;
@@ -63,7 +64,6 @@ function BooksPageInner() {
   const [projectEditorStepId, setProjectEditorStepId] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
   const [exportingProject, setExportingProject] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState("");
   const [joiningClass, setJoiningClass] = useState(false);
 
@@ -150,6 +150,13 @@ function BooksPageInner() {
 
   const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
+  const deletion = useBookProjectDeletion({
+    user, classId, project,
+    ready: Boolean(classId && projectLoadedClass === classId && activitiesLoadedClass === classId),
+    saveProject: saveBookProject,
+    deleteActivity: deleteBookActivity,
+    onToast: setToast,
+  });
 
   useEffect(() => {
     let active = true;
@@ -303,24 +310,6 @@ function BooksPageInner() {
     setEditingProject(true);
   }
 
-  async function handleDelete() {
-    const target = confirmDelete;
-    setConfirmDelete(null);
-    const nextSteps = (project?.steps ?? []).map((step) => step.id !== target.stepId ? step : {
-      ...step,
-      activities: target.kind === "activity" ? step.activities.filter((item) => item.id !== target.item.id) : step.activities,
-      resources: target.kind === "resource" ? step.resources.filter((item) => item.id !== target.item.id) : step.resources,
-    });
-    try {
-      if (target.kind === "activity") await deleteBookActivity(target.item.id);
-      await saveBookProject(user, { classId, title: project.title, steps: nextSteps });
-      setToast(`${target.kind === "activity" ? "활동" : "자료"}을 삭제했어요.`);
-    } catch (error) {
-      console.error("[책방] 프로젝트 항목 삭제 실패:", error);
-      setToast("삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
-    }
-  }
-
   async function handleExportProjectItem(request) {
     const sourceProject = displayedProject ?? project;
     if (!user || !sourceProject || !request?.targetClassId) return false;
@@ -405,17 +394,21 @@ function BooksPageInner() {
         visibleActivities={activitiesLoadedClass === classId && classId ? visibleActivities : []}
         liveProjectReady={Boolean(classId && activitiesLoadedClass === classId && projectLoadedClass === classId)}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
-        appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject}
+        appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject || deletion.pending}
         exportingProject={exportingProject}
         onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
         onSaveProject={handleSaveProject}
-        onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={setConfirmDelete}
+        onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={admin ? deletion.requestDelete : null}
         onExportProjectItem={handleExportProjectItem}
         loadProject={getBookProject}
         joiningClass={joiningClass} onJoinClass={handleJoinClass}
       />
 
-      <ProjectItemDeleteModal target={confirmDelete} onConfirm={handleDelete} onClose={() => setConfirmDelete(null)} />
+      <ProjectItemDeleteModal
+        target={deletion.target} pending={deletion.pending} error={deletion.error}
+        cleanupPending={deletion.cleanupPending}
+        onConfirm={deletion.confirmDelete} onClose={deletion.closeDelete}
+      />
 
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </div>

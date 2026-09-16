@@ -1,6 +1,6 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
 const projectPayload = (uid, overrides = {}) => ({
@@ -146,6 +146,55 @@ describe("개발자실 프로젝트 저장 규칙", () => {
       activeItemByStep: { step1: "activity:act1" },
       updatedAt: serverTimestamp(),
     }));
+  });
+
+  for (const [label, makeContext] of [
+    ["등록된 학생은", () => asStudent(env, "studentA")],
+    ["반 밖의 학생은", () => asStudent(env, "outsider")],
+    ["다른 반 교사는", () => asTeacher(env, "teacherB")],
+  ]) {
+    it(`${label} 활동·자료·프로젝트를 삭제하거나 프로젝트에서 항목을 제거할 수 없다`, async () => {
+      await seed(env, async (db) => {
+        await setDoc(doc(db, "bookProjects", "cA"), projectPayload("teacherA"));
+        await setDoc(doc(db, "bookActivities", "act1"), activityPayload("teacherA"));
+        await setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA"));
+        await setDoc(doc(db, "memberships", "studentA_cA"), { uid: "studentA", classId: "cA", accessVersion: 2 });
+      });
+      const db = makeContext().firestore();
+
+      for (const [collectionName, id] of [["bookActivities", "act1"], ["bookResources", "res1"], ["bookProjects", "cA"]]) {
+        await assertFails(deleteDoc(doc(db, collectionName, id)));
+      }
+      for (const field of ["activities", "resources"]) {
+        const steps = projectPayload("teacherA").steps.map((step) => ({
+          ...step,
+          [field]: [],
+          itemOrder: step.itemOrder.filter((item) => item.kind !== (field === "activities" ? "activity" : "resource")),
+        }));
+        await assertFails(updateDoc(doc(db, "bookProjects", "cA"), {
+          steps,
+          confirmableItemKeys: field === "activities" ? ["resource:res1"] : ["activity:act1"],
+          updatedAt: serverTimestamp(),
+        }));
+      }
+    });
+  }
+
+  it("담당 교사는 프로젝트에서 항목을 제거하고 활동·자료·프로젝트를 삭제할 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), projectPayload("teacherA"));
+      await setDoc(doc(db, "bookActivities", "act1"), activityPayload("teacherA"));
+      await setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA"));
+    });
+    const db = asTeacher(env, "teacherA").firestore();
+    await assertSucceeds(updateDoc(doc(db, "bookProjects", "cA"), {
+      steps: [{ id: "step1", title: "프로그램 설치", activities: [], resources: [], itemOrder: [] }],
+      confirmableItemKeys: [],
+      updatedAt: serverTimestamp(),
+    }));
+    for (const [collectionName, id] of [["bookActivities", "act1"], ["bookResources", "res1"], ["bookProjects", "cA"]]) {
+      await assertSucceeds(deleteDoc(doc(db, collectionName, id)));
+    }
   });
 
   it("보관된 반에는 담당 교사도 프로젝트를 저장할 수 없다", async () => {

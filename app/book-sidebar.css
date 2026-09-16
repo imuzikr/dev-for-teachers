@@ -756,6 +756,10 @@
   overflow-wrap: anywhere;
 }
 
+.book-personal-card-head-actions > .book-card-delete-btn:hover {
+  color: var(--danger);
+}
+
 .book-step-description-field {
   display: grid;
   min-width: 0;

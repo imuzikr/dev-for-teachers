@@ -9,7 +9,7 @@ import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
-export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep }) {
+export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep }) {
   const [selectedUid, setSelectedUid] = useState(null);
   const sections = preparedSections ?? bookDetailSections(project, activities);
   const itemCount = bookProjectItemCount(sections);
@@ -121,6 +121,8 @@ export default function BookPersonalDashboard({ participants, activities, sectio
           reorderDisabled={reorderDisabled}
           reorderError={reorderError}
           onEditItem={onEditItem}
+          onDeleteItem={isTeacher ? onDeleteItem : null}
+          deletionDisabled={deletionDisabled}
           renderAddItem={renderAddItem}
         />
       )}

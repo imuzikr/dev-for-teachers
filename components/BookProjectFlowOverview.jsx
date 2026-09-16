@@ -33,6 +33,8 @@ export default function BookProjectFlowOverview({
   onActivateItem,
   activationDisabled,
   onEditItem,
+  onDeleteItem,
+  deletionDisabled,
   renderAddItem,
   onReorderItem,
   reorderDisabled,
@@ -185,6 +187,8 @@ export default function BookProjectFlowOverview({
                         onActivate={onActivateItem}
                         activationDisabled={activationDisabled}
                         onEdit={onEditItem}
+                        onDelete={isTeacher ? onDeleteItem : null}
+                        deletionDisabled={deletionDisabled}
                       />
                     ) : (
                       <BookPersonalActivityCard
@@ -209,6 +213,8 @@ export default function BookProjectFlowOverview({
                         onActivate={onActivateItem}
                         activationDisabled={activationDisabled}
                         onEdit={onEditItem}
+                        onDelete={isTeacher ? onDeleteItem : null}
+                        deletionDisabled={deletionDisabled}
                       />
                     )
                   ))}

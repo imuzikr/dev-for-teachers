@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, IconEdit, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
-import { IconCheckSquare } from "./StatusIcons";
+import { IconCheckSquare, IconTrash } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
 import ChecklistWarningModal from "./ChecklistWarningModal";
@@ -77,6 +77,8 @@ export function BookPersonalResourceCard({
   onConfirm,
   onPresent,
   onEdit,
+  onDelete,
+  deletionDisabled,
   onActivate,
   activationDisabled,
   reorderProps,
@@ -109,6 +111,7 @@ export function BookPersonalResourceCard({
         <div className="book-personal-card-head-actions">
           {!isTeacher && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="자료 수정" aria-label="자료 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
+          {isTeacher && onDelete && <button type="button" className="btn-ghost book-card-expand-btn book-card-delete-btn" title="자료 삭제" aria-label="자료 삭제" disabled={deletionDisabled} onClick={() => onDelete(detailItem)}><IconTrash size={14} /></button>}
           {onCopy && <button type="button" className="btn-ghost book-personal-copy-btn" title={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
           </button>}
@@ -174,6 +177,8 @@ export function BookPersonalActivityCard({
   onSave,
   onPresent,
   onEdit,
+  onDelete,
+  deletionDisabled,
   onActivate,
   activationDisabled,
   reorderProps,
@@ -209,6 +214,7 @@ export function BookPersonalActivityCard({
         <div className="book-personal-card-head-actions">
           {(!isTeacher || !onPresent) && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="활동 수정" aria-label="활동 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
+          {isTeacher && onDelete && <button type="button" className="btn-ghost book-card-expand-btn book-card-delete-btn" title="활동 삭제" aria-label="활동 삭제" disabled={deletionDisabled} onClick={() => onDelete(detailItem)}><IconTrash size={14} /></button>}
           {isTeacher && <BookItemImageIndicator images={activity.images} />}
           <button type="button" className="btn-ghost book-personal-expand-btn book-card-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
             <IconExpand />

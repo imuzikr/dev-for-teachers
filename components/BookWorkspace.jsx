@@ -130,6 +130,15 @@ export default function BookWorkspace({
     return saved;
   }
 
+  function requestDeleteItem(item) {
+    if (!isTeacher || !onDelete || editingProject || savingProject || !item?.stepId) return;
+    const step = project?.steps?.find((candidate) => candidate.id === item.stepId);
+    const collection = item.kind === "activity" ? "activities" : item.kind === "resource" ? "resources" : null;
+    const source = collection && step?.[collection]?.find((candidate) => candidate.id === item.id);
+    if (!source) return;
+    onDelete({ classId, projectId, stepId: step.id, kind: item.kind, item: source });
+  }
+
   async function reorderProjectItem(item, target) {
     if (!isTeacher || !onSaveProject || !previewProject?.steps?.length || editingProject || savingProject || !item?.stepId) return;
     if (target && typeof target !== "number" && target.stepId !== item.stepId) return;
@@ -397,6 +406,8 @@ export default function BookWorkspace({
           onActivateItem={isTeacher ? activateItem : null}
           activationDisabled={editingProject || savingProject || activatingScope === scope}
           onEditItem={isTeacher && onSaveProject ? (item) => setEditingCard({ scope, stepId: item.stepId, kind: item.kind, id: item.id }) : null}
+          onDeleteItem={isTeacher && onDelete ? requestDeleteItem : null}
+          deletionDisabled={editingProject || savingProject}
           renderAddItem={isTeacher && onSaveProject ? (stepId) => (
             <button type="button" className="btn-outline book-main-add-item" disabled={editingProject || savingProject} onClick={() => setAddingCard({ scope, stepId, id: crypto.randomUUID() })}>
               <IconAddFeature size={16} /> 추가하기
