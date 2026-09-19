@@ -11,6 +11,8 @@ import { orderedStepItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
 import { initialBookProject } from "@/lib/internalProjectTemplate.mjs";
+import { appendClonedBookProjectSteps } from "@/lib/bookProjectExport";
+import BookProjectCopyPicker from "./BookProjectCopyPicker";
 
 function newStep(index) {
   return { id: crypto.randomUUID(), title: `Step ${index + 1}`, description: "", activities: [], resources: [], itemOrder: [] };
@@ -87,6 +89,9 @@ export default function BookProjectEditor({
   participantCount,
   onSave,
   onDraftChange,
+  currentClassId,
+  copyClasses,
+  loadProject,
 }) {
   const [draft] = useState(() => initialDraft(
     initialBookProject(project, classPurpose),
@@ -105,6 +110,19 @@ export default function BookProjectEditor({
   const dialogRef = useRef(null);
   const expandRef = useRef(null);
   const previousExpandRequest = useRef(expandRequest);
+
+  const copyPicker = !project && loadProject ? <BookProjectCopyPicker
+    classes={copyClasses} currentClassId={currentClassId} loadProject={loadProject}
+    disabled={saving || busyImages.size > 0}
+    onCopy={(source) => {
+      const copied = appendClonedBookProjectSteps(null, source);
+      setTitle(copied.title);
+      setSteps(copied.steps);
+      setOpenIds(new Set());
+      setActiveStepId(null);
+      setSaveError("");
+    }}
+  /> : null;
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -438,6 +456,7 @@ export default function BookProjectEditor({
 
   const fullEditor = (
       <div className="book-project-editor">
+        {copyPicker}
         {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
         <BookProjectSidebarTools
           project={draftProject}
@@ -469,7 +488,7 @@ export default function BookProjectEditor({
   return (
     <>
       <button ref={expandRef} type="button" className="btn-outline book-project-expand" onClick={() => setExpanded(true)}>프로젝트 크게 편집</button>
-      {!expanded && sidebarEditor}
+      {!expanded && <>{copyPicker}{sidebarEditor}</>}
       {mounted && expanded && createPortal(
         <div className="modal-backdrop book-project-edit-backdrop" {...backdropClose(() => setExpanded(false))}>
           <section ref={dialogRef} inert={addingItem ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">

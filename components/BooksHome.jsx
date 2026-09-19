@@ -15,6 +15,7 @@ export default function BooksHome(props) {
     appendProjectStep, projectEditorStepId, savingProject, onSelectTeacherClass, onToast,
     exportingProject, onEditProject, onSaveProject, onToggleActivityLock, onToggleProjectItemLock, onDelete,
     onExportProjectItem, loadProject, joiningClass, onJoinClass, liveProjectReady,
+    onProjectDeleted, onProjectDeletionPending, deletingProject,
   } = props;
   const stepTabs = useMemo(() => (
     (displayedProject?.steps ?? []).map((step, index) => ({
@@ -68,7 +69,7 @@ export default function BooksHome(props) {
                 <div className="books-head-main">
                   <h1><IconDeveloperRoom size={26} /> 개발자실</h1>
                   {admin && myClasses.length > 0 && (
-                    <select className="class-select" value={classId ?? ""} onChange={(event) => {
+                    <select className="class-select" disabled={deletingProject} value={classId ?? ""} onChange={(event) => {
                       onSelectTeacherClass(event.target.value);
                       setSelectedClassId(event.target.value);
                     }}>
@@ -86,7 +87,7 @@ export default function BooksHome(props) {
                   </div>}
                 </div>
                 {admin && classId && (
-                  <button type="button" className="btn-primary books-project-create" onClick={() => onEditProject(false)}>
+                  <button type="button" className="btn-primary books-project-create" disabled={savingProject || liveProjectReady === false} onClick={() => onEditProject(false)}>
                     {project ? "프로젝트 편집" : "프로젝트 만들기"}
                   </button>
                 )}
@@ -144,6 +145,8 @@ export default function BooksHome(props) {
         selectedStepId={activeStepId}
         onSelectStep={setSelectedStepId}
         onToast={onToast}
+        onProjectDeleted={onProjectDeleted}
+        onProjectDeletionPending={onProjectDeletionPending}
       />
       {!admin && changingClass && <ClassChangeModal joining={joiningClass} onJoin={onJoinClass} onClose={closeClassChange} />}
     </main>

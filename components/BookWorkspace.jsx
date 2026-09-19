@@ -17,6 +17,7 @@ import { IconAddFeature } from "./StatusIcons";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
+import BookProjectDeleteButton from "./BookProjectDeleteButton";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 const HELP_DRAWER_COLLAPSED_KEY = "book_help_drawer_collapsed";
@@ -56,6 +57,8 @@ export default function BookWorkspace({
   selectedStepId,
   onSelectStep,
   onToast,
+  onProjectDeleted,
+  onProjectDeletionPending,
   setActiveItem = setBookActiveItem,
 }) {
   const [activatingScope, setActivatingScope] = useState(null);
@@ -348,6 +351,12 @@ export default function BookWorkspace({
               <p>{editingProject ? "Step별 활동과 자료를 준비하세요." : "선생님이 준비한 개발자실 흐름"}</p>
             </div>
           </div>
+
+          {isTeacher && project && onProjectDeleted && <BookProjectDeleteButton
+            key={`${classId}:${project.version ?? ""}`} user={user} project={project}
+            disabled={!liveProjectReady || editingProject || savingProject || exportingProject}
+            onDeleted={onProjectDeleted} onPendingChange={onProjectDeletionPending}
+          />}
 
           {!hasClass ? (
             <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
