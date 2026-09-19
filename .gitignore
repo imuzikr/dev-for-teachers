@@ -12,5 +12,6 @@ firebase-debug.log
 ui-debug.log
 
 artifacts/class-deletion-ui/
+artifacts/book-project-management/
 tests/classDeletion/*.log
 tests/rules/deletion-*.log

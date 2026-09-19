@@ -6,7 +6,7 @@ import vm from "node:vm";
 async function loadBookConfirmationsModule() {
   const context = vm.createContext({ console, Date, Map, Set });
   const firestoreModule = new vm.SyntheticModule(
-    ["collection", "doc", "onSnapshot", "query", "serverTimestamp", "setDoc", "where"],
+    ["collection", "doc", "getDocs", "onSnapshot", "query", "serverTimestamp", "setDoc", "where", "writeBatch"],
     function defineFirestoreExports() {
       this.setExport("collection", () => {});
       this.setExport("doc", () => {});
@@ -15,6 +15,8 @@ async function loadBookConfirmationsModule() {
       this.setExport("serverTimestamp", () => new Date(0));
       this.setExport("setDoc", async () => {});
       this.setExport("where", () => {});
+      this.setExport("getDocs", async () => { throw new Error("Unexpected Firestore read"); });
+      this.setExport("writeBatch", () => { throw new Error("Unexpected Firestore write"); });
     },
     { context }
   );

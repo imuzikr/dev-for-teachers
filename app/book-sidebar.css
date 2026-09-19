@@ -902,3 +902,27 @@
 .book-personal-expand-body .activity-template-result {
   max-height: none;
 }
+
+.book-project-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--danger);
+  margin-bottom: 12px;
+  min-height: 40px;
+}
+
+.book-project-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.book-project-copy label { display: flex; flex-direction: column; gap: 8px; }
+.book-project-copy select { width: 100%; min-height: 40px; padding: 8px; font: inherit; }
+.book-project-copy p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-sub); }
+.book-project-copy .form-error { color: var(--danger); }
