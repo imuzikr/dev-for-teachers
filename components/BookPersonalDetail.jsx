@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { stripHtml } from "@/lib/html";
 import { saveBookDashboardText } from "@/lib/store";
+import useClipboardCopy from "./useClipboardCopy";
 import { BookPersonalActivityCard, BookPersonalResourceCard, dashboardText, participantEntry, participantName } from "./BookPersonalDetailCards";
 
 export default function BookPersonalDetail({
@@ -29,7 +30,7 @@ export default function BookPersonalDetail({
   const [failedId, setFailedId] = useState(null);
   const [confirmingKey, setConfirmingKey] = useState(null);
   const [confirmFailedKey, setConfirmFailedKey] = useState(null);
-  const [copiedId, setCopiedId] = useState(null);
+  const clipboard = useClipboardCopy();
 
   useEffect(() => {
     setDrafts(Object.fromEntries(activities.map((activity) => [
@@ -75,13 +76,12 @@ export default function BookPersonalDetail({
 
   async function copyResource(resource) {
     const text = [resource.title, stripHtml(resource.content || ""), resource.url].filter(Boolean).join("\n");
-    await navigator.clipboard.writeText(text);
-    setCopiedId(resource.id);
-    window.setTimeout(() => setCopiedId(null), 1600);
+    await clipboard.copy(text, resource.id);
   }
 
   return (
     <section className={`book-personal-dashboard book-personal-detail${isTeacher ? " book-personal-detail--teacher" : ""}`} aria-label={isTeacher ? "참여자 활동 대시보드" : "나의 활동 대시보드"}>
+      {clipboard.notice}
       {showNavigation && <header className={`book-personal-detail-head${isTeacher ? "" : " book-personal-detail-head--student"}`}>
         <button type="button" className="btn-outline" onClick={onBack}>{backLabel}</button>
         {isTeacher && (
@@ -113,7 +113,7 @@ export default function BookPersonalDetail({
                         index={index}
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
-                        copiedId={copiedId}
+                        copiedId={clipboard.copiedId}
                         confirmState={{ pendingKey: confirmingKey, failedKey: confirmFailedKey }}
                         onCopy={copyResource}
                         onConfirm={onConfirmItem ? confirmItem : null}

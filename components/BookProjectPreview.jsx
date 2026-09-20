@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import useClipboardCopy from "./useClipboardCopy";
 import { stripHtml } from "@/lib/html";
 import RichTextDisplay from "./RichTextDisplay";
 import { BookItemImageIndicator } from "./BookItemImages";
@@ -91,7 +91,8 @@ export function stepPreviewItems(step) {
 }
 
 export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock, dragProps = null, dragging = false }) {
-  const [copied, setCopied] = useState(false);
+  const clipboard = useClipboardCopy();
+  const copied = clipboard.copiedId === item.id;
   const content = item.content || "";
   const linkSource = kind === "activity" ? item.bookUrl || item.url : item.url;
   const linkHref = resourceHref(linkSource);
@@ -102,9 +103,7 @@ export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock,
 
   async function copyResource() {
     const text = [item.title, stripHtml(item.content || ""), linkSource].filter(Boolean).join("\n");
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    await clipboard.copy(text, item.id);
   }
 
   return (
@@ -113,6 +112,7 @@ export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock,
       onDragOver={dragProps?.onDragOver}
       onDrop={dragProps?.onDrop}
     >
+      {clipboard.notice}
       {dragProps && (
         <span
           className="book-step-drag-handle"

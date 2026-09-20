@@ -14,10 +14,10 @@ import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { orderedStepItems } from "./BookProjectPreview";
 import { IconAddFeature } from "./StatusIcons";
-import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 import BookProjectDeleteButton from "./BookProjectDeleteButton";
+import TeacherActivityDemoView, { TeacherActivityDemoProvider } from "./TeacherActivityDemo";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 const HELP_DRAWER_COLLAPSED_KEY = "book_help_drawer_collapsed";
@@ -326,6 +326,7 @@ export default function BookWorkspace({
   }
 
   return (
+    <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
     <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem} autoOpenRequest={studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
@@ -385,12 +386,12 @@ export default function BookWorkspace({
             />
           )}
           {teacherDetailItem && <div className="teacher-active-detail" ref={setTeacherDetailTarget} />}
-          {teacherDetailItem && teacherDetailTarget && <BookPersonalItemViewModal
-            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+          {teacherDetailItem && teacherDetailTarget && <TeacherActivityDemoView
+            detailItem={teacherDetailItem} index={teacherDetailIndex}
             panelTarget={teacherDetailTarget} onExpand={() => setTeacherDetailExpanded(true)}
           />}
-          {teacherDetailItem && teacherDetailExpanded && <BookPersonalItemViewModal
-            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+          {teacherDetailItem && teacherDetailExpanded && <TeacherActivityDemoView
+            detailItem={teacherDetailItem} index={teacherDetailIndex}
             onClose={() => setTeacherDetailExpanded(false)}
           />}
         </div>
@@ -468,5 +469,6 @@ export default function BookWorkspace({
     )}
     </StudentActivityPanel>
     </BookImagePresentationContext.Provider>
+    </TeacherActivityDemoProvider>
   );
 }
