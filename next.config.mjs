@@ -8,7 +8,7 @@ const csp = [
   "font-src 'self' data:",
   "connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://cdn.jsdelivr.net https://apis.google.com wss://*.firebaseio.com data: blob:",
   "worker-src 'self' blob:",
-  "frame-src 'self' https://dev-for-teachers.firebaseapp.com https://apis.google.com https://accounts.google.com",
+  "frame-src 'self' https://firebasestorage.googleapis.com https://dev-for-teachers.firebaseapp.com https://apis.google.com https://accounts.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
