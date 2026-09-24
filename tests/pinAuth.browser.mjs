@@ -30,7 +30,7 @@ async function copyFixture() {
   await writeFile(path.join(fixture, "app/layout.js"), 'import "./globals.css"; export default function Layout({ children }) { return <html lang="ko"><body>{children}</body></html>; }');
   await writeFile(path.join(fixture, "app/books/page.js"), 'export default function BooksPage() { return <main><h1>책방</h1></main>; }');
   await writeFile(path.join(fixture, "components/TopNav.jsx"), 'export default function TopNav() { return <nav className="top-nav">사용자 관리</nav>; }');
-  await writeFile(path.join(fixture, "lib/firebase.js"), 'export const isFirebaseConfigured = true; export const auth = { async authStateReady() {}, currentUser: { async getIdToken() { return "fixture-token"; } } }; export const db = {};');
+  await writeFile(path.join(fixture, "lib/firebase.js"), 'export const isFirebaseConfigured = true; export const auth = { async authStateReady() { if (typeof window !== "undefined" && window.__stallPinSession === "restore") return new Promise(() => {}); }, currentUser: { async getIdToken() { if (typeof window !== "undefined" && window.__stallPinSession === "token") return new Promise(() => {}); return "fixture-token"; } } }; export const db = {};');
   await writeFile(path.join(fixture, "lib/user.js"), `
     export function getGuestTeacherSession() { return null; }
     export function saveGuestTeacherSession(value) { window.__savedGuestSession = value; }
@@ -174,6 +174,16 @@ async function run() {
   await page.mouse.click(5, 5);
   await page.getByRole("dialog").waitFor({ state: "detached" });
 
+  for (const phase of ["restore", "token"]) {
+    await openLanding(page);
+    await page.evaluate(value => { window.__stallPinSession = value; }, phase);
+    await page.getByLabel("PIN", { exact: true }).fill("0007");
+    await page.getByRole("dialog").getByRole("button", { name: "시작하기" }).click();
+    await page.getByRole("heading", { name: "책방", exact: true }).waitFor();
+    assert.equal(pinState.requests.at(-1).action, "login");
+    console.log(`checked PIN login reaches books while old session ${phase} is stalled`);
+  }
+
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await openLanding(page);
@@ -209,7 +219,7 @@ async function run() {
   }
 
   assert.deepEqual(errors, []);
-  await writeFile(path.join(output, "results.json"), JSON.stringify({ pass: true, errors }, null, 2));
+  await writeFile(path.join(output, "results.json"), JSON.stringify({ pass: true, stalledSessionLoginChecks: 2, errors }, null, 2));
   console.log(output);
 }
 
