@@ -25,7 +25,7 @@ function initialProject() {
       { id: "activity-answer", title: "완성한 앱 소개하기", content: "<p>완성한 앱을 소개해 보세요.</p><p>GitHub 저장소와 배포한 앱의 주소를 함께 공유하세요.</p>", requiresAnswer: true, bookUrl: "https://primary.example.test/activity", images: [canvas.toDataURL("image/jpeg")] },
       { id: "activity-confirmed", title: "확인한 활동", content: "<p>확인한 뒤에도 링크를 수정할 수 있어요.</p>", requiresAnswer: false },
       { id: "activity-template", title: "템플릿 활동", content: "<p>앱 이름: {{앱 이름}}</p>", templateEnabled: true, requiresAnswer: false },
-      { id: "activity-checklist", title: "체크리스트 활동", content: '<ul class="rte-checklist"><li><label><input type="checkbox"><span class="rte-checklist-text">앱 완성하기</span></label></li></ul>', requiresAnswer: false },
+      { id: "activity-checklist", title: "체크리스트 활동", content: '<ul class="rte-checklist"><li><label><input type="checkbox"><span class="rte-checklist-text">앱 완성하기</span></label></li></ul>', requiresAnswer: true },
     ], resources: [{ id: "resource-help", title: "배포 도움 자료", content: "<p>웹 앱을 배포할 때 참고할 자료입니다.</p>", url: "https://primary.example.test/resource" }],
   }] };
 }

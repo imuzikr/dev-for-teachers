@@ -105,7 +105,7 @@ async function openPanel(title = activityTitle) {
   await card(title).getByRole("button", { name: "패널에서 열기", exact: true }).click();
   await sidebar().locator(".student-activity-detail").filter({ hasText: title }).waitFor();
   await editor(sidebar()).waitFor();
-  await sidebar().getByRole("button", { name: "URL 저장", exact: true }).waitFor();
+  await sidebar().getByRole("button", { name: "저장", exact: true }).waitFor();
 }
 async function assertLinks(scope, expected = hrefs) {
   await links(scope).first().waitFor();
@@ -126,8 +126,10 @@ async function clickLink(scope, index = 0, expected = hrefs[index]) {
   assert.equal(await popup.evaluate(() => window.opener), null);
   await popup.close();
 }
-async function saveUrls(scope, expected, title = activityTitle) {
-  await scope.getByRole("button", { name: "URL 저장", exact: true }).click();
+async function saveActivity(scope, expected, title = activityTitle) {
+  assert.equal(await scope.getByRole("button", { name: "URL 저장", exact: true }).count(), 0);
+  assert.equal(await scope.getByRole("button", { name: "저장", exact: true }).count(), 1);
+  await scope.getByRole("button", { name: "저장", exact: true }).click();
   await page.waitForFunction(({ expected, title }) => {
     const value = window.__activityUrls.entries().find(item => item.authorId === "urls-student-a" && item.title === title);
     return JSON.stringify(value?.urls) === JSON.stringify(expected);
@@ -192,18 +194,22 @@ try {
     await sidebar().getByRole("button", { name: "확대", exact: true }).click();
     assert.deepEqual(await editor(expanded()).locator("input").evaluateAll(nodes => nodes.map(node => node.value.trim())), urls);
     assert.equal(await links(expanded()).count(), 0);
+    assert.equal(await expanded().getByRole("button", { name: "URL 저장", exact: true }).count(), 0);
+    assert.equal(await expanded().getByRole("button", { name: "저장", exact: true }).count(), 1);
     await closeExpanded();
     const beforeInvalid = (await state()).calls.length;
     await editor(sidebar()).locator("input").nth(1).fill("javascript:window.__urlAttack=1");
-    await sidebar().getByRole("button", { name: "URL 저장", exact: true }).click();
-    await sidebar().getByRole("alert").waitFor();
+    await sidebar().getByRole("button", { name: "저장", exact: true }).click();
+    await sidebar().getByRole("alert").first().waitFor();
     assert.equal(await editor(sidebar()).locator("input").nth(1).getAttribute("aria-invalid"), "true");
     assert.equal((await state()).calls.length, beforeInvalid);
+    assert.equal(await sidebar().getByText("체크 상태를 저장하지 못했어요.", { exact: true }).count(), 0);
+    assert.equal(await sidebar().getByRole("button", { name: "다시 저장", exact: true }).count(), 0);
     await capture(`student-${width}-editor-invalid`, editor(sidebar()));
     await editor(sidebar()).locator("input").nth(1).fill(urls[1]);
     await editor(sidebar()).getByRole("button", { name: "활동 URL 입력 칸 추가", exact: true }).click();
     await editor(sidebar()).locator("input").nth(2).fill("   ");
-    await saveUrls(sidebar(), urls);
+    await saveActivity(sidebar(), urls);
     assert.equal(entry(await stored()).dashboardText, "이전 답변");
     await assertLinks(sidebar());
     await capture(`student-${width}-saved-sidebar`, sidebar().locator(".student-activity-urls"));
@@ -237,15 +243,23 @@ try {
       await openPanel(title);
       const value = `https://links.example.test/${title === "확인한 활동" ? "confirmed" : title === "템플릿 활동" ? "template" : "checklist"}`;
       await editor(sidebar()).locator("input").fill(value);
-      await saveUrls(sidebar(), [value], title);
+      if (title === "체크리스트 활동") await sidebar().getByRole("textbox", { name: "답변 내용", exact: true }).fill("체크 전 작성한 답변");
+      await saveActivity(sidebar(), [value], title);
       await assertLinks(sidebar(), [value]);
       if (width === 375 || width === 1280) await capture(`student-${width}-${title === "확인한 활동" ? "confirmed" : title === "템플릿 활동" ? "template" : "incomplete-checklist"}`, sidebar().locator(".student-activity-urls"));
       if (title === "체크리스트 활동") {
         assert.equal(await sidebar().locator('input[type="checkbox"]').first().isChecked(), false);
-        assert.equal((await state()).records.some(record => record.itemTitle === title && record.confirmed), false);
+        const project = await page.evaluate(() => window.__activityUrls.storedProject());
+        const activityId = project.steps[0].activities.find(activity => activity.title === title).id;
+        await page.waitForFunction(id => window.__activityUrls.state().records.some(record => record.itemId === id && record.authorId === "urls-student-a" && !record.confirmed), activityId);
+        assert.equal(entry(await stored(), "urls-student-a", title).dashboardText, "체크 전 작성한 답변");
+        assert.equal(await page.getByRole("alertdialog").count(), 0);
+        await sidebar().locator('input[type="checkbox"]').first().check();
+        await saveActivity(sidebar(), [value], title);
+        await page.waitForFunction(id => window.__activityUrls.state().records.some(record => record.itemId === id && record.authorId === "urls-student-a" && record.confirmed), activityId);
       }
     }
-    record(`student-${width}-confirmed-noanswer-template-incomplete-checklist-independent-url-save`);
+    record(`student-${width}-confirmed-noanswer-template-incomplete-checklist-single-save`);
     await card(resourceTitle).getByRole("button", { name: "자료 확대", exact: true }).click();
     await expanded().waitFor();
     assert.equal(await editor(expanded()).count(), 0);
@@ -258,15 +272,15 @@ try {
       assert.deepEqual(await editor(sidebar()).locator("input").evaluateAll(nodes => nodes.map(node => node.value)), urls);
       await configure({ failSave: 1 });
       await editor(sidebar()).locator("input").nth(1).fill("https://links.example.test/retry");
-      await sidebar().getByRole("button", { name: "URL 저장", exact: true }).click();
-      await sidebar().getByRole("alert").waitFor();
+      await sidebar().getByRole("button", { name: "저장", exact: true }).click();
+      await sidebar().getByRole("alert").first().waitFor();
       assert.equal(await editor(sidebar()).locator("input").nth(1).inputValue(), "https://links.example.test/retry");
       assert.deepEqual(entry(await stored()).urls, urls);
       await capture("student-1280-save-failure", sidebar().locator(".student-activity-urls"));
       await configure({ holdSave: true });
       const beforeDuplicate = (await state()).calls.length;
-      await sidebar().getByRole("button", { name: "URL 저장", exact: true }).evaluate(button => { button.click(); button.click(); });
-      await sidebar().getByRole("button", { name: "URL 저장 중...", exact: true }).waitFor();
+      await sidebar().getByRole("button", { name: "저장", exact: true }).evaluate(button => { button.click(); button.click(); });
+      await sidebar().getByRole("button", { name: "저장 중...", exact: true }).waitFor();
       assert.equal(await editor(sidebar()).getAttribute("disabled"), "");
       assert.equal((await state()).calls.length, beforeDuplicate + 1);
       await page.evaluate(() => window.__activityUrls.releaseSave());
@@ -288,7 +302,7 @@ try {
       await editor(sidebar()).getByRole("button", { name: "활동 URL 1 삭제", exact: true }).click();
       assert.equal(await editor(sidebar()).locator("input").count(), 1);
       assert.equal(await editor(sidebar()).locator("input").inputValue(), "");
-      await saveUrls(sidebar(), []);
+      await saveActivity(sidebar(), []);
       await page.reload();
       await page.locator('[data-fixture-ready="true"]').waitFor();
       await openPanel();

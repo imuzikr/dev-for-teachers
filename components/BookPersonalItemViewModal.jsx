@@ -73,7 +73,6 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               {!isTeacher && activityUrls && <>
                 <BookItemUrlEditor urls={activityUrls.draft} onChange={activityUrls.change} disabled={!urlsReady || saving || activityUrls.saving} label="활동 URL" />
                 <div className="student-activity-url-actions">
-                  <button type="button" className="btn-outline" disabled={!urlsReady || saving || activityUrls.saving} onClick={() => activityUrls.save()}>{activityUrls.saving ? "URL 저장 중..." : "URL 저장"}</button>
                   {!urlsReady && <small role="status">저장한 URL을 불러오는 중...</small>}
                   {urlsReady && !activityUrls.saving && !activityUrls.dirty && !activityUrls.error && Array.isArray(savedUrls) && savedUrls.length > 0 && <small role="status">저장됨</small>}
                 </div>
@@ -96,14 +95,14 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}
               </div>}
-              {onSave && <button type="button" className="btn-primary" disabled={saving || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
-                if (hasChecklist && !checklistComplete) {
+              {onSave && <button type="button" className="btn-primary" disabled={saving || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
+                if (!activityUrls && hasChecklist && !checklistComplete) {
                   setShowChecklistWarning(true);
                   return;
                 }
                 const saved = await onSave();
                 if (saved !== false && !panelTarget) onClose();
-              }}>{saving ? "저장 중..." : saveLabel || (requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인")}</button>}
+              }}>{saving || activityUrls?.saving ? "저장 중..." : saveLabel || (activityUrls || requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인")}</button>}
               {checklistStatus === "failed" && <small role="alert">체크 상태를 저장하지 못했어요.</small>}
               {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
               {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}

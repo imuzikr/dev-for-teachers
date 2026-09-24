@@ -214,7 +214,10 @@ export function BookPersonalActivityCard({
     ready: urlsReady,
     onSave: (urls) => onSaveUrls(detailItem, urls),
   });
-  const save = onSave ? () => checklist.confirm(() => activityUrls.save((urls) => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls))) : undefined;
+  const save = onSave ? () => activityUrls.save((urls) => {
+    const persist = () => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls);
+    return checklist.complete ? checklist.confirm(persist) : persist();
+  }) : undefined;
   const urlViewProps = { savedUrls, activityUrls: !isTeacher && onSaveUrls ? activityUrls : undefined, urlsReady };
 
   return (
