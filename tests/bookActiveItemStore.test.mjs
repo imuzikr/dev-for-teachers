@@ -5,7 +5,7 @@ import test from "node:test";
 import vm from "node:vm";
 
 async function loadStore(firebase = false, { initialActiveItemByStep = { step2: "activity:act2" } } = {}) {
-  const context = vm.createContext({ console, Date, Map, Set, TextEncoder, crypto: { randomUUID } });
+  const context = vm.createContext({ console, Date, Map, Set, TextEncoder, URL, crypto: { randomUUID } });
   const source = (file) => readFileSync(new URL(`../lib/${file}.js`, import.meta.url), "utf8");
   const stub = (exports) => new vm.SyntheticModule(Object.keys(exports), function defineExports() {
     Object.entries(exports).forEach(([name, value]) => this.setExport(name, value));
@@ -13,6 +13,9 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
   const imageModule = new vm.SourceTextModule(source("bookProjectImages"), { context });
   await imageModule.link(() => {});
   await imageModule.evaluate();
+  const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
+  await urlModule.link(() => {});
+  await urlModule.evaluate();
   const storeSource = source("store");
   const firestoreNames = storeSource.match(/import \{([^}]+)\} from "firebase\/firestore"/)[1]
     .split(",")
@@ -46,6 +49,7 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
     "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Unexpected class deletion during active item test"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
+    "./bookItemUrls": urlModule,
   };
   const store = new vm.SourceTextModule(storeSource, { context });
   await store.link((specifier) => {

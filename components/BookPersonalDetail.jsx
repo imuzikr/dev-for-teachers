@@ -38,14 +38,16 @@ export default function BookPersonalDetail({
     ])));
   }, [activities, entriesByActivity, selected.uid]);
 
-  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }) {
+  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }, urls) {
+    if (isTeacher || selected.uid !== user?.uid) return false;
     const activity = detailItem.source;
     const answerText = nextText ?? drafts[activity.id] ?? "";
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
     try {
-      if (activity.templateEnabled !== true && activity.requiresAnswer !== false) await saveDashboardText(activity.id, user, answerText);
+      const needsAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
+      if (needsAnswer || urls !== undefined) await saveDashboardText(activity.id, user, needsAnswer ? answerText : undefined, urls);
       await onConfirmItem?.(detailItem, checklistState);
       setDrafts((current) => ({ ...current, [activity.id]: answerText }));
       if (checklistState.confirmed) setSavedId(activity.id);
@@ -56,6 +58,12 @@ export default function BookPersonalDetail({
     } finally {
       setSavingId(null);
     }
+  }
+
+  async function saveUrls(detailItem, urls) {
+    if (isTeacher || selected.uid !== user?.uid) return false;
+    await saveDashboardText(detailItem.id, user, undefined, urls);
+    return true;
   }
 
   async function confirmItem(item, checklistState) {
@@ -120,14 +128,18 @@ export default function BookPersonalDetail({
                       />
                     ) : (
                       <BookPersonalActivityCard
-                        key={`activity:${detailItem.id}`}
+                        key={`activity:${selected.uid}:${detailItem.id}`}
                         detailItem={detailItem}
                         index={index}
                         response={isTeacher ? dashboardText(participantEntry(entriesByActivity, detailItem.id, selected.uid)) : drafts[detailItem.id] ?? ""}
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
                         saveState={{ savingId, savedId, failedId }}
-                        onSave={saveResponse}
+                        savedUrls={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.urls}
+                        entryOwnerId={selected.uid}
+                        urlsReady={Object.prototype.hasOwnProperty.call(entriesByActivity, detailItem.id)}
+                        onSaveUrls={!isTeacher && selected.uid === user?.uid ? saveUrls : undefined}
+                        onSave={!isTeacher ? saveResponse : undefined}
                         onToggleActivityLock={onToggleActivityLock}
                       />
                     )

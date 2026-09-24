@@ -7,6 +7,7 @@ import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { IconCheckSquare, IconTrash } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
+import useStudentActivityUrls from "./useStudentActivityUrls";
 import ChecklistWarningModal from "./ChecklistWarningModal";
 import { BookItemImageIndicator } from "./BookItemImages";
 
@@ -174,6 +175,10 @@ export function BookPersonalActivityCard({
   isTeacher,
   selectedProgress,
   saveState,
+  savedUrls,
+  entryOwnerId,
+  urlsReady = false,
+  onSaveUrls,
   onSave,
   onPresent,
   onEdit,
@@ -201,7 +206,15 @@ export function BookPersonalActivityCard({
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const requiresAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
-  const save = onSave ? () => checklist.confirm(() => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation)) : undefined;
+  const activityUrls = useStudentActivityUrls({
+    urls: savedUrls,
+    scope: `${panel?.scope ?? ""}:${entryOwnerId ?? ""}:${activity.id}`,
+    enabled: !isTeacher && Boolean(onSaveUrls),
+    ready: urlsReady,
+    onSave: (urls) => onSaveUrls(detailItem, urls),
+  });
+  const save = onSave ? () => checklist.confirm(() => activityUrls.save((urls) => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls))) : undefined;
+  const urlViewProps = { savedUrls, activityUrls: !isTeacher && onSaveUrls ? activityUrls : undefined, urlsReady };
 
   return (
     <article {...reorderProps?.card} aria-current={detailItem.isActive ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${confirmed ? " is-confirmed" : ""}${detailItem.isActive ? " is-current-activity" : ""}`}>
@@ -228,7 +241,7 @@ export function BookPersonalActivityCard({
         <TeacherCardActions item={detailItem} onPresent={onPresent} onActivate={onActivate} disabled={activationDisabled} />
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || !urlsReady || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
@@ -238,13 +251,14 @@ export function BookPersonalActivityCard({
       {!isTeacher && saveState.failedId === activity.id && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
       {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
           index={index}
           response={response}
+          {...urlViewProps}
           isTeacher={isTeacher}
           templateValues={templateValues}
           onTemplateChange={setTemplateValues}

@@ -5,11 +5,14 @@ import test from "node:test";
 import vm from "node:vm";
 
 async function loadModules(firebase = false, { existingProject = null, uploadFails = false } = {}) {
-  const context = vm.createContext({ console, Date, Map, Set, TextEncoder, crypto: { randomUUID } });
+  const context = vm.createContext({ console, Date, Map, Set, TextEncoder, URL, crypto: { randomUUID } });
   const source = (file) => readFileSync(new URL(`../lib/${file}.js`, import.meta.url), "utf8");
   const imageModule = new vm.SourceTextModule(source("bookProjectImages"), { context });
   await imageModule.link(() => {});
   await imageModule.evaluate();
+  const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
+  await urlModule.link(() => {});
+  await urlModule.evaluate();
   const writes = [];
   let commits = 0;
   let id = 0;
@@ -37,6 +40,7 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
     "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Unexpected class deletion during image test"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
+    "./bookItemUrls": urlModule,
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => {
       uploads += 1;
       if (uploadFails) throw new Error("Image upload failed");

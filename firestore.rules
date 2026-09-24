@@ -1088,6 +1088,7 @@ service cloud.firestore {
                       && signedIn()
                       && sId == uid()
                       && request.resource.data.authorId == uid()
+                      && (!('urls' in request.resource.data) || request.resource.data.urls is list)
                       && isBookActivityMember(aId);
         allow delete: if classDeletionClientWritesOpen()
                       && (isAdmin() || ownsBookActivityEditable(aId));

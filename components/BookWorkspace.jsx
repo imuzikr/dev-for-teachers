@@ -63,7 +63,7 @@ export default function BookWorkspace({
   const [reorderingScope, setReorderingScope] = useState(null);
   const reorderPending = useRef(new Set());
   const [reorderError, setReorderError] = useState("");
-  const [entriesByActivity, setEntriesByActivity] = useState({});
+  const [entrySnapshot, setEntrySnapshot] = useState({ scope: "", entries: {} });
   const [confirmations, setConfirmations] = useState([]);
   const saveQueues = useRef(new Map());
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
@@ -78,6 +78,8 @@ export default function BookWorkspace({
   const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
   const scope = `${classId}:${projectId}:${user?.uid}`;
+  const entryScope = `${scope}:${isTeacher}`;
+  const entriesByActivity = entrySnapshot.scope === entryScope ? entrySnapshot.entries : {};
   const activeScope = useRef(scope);
   activeScope.current = scope;
   useEffect(() => { setReorderError(""); }, [scope]);
@@ -211,20 +213,27 @@ export default function BookWorkspace({
 
   useEffect(() => {
     if (!user?.uid || activities.length === 0) {
-      setEntriesByActivity({});
+      setEntrySnapshot({ scope: entryScope, entries: {} });
       return;
     }
+    let live = true;
     const unsubscribers = activities.map((activity) => {
       const update = (entries) => {
         const list = Array.isArray(entries) ? entries : entries ? [entries] : [];
-        setEntriesByActivity((current) => ({ ...current, [activity.id]: list }));
+        if (live) setEntrySnapshot((current) => ({
+          scope: entryScope,
+          entries: { ...(current.scope === entryScope ? current.entries : {}), [activity.id]: list },
+        }));
       };
       return isTeacher
         ? subscribeBookEntries(activity.id, update)
         : subscribeMyBookEntry(activity.id, user.uid, update);
     });
-    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-  }, [activities, isTeacher, user?.uid]);
+    return () => {
+      live = false;
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [activities, isTeacher, user?.uid, entryScope]);
 
   useEffect(() => {
     if (!classId || !user?.uid) {

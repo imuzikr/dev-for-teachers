@@ -7,8 +7,9 @@
 // 교사 임시 편집은 저장 없이 화면·방송에만 반영되는 임시 편집입니다.
 // =============================================================
 import { describe, it, before, after, beforeEach } from "node:test";
+import assert from "node:assert/strict";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
 const entry = (uid, answers = { K: "안다" }, overrides = {}) => ({
@@ -51,6 +52,49 @@ describe("개인 활동 제출물 규칙", () => {
     await assertSucceeds(
       setDoc(doc(db, "bookActivities", "act1", "entries", "stu1"), entry("stu1", { K: "고쳤다" }))
     );
+  });
+
+  it("학생 URL은 열린 활동과 legacy 잠긴 활동에서 본인 제출물에 저장하고 비울 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    for (const activityId of ["act1", "locked1"]) {
+      const ref = doc(db, "bookActivities", activityId, "entries", "stu1");
+      await assertSucceeds(setDoc(ref, entry("stu1", { K: "기존 답변" }, {
+        activityId, dashboardText: "결과 소개", urls: ["github.com/student/repo", "https://example.com/app"],
+      })));
+      await assertSucceeds(updateDoc(ref, { urls: ["https://example.com/revised"] }));
+      const revised = await assertSucceeds(getDoc(ref));
+      assert.deepEqual(revised.data().urls, ["https://example.com/revised"]);
+      assert.equal(revised.data().dashboardText, "결과 소개");
+      assert.deepEqual(revised.data().answers, { K: "기존 답변" });
+      await assertSucceeds(updateDoc(ref, { urls: [] }));
+      assert.deepEqual((await getDoc(ref)).data().urls, []);
+    }
+  });
+
+  it("학생 URL도 본인과 담당 교사만 읽을 수 있고 학생 본인만 수정할 수 있다", async () => {
+    await seed(env, db => setDoc(doc(db, "bookActivities", "act1", "entries", "stu1"), entry("stu1", {}, { urls: ["https://example.com/private"] })));
+    const refFor = context => doc(context.firestore(), "bookActivities", "act1", "entries", "stu1");
+    await assertSucceeds(getDoc(refFor(asStudent(env, "stu1"))));
+    await assertSucceeds(getDoc(refFor(asTeacher(env, "teacherA"))));
+    for (const context of [asStudent(env, "stu2"), asStudent(env, "outsider"), asTeacher(env, "teacherB")]) {
+      await assertFails(getDoc(refFor(context)));
+      await assertFails(updateDoc(refFor(context), { urls: [] }));
+    }
+    await assertFails(updateDoc(refFor(asTeacher(env, "teacherA")), { urls: [] }));
+    const outsiderDb = asStudent(env, "outsider").firestore();
+    await assertFails(setDoc(doc(outsiderDb, "bookActivities", "act1", "entries", "outsider"), entry("outsider", {}, { urls: ["https://example.com"] })));
+    const studentDb = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(doc(studentDb, "bookActivities", "lockedArchived", "entries", "stu1"), entry("stu1", {}, { activityId: "lockedArchived", urls: ["https://example.com"] })));
+  });
+
+  it("학생 URL 필드는 목록이어야 하며 기존 URL 없는 제출물은 계속 저장할 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    const ref = doc(db, "bookActivities", "act1", "entries", "stu1");
+    await assertSucceeds(setDoc(ref, entry("stu1")));
+    for (const urls of [null, "https://example.com", 123, { url: "https://example.com" }]) {
+      await assertFails(updateDoc(ref, { urls }));
+    }
+    await assertSucceeds(updateDoc(ref, { urls: Array.from({ length: 40 }, (_, index) => "https://example.com/" + index) }));
   });
 
   it("남의 제출물 자리에 쓸 수 없다", async () => {

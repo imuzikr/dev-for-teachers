@@ -20,7 +20,7 @@ export default function StudentConfirmGatePage() {
     <output data-testid="saved">{JSON.stringify(saved)}</output>
     <StudentActivityPanel enabled scope="qa-confirm-gate" itemKeys={keys}>
       {({ sidebar }) => <div style={{ display: "flex" }}>{sidebar}<BookPersonalDetail
-        selected={user} sections={sections} activities={activities} entriesByActivity={{}} selectedProgress={progress}
+        selected={user} sections={sections} activities={activities} entriesByActivity={{ first: [], second: [] }} selectedProgress={progress}
         itemCount={3} user={user} isTeacher={false} onBack={() => {}}
         saveDashboardText={async (id, actor, text) => { if (fail) { setFail(false); throw new Error("Test failure"); } setSaved(current => ({ ...current, [id]: text })); }}
         onConfirmItem={async (item, state) => { if (state.confirmed) setProgress(current => new Set([...current, `${item.kind}:${item.id}`])); }}

@@ -7,6 +7,8 @@ import RichTextDisplay from "./RichTextDisplay";
 import { useContext, useState } from "react";
 import { BookImagePresentationContext } from "./BookPresentationMode";
 import BookItemImages from "./BookItemImages";
+import BookItemUrlEditor from "./BookItemUrlEditor";
+import BookItemUrlList from "./BookItemUrlList";
 import ActivityTemplate from "./ActivityTemplate";
 import ChecklistWarningModal from "./ChecklistWarningModal";
 
@@ -27,7 +29,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, hideResponse = false, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, hideResponse = false, templateValues, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true }) {
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
@@ -65,11 +67,25 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
             />
           )}
+          {!isResource && (
+            <section className="student-activity-urls" aria-label={isTeacher ? "학생 활동 URL" : "나의 활동 URL"}>
+              {!isTeacher && activityUrls && <>
+                <BookItemUrlEditor urls={activityUrls.draft} onChange={activityUrls.change} disabled={!urlsReady || saving || activityUrls.saving} label="활동 URL" />
+                <div className="student-activity-url-actions">
+                  <button type="button" className="btn-outline" disabled={!urlsReady || saving || activityUrls.saving} onClick={() => activityUrls.save()}>{activityUrls.saving ? "URL 저장 중..." : "URL 저장"}</button>
+                  {!urlsReady && <small role="status">저장한 URL을 불러오는 중...</small>}
+                  {urlsReady && !activityUrls.saving && !activityUrls.dirty && !activityUrls.error && Array.isArray(savedUrls) && savedUrls.length > 0 && <small role="status">저장됨</small>}
+                </div>
+                {activityUrls.error && <p className="book-project-error" role="alert">{activityUrls.error}</p>}
+              </>}
+              <BookItemUrlList urls={savedUrls} />
+            </section>
+          )}
           {isTeacher && <BookItemImages images={item.images} onPresent={onPresent} />}
           {requiresAnswer && !hideResponse && (
             <section className="book-personal-expand-response" aria-label={isTeacher ? "학생 답변" : "나의 답변"}>
               <span>{isTeacher ? "학생 답변" : "나의 답변"}</span>
-              {!isTeacher && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving} /> : <p>{response || "아직 입력한 내용이 없습니다."}</p>}
+              {!isTeacher && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving || activityUrls?.saving} /> : <p>{response || "아직 입력한 내용이 없습니다."}</p>}
             </section>
           )}
           {!isTeacher && (
@@ -79,7 +95,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}
               </div>}
-              {onSave && <button type="button" className="btn-primary" disabled={saving || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
+              {onSave && <button type="button" className="btn-primary" disabled={saving || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (!hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 if (hasChecklist && !checklistComplete) {
                   setShowChecklistWarning(true);
                   return;
