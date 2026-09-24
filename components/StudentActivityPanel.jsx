@@ -8,7 +8,7 @@ export function useStudentActivityPanel() {
   return useContext(PanelContext);
 }
 
-export default function StudentActivityPanel({ children, enabled, scope = "", records = [], saveChecklist, itemKeys, autoOpenRequest = null }) {
+export default function StudentActivityPanel({ children, enabled, readOnly = false, scope = "", records = [], saveChecklist, itemKeys, autoOpenRequest = null }) {
   const [selectedKey, setSelectedKey] = useState(null);
   const [requestedKey, setRequestedKey] = useState(null);
   const [collapsed, setCollapsed] = useState(true);
@@ -20,6 +20,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
   const switching = visibleKey !== null && nextKey !== visibleKey;
 
   useEffect(() => {
+    if (readOnly) return;
     try {
       const saved = JSON.parse(localStorage.getItem(`student-panel:${scope}`) || "null");
       if (saved) {
@@ -30,12 +31,12 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
       }
     } catch { /* Keep the default panel when browser storage is unavailable. */ }
     restored.current = true;
-  }, [scope]);
+  }, [scope, readOnly]);
 
   useEffect(() => {
     if (requestedKey !== nextKey) setRequestedKey(nextKey);
     if (selectedKey && !visibleKey) setSelectedKey(null);
-    if (restored.current) {
+    if (!readOnly && restored.current) {
       try { localStorage.setItem(`student-panel:${scope}`, JSON.stringify({ selectedKey: nextKey, collapsed })); }
       catch { /* In-memory panel state still works without browser storage. */ }
     }
@@ -46,7 +47,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
       if (target) target.closest("aside").scrollTop = 0;
     }, switching && !collapsed && !reduceMotion ? 120 : 0);
     return () => window.clearTimeout(timer);
-  }, [requestedKey, nextKey, selectedKey, visibleKey, switching, collapsed, scope, target]);
+  }, [requestedKey, nextKey, selectedKey, visibleKey, switching, collapsed, scope, target, readOnly]);
 
   useEffect(() => {
     if (!enabled || !autoOpenRequest?.key || !itemKeys.has(autoOpenRequest.key)) return;
@@ -58,7 +59,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
   }, [autoOpenRequest, enabled, itemKeys, scope]);
 
   const value = enabled ? {
-    selectedKey: visibleKey, scope, records, saveChecklist, target,
+    selectedKey: visibleKey, scope, records, readOnly, saveChecklist: readOnly ? undefined : saveChecklist, target,
     isOpen: !collapsed && !switching && visibleKey !== null && target !== null,
     open(key) {
       if (!itemKeys.has(key)) return;
@@ -75,6 +76,7 @@ export default function StudentActivityPanel({ children, enabled, scope = "", re
             <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
           </button>
           <div className="student-activity-panel-content" inert={collapsed} aria-hidden={collapsed}>
+            {readOnly && itemKeys.size === 0 && <p className="book-library-empty">이 Step에 등록된 활동과 자료가 없습니다.</p>}
             <div className={`student-activity-panel-item${switching ? " is-switching" : ""}`} inert={switching} ref={setTarget} />
           </div>
         </aside>

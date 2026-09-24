@@ -16,7 +16,7 @@ export default function useStudentChecklist(item) {
   const revision = useRef(0);
   const pending = useRef(false);
   const record = panel?.records?.find((entry) => `${entry.itemKind}:${entry.itemId}` === key);
-  const storageKey = panel ? `book-checklist:${panel.scope}:${key}` : null;
+  const storageKey = panel && !panel.readOnly ? `book-checklist:${panel.scope}:${key}` : null;
 
   useEffect(() => {
     const root = document.createElement("div");
@@ -50,6 +50,7 @@ export default function useStudentChecklist(item) {
   }
 
   async function persist(next) {
+    if (panel?.readOnly) return false;
     setValues(next);
     if (!panel?.saveChecklist) return;
     const request = ++revision.current;
@@ -86,7 +87,7 @@ export default function useStudentChecklist(item) {
     },
     retry: () => persist(snapshot),
     async confirm(save) {
-      if (loadedVersion !== version || !checklistComplete(snapshot)) return false;
+      if (panel?.readOnly || loadedVersion !== version || !checklistComplete(snapshot)) return false;
       const request = ++revision.current;
       pending.current = true;
       const saved = await save();

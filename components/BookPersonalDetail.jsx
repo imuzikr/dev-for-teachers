@@ -120,11 +120,12 @@ export default function BookPersonalDetail({
                         detailItem={detailItem}
                         index={index}
                         isTeacher={isTeacher}
+                        participantLabel={isTeacher ? participantName(selected) : undefined}
                         selectedProgress={selectedProgress}
                         copiedId={clipboard.copiedId}
                         confirmState={{ pendingKey: confirmingKey, failedKey: confirmFailedKey }}
                         onCopy={copyResource}
-                        onConfirm={onConfirmItem ? confirmItem : null}
+                        onConfirm={!isTeacher && onConfirmItem ? confirmItem : null}
                       />
                     ) : (
                       <BookPersonalActivityCard
@@ -132,6 +133,7 @@ export default function BookPersonalDetail({
                         detailItem={detailItem}
                         index={index}
                         response={isTeacher ? dashboardText(participantEntry(entriesByActivity, detailItem.id, selected.uid)) : drafts[detailItem.id] ?? ""}
+                        participantLabel={isTeacher ? participantName(selected) : undefined}
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
                         saveState={{ savingId, savedId, failedId }}

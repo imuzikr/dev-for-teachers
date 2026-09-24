@@ -9,8 +9,10 @@ import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
-export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep }) {
-  const [selectedUid, setSelectedUid] = useState(null);
+export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
+  const [localSelectedUid, setLocalSelectedUid] = useState(null);
+  const selectedUid = selectedParticipantUid === undefined ? localSelectedUid : selectedParticipantUid;
+  const setSelectedUid = onSelectParticipant ?? setLocalSelectedUid;
   const sections = preparedSections ?? bookDetailSections(project, activities);
   const itemCount = bookProjectItemCount(sections);
   const cardProgressGroups = progressStepGroups(sections);
@@ -73,14 +75,15 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   }
 
   if (selected) {
-    const visibleSections = activeStepSection ? [activeStepSection] : sections;
 
     return (
       <div className="book-personal-selected-view">
         <BookStepGuidance step={activeStepSection} />
         <BookPersonalDetail
+          key={selected.uid}
           selected={selected}
-          sections={visibleSections}
+          sections={sections}
+          visibleStepId={activeStepSection?.id}
           activities={activities}
           entriesByActivity={entriesByActivity}
           selectedProgress={selectedProgress}
@@ -96,7 +99,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
           }}
           backLabel={isTeacher ? "← 개인 카드" : "← STEP 카드"}
           onToggleActivityLock={isTeacher ? null : onToggleActivityLock}
-          onConfirmItem={onConfirmItem}
+          onConfirmItem={isTeacher ? undefined : onConfirmItem}
           saveDashboardText={saveDashboardText}
         />
       </div>

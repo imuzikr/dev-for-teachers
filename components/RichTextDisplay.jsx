@@ -14,6 +14,7 @@ export default function RichTextDisplay({
   as: Tag = "div",
   checklistValues,
   onChecklistChange,
+  readOnly = false,
   onImageClick,
   previewImages = false,
   compactCode = false,
@@ -48,6 +49,7 @@ export default function RichTextDisplay({
     const values = checklistValues ?? localChecks;
     rootRef.current?.querySelectorAll('input[type="checkbox"]').forEach((input, index) => {
       input.checked = Object.hasOwn(values, index) ? values[index] : input.hasAttribute("checked");
+      input.disabled = readOnly;
     });
   });
 
@@ -64,6 +66,7 @@ export default function RichTextDisplay({
       if (element?.closest(".rte-checklist label")) event.preventDefault();
       return;
     }
+    if (readOnly) { event.preventDefault(); return; }
     const inputs = [...rootRef.current.querySelectorAll('input[type="checkbox"]')];
     const index = inputs.indexOf(event.target);
     const next = { ...(checklistValues ?? localChecks), [index]: event.target.checked };

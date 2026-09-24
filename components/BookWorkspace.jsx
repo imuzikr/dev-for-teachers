@@ -77,11 +77,21 @@ export default function BookWorkspace({
   const [editingCard, setEditingCard] = useState(null);
   const [addingCard, setAddingCard] = useState(null);
   const addingPending = useRef(false);
-  const showLibraryPanel = isTeacher;
+  const [reviewSelection, setReviewSelection] = useState(null);
   const classId = project?.classId || activeClassId || activities[0]?.classId || null;
   const projectId = project?.id || project?.classId || classId || "";
   const scope = `${classId}:${projectId}:${user?.uid}`;
   const entryScope = `${scope}:${isTeacher}`;
+  const reviewScope = `${entryScope}:${project?.version ?? ""}`;
+  const reviewStudent = isTeacher && !editingProject && reviewSelection?.scope === reviewScope
+    ? participants.find(participant => participant.uid === reviewSelection.uid) ?? null : null;
+  const showLibraryPanel = isTeacher && !reviewStudent;
+  const panelScope = reviewStudent ? `${reviewScope}:review:${reviewStudent.uid}` : scope;
+  useEffect(() => { setReviewSelection(null); }, [reviewScope, editingProject]);
+  function selectReviewStudent(uid) {
+    setReviewSelection(uid ? { scope: reviewScope, uid } : null);
+    setTeacherDetailExpanded(false);
+  }
   const entriesByActivity = entrySnapshot.scope === entryScope ? entrySnapshot.entries : {};
   const activeScope = useRef(scope);
   activeScope.current = scope;
@@ -183,9 +193,15 @@ export default function BookWorkspace({
   }, [activities, previewProject]);
   const sections = useMemo(() => bookDetailSections(previewProject, previewActivities), [previewActivities, previewProject]);
   const studentPanelItemKeys = useMemo(() => new Set(
-    (sections.find((section) => section.id === selectedStepId)?.items ?? [])
+    (sections.find((section) => section.id === selectedStepId)?.items ?? (reviewStudent ? sections.flatMap(section => section.items) : []))
       .map((item) => `${item.kind}:${item.id}`),
-  ), [sections, selectedStepId]);
+  ), [sections, selectedStepId, reviewStudent]);
+  const reviewItems = reviewStudent ? sections.flatMap(section => section.items).filter(item => studentPanelItemKeys.has(`${item.kind}:${item.id}`)) : [];
+  const initialReviewItem = reviewItems.find(item => item.kind === "activity") ?? reviewItems[0];
+  const reviewAutoOpen = initialReviewItem ? {
+    scope: panelScope, requestId: selectedStepId ?? "all",
+    key: `${initialReviewItem.kind}:${initialReviewItem.id}`,
+  } : null;
   const bookPresentation = useBookPresentationMode({
     isTeacher,
     classId,
@@ -194,7 +210,7 @@ export default function BookWorkspace({
     projectTitle: previewProject?.title ?? "",
     sections,
   });
-  const studentPanelAutoOpen = useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready: liveProjectReady, scope });
+  const studentPanelAutoOpen = useStudentPanelAutoOpenRequest({ sections, isTeacher, onSelectStep, ready: liveProjectReady && !reviewStudent, scope });
   const teacherDetailSection = isTeacher && sections.find(section => section.items.some(item => item.isActive));
   const teacherDetailIndex = teacherDetailSection ? teacherDetailSection.items.findIndex(item => item.isActive) : -1;
   const teacherDetailItem = teacherDetailIndex >= 0 ? teacherDetailSection.items[teacherDetailIndex] : null;
@@ -337,7 +353,9 @@ export default function BookWorkspace({
   return (
     <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
-    <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem} autoOpenRequest={studentPanelAutoOpen}>
+    <StudentActivityPanel key={`${panelScope}:${isTeacher}:${reviewStudent ? selectedStepId : ""}`} enabled={!isTeacher || !!reviewStudent} readOnly={!!reviewStudent} itemKeys={studentPanelItemKeys} scope={panelScope}
+      records={reviewStudent ? confirmations.filter(record => record.projectId === projectId && record.authorId === reviewStudent.uid) : confirmations}
+      saveChecklist={isTeacher ? undefined : confirmBookItem} autoOpenRequest={reviewStudent ? reviewAutoOpen : studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
       {sidebar}
@@ -411,6 +429,8 @@ export default function BookWorkspace({
         {header}
         <BookPersonalDashboard
           participants={participants}
+          selectedParticipantUid={reviewStudent?.uid ?? null}
+          onSelectParticipant={isTeacher ? selectReviewStudent : undefined}
           activities={previewActivities}
           sections={sections}
           project={previewProject}
