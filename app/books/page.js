@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteBookActivity,
   getBookProject,
+  getBookProjectForCopy,
   joinClassByCode,
   saveBookProject,
   subscribeBookActivities,
@@ -63,6 +64,7 @@ function BooksPageInner() {
   const [appendProjectStep, setAppendProjectStep] = useState(false);
   const [projectEditorStepId, setProjectEditorStepId] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
   const [exportingProject, setExportingProject] = useState(false);
   const [toast, setToast] = useState("");
   const [joiningClass, setJoiningClass] = useState(false);
@@ -150,6 +152,8 @@ function BooksPageInner() {
 
   const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
+  const activeClassRef = useRef(classId);
+  activeClassRef.current = classId;
   const deletion = useBookProjectDeletion({
     user, classId, project,
     ready: Boolean(classId && projectLoadedClass === classId && activitiesLoadedClass === classId),
@@ -206,7 +210,7 @@ function BooksPageInner() {
 
   const visibleActivities = useMemo(
     () => {
-      if (!project) return activities.filter((activity) => activity.type === "book");
+      if (!project) return activities.filter((activity) => activity.type === "book" && !activity.projectId);
 
       const activityById = new Map(activities.map((activity) => [activity.id, activity]));
       return (project.steps ?? [])
@@ -394,13 +398,18 @@ function BooksPageInner() {
         visibleActivities={activitiesLoadedClass === classId && classId ? visibleActivities : []}
         liveProjectReady={Boolean(classId && activitiesLoadedClass === classId && projectLoadedClass === classId)}
         participants={participants} editingProject={editingProject} projectEditorKey={projectEditorKey}
-        appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject || deletion.pending}
+        appendProjectStep={appendProjectStep} projectEditorStepId={projectEditorStepId} savingProject={savingProject || deletion.pending || deletingProject}
+        deletingProject={deletingProject}
+        onProjectDeletionPending={setDeletingProject}
+        onProjectDeleted={() => {
+          if (activeClassRef.current === classId) { setEditingProject(false); setToast("프로젝트를 삭제했어요."); }
+        }}
         exportingProject={exportingProject}
         onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}
         onSaveProject={handleSaveProject}
         onToggleActivityLock={handleToggleActivityLock} onToggleProjectItemLock={handleToggleProjectItemLock} onDelete={admin ? deletion.requestDelete : null}
         onExportProjectItem={handleExportProjectItem}
-        loadProject={getBookProject}
+        loadProject={getBookProjectForCopy}
         joiningClass={joiningClass} onJoinClass={handleJoinClass}
       />
 

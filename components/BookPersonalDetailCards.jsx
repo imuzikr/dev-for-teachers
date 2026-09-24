@@ -10,6 +10,7 @@ import useStudentChecklist from "./useStudentChecklist";
 import useStudentActivityUrls from "./useStudentActivityUrls";
 import ChecklistWarningModal from "./ChecklistWarningModal";
 import { BookItemImageIndicator } from "./BookItemImages";
+import TeacherActivityDemoView from "./TeacherActivityDemo";
 
 export function participantEntry(entriesByActivity, activityId, uid) {
   return (entriesByActivity[activityId] ?? []).find((entry) => entry.authorId === uid) ?? null;
@@ -94,7 +95,7 @@ export function BookPersonalResourceCard({
   const checkAll = checklist.checkAll;
   const panel = useStudentActivityPanel();
   const panelKey = `resource:${resource.id}`;
-  const openPanel = () => panel?.open(panelKey);
+  const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
   const linkHref = resourceHref(resource.url);
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
@@ -107,7 +108,7 @@ export function BookPersonalResourceCard({
         <CardOrder reorderProps={reorderProps}>R{index + 1}</CardOrder>
         <div className="book-personal-activity-copy">
           <span>자료 {index + 1}</span>
-          <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
+          <strong>{panel || (isTeacher && onPresent) ? <button type="button" className="student-item-title" onClick={openPanel}>{resource.title}</button> : resource.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
           {!isTeacher && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
@@ -141,7 +142,7 @@ export function BookPersonalResourceCard({
       {panel?.selectedKey === panelKey && panel.target && (
         <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
-      {expanded && (
+      {expanded && isTeacher && onPresent ? <TeacherActivityDemoView detailItem={detailItem} index={index} onClose={() => setExpanded(false)} /> : expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
           index={index}
@@ -200,7 +201,7 @@ export function BookPersonalActivityCard({
   useEffect(() => { setAnswerDraft(response ?? ""); }, [activity.id, response]);
   const panel = useStudentActivityPanel();
   const panelKey = `activity:${activity.id}`;
-  const openPanel = () => panel?.open(panelKey);
+  const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
   const confirmationKey = bookConfirmationKey("activity", activity.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
   const activityHref = resourceHref(activity.bookUrl || activity.url);
@@ -222,7 +223,7 @@ export function BookPersonalActivityCard({
         <CardOrder reorderProps={reorderProps}>{String(index + 1).padStart(2, "0")}</CardOrder>
         <div className="book-personal-activity-copy">
           <span>활동 {index + 1}</span>
-          <strong>{panel ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
+          <strong>{panel || (isTeacher && onPresent) ? <button type="button" className="student-item-title" onClick={openPanel}>{activity.title}</button> : activity.title}</strong>
         </div>
         <div className="book-personal-card-head-actions">
           {(!isTeacher || !onPresent) && <em role="img" className={confirmed ? "is-done" : ""} aria-label={confirmed ? "확인됨" : "미확인"} title={confirmed ? "확인됨" : "미확인"}><IconCheckSquare checked={confirmed} /></em>}
@@ -253,7 +254,7 @@ export function BookPersonalActivityCard({
       {panel?.selectedKey === panelKey && panel.target && (
         <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={false} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
-      {expanded && (
+      {expanded && isTeacher && onPresent ? <TeacherActivityDemoView detailItem={detailItem} index={index} onClose={() => setExpanded(false)} /> : expanded && (
         <BookPersonalItemViewModal
           detailItem={detailItem}
           index={index}

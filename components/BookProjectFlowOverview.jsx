@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { stripHtml } from "@/lib/html";
 import { BookPersonalActivityCard, BookPersonalResourceCard } from "./BookPersonalDetailCards";
 import { IconLock, IconUnlock } from "./StatusIcons";
+import useClipboardCopy from "./useClipboardCopy";
 
 function OverviewHeader({ project, sections, itemCount, activityCount, resourceCount }) {
   return (
@@ -49,7 +50,7 @@ export default function BookProjectFlowOverview({
   const resourceCount = visibleSections.reduce((total, section) => total + section.resources.length, 0);
   const sectionIdentity = visibleSections.map((section) => section.id).join("|");
   const [openStepId, setOpenStepId] = useState(null);
-  const [copiedId, setCopiedId] = useState(null);
+  const clipboard = useClipboardCopy();
   const dragItem = useRef(null);
   const dragBlocked = useRef(false);
   const [dropKey, setDropKey] = useState(null);
@@ -150,9 +151,7 @@ export default function BookProjectFlowOverview({
 
   async function copyResource(resource) {
     const text = [resource.title, stripHtml(resource.content || ""), resource.url].filter(Boolean).join("\n");
-    await navigator.clipboard.writeText(text);
-    setCopiedId(resource.id);
-    window.setTimeout(() => setCopiedId(null), 1600);
+    await clipboard.copy(text, resource.id);
   }
 
   if (visibleSections.length === 0) return null;
@@ -162,6 +161,7 @@ export default function BookProjectFlowOverview({
 
   return (
     <section className="book-project-flow-overview" aria-label="전체 프로젝트 구성">
+      {clipboard.notice}
       {reorderError && <p role="alert">{reorderError}</p>}
       {selectedIndex >= 0 ? (
         <div className="book-project-flow-selected">
@@ -178,7 +178,7 @@ export default function BookProjectFlowOverview({
                         index={index}
                         isTeacher={isTeacher}
                         selectedProgress={detailSelectedProgress}
-                        copiedId={copiedId}
+                        copiedId={clipboard.copiedId}
                         confirmState={detailConfirmState}
                         onCopy={copyResource}
                         onToggleResourceLock={onToggleItemLock}

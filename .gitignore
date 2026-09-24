@@ -12,5 +12,7 @@ firebase-debug.log
 ui-debug.log
 
 artifacts/class-deletion-ui/
+artifacts/book-project-management/
+artifacts/teacher-activity-demo/
 tests/classDeletion/*.log
 tests/rules/deletion-*.log

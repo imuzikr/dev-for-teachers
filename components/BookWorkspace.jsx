@@ -14,9 +14,10 @@ import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { orderedStepItems } from "./BookProjectPreview";
 import { IconAddFeature } from "./StatusIcons";
-import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
+import BookProjectDeleteButton from "./BookProjectDeleteButton";
+import TeacherActivityDemoView, { TeacherActivityDemoProvider } from "./TeacherActivityDemo";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
 const HELP_DRAWER_COLLAPSED_KEY = "book_help_drawer_collapsed";
@@ -56,6 +57,8 @@ export default function BookWorkspace({
   selectedStepId,
   onSelectStep,
   onToast,
+  onProjectDeleted,
+  onProjectDeletionPending,
   setActiveItem = setBookActiveItem,
 }) {
   const [activatingScope, setActivatingScope] = useState(null);
@@ -332,6 +335,7 @@ export default function BookWorkspace({
   }
 
   return (
+    <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
     <StudentActivityPanel key={`${scope}:${isTeacher}`} enabled={!isTeacher} itemKeys={studentPanelItemKeys} scope={scope} records={confirmations} saveChecklist={confirmBookItem} autoOpenRequest={studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
@@ -357,6 +361,12 @@ export default function BookWorkspace({
               <p>{editingProject ? "Step별 활동과 자료를 준비하세요." : "선생님이 준비한 개발자실 흐름"}</p>
             </div>
           </div>
+
+          {isTeacher && project && onProjectDeleted && <BookProjectDeleteButton
+            key={`${classId}:${project.version ?? ""}`} user={user} project={project}
+            disabled={!liveProjectReady || editingProject || savingProject || exportingProject}
+            onDeleted={onProjectDeleted} onPendingChange={onProjectDeletionPending}
+          />}
 
           {!hasClass ? (
             <div className="book-library-empty">관리자가 반을 만들면 활동이 여기에 표시됩니다.</div>
@@ -385,12 +395,12 @@ export default function BookWorkspace({
             />
           )}
           {teacherDetailItem && <div className="teacher-active-detail" ref={setTeacherDetailTarget} />}
-          {teacherDetailItem && teacherDetailTarget && <BookPersonalItemViewModal
-            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+          {teacherDetailItem && teacherDetailTarget && <TeacherActivityDemoView
+            detailItem={teacherDetailItem} index={teacherDetailIndex}
             panelTarget={teacherDetailTarget} onExpand={() => setTeacherDetailExpanded(true)}
           />}
-          {teacherDetailItem && teacherDetailExpanded && <BookPersonalItemViewModal
-            detailItem={teacherDetailItem} index={teacherDetailIndex} isTeacher hideResponse
+          {teacherDetailItem && teacherDetailExpanded && <TeacherActivityDemoView
+            detailItem={teacherDetailItem} index={teacherDetailIndex}
             onClose={() => setTeacherDetailExpanded(false)}
           />}
         </div>
@@ -468,5 +478,6 @@ export default function BookWorkspace({
     )}
     </StudentActivityPanel>
     </BookImagePresentationContext.Provider>
+    </TeacherActivityDemoProvider>
   );
 }
