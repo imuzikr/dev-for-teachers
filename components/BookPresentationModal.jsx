@@ -6,6 +6,7 @@ import { safeBookImageUrl } from "./BookItemImages";
 import { useEffect, useRef, useState } from "react";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
+import BookResourceContent from "./BookResourceContent";
 import { applyPresentationScroll, presentationScrollPosition } from "./bookPresentationScroll";
 
 function presentationKindLabel(kind) {
@@ -20,11 +21,7 @@ function presentationUrl(item) {
 
 function presentationContent(item) {
   const source = item?.source ?? item ?? {};
-  const content = source.content ?? item?.content ?? "";
-  if (item?.kind === "resource" || item?.itemKind === "resource") {
-    return content || "등록된 내용이 없습니다.";
-  }
-  return content || "활동 안내사항";
+  return source.content ?? item?.content ?? "";
 }
 
 function presentationTitle(item) {
@@ -48,7 +45,8 @@ export function bookPresentationPayload(item, position) {
     itemIndex: position.itemIndex,
     itemTotal: position.itemTotal,
     title: presentationTitle({ ...item, kind }),
-    content: presentationContent({ ...item, kind }),
+    content: kind === "resource" ? source.content || "" : presentationContent({ ...item, kind }),
+    teacherDescription: kind === "resource" ? source.teacherDescription || "" : "",
     url,
     locked: source.locked === true,
     images: Array.isArray(source.images) ? source.images.map(safeBookImageUrl).filter(Boolean) : [],
@@ -69,6 +67,7 @@ export function bookPresentationItemFromBroadcast(broadcast) {
       id: broadcast?.itemId ?? "",
       title: broadcast?.title ?? "",
       content: broadcast?.content ?? "",
+      teacherDescription: broadcast?.teacherDescription ?? "",
       url: broadcast?.url ?? "",
       bookUrl: kind === "activity" ? broadcast?.url ?? "" : "",
       locked: broadcast?.locked === true,
@@ -173,10 +172,12 @@ export default function BookPresentationModal({
           ) : (
             <div className="book-presentation-url is-empty">제공 URL 없음</div>
           )}
-          <article className={`book-presentation-content book-presentation-content--${kind}`}>
+          {kind === "resource" ? <BookResourceContent resource={item?.source ?? item ?? {}}>
+            <RichTextDisplay className="book-presentation-rich" html={content} fallback="등록된 내용이 없습니다." />
+          </BookResourceContent> : <article className={`book-presentation-content book-presentation-content--${kind}`}>
             {kind === "activity" && <span>활동 안내사항</span>}
-            <RichTextDisplay className="book-presentation-rich" html={content} />
-          </article>
+            <RichTextDisplay className="book-presentation-rich" html={content} fallback="활동 안내사항" />
+          </article>}
           </>}
         </div>
         {busy && <p className="book-presentation-status" role="status">방송에 반영 중...</p>}

@@ -11,6 +11,7 @@ import BookItemUrlEditor from "./BookItemUrlEditor";
 import BookItemUrlList from "./BookItemUrlList";
 import ActivityTemplate from "./ActivityTemplate";
 import ChecklistWarningModal from "./ChecklistWarningModal";
+import BookResourceContent from "./BookResourceContent";
 
 function modalUrlSlot(href, label) {
   if (href) {
@@ -45,6 +46,22 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
 
   if (typeof document === "undefined") return null;
 
+  const itemContent = interactive && item.templateEnabled === true ? (
+    <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
+  ) : (
+    <RichTextDisplay
+      className="book-personal-expand-content"
+      html={item.content}
+      previewImages={interactive || Boolean(participantLabel)}
+      compactCode={interactive}
+      onImageClick={onPresent ? (index) => onPresent(index, true) : undefined}
+      checklistValues={checklistValues}
+      onChecklistChange={interactive ? onChecklistChange : undefined}
+      readOnly={!interactive}
+      fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
+    />
+  );
+
   const content = (
       <section className={panelTarget ? "student-activity-detail" : "modal book-personal-expand-modal"} role={panelTarget ? undefined : "dialog"} aria-modal={panelTarget ? undefined : "true"} aria-label={item.title} onClick={(event) => event.stopPropagation()}>
         <header className="book-personal-expand-head">
@@ -54,21 +71,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
         </header>
         <div className="book-personal-expand-body">
           {modalUrlSlot(href, linkLabel)}
-          {interactive && item.templateEnabled === true ? (
-            <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
-          ) : (
-            <RichTextDisplay
-              className="book-personal-expand-content"
-              html={item.content}
-              previewImages={interactive || Boolean(participantLabel)}
-              compactCode={interactive}
-              onImageClick={onPresent ? (index) => onPresent(index, true) : undefined}
-              checklistValues={checklistValues}
-              onChecklistChange={interactive ? onChecklistChange : undefined}
-              readOnly={!interactive}
-              fallback={isResource ? "등록된 내용이 없습니다." : "활동 안내사항"}
-            />
-          )}
+          {isResource ? <BookResourceContent resource={item} templateInteractive={interactive && item.templateEnabled === true}>{itemContent}</BookResourceContent> : itemContent}
           {!isResource && (
             <section className="student-activity-urls" aria-label={isTeacher ? "학생 활동 URL" : "나의 활동 URL"}>
               {!isTeacher && activityUrls && <>
@@ -91,7 +94,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           )}
           {interactive && (
             <div className="student-activity-detail-actions">
-              {onCopy && !item.templateEnabled && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
+              {!isResource && onCopy && !item.templateEnabled && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && hasChecklist && onCheckAll && <div className="student-checklist-bulk-actions">
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}

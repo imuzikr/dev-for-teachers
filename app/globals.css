@@ -12281,6 +12281,65 @@ button.book-project-flow-pill:focus-visible {
   padding: 22px 2px 2px;
 }
 
+.book-resource-sections {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.book-resource-description,
+.book-resource-copy-section {
+  min-width: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+.book-resource-copy-section { border: 1px solid var(--border); }
+.book-resource-copy-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.book-resource-copy-section > header button { min-height: 44px; flex-shrink: 0; }
+.book-resource-sections h4,
+.book-resource-editor-label,
+.book-resource-description-field > span {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 800;
+}
+.book-resource-description p {
+  margin: 12px 0 0;
+  white-space: pre-wrap;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.book-resource-copy-section .book-personal-expand-content {
+  min-height: 0;
+  padding: 0;
+}
+.book-resource-description-field { display: grid; gap: 8px; }
+.book-resource-description-field textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.7;
+  resize: vertical;
+}
+.book-resource-description-field small { color: var(--text-sub); font-weight: 400; }
+.book-resource-description-field textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.book-resource-copy-section .book-presentation-rich { overflow-wrap: anywhere; }
+
 .book-personal-expand-content,
 .book-personal-expand-locked,
 .book-personal-expand-response {

@@ -1,7 +1,7 @@
 "use client";
 
 import useClipboardCopy from "./useClipboardCopy";
-import { stripHtml } from "@/lib/html";
+import { templatePlainText } from "@/lib/activityTemplate.mjs";
 import RichTextDisplay from "./RichTextDisplay";
 import { BookItemImageIndicator } from "./BookItemImages";
 import { IconLock, IconTrash, IconUnlock } from "./StatusIcons";
@@ -102,7 +102,7 @@ export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock,
   const compactResource = kind === "resource";
 
   async function copyResource() {
-    const text = [item.title, stripHtml(item.content || ""), linkSource].filter(Boolean).join("\n");
+    const text = templatePlainText(item.content || "");
     await clipboard.copy(text, item.id);
   }
 

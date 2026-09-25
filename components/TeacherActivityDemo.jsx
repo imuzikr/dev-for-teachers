@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { checklistComplete, checklistSnapshot, checklistVersion } from "@/lib/activityChecklist";
-import { safeDisplayHtml, stripHtml } from "@/lib/html";
+import { safeDisplayHtml } from "@/lib/html";
+import { templatePlainText } from "@/lib/activityTemplate.mjs";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import useClipboardCopy from "./useClipboardCopy";
 import Toast from "./Toast";
@@ -85,7 +86,7 @@ export default function TeacherActivityDemoView({ detailItem, ...props }) {
       onUncheckAll={() => change({ checklistValues: defaults.map(() => false) })}
       confirmed={draft.confirmed === true} saveLabel="저장"
       onSave={() => demo?.save(key) ?? false}
-      onCopy={detailItem.kind === "resource" ? () => clipboard.copy([item.title, stripHtml(item.content || ""), item.url].filter(Boolean).join("\n"), item.id) : undefined}
+      onCopy={detailItem.kind === "resource" ? () => clipboard.copy(templatePlainText(item.content || ""), item.id) : undefined}
       copied={clipboard.copiedId === item.id}
     />
   </>;

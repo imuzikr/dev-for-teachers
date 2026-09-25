@@ -153,6 +153,7 @@ export default function BookProjectItemEditModal({
   const [mounted, setMounted] = useState(false);
   const [title, setTitle] = useState(item?.title ?? "");
   const [content, setContent] = useState(item?.content ?? "");
+  const [teacherDescription, setTeacherDescription] = useState(item?.teacherDescription ?? "");
   const [images, setImages] = useState(item?.images ?? []);
   const [imageSizes, setImageSizes] = useState(item?.imageSizes);
   const [imagesBusy, setImagesBusy] = useState(false);
@@ -169,12 +170,13 @@ export default function BookProjectItemEditModal({
     setTitle(item?.title ?? "");
     setDraftKind(kind);
     setContent(item?.content ?? "");
+    setTeacherDescription(item?.teacherDescription ?? "");
     setImages(item?.images ?? []);
     setImageSizes(item?.imageSizes);
     setUrl(kind === "resource" ? item?.url ?? "" : item?.bookUrl || item?.url || "");
     setRequiresAnswer(kind === "activity" && item?.requiresAnswer !== false && !isCreating);
     setTemplateEnabled(item?.templateEnabled === true);
-  }, [isCreating, item?.id, item?.title, item?.content, item?.images, item?.imageSizes, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
+  }, [isCreating, item?.id, item?.title, item?.content, item?.teacherDescription, item?.images, item?.imageSizes, item?.url, item?.bookUrl, item?.requiresAnswer, item?.templateEnabled, kind]);
 
   if (!mounted) return null;
 
@@ -208,7 +210,7 @@ export default function BookProjectItemEditModal({
         imageSizes,
         templateEnabled,
         ...(draftKind === "resource"
-          ? { url: trimmedUrl, bookUrl: trimmedUrl }
+          ? { url: trimmedUrl, bookUrl: trimmedUrl, teacherDescription }
           : { url: trimmedUrl, bookUrl: trimmedUrl, requiresAnswer }),
       }, draftKind);
       if (saved === false) setSaveError("저장하지 못했어요. 입력 내용은 유지됩니다. 다시 저장해 주세요.");
@@ -285,6 +287,11 @@ export default function BookProjectItemEditModal({
               {draftKind === "activity" ? "자료로 변환" : "활동으로 변환"}
             </button>
           </div>
+          {draftKind === "resource" && <label className="book-resource-description-field">
+            <span>교사 설명 <small>(선택)</small></span>
+            <textarea aria-label="교사 설명" rows={4} value={teacherDescription} onChange={event => setTeacherDescription(event.target.value)} placeholder="자료 사용 방법을 안내해 주세요. 복사할 내용에는 포함되지 않습니다." />
+          </label>}
+          {draftKind === "resource" && <strong className="book-resource-editor-label">복사할 내용</strong>}
           <BasicFormatEditor
             templateEnabled={templateEnabled}
             value={content}

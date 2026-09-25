@@ -82,7 +82,7 @@ try {
   await clipboardFails(false);
   await card("복사 자료").getByRole("button", { name: "자료 복사", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "복사했습니다." }).waitFor();
-  assert.equal(await page.evaluate(() => window.copiedText), "복사 자료\n학생에게 보여줄 내용");
+  assert.equal(await page.evaluate(() => window.copiedText), "학생에게 보여줄 내용");
   await clipboardFails(true);
   await card("복사 자료").getByRole("button", { name: "자료를 복사했습니다", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "복사하지 못했어요" }).waitFor();
@@ -109,6 +109,8 @@ try {
   assert.equal(await page.evaluate(() => window.copiedText), "시연학교에서 김선생과 활동합니다.");
   await save();
   await open("템플릿 자료");
+  await modal().getByText("복사할 내용", { exact: true }).waitFor();
+  assert.equal(await modal().getByRole("button", { name: "복사", exact: true }).count(), 0);
   await modal().getByLabel("주제", { exact: true }).fill("환경 보호");
   await modal().getByRole("button", { name: "모두 체크하기", exact: true }).click();
   await save();
@@ -156,6 +158,7 @@ try {
   await clipboardFails(false);
   await studentCards.filter({ hasText: "복사 자료" }).getByRole("button", { name: "자료 복사", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "복사했습니다." }).waitFor();
+  assert.equal(await page.evaluate(() => window.copiedText), "학생에게 보여줄 내용");
   await clipboardFails(true);
   await studentCards.filter({ hasText: "복사 자료" }).getByRole("button", { name: "자료를 복사했습니다", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "복사하지 못했어요" }).waitFor();

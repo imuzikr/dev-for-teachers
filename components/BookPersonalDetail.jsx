@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
-import { stripHtml } from "@/lib/html";
+import { templatePlainText } from "@/lib/activityTemplate.mjs";
 import { saveBookDashboardText } from "@/lib/store";
 import useClipboardCopy from "./useClipboardCopy";
 import { BookPersonalActivityCard, BookPersonalResourceCard, dashboardText, participantEntry, participantName } from "./BookPersonalDetailCards";
@@ -83,7 +83,7 @@ export default function BookPersonalDetail({
   }
 
   async function copyResource(resource) {
-    const text = [resource.title, stripHtml(resource.content || ""), resource.url].filter(Boolean).join("\n");
+    const text = templatePlainText(resource.content || "");
     await clipboard.copy(text, resource.id);
   }
 

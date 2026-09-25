@@ -288,6 +288,52 @@ test("Firestore step introductions preserve formatting and explicit empty values
   assert.equal(api.commits(), 3);
 });
 
+test("resource teacher descriptions survive save, clearing, Firestore writes and export without replacing copy body", async () => {
+  const api = await loadModules();
+  const project = draft();
+  const teacherDescription = "  설치 전에 참고할 설명입니다.\n복사할 내용과 분리합니다.  ";
+  project.steps[0].resources[0].teacherDescription = teacherDescription;
+  project.steps[0].resources[0].content = "  https://developers.google.com/apps-script/guides/clasp?hl=ko\n복사할 명령어  ";
+  await api.saveBookProject(user, project);
+  const saved = await api.getBookProject(project.classId);
+  assert.equal(saved.steps[0].resources[0].teacherDescription, teacherDescription);
+  assert.equal(saved.steps[0].resources[0].content, "https://developers.google.com/apps-script/guides/clasp?hl=ko\n복사할 명령어");
+
+  const cloned = api.cloneBookProjectStep(saved.steps[0]);
+  assert.equal(cloned.resources[0].teacherDescription, teacherDescription);
+  assert.equal(cloned.resources[0].content, saved.steps[0].resources[0].content);
+  assert.equal(api.appendClonedBookProjectItem(null, saved, saved.steps[0], "resource", saved.steps[0].resources[0]).steps[0].resources[0].teacherDescription, teacherDescription);
+
+  await api.saveBookProject(user, {
+    ...saved,
+    steps: saved.steps.map((step) => ({
+      ...step,
+      resources: step.resources.map((resource) => ({ ...resource, teacherDescription: "" })),
+    })),
+  });
+  const cleared = await api.getBookProject(project.classId);
+  assert.equal(cleared.steps[0].resources[0].teacherDescription, "");
+  assert.equal(cleared.steps[0].resources[0].content, saved.steps[0].resources[0].content);
+
+  await api.saveBookProject(user, draft());
+  const legacy = await api.getBookProject(project.classId);
+  assert.equal(legacy.steps[0].resources[0].teacherDescription, "");
+
+  const firestore = await loadModules(true);
+  for (const value of [teacherDescription, "", undefined]) {
+    const remoteProject = draft();
+    remoteProject.steps[0].resources[0].content = "학생이 복사할 내용";
+    if (value !== undefined) remoteProject.steps[0].resources[0].teacherDescription = value;
+    await firestore.saveBookProject(user, remoteProject);
+    const resourceWrite = firestore.writes.filter(([ref]) => ref.path.startsWith("bookResources")).at(-1)[1];
+    const projectWrite = firestore.writes.filter(([ref]) => ref.path.startsWith("bookProjects")).at(-1)[1];
+    assert.equal(resourceWrite.teacherDescription, value ?? "");
+    assert.equal(projectWrite.steps[0].resources[0].teacherDescription, value ?? "");
+    assert.equal(resourceWrite.content, "학생이 복사할 내용");
+    assert.equal(projectWrite.steps[0].resources[0].content, "학생이 복사할 내용");
+  }
+});
+
 test("whole-project and single-step exports retain introductions without replacing blanks", async () => {
   const api = await loadModules();
   for (const description of ["  준비 안내\n\n자료를 읽어 주세요.  ", "", undefined]) {

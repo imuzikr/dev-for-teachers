@@ -9,7 +9,7 @@ const steps = [{ id: "step-1", title: "시연 단계", activities: [
   { id: "answer", title: "답변 활동", content: "<p>한 문장으로 정리하세요.</p>", requiresAnswer: true },
   { id: "template", title: "템플릿 활동", content: "<p>{{학교}}에서 {{이름}}과 활동합니다.</p>", templateEnabled: true },
 ], resources: [
-  { id: "plain", title: "복사 자료", content: "<p>학생에게 보여줄 내용</p>" },
+  { id: "plain", title: "복사 자료", teacherDescription: "학생에게 복사하기 전 참고할 설명입니다.", content: "<p>학생에게 보여줄 내용</p>" },
   { id: "resource-template", title: "템플릿 자료", templateEnabled: true, content: '<p>{{주제}}에 대해 설명해 주세요.</p><ul class="rte-checklist"><li><label><input type="checkbox"><span class="rte-checklist-text">내용 확인</span></label></li></ul>' },
 ] }];
 

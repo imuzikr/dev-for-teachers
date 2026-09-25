@@ -100,6 +100,17 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     await assertFails(setDoc(doc(asTeacher(env, "teacherB").firestore(), "bookResources", "res1"), resourcePayload("teacherB", { templateEnabled: true })));
   });
 
+  it("resource teacher descriptions are optional strings for the owning teacher only", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    for (const teacherDescription of ["교사용 설명", "", "한".repeat(6000)]) {
+      await assertSucceeds(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { teacherDescription })));
+    }
+    await assertSucceeds(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA")));
+    await assertFails(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { teacherDescription: 123 })));
+    await assertFails(setDoc(doc(asStudent(env, "studentA").firestore(), "bookResources", "res1"), resourcePayload("studentA", { teacherDescription: "학생 작성" })));
+    await assertFails(setDoc(doc(asTeacher(env, "teacherB").firestore(), "bookResources", "res1"), resourcePayload("teacherB", { teacherDescription: "다른 반 교사 작성" })));
+  });
+
   it("다른 반 교사는 프로젝트를 저장할 수 없다", async () => {
     const db = asTeacher(env, "teacherB").firestore();
 

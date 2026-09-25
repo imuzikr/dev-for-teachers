@@ -294,7 +294,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await resourceCard.getByRole("button", { name: "자료 복사" }).click();
   await resourceCard.getByRole("button", { name: "자료를 복사했습니다" }).waitFor();
   const copiedText = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n");
-  assert.equal(copiedText, "체크리스트 자료\n자료를 읽고 체크하세요. 핵심 개념 확인 친구에게 설명 준비\nhttps://example.com/resource");
+  assert.equal(copiedText, "자료를 읽고 체크하세요.\n- 핵심 개념 확인\n- 친구에게 설명 준비");
   await capture("student-main-1280.png", 1280, 900);
   await capture("student-main-768.png", 768, 900);
   await capture("student-main-375.png", 375, 812);
@@ -305,6 +305,9 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await page.getByRole("button", { name: "닫기", exact: true }).click();
   await resourceCard.getByRole("button", { name: "패널에서 열기", exact: true }).click();
   await page.locator(".student-activity-detail").getByText("체크리스트 자료").waitFor();
+  await page.locator(".student-activity-detail").getByLabel("교사 설명").getByText("학생들이 체크리스트를 읽기 전에 보는 교사 설명입니다.").waitFor();
+  await page.locator(".student-activity-detail").getByLabel("복사할 내용").getByRole("button", { name: "복사", exact: true }).click();
+  assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), "자료를 읽고 체크하세요.\n- 핵심 개념 확인\n- 친구에게 설명 준비");
   await page.locator(".student-activity-detail").getByRole("button", { name: "모두 체크하기" }).click();
   await page.locator(".student-activity-detail").getByText("자동 저장됨").waitFor();
   await captureVisibleSidebarConfirm(page, screenshotRoot, "student-sidebar-controls-768.png", 768, 900);
@@ -346,6 +349,9 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await legacyStudentResource.getByRole("button", { name: "자료 확대", exact: true }).click();
   const legacyStudentDialog = page.getByRole("dialog", { name: "체크리스트 자료", exact: true });
   await legacyStudentDialog.getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await legacyStudentDialog.getByLabel("교사 설명").getByText("학생들이 체크리스트를 읽기 전에 보는 교사 설명입니다.").waitFor({ timeout: 5000 });
+  await legacyStudentDialog.getByLabel("복사할 내용").getByRole("button", { name: "복사", exact: true }).click();
+  assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), "자료를 읽고 체크하세요.\n- 핵심 개념 확인\n- 친구에게 설명 준비");
   await legacyStudentDialog.getByRole("button", { name: "닫기", exact: true }).click();
   await activityCard.getByRole("button", { name: "패널에서 열기", exact: true }).click();
   await page.locator(".student-activity-detail").getByText("읽은 내용을 한 문장으로 정리하세요.", { exact: true }).waitFor({ timeout: 5000 });
@@ -363,6 +369,7 @@ export default async function verifyBookWorkflowUi(page, baseUrl) {
   await teacherResource.getByRole("button", { name: "자료 확대", exact: true }).click();
   const legacyResourceDialog = page.getByRole("dialog", { name: "체크리스트 자료", exact: true });
   await legacyResourceDialog.getByText("자료를 읽고 체크하세요.", { exact: true }).waitFor({ timeout: 5000 });
+  await legacyResourceDialog.getByLabel("교사 설명").getByText("학생들이 체크리스트를 읽기 전에 보는 교사 설명입니다.").waitFor({ timeout: 5000 });
   assert.equal(await legacyResourceDialog.locator(".book-personal-expand-locked").count(), 0);
   await legacyResourceDialog.getByRole("button", { name: "닫기", exact: true }).click();
   await clickTeacherActivation(teacherResource, false);
