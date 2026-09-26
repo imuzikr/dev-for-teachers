@@ -64,6 +64,7 @@ class FakeDoc {
     this.id = path.split("/").pop();
   }
   async get() {
+    await this.db.beforeGet?.(this.path);
     return new FakeSnap(this.id, this.db.docs.get(this.path));
   }
   async delete() {
@@ -342,6 +343,86 @@ test("login refuses disabled, missing Auth, Google, system admin, teacher, and r
 
     assert.equal(result.status, status);
     assert.equal(result.body.code, code);
+  }
+});
+
+test("login starts independent account checks while the profile lookup is still pending", async () => {
+  const api = await loadPinAuth();
+  const h = deps();
+  const identity = { schoolName: "parallel-school", realName: "parallel-student", pin: "1212" };
+  await api.handlePinAuthPost(req({ action: "register", ...identity, pinConfirm: identity.pin }), h.value, response);
+  const uid = h.auth.customTokens[0].uid;
+  const started = [];
+  let releaseProfile;
+  let markProfileStarted;
+  const profileGate = new Promise((resolve) => { releaseProfile = resolve; });
+  const profileStarted = new Promise((resolve) => { markProfileStarted = resolve; });
+  h.db.beforeGet = async (path) => {
+    if (path === `users/${uid}`) {
+      started.push("profile");
+      markProfileStarted();
+      await profileGate;
+    }
+    if (path === "system/admin") started.push("admin");
+  };
+  const getUser = h.auth.getUser.bind(h.auth);
+  h.auth.getUser = async (targetUid) => {
+    started.push("auth");
+    return getUser(targetUid);
+  };
+
+  const pending = api.handlePinAuthPost(req({ action: "login", ...identity }), h.value, response);
+  await profileStarted;
+  const startedBeforeProfileResolved = [...started];
+  const tokensBeforeProfileResolved = h.auth.customTokens.length;
+  releaseProfile();
+  const result = await pending;
+
+  assert.deepEqual(startedBeforeProfileResolved, ["profile", "admin", "auth"]);
+  assert.equal(tokensBeforeProfileResolved, 1, "no login token may be issued before all account checks finish");
+  assert.equal(result.status, 200);
+  assert.equal(h.auth.customTokens.length, 2);
+});
+
+test("login fails closed on account lookup failures and preserves account rejection priority", async () => {
+  const api = await loadPinAuth();
+  const h = deps();
+  const identity = { schoolName: "failure-school", realName: "failure-student", pin: "1212" };
+  await api.handlePinAuthPost(req({ action: "register", ...identity, pinConfirm: identity.pin }), h.value, response);
+  const uid = h.auth.customTokens[0].uid;
+  const profile = h.db.docs.get(`users/${uid}`);
+  const getUser = h.auth.getUser.bind(h.auth);
+  const cases = [
+    { name: "profile service failure", failedLookup: "profile", status: 503, code: "auth/pin-unavailable" },
+    { name: "admin service failure", failedLookup: "admin", status: 503, code: "auth/pin-unavailable" },
+    { name: "auth service failure", authFailure: true, status: 503, code: "auth/pin-unavailable" },
+    { name: "deleted profile", missingProfile: true, failedLookup: "admin", authFailure: true, status: 409, code: "auth/pin-orphaned-identity" },
+    { name: "teacher profile", role: "teacher", failedLookup: "admin", authFailure: true, status: 403, code: "auth/pin-target-forbidden" },
+    { name: "system admin", admin: true, authFailure: true, status: 403, code: "auth/pin-target-forbidden" },
+  ];
+  for (const item of cases) {
+    h.db.docs.set(`users/${uid}`, { ...profile, role: item.role ?? "student" });
+    if (item.missingProfile) h.db.docs.delete(`users/${uid}`);
+    if (item.admin) h.db.docs.set("system/admin", { uid });
+    else h.db.docs.delete("system/admin");
+    for (const path of h.db.docs.keys()) {
+      if (path.startsWith("pinLoginAttempts/")) h.db.docs.delete(path);
+    }
+    h.db.beforeGet = async (path) => {
+      if ((item.failedLookup === "profile" && path === `users/${uid}`)
+          || (item.failedLookup === "admin" && path === "system/admin")) {
+        throw new Error("account lookup unavailable");
+      }
+    };
+    h.auth.getUser = async (targetUid) => {
+      if (item.authFailure) throw new Error("auth lookup unavailable");
+      return getUser(targetUid);
+    };
+
+    const result = await api.handlePinAuthPost(req({ action: "login", ...identity }), h.value, response);
+    assert.equal(result.status, item.status, item.name);
+    assert.equal(result.body.code, item.code, item.name);
+    assert.equal(h.auth.customTokens.length, 1, `${item.name} must not issue a token`);
   }
 });
 
