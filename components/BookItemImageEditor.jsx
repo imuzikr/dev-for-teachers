@@ -5,7 +5,7 @@ import { uploadImage } from "@/lib/storageUpload";
 import { normalizeBookImageSizes, BOOK_ITEM_IMAGE_LIMIT as MAX_IMAGES, BOOK_ITEM_IMAGE_MAX_CHARS as MAX_IMAGE_CHARACTERS } from "@/lib/bookProjectImages";
 import "./BookItemImageEditor.css";
 
-export default function BookItemImageEditor({ images = [], imageSizes, onChange, disabled = false, onBusyChange }) {
+export default function BookItemImageEditor({ images = [], imageSizes, onChange, disabled = false, onBusyChange, showImageSizes = true }) {
   const sizes = normalizeBookImageSizes(imageSizes, images);
   const inputRef = useRef(null);
   const helpId = useId();
@@ -125,18 +125,20 @@ export default function BookItemImageEditor({ images = [], imageSizes, onChange,
           {images.map((image, index) => (
             <li key={`${index}:${image.slice(-32)}`}>
               <img draggable={false} src={image} alt={`첨부 이미지 ${index + 1}`} />
-              <label className="book-item-image-size">
-                <span>방송 크기</span>
-                <select aria-label={`이미지 ${index + 1} 방송 크기`} value={sizes[index]} disabled={disabled || busy} onChange={(event) => {
-                  const nextSizes = [...sizes];
-                  nextSizes[index] = event.target.value;
-                  onChange(images, nextSizes);
-                }}>
-                  <option value="large">대</option>
-                  <option value="medium">중</option>
-                  <option value="small">소</option>
-                </select>
-              </label>
+              {showImageSizes && (
+                <label className="book-item-image-size">
+                  <span>방송 크기</span>
+                  <select aria-label={`이미지 ${index + 1} 방송 크기`} value={sizes[index]} disabled={disabled || busy} onChange={(event) => {
+                    const nextSizes = [...sizes];
+                    nextSizes[index] = event.target.value;
+                    onChange(images, nextSizes);
+                  }}>
+                    <option value="large">대</option>
+                    <option value="medium">중</option>
+                    <option value="small">소</option>
+                  </select>
+                </label>
+              )}
               <div className="book-item-images-controls">
                 <span>{index + 1}</span>
                 <button type="button" disabled={disabled || busy || index === 0} aria-label={`이미지 ${index + 1} 앞으로 이동`} onClick={() => moveImage(index, -1)}>←</button>

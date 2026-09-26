@@ -182,7 +182,9 @@ export function BookPersonalActivityCard({
   participantLabel,
   selectedProgress,
   saveState,
+  allowStudentImages = false,
   savedUrls,
+  savedImages,
   entryOwnerId,
   urlsReady = false,
   onSaveUrls,
@@ -205,6 +207,18 @@ export function BookPersonalActivityCard({
   const checkAll = checklist.checkAll;
   const [answerDraft, setAnswerDraft] = useState(response ?? "");
   useEffect(() => { setAnswerDraft(response ?? ""); }, [activity.id, response]);
+  const imageScope = `${entryOwnerId ?? ""}:${activity.id}`;
+  const [imageDraft, setImageDraft] = useState({ scope: imageScope, images: Array.isArray(savedImages) ? savedImages : [], dirty: false });
+  const [imageBusyBySurface, setImageBusyBySurface] = useState({});
+  const imagesBusy = Object.values(imageBusyBySurface).some(Boolean);
+  const setImageBusy = (surface, busy) => setImageBusyBySurface((current) => ({ ...current, [surface]: busy }));
+  useEffect(() => {
+    const nextImages = Array.isArray(savedImages) ? savedImages : [];
+    setImageDraft((current) => {
+      if (current.scope !== imageScope) return { scope: imageScope, images: nextImages, dirty: false };
+      return current.dirty ? current : { scope: imageScope, images: nextImages, dirty: false };
+    });
+  }, [imageScope, savedImages]);
   const panel = useStudentActivityPanel();
   const panelKey = `activity:${activity.id}`;
   const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
@@ -222,7 +236,14 @@ export function BookPersonalActivityCard({
     onSave: (urls) => onSaveUrls(detailItem, urls),
   });
   const save = onSave ? () => activityUrls.save((urls) => {
-    const persist = () => onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls);
+    const studentImages = allowStudentImages && imageDraft.dirty ? imageDraft.images : undefined;
+    const persist = async () => {
+      const saved = await onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls, studentImages);
+      if (saved !== false && studentImages !== undefined) {
+        setImageDraft((current) => current.scope === imageScope ? { ...current, dirty: false } : current);
+      }
+      return saved;
+    };
     return checklist.complete ? checklist.confirm(persist) : persist();
   }) : undefined;
   const urlViewProps = { savedUrls, activityUrls: !isTeacher && onSaveUrls ? activityUrls : undefined, urlsReady };
@@ -240,6 +261,7 @@ export function BookPersonalActivityCard({
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="활동 수정" aria-label="활동 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
           {isTeacher && onDelete && <button type="button" className="btn-ghost book-card-expand-btn book-card-delete-btn" title="활동 삭제" aria-label="활동 삭제" disabled={deletionDisabled} onClick={() => onDelete(detailItem)}><IconTrash size={14} /></button>}
           {isTeacher && <BookItemImageIndicator images={activity.images} />}
+          {isTeacher && <BookItemImageIndicator images={savedImages} />}
           <button type="button" className="btn-ghost book-personal-expand-btn book-card-expand-btn" title="활동 확대" aria-label="활동 확대" onClick={() => setExpanded(true)}>
             <IconExpand />
           </button>
@@ -254,7 +276,7 @@ export function BookPersonalActivityCard({
         <footer className="book-personal-card-actions book-student-review-actions"><button type="button" className="btn-primary" onClick={openPanel}>패널에서 열기</button></footer>
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || !urlsReady || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || !urlsReady || imagesBusy || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
@@ -264,7 +286,7 @@ export function BookPersonalActivityCard({
       {!isTeacher && saveState.failedId === activity.id && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
       {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} savedImages={savedImages} imageDraft={allowStudentImages ? imageDraft.images : undefined} onImageDraftChange={allowStudentImages ? (images) => setImageDraft({ scope: imageScope, images, dirty: true }) : undefined} imagesBusy={imagesBusy} onImagesBusyChange={(busy) => setImageBusy("panel", busy)} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} saveError={saveState.failedMessage} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && isTeacher && onPresent ? <TeacherActivityDemoView detailItem={detailItem} index={index} onClose={() => setExpanded(false)} /> : expanded && (
         <BookPersonalItemViewModal
@@ -277,6 +299,11 @@ export function BookPersonalActivityCard({
           templateValues={templateValues}
           onTemplateChange={setTemplateValues}
           answerDraft={answerDraft}
+          savedImages={savedImages}
+          imageDraft={allowStudentImages ? imageDraft.images : undefined}
+          onImageDraftChange={allowStudentImages ? (images) => setImageDraft({ scope: imageScope, images, dirty: true }) : undefined}
+          imagesBusy={imagesBusy}
+          onImagesBusyChange={(busy) => setImageBusy("expanded", busy)}
           checklistValues={checklistValues}
           onChecklistChange={setChecklistValues}
           onAnswerChange={setAnswerDraft}
@@ -287,6 +314,7 @@ export function BookPersonalActivityCard({
           hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete}
           saving={saveState.savingId === activity.id}
           failed={saveState.failedId === activity.id}
+          saveError={saveState.failedMessage}
           confirmed={confirmed}
           onClose={() => setExpanded(false)}
         />

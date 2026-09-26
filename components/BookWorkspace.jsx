@@ -8,6 +8,7 @@ import { safeDisplayHtml } from "@/lib/html";
 import BookHelpDrawer from "./BookHelpDrawer";
 import BookClassProgressModal from "./BookClassProgressModal";
 import BookPersonalDashboard from "./BookPersonalDashboard";
+import BookPortfolioButton from "./BookPortfolioButton";
 import { BookImagePresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
@@ -430,9 +431,17 @@ export default function BookWorkspace({
       )}
 
       <section className="book-library-main" aria-label="개발자실 메인 화면">
-        {header}
+        {typeof header === "function" ? header(isTeacher && classPurpose === "internal" && project?.id && project.steps?.length > 0 ? (
+          <BookPortfolioButton key={JSON.stringify([project.id, project.version, activeClassId, user?.uid, isTeacher, reviewStudent?.uid, className])}
+            project={project} participant={reviewStudent} classId={activeClassId} className={className} user={user}
+            entriesByActivity={entriesByActivity} disabled={!liveProjectReady || editingProject || savingProject} />
+        ) : null) : header}
         <BookPersonalDashboard
           participants={participants}
+          classPurpose={classPurpose}
+          classId={activeClassId}
+          className={className}
+          portfolioDisabled={!liveProjectReady || editingProject || savingProject}
           selectedParticipantUid={reviewStudent?.uid ?? null}
           onSelectParticipant={isTeacher ? selectReviewStudent : undefined}
           activities={previewActivities}

@@ -7,6 +7,7 @@ import RichTextDisplay from "./RichTextDisplay";
 import { useContext, useState } from "react";
 import { BookImagePresentationContext } from "./BookPresentationMode";
 import BookItemImages from "./BookItemImages";
+import BookItemImageEditor from "./BookItemImageEditor";
 import BookItemUrlEditor from "./BookItemUrlEditor";
 import BookItemUrlList from "./BookItemUrlList";
 import ActivityTemplate from "./ActivityTemplate";
@@ -30,7 +31,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, participantLabel, allowInteraction = false, saveLabel, hideResponse = false, templateValues = {}, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, onSave, saving, failed, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, participantLabel, allowInteraction = false, saveLabel, hideResponse = false, templateValues = {}, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, savedImages, imageDraft, onImageDraftChange, imagesBusy = false, onImagesBusyChange, onSave, saving, failed, saveError, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true }) {
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !participantLabel && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
@@ -43,6 +44,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
   const linkLabel = resourceLinkLabel(url);
   const requiresAnswer = !isResource && item.templateEnabled !== true && item.requiresAnswer !== false;
   const interactive = !isTeacher || allowInteraction;
+  const studentImageEntries = Array.isArray(savedImages) ? savedImages : [];
 
   if (typeof document === "undefined") return null;
 
@@ -89,7 +91,20 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {requiresAnswer && !hideResponse && (
             <section className="book-personal-expand-response" aria-label={interactive ? "나의 답변" : "학생 답변"}>
               <span>{interactive ? "나의 답변" : "학생 답변"}</span>
-              {interactive && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving || activityUrls?.saving} /> : <p>{isTeacher && !urlsReady ? "학생 답변을 불러오는 중..." : response || "아직 입력한 내용이 없습니다."}</p>}
+              {interactive && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving || imagesBusy || activityUrls?.saving} /> : <p>{isTeacher && !urlsReady ? "학생 답변을 불러오는 중..." : response || "아직 입력한 내용이 없습니다."}</p>}
+            </section>
+          )}
+          {!isResource && interactive && onImageDraftChange && (
+            <section className="book-personal-expand-response" aria-label="포트폴리오 캡처">
+              <span>포트폴리오 캡처</span>
+              <p>활동 결과 화면을 첨부하면 포트폴리오에 함께 담겨요.</p>
+              <BookItemImageEditor images={imageDraft} onChange={(images) => onImageDraftChange(images)} onBusyChange={onImagesBusyChange} disabled={saving || imagesBusy || activityUrls?.saving || !urlsReady} showImageSizes={false} />
+            </section>
+          )}
+          {!isResource && isTeacher && studentImageEntries.length > 0 && (
+            <section className="book-personal-expand-response" aria-label="학생 첨부 이미지">
+              <span>학생 첨부 이미지</span>
+              <BookItemImages images={studentImageEntries} previewImages />
             </section>
           )}
           {interactive && (
@@ -99,7 +114,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}
               </div>}
-              {onSave && <button type="button" className="btn-primary" disabled={saving || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
+              {onSave && <button type="button" className="btn-primary" disabled={saving || imagesBusy || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 if (!activityUrls && hasChecklist && !checklistComplete) {
                   setShowChecklistWarning(true);
                   return;
@@ -109,7 +124,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
               }}>{saving || activityUrls?.saving ? "저장 중..." : saveLabel || (activityUrls || requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인")}</button>}
               {checklistStatus === "failed" && <small role="alert">체크 상태를 저장하지 못했어요.</small>}
               {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
-              {failed && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
+              {failed && <p role="alert">{saveError || "저장하지 못했어요. 다시 시도해 주세요."}</p>}
             </div>
           )}
           {!isTeacher && <BookItemImages images={item.images} previewImages />}

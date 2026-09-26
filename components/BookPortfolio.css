@@ -1,0 +1,24 @@
+.book-portfolio-backdrop { z-index: 3900; padding: 16px; }
+.book-portfolio-modal { width: min(100%, 1080px); max-width: 1080px; height: 92dvh; max-height: 92dvh; display: flex; flex-direction: column; gap: 0; padding: 24px; overflow: hidden; }
+.book-portfolio-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-shrink: 0; }
+.book-portfolio-head h2 { margin: 4px 0 16px; font-size: 28px; }
+.book-portfolio-head small { color: var(--text-sub); overflow-wrap: anywhere; }
+.book-portfolio-toolbar { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+.book-portfolio-toolbar button { min-height: 44px; }
+.book-portfolio-notes { padding: 8px 0 12px; flex-shrink: 0; }
+.book-portfolio-notes p { color: var(--text-sub); font-size: 12px; line-height: 1.6; margin: 4px 0; overflow-wrap: anywhere; }
+.book-portfolio-notes .form-error { color: var(--danger); }
+.book-portfolio-preview { flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card-bg); }
+.book-portfolio-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+.book-portfolio-state { padding: 32px; color: var(--text-sub); line-height: 1.8; }
+@media (max-width: 600px) {
+  .book-portfolio-backdrop { padding: 8px; }
+  .book-portfolio-modal { padding: 16px; height: 96dvh; max-height: 96dvh; border-radius: 16px; }
+  .book-portfolio-head h2 { font-size: 24px; margin-bottom: 12px; }
+  .book-portfolio-toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+  .book-portfolio-toolbar button:first-child { grid-column: 1 / -1; }
+  .book-portfolio-toolbar button { padding: 8px; font-size: 14px; white-space: nowrap; }
+}
+.books-step-tabs:has(.book-portfolio-trigger) { flex-wrap: nowrap; overflow-x: auto; padding: 2px; }
+.books-step-tabs .book-portfolio-trigger { flex: none; }
+.books-step-tabs .book-portfolio-trigger:disabled { cursor: not-allowed; opacity: 0.6; }

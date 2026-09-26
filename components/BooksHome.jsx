@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ClassChangeModal from "./ClassChangeModal";
 import { setSelectedClassId } from "@/lib/classroom";
+import { getClassPurpose } from "@/lib/classPurpose";
 import BookClassroomTools from "./BookClassroomTools";
 import BookWorkspace from "./BookWorkspace";
 import { IconDeveloperRoom } from "./IconDeveloperRoom";
@@ -61,7 +62,7 @@ export default function BooksHome(props) {
     <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
       <BookWorkspace
         liveProjectReady={liveProjectReady}
-        header={(
+        header={(portfolioAction) => (
           <>
             {topNav}
             <div className="books-content-head">
@@ -109,6 +110,7 @@ export default function BooksHome(props) {
                         </button>
                       );
                     })}
+                    {portfolioAction}
                   </div>
                 </div>
               )}
@@ -126,7 +128,7 @@ export default function BooksHome(props) {
         isTeacher={admin}
         hasClass={!!classId}
         activeClassId={classId}
-        classPurpose={classPurpose}
+        classPurpose={currentClass ? getClassPurpose(currentClass) : classPurpose}
         project={displayedProject}
         editingProject={editingProject}
         projectEditorKey={projectEditorKey}

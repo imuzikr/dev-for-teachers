@@ -16,6 +16,7 @@ export default function BookPersonalDetail({
   itemCount,
   user,
   isTeacher,
+  allowStudentImages = false,
   onBack,
   onToggleActivityLock,
   onConfirmItem,
@@ -28,6 +29,7 @@ export default function BookPersonalDetail({
   const [savingId, setSavingId] = useState(null);
   const [savedId, setSavedId] = useState(null);
   const [failedId, setFailedId] = useState(null);
+  const [failedMessage, setFailedMessage] = useState("");
   const [confirmingKey, setConfirmingKey] = useState(null);
   const [confirmFailedKey, setConfirmFailedKey] = useState(null);
   const clipboard = useClipboardCopy();
@@ -39,22 +41,24 @@ export default function BookPersonalDetail({
     ])));
   }, [activities, entriesByActivity, selected.uid]);
 
-  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }, urls) {
+  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }, urls, images) {
     if (isTeacher || selected.uid !== user?.uid) return false;
     const activity = detailItem.source;
     const answerText = nextText ?? drafts[activity.id] ?? "";
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
+    setFailedMessage("");
     try {
       const needsAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
-      if (needsAnswer || urls !== undefined) await saveDashboardText(activity.id, user, needsAnswer ? answerText : undefined, urls);
+      if (needsAnswer || urls !== undefined || images !== undefined) await saveDashboardText(activity.id, user, needsAnswer ? answerText : undefined, urls, images);
       await onConfirmItem?.(detailItem, checklistState);
       setDrafts((current) => ({ ...current, [activity.id]: answerText }));
       if (checklistState.confirmed) setSavedId(activity.id);
       return true;
-    } catch {
+    } catch (cause) {
       setFailedId(activity.id);
+      setFailedMessage(cause instanceof Error && ["book-project/image-limit", "book-project/size-limit"].includes(cause.code) ? cause.message : "");
       return false;
     } finally {
       setSavingId(null);
@@ -136,8 +140,10 @@ export default function BookPersonalDetail({
                         participantLabel={isTeacher ? participantName(selected) : undefined}
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
-                        saveState={{ savingId, savedId, failedId }}
+                        saveState={{ savingId, savedId, failedId, failedMessage }}
+                        allowStudentImages={allowStudentImages}
                         savedUrls={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.urls}
+                        savedImages={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.images}
                         entryOwnerId={selected.uid}
                         urlsReady={Object.prototype.hasOwnProperty.call(entriesByActivity, detailItem.id)}
                         onSaveUrls={!isTeacher && selected.uid === user?.uid ? saveUrls : undefined}

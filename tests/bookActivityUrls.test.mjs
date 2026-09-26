@@ -8,7 +8,7 @@ const alice = { uid: "student-a", realName: "학생 가" };
 const bob = { uid: "student-b", realName: "학생 나" };
 
 async function loadStore(firebase = false) {
-  const context = vm.createContext({ console, Date, Map, Set, URL });
+  const context = vm.createContext({ console, Date, Map, Set, URL, TextEncoder });
   const source = readFileSync(new URL("../lib/store.js", import.meta.url), "utf8");
   const urls = new vm.SourceTextModule(readFileSync(new URL("../lib/bookItemUrls.js", import.meta.url), "utf8"), { context });
   await urls.link(() => {});
@@ -21,6 +21,20 @@ async function loadStore(firebase = false) {
     setDoc: async (ref, data, options) => {
       writes.push({ path: ref.path, data, options });
       records.set(ref.path, options?.merge ? { ...records.get(ref.path), ...data } : data);
+    },
+    runTransaction: async (_db, callback) => {
+      const pending = [];
+      await callback({
+        get: async ref => ({
+          exists: () => records.has(ref.path),
+          data: () => records.get(ref.path),
+        }),
+        set: (ref, data, options) => pending.push({ path: ref.path, data, options }),
+      });
+      for (const write of pending) {
+        writes.push(write);
+        records.set(write.path, write.options?.merge ? { ...records.get(write.path), ...write.data } : write.data);
+      }
     },
   };
   const store = new vm.SourceTextModule(source, { context });
@@ -129,4 +143,25 @@ test("URL-only first saves do not add an undefined answer field and legacy text 
   await api.saveBookDashboardText("legacy-activity", alice, "legacy text");
   assert.equal("urls" in api.writes.at(-1).data, false);
   assert.equal(api.writes.at(-1).data.dashboardText, "legacy text");
+});
+
+test("Firestore text-only saves reject an oversized merge with existing captures", async () => {
+  const api = await loadStore(true);
+  const path = "bookActivities/activity-1/entries/student-a";
+  const retainedImage = "https://example.com/" + "a".repeat(599000);
+  api.records.set(path, {
+    activityId: "activity-1",
+    authorId: alice.uid,
+    authorName: alice.realName,
+    images: [retainedImage],
+    urls: ["https://example.com/keep"],
+  });
+  const writeCount = api.writes.length;
+
+  await assert.rejects(api.saveBookDashboardText("activity-1", alice, "한".repeat(84000)), { code: "book-project/size-limit" });
+
+  assert.equal(api.writes.length, writeCount);
+  assert.deepEqual(plain(api.records.get(path).images), [retainedImage]);
+  assert.deepEqual(plain(api.records.get(path).urls), ["https://example.com/keep"]);
+  assert.equal("dashboardText" in api.records.get(path), false);
 });

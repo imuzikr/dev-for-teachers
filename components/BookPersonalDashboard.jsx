@@ -4,12 +4,13 @@ import { useState } from "react";
 import BookPersonalDetail from "./BookPersonalDetail";
 import BookProjectFlowOverview from "./BookProjectFlowOverview";
 import BookStepGuidance from "./BookStepGuidance";
+import BookPortfolioButton from "./BookPortfolioButton";
 import { STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from "./BookProgressBars";
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
-export default function BookPersonalDashboard({ participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
+export default function BookPersonalDashboard({ classPurpose = "training", classId, className = "", portfolioDisabled = false, participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
   const [localSelectedUid, setLocalSelectedUid] = useState(null);
   const selectedUid = selectedParticipantUid === undefined ? localSelectedUid : selectedParticipantUid;
   const setSelectedUid = onSelectParticipant ?? setLocalSelectedUid;
@@ -37,6 +38,14 @@ export default function BookPersonalDashboard({ participants, activities, sectio
   const selectedProgress = selected ? progressByUser.get(selected.uid) ?? new Set() : new Set();
   const visibleParticipantCount = isTeacher ? participants.length : ownParticipant ? 1 : participants.length;
 
+  const internalProject = classPurpose === "internal" && Boolean(project?.id);
+  const portfolioParticipant = ownParticipant;
+  const portfolioButton = !isTeacher && internalProject && project?.steps?.length > 0 ? (
+    <BookPortfolioButton key={JSON.stringify([project.id, project.version, classId, user?.uid, isTeacher, portfolioParticipant?.uid, className])}
+      project={project} participant={portfolioParticipant} classId={classId} className={className} user={user}
+      entriesByActivity={entriesByActivity} disabled={portfolioDisabled} />
+  ) : null;
+
   if (!isTeacher && ownParticipant) {
     return (
       <>
@@ -48,11 +57,12 @@ export default function BookPersonalDashboard({ participants, activities, sectio
               aria-pressed={activeStepSection?.id === section.id} onClick={() => onSelectStep?.(section.id)}>
               STEP {index + 1}
             </button>)}
+            {portfolioButton}
           </div>
         </nav>
         <div className="book-personal-selected-view" hidden={!activeStepSection}>
           <BookStepGuidance step={activeStepSection} />
-          <BookPersonalDetail selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} showNavigation={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
+          <BookPersonalDetail allowStudentImages={internalProject} selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} showNavigation={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
         </div>
         <section className="book-personal-dashboard" hidden={!!activeStepSection} aria-label="나의 Step 카드">
           <div className="book-dashboard-head"><h2>STEP 카드</h2></div>
@@ -81,6 +91,7 @@ export default function BookPersonalDashboard({ participants, activities, sectio
         <BookStepGuidance step={activeStepSection} />
         <BookPersonalDetail
           key={selected.uid}
+          allowStudentImages={internalProject}
           selected={selected}
           sections={sections}
           visibleStepId={activeStepSection?.id}
