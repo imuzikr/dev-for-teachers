@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setBookActiveItem, subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
-import { bookConfirmationKey, saveBookConfirmation, subscribeBookConfirmations } from "@/lib/bookConfirmations";
+import { bookConfirmationKey, saveBookConfirmation, saveBookTemplateDraft, subscribeBookConfirmations } from "@/lib/bookConfirmations";
 import { currentChecklistConfirmation } from "@/lib/activityChecklist";
 import { safeDisplayHtml } from "@/lib/html";
 import BookHelpDrawer from "./BookHelpDrawer";
@@ -70,6 +70,7 @@ export default function BookWorkspace({
   const [reorderError, setReorderError] = useState("");
   const [entrySnapshot, setEntrySnapshot] = useState({ scope: "", entries: {} });
   const [confirmations, setConfirmations] = useState([]);
+  const [confirmationReadyScope, setConfirmationReadyScope] = useState("");
   const saveQueues = useRef(new Map());
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [teacherDetailTarget, setTeacherDetailTarget] = useState(null);
@@ -261,12 +262,18 @@ export default function BookWorkspace({
       setConfirmations([]);
       return;
     }
-    return subscribeBookConfirmations({
+    let live = true;
+    const unsubscribe = subscribeBookConfirmations({
       classId,
       authorId: isTeacher ? "" : user.uid,
-      callback: (records) => setConfirmations(records.filter((record) => record.projectId === projectId)),
+      callback: (records) => {
+        if (!live) return;
+        setConfirmations(records.filter((record) => record.projectId === projectId));
+        setConfirmationReadyScope(entryScope);
+      },
     });
-  }, [classId, projectId, isTeacher, user?.uid]);
+    return () => { live = false; unsubscribe(); };
+  }, [classId, projectId, isTeacher, user?.uid, entryScope]);
 
   const confirmedItemsByUser = useMemo(() => {
     const progress = new Map(participants.map((participant) => [participant.uid, new Set()]));
@@ -352,11 +359,18 @@ export default function BookWorkspace({
     }
   }
 
+  async function saveTemplate(item, templateValues, templateText) {
+    if (isTeacher || !user?.uid) return false;
+    await saveBookTemplateDraft({ classId, projectId, itemKind: item.kind, itemId: item.id, itemTitle: item.title, stepId: item.stepId, user, templateValues, templateText });
+    return true;
+  }
+
   return (
     <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
     <StudentActivityPanel key={`${panelScope}:${isTeacher}:${reviewStudent ? selectedStepId : ""}`} enabled={!isTeacher || !!reviewStudent} readOnly={!!reviewStudent} itemKeys={studentPanelItemKeys} scope={panelScope}
-      records={reviewStudent ? confirmations.filter(record => record.projectId === projectId && record.authorId === reviewStudent.uid) : confirmations}
+      draftScope={`${panelScope}:${project?.version ?? ""}`} recordsReady={confirmationReadyScope === entryScope} saveTemplate={isTeacher ? undefined : saveTemplate}
+      records={confirmationReadyScope !== entryScope ? [] : reviewStudent ? confirmations.filter(record => record.projectId === projectId && record.authorId === reviewStudent.uid) : confirmations}
       saveChecklist={isTeacher ? undefined : confirmBookItem} autoOpenRequest={reviewStudent ? reviewAutoOpen : studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>

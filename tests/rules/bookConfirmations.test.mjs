@@ -109,6 +109,39 @@ describe("책방 활동·자료 확인 규칙", () => {
     ));
   });
 
+  it("학생은 자료 템플릿 초안을 확인 기록에 저장하고 비울 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    const ref = doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1"));
+    await assertSucceeds(setDoc(ref, confirmation("stu1", {
+      confirmed: false,
+      templateValues: { problem: "문제 정의", prompt: "프롬프트" },
+      templateText: "문제 정의\n프롬프트",
+    })));
+    await assertSucceeds(setDoc(ref, confirmation("stu1", {
+      confirmed: false,
+      templateValues: {},
+      templateText: "",
+    })));
+  });
+
+  it("자료 템플릿 초안은 크기 제한을 넘길 수 없다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", {
+        confirmed: false,
+        templateValues: Object.fromEntries(Array.from({ length: 101 }, (_, index) => [`k${index}`, "v"])),
+      })
+    ));
+    await assertFails(setDoc(
+      doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1")),
+      confirmation("stu1", {
+        confirmed: false,
+        templateText: "a".repeat(100001),
+      })
+    ));
+  });
+
   it("체크리스트가 모두 체크되면 완료 확인을 저장할 수 있다", async () => {
     const db = asStudent(env, "stu1").firestore();
     await assertSucceeds(setDoc(

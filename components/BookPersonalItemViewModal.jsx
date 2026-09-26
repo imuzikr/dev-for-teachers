@@ -31,7 +31,7 @@ function modalUrlSlot(href, label) {
   );
 }
 
-export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, participantLabel, allowInteraction = false, saveLabel, hideResponse = false, templateValues = {}, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, savedImages, imageDraft, onImageDraftChange, imagesBusy = false, onImagesBusyChange, onSave, saving, failed, saveError, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true }) {
+export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, participantLabel, allowInteraction = false, saveLabel, hideResponse = false, templateValues = {}, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, savedImages, imageDraft, onImageDraftChange, imagesBusy = false, onImagesBusyChange, onSave, saving, failed, saveError, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true, autosave, templateReady = true }) {
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
   const onPresent = isTeacher && !participantLabel && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
@@ -48,8 +48,8 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
 
   if (typeof document === "undefined") return null;
 
-  const itemContent = interactive && item.templateEnabled === true ? (
-    <ActivityTemplate content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
+  const itemContent = (interactive || participantLabel) && item.templateEnabled === true ? (
+    <ActivityTemplate readOnly={!interactive} disabled={!templateReady} content={item.content} values={templateValues} onChange={onTemplateChange} hasChecklist={hasChecklist} checklistValues={checklistValues} onChecklistChange={interactive ? onChecklistChange : undefined} />
   ) : (
     <RichTextDisplay
       className="book-personal-expand-content"
@@ -65,7 +65,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
   );
 
   const content = (
-      <section className={panelTarget ? "student-activity-detail" : "modal book-personal-expand-modal"} role={panelTarget ? undefined : "dialog"} aria-modal={panelTarget ? undefined : "true"} aria-label={item.title} onClick={(event) => event.stopPropagation()}>
+      <section className={panelTarget ? "student-activity-detail" : "modal book-personal-expand-modal"} role={panelTarget ? undefined : "dialog"} aria-modal={panelTarget ? undefined : "true"} aria-label={item.title} onClick={(event) => event.stopPropagation()} onBlurCapture={() => { if (autosave) void autosave.flush(); }}>
         <header className="book-personal-expand-head">
           <span>{participantLabel ? `${participantLabel} · ` : ""}{orderLabel} · {itemLabel}</span>
           <h3>{item.title}</h3>
@@ -91,7 +91,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           {requiresAnswer && !hideResponse && (
             <section className="book-personal-expand-response" aria-label={interactive ? "나의 답변" : "학생 답변"}>
               <span>{interactive ? "나의 답변" : "학생 답변"}</span>
-              {interactive && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={saving || imagesBusy || activityUrls?.saving} /> : <p>{isTeacher && !urlsReady ? "학생 답변을 불러오는 중..." : response || "아직 입력한 내용이 없습니다."}</p>}
+              {interactive && onAnswerChange ? <textarea aria-label="답변 내용" value={answerDraft} onChange={(event) => onAnswerChange(event.target.value)} disabled={!urlsReady || saving || imagesBusy || activityUrls?.saving} /> : <p>{isTeacher && !urlsReady ? "학생 답변을 불러오는 중..." : response || "아직 입력한 내용이 없습니다."}</p>}
             </section>
           )}
           {!isResource && interactive && onImageDraftChange && (
@@ -109,6 +109,12 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
           )}
           {interactive && (
             <div className="student-activity-detail-actions">
+              {autosave && <div className={`student-autosave-status${autosave.status === "failed" ? " is-failed" : ""}`}>
+                <small role={autosave.status === "failed" ? "alert" : "status"} aria-live="polite">
+                  {autosave.status === "failed" ? (autosave.error || "자동 저장하지 못했어요. 입력 내용은 유지됩니다.") : autosave.status === "saving" ? "자동 저장 중..." : autosave.status === "pending" ? "입력 내용을 저장할 예정이에요." : autosave.status === "saved" ? "자동 저장됨" : "입력하면 자동으로 저장됩니다."}
+                </small>
+                {autosave.status === "failed" && <button type="button" className="btn-outline" onClick={() => autosave.flush()}>다시 저장</button>}
+              </div>}
               {!isResource && onCopy && !item.templateEnabled && <button type="button" className="btn-outline" onClick={onCopy}>{copied ? "복사됨" : "복사"}</button>}
               {onSave && hasChecklist && onCheckAll && <div className="student-checklist-bulk-actions">
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>

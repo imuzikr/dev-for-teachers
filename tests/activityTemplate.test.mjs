@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fillTemplate, templateFields, templatePlainText } from "../lib/activityTemplate.mjs";
+import { fillTemplate, templateFields, templatePlainText, templateStringValues } from "../lib/activityTemplate.mjs";
 
 test("named fields retain order and deduplicate trimmed names", () => {
   assert.deepEqual(templateFields("{{이름}} {{ 이메일 }} {{이름}} {{깃허브 링크}}"), ["이름", "이메일", "깃허브 링크"]);
@@ -20,4 +20,10 @@ test("missing values and inherited properties remain placeholders", () => {
 
 test("plain text retains line breaks and literal angle brackets", () => {
   assert.equal(templatePlainText("a < b\n{{이름}}"), "a < b\n{{이름}}");
+});
+
+test("saved template fields reject non-string values before display", () => {
+  assert.deepEqual(templateStringValues({ 이름: "학생", count: 2, nested: {}, empty: "" }), { 이름: "학생", empty: "" });
+  assert.deepEqual(templateStringValues(["unexpected"]), {});
+  assert.deepEqual(templateStringValues(null), {});
 });

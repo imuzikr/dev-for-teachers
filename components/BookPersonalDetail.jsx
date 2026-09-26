@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { templatePlainText } from "@/lib/activityTemplate.mjs";
 import { saveBookDashboardText } from "@/lib/store";
@@ -25,7 +25,6 @@ export default function BookPersonalDetail({
   visibleStepId,
   showNavigation = true,
 }) {
-  const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [savedId, setSavedId] = useState(null);
   const [failedId, setFailedId] = useState(null);
@@ -34,26 +33,18 @@ export default function BookPersonalDetail({
   const [confirmFailedKey, setConfirmFailedKey] = useState(null);
   const clipboard = useClipboardCopy();
 
-  useEffect(() => {
-    setDrafts(Object.fromEntries(activities.map((activity) => [
-      activity.id,
-      dashboardText(participantEntry(entriesByActivity, activity.id, selected.uid)),
-    ])));
-  }, [activities, entriesByActivity, selected.uid]);
-
-  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }, urls, images) {
+  async function saveResponse(detailItem, nextText = null, checklistState = { confirmed: true }, urls, images, alreadySaved = false) {
     if (isTeacher || selected.uid !== user?.uid) return false;
     const activity = detailItem.source;
-    const answerText = nextText ?? drafts[activity.id] ?? "";
+    const answerText = nextText ?? dashboardText(participantEntry(entriesByActivity, activity.id, selected.uid));
     setSavingId(activity.id);
     setSavedId(null);
     setFailedId(null);
     setFailedMessage("");
     try {
       const needsAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
-      if (needsAnswer || urls !== undefined || images !== undefined) await saveDashboardText(activity.id, user, needsAnswer ? answerText : undefined, urls, images);
+      if (!alreadySaved && (needsAnswer || urls !== undefined || images !== undefined)) await saveDashboardText(activity.id, user, needsAnswer ? answerText : undefined, urls, images);
       await onConfirmItem?.(detailItem, checklistState);
-      setDrafts((current) => ({ ...current, [activity.id]: answerText }));
       if (checklistState.confirmed) setSavedId(activity.id);
       return true;
     } catch (cause) {
@@ -63,6 +54,12 @@ export default function BookPersonalDetail({
     } finally {
       setSavingId(null);
     }
+  }
+
+  async function autosaveResponse(detailItem, patch) {
+    if (isTeacher || selected.uid !== user?.uid) return false;
+    await saveDashboardText(detailItem.id, user, patch.text, patch.urls, patch.images, patch.templateValues);
+    return true;
   }
 
   async function saveUrls(detailItem, urls) {
@@ -136,12 +133,14 @@ export default function BookPersonalDetail({
                         key={`activity:${selected.uid}:${detailItem.id}`}
                         detailItem={detailItem}
                         index={index}
-                        response={isTeacher ? dashboardText(participantEntry(entriesByActivity, detailItem.id, selected.uid)) : drafts[detailItem.id] ?? ""}
+                        response={dashboardText(participantEntry(entriesByActivity, detailItem.id, selected.uid))}
                         participantLabel={isTeacher ? participantName(selected) : undefined}
                         isTeacher={isTeacher}
                         selectedProgress={selectedProgress}
                         saveState={{ savingId, savedId, failedId, failedMessage }}
                         allowStudentImages={allowStudentImages}
+                        onAutosave={!isTeacher && selected.uid === user?.uid ? autosaveResponse : undefined}
+                        savedTemplateValues={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.templateValues}
                         savedUrls={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.urls}
                         savedImages={participantEntry(entriesByActivity, detailItem.id, selected.uid)?.images}
                         entryOwnerId={selected.uid}

@@ -104,6 +104,48 @@ test("Firestore image saves validate the merged entry and preserve existing fiel
   assert.deepEqual(plain(api.records.get(path).answers), { K: "keep answer" });
 });
 
+test("activity template values persist and clear without replacing existing answer URLs or images", async () => {
+  const api = await loadStore(true);
+  const path = "bookActivities/activity-1/entries/student-a";
+
+  await api.saveBookEntry("activity-1", alice, { K: "기존 답변" });
+  await api.saveBookDashboardText("activity-1", alice, "초안", ["https://example.com/app"], [image], {
+    problem: "문제 정의",
+    prompt: "프롬프트",
+  });
+  assert.deepEqual(plain(api.records.get(path).templateValues), { problem: "문제 정의", prompt: "프롬프트" });
+  assert.deepEqual(plain(api.records.get(path).answers), { K: "기존 답변" });
+  assert.deepEqual(plain(api.records.get(path).urls), ["https://example.com/app"]);
+  assert.deepEqual(plain(api.records.get(path).images), [image]);
+
+  await api.saveBookDashboardText("activity-1", alice, undefined, undefined, undefined, {});
+  assert.deepEqual(plain(api.records.get(path).templateValues), {});
+  assert.equal(api.records.get(path).dashboardText, "초안");
+  assert.deepEqual(plain(api.records.get(path).urls), ["https://example.com/app"]);
+  assert.deepEqual(plain(api.records.get(path).images), [image]);
+
+  await api.saveBookDashboardText("activity-1", alice, undefined, undefined, undefined, { problem: "다시 작성" });
+  assert.deepEqual(plain(api.records.get(path).templateValues), { problem: "다시 작성" });
+  await api.saveBookDashboardText("activity-1", alice, undefined, undefined, undefined, { prompt: "프롬프트만" });
+  assert.deepEqual(plain(api.records.get(path).templateValues), { prompt: "프롬프트만" });
+});
+
+test("invalid activity template values reject before writes", async () => {
+  const api = await loadStore(true);
+  await api.saveBookDashboardText("activity-1", alice, "보존", ["https://example.com/keep"], [image]);
+  const writeCount = api.writes.length;
+
+  for (const templateValues of [null, [], { answer: 42 }, Object.fromEntries(Array.from({ length: 101 }, (_, index) => [`k${index}`, "v"]))]) {
+    await assert.rejects(
+      api.saveBookDashboardText("activity-1", alice, "대체 금지", undefined, undefined, templateValues),
+      { code: "book-project/template-invalid" }
+    );
+  }
+
+  assert.equal(api.writes.length, writeCount);
+  assert.equal(api.records.get("bookActivities/activity-1/entries/student-a").dashboardText, "보존");
+});
+
 test("invalid or oversized entry images reject before writes or mock replacement", async () => {
   for (const firebase of [false, true]) {
     const api = await loadStore(firebase);

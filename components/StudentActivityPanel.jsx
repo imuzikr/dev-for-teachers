@@ -8,7 +8,7 @@ export function useStudentActivityPanel() {
   return useContext(PanelContext);
 }
 
-export default function StudentActivityPanel({ children, enabled, readOnly = false, scope = "", records = [], saveChecklist, itemKeys, autoOpenRequest = null }) {
+export default function StudentActivityPanel({ children, enabled, readOnly = false, scope = "", records = [], recordsReady = true, draftScope = scope, saveTemplate, saveChecklist, itemKeys, autoOpenRequest = null }) {
   const [selectedKey, setSelectedKey] = useState(null);
   const [requestedKey, setRequestedKey] = useState(null);
   const [collapsed, setCollapsed] = useState(true);
@@ -59,7 +59,7 @@ export default function StudentActivityPanel({ children, enabled, readOnly = fal
   }, [autoOpenRequest, enabled, itemKeys, scope]);
 
   const value = enabled ? {
-    selectedKey: visibleKey, scope, records, readOnly, saveChecklist: readOnly ? undefined : saveChecklist, target,
+    selectedKey: visibleKey, scope, draftScope, records, recordsReady, readOnly, saveTemplate: readOnly ? undefined : saveTemplate, saveChecklist: readOnly ? undefined : saveChecklist, target,
     isOpen: !collapsed && !switching && visibleKey !== null && target !== null,
     open(key) {
       if (!itemKeys.has(key)) return;

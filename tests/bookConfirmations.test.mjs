@@ -3,17 +3,43 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-async function loadBookConfirmationsModule() {
+const plain = value => JSON.parse(JSON.stringify(value));
+
+async function loadBookConfirmationsModule(firebase = false) {
   const context = vm.createContext({ console, Date, Map, Set });
+  const writes = [];
+  const records = new Map();
+  const ref = (_db, ...parts) => ({ path: parts.join("/"), id: parts.at(-1) });
+  const applyWrite = ({ path, data, options }) => {
+    records.set(path, options?.merge ? { ...records.get(path), ...data } : data);
+  };
   const firestoreModule = new vm.SyntheticModule(
-    ["collection", "doc", "getDocs", "onSnapshot", "query", "serverTimestamp", "setDoc", "where", "writeBatch"],
+    ["collection", "doc", "getDocs", "onSnapshot", "query", "runTransaction", "serverTimestamp", "setDoc", "where", "writeBatch"],
     function defineFirestoreExports() {
       this.setExport("collection", () => {});
-      this.setExport("doc", () => {});
+      this.setExport("doc", ref);
       this.setExport("onSnapshot", () => {});
       this.setExport("query", () => {});
       this.setExport("serverTimestamp", () => new Date(0));
-      this.setExport("setDoc", async () => {});
+      this.setExport("setDoc", async (reference, data, options) => {
+        const write = { path: reference.path, data, options };
+        writes.push(write);
+        applyWrite(write);
+      });
+      this.setExport("runTransaction", async (_db, callback) => {
+        const pending = [];
+        await callback({
+          get: async (reference) => ({
+            exists: () => records.has(reference.path),
+            data: () => records.get(reference.path),
+          }),
+          set: (reference, data, options) => pending.push({ path: reference.path, data, options }),
+        });
+        for (const write of pending) {
+          writes.push(write);
+          applyWrite(write);
+        }
+      });
       this.setExport("where", () => {});
       this.setExport("getDocs", async () => { throw new Error("Unexpected Firestore read"); });
       this.setExport("writeBatch", () => { throw new Error("Unexpected Firestore write"); });
@@ -24,7 +50,7 @@ async function loadBookConfirmationsModule() {
     ["db", "isFirebaseConfigured"],
     function defineFirebaseExports() {
       this.setExport("db", null);
-      this.setExport("isFirebaseConfigured", false);
+      this.setExport("isFirebaseConfigured", firebase);
     },
     { context }
   );
@@ -37,7 +63,7 @@ async function loadBookConfirmationsModule() {
     throw new Error(`Unexpected import: ${specifier}`);
   });
   await module.evaluate();
-  return module.namespace;
+  return { ...module.namespace, writes, records };
 }
 
 const validInput = (overrides = {}) => ({
@@ -181,4 +207,90 @@ test("saveBookConfirmation throws when required confirmation context is missing"
   await assert.rejects(saveBookConfirmation(validInput({ itemId: "" })), /requires a valid item/);
   await assert.rejects(saveBookConfirmation(validInput({ itemKind: "note" })), /requires a valid item/);
   await assert.rejects(saveBookConfirmation(validInput({ user: null })), /requires a signed-in user/);
+});
+
+test("saveBookTemplateDraft stores resource templates without completing or clearing checklist drafts", async () => {
+  const { saveBookConfirmation, saveBookTemplateDraft, subscribeBookConfirmations } = await loadBookConfirmationsModule();
+  const emissions = [];
+
+  subscribeBookConfirmations({
+    classId: "classA",
+    authorId: "stu1",
+    callback: (items) => emissions.push(items),
+  });
+  await saveBookConfirmation(validInput({
+    confirmed: false,
+    checklistValues: [true, false],
+    checklistVersion: "v1:resource:res1",
+  }));
+  await saveBookTemplateDraft(validInput({
+    templateValues: { problem: "문제", prompt: "프롬프트" },
+    templateText: "문제: 문제\n프롬프트: 프롬프트",
+  }));
+  await saveBookTemplateDraft(validInput({
+    templateValues: {},
+    templateText: "",
+  }));
+
+  const [saved] = emissions.at(-1);
+  assert.equal(saved.confirmed, false);
+  assert.deepEqual(Array.from(saved.checklistValues), [true, false]);
+  assert.equal(saved.checklistVersion, "v1:resource:res1");
+  assert.deepEqual(plain(saved.templateValues), {});
+  assert.equal(saved.templateText, "");
+});
+
+test("saveBookTemplateDraft preserves existing completed confirmations in Firestore transactions", async () => {
+  const api = await loadBookConfirmationsModule(true);
+  const path = "bookConfirmations/classA|classA|resource|res1|stu1";
+
+  await api.saveBookConfirmation(validInput({ confirmed: true }));
+  await api.saveBookTemplateDraft(validInput({
+    templateValues: { summary: "자료 요약" },
+    templateText: "자료 요약",
+  }));
+
+  assert.equal(api.records.get(path).confirmed, true);
+  assert.deepEqual(plain(api.records.get(path).templateValues), { summary: "자료 요약" });
+  assert.equal(api.records.get(path).templateText, "자료 요약");
+  assert.equal(api.records.get(path).authorId, "stu1");
+  assert.equal(api.records.get(path).itemKind, "resource");
+});
+
+test("saveBookConfirmation preserves resource template drafts on later checklist writes", async () => {
+  const api = await loadBookConfirmationsModule(true);
+  const path = "bookConfirmations/classA|classA|resource|res1|stu1";
+
+  await api.saveBookTemplateDraft(validInput({
+    templateValues: { problem: "문제" },
+    templateText: "문제",
+  }));
+  await api.saveBookConfirmation(validInput({
+    confirmed: false,
+    checklistValues: [true, false],
+    checklistVersion: "v1:resource:res1",
+  }));
+
+  assert.equal(api.records.get(path).confirmed, false);
+  assert.deepEqual(plain(api.records.get(path).templateValues), { problem: "문제" });
+  assert.equal(api.records.get(path).templateText, "문제");
+  assert.deepEqual(plain(api.records.get(path).checklistValues), [true, false]);
+  assert.equal(api.records.get(path).checklistVersion, "v1:resource:res1");
+});
+
+test("saveBookTemplateDraft validates template input before writes", async () => {
+  const api = await loadBookConfirmationsModule(true);
+
+  for (const templateValues of [null, [], { answer: false }, Object.fromEntries(Array.from({ length: 101 }, (_, index) => [`k${index}`, "v"]))]) {
+    await assert.rejects(
+      api.saveBookTemplateDraft(validInput({ templateValues, templateText: "보존 금지" })),
+      /templateValues/
+    );
+  }
+  await assert.rejects(
+    api.saveBookTemplateDraft(validInput({ templateValues: {}, templateText: "a".repeat(100001) })),
+    /templateText/
+  );
+
+  assert.equal(api.writes.length, 0);
 });

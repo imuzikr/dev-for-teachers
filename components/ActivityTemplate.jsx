@@ -6,7 +6,7 @@ import { IconCopy } from "./BookProjectPreview";
 import { safeDisplayHtml } from "@/lib/html";
 import RichTextDisplay from "./RichTextDisplay";
 
-export default function ActivityTemplate({ content, values, onChange, hasChecklist, checklistValues, onChecklistChange }) {
+export default function ActivityTemplate({ content, values, onChange, hasChecklist, checklistValues, onChecklistChange, readOnly = false, disabled = false }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
   const [formattedResult, setFormattedResult] = useState("");
@@ -33,15 +33,15 @@ export default function ActivityTemplate({ content, values, onChange, hasCheckli
     }
   }
 
-  return <section className="activity-template" aria-label="나의 프롬프트">
+  return <section className="activity-template" aria-label={readOnly ? "학생 프롬프트" : "나의 프롬프트"}>
     <div className="activity-template-fields">
       {fields.map((field, index) => <label key={field} htmlFor={`${id}-${index}`}>
         <span>{field}</span>
-        <input id={`${id}-${index}`} value={Object.hasOwn(values, field) ? values[field] : ""} onChange={(event) => onChange({ ...values, [field]: event.target.value })} autoComplete="off" />
+        <input id={`${id}-${index}`} value={Object.hasOwn(values, field) ? values[field] : ""} onChange={(event) => onChange({ ...values, [field]: event.target.value })} readOnly={readOnly} disabled={disabled} autoComplete="off" />
       </label>)}
     </div>
     {fields.length === 0 && <p className="form-error">등록된 템플릿 변수가 없습니다.</p>}
-    <RichTextDisplay previewImages compactCode className="activity-template-result" html={formattedResult} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
+    <RichTextDisplay readOnly={readOnly} previewImages compactCode className="activity-template-result" html={formattedResult} checklistValues={checklistValues} onChecklistChange={onChecklistChange} />
     <button type="button" className="btn-outline" disabled={!complete} onClick={copy}><IconCopy /> 복사하기</button>
     <span className="activity-template-status" role="status">{status}</span>
   </section>;

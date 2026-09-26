@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { bookConfirmationKey } from "@/lib/bookConfirmations";
 import { IconCopy, IconEdit, resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import BookPersonalItemViewModal from "./BookPersonalItemViewModal";
 import { IconCheckSquare, IconTrash } from "./StatusIcons";
 import { useStudentActivityPanel } from "./StudentActivityPanel";
 import useStudentChecklist from "./useStudentChecklist";
-import useStudentActivityUrls from "./useStudentActivityUrls";
+import useStudentAutosave from "./useStudentAutosave";
+import useBookActivityDraft from "./useBookActivityDraft";
+import { fillTemplate, templatePlainText, templateStringValues } from "@/lib/activityTemplate.mjs";
 import ChecklistWarningModal from "./ChecklistWarningModal";
 import { BookItemImageIndicator } from "./BookItemImages";
 import TeacherActivityDemoView from "./TeacherActivityDemo";
@@ -89,20 +91,34 @@ export function BookPersonalResourceCard({
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const resource = detailItem.source;
-  const [templateValues, setTemplateValues] = useState({});
   const checklist = useStudentChecklist(detailItem);
   const checklistValues = checklist.values;
   const setChecklistValues = checklist.change;
   const checkAll = checklist.checkAll;
   const panel = useStudentActivityPanel();
   const panelKey = `resource:${resource.id}`;
+  const record = panel?.records.find((row) => row.itemKind === "resource" && row.itemId === resource.id);
+  const templateAutosave = useStudentAutosave({
+    scope: `${panel?.draftScope ?? ""}:resource:${resource.id}:template`,
+    value: { templateValues: templateStringValues(record?.templateValues) },
+    enabled: !isTeacher && resource.templateEnabled === true && Boolean(panel?.saveTemplate),
+    ready: panel?.recordsReady !== false,
+    onSave: ({ templateValues }) => panel.saveTemplate(detailItem, templateValues, fillTemplate(templatePlainText(resource.content || ""), templateValues)),
+  });
+  const templateValues = templateAutosave.draft.templateValues;
+  const setTemplateValues = (values) => templateAutosave.change({ templateValues: values });
+  const resourceDraftProps = { autosave: !isTeacher && resource.templateEnabled ? templateAutosave : undefined, templateReady: panel?.recordsReady !== false };
+
   const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
   const isCurrent = panel?.readOnly ? panel.selectedKey === panelKey : detailItem.isActive;
   const linkHref = resourceHref(resource.url);
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
-  const save = onConfirm ? () => checklist.confirm(() => onConfirm(detailItem, checklist.confirmation)) : undefined;
+  const save = onConfirm ? async () => {
+    if (!await templateAutosave.flush()) return false;
+    return checklist.confirm(() => onConfirm(detailItem, checklist.confirmation));
+  } : undefined;
 
   return (
     <article {...reorderProps?.card} aria-current={isCurrent ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact book-personal-resource-card does-not-require-answer${confirmed ? " is-confirmed" : ""}${isCurrent ? " is-current-activity" : ""}`}>
@@ -144,10 +160,10 @@ export function BookPersonalResourceCard({
       {!isTeacher && confirmState.failedKey === confirmationKey && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
       {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal detailItem={detailItem} index={index} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal {...resourceDraftProps} detailItem={detailItem} index={index} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && isTeacher && onPresent ? <TeacherActivityDemoView detailItem={detailItem} index={index} onClose={() => setExpanded(false)} /> : expanded && (
-        <BookPersonalItemViewModal
+        <BookPersonalItemViewModal {...resourceDraftProps}
           detailItem={detailItem}
           index={index}
           response=""
@@ -185,6 +201,8 @@ export function BookPersonalActivityCard({
   allowStudentImages = false,
   savedUrls,
   savedImages,
+  savedTemplateValues,
+  onAutosave,
   entryOwnerId,
   urlsReady = false,
   onSaveUrls,
@@ -199,26 +217,14 @@ export function BookPersonalActivityCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showChecklistWarning, setShowChecklistWarning] = useState(false);
-  const [templateValues, setTemplateValues] = useState({});
   const activity = detailItem.source;
   const checklist = useStudentChecklist(detailItem);
   const checklistValues = checklist.values;
   const setChecklistValues = checklist.change;
   const checkAll = checklist.checkAll;
-  const [answerDraft, setAnswerDraft] = useState(response ?? "");
-  useEffect(() => { setAnswerDraft(response ?? ""); }, [activity.id, response]);
-  const imageScope = `${entryOwnerId ?? ""}:${activity.id}`;
-  const [imageDraft, setImageDraft] = useState({ scope: imageScope, images: Array.isArray(savedImages) ? savedImages : [], dirty: false });
   const [imageBusyBySurface, setImageBusyBySurface] = useState({});
   const imagesBusy = Object.values(imageBusyBySurface).some(Boolean);
   const setImageBusy = (surface, busy) => setImageBusyBySurface((current) => ({ ...current, [surface]: busy }));
-  useEffect(() => {
-    const nextImages = Array.isArray(savedImages) ? savedImages : [];
-    setImageDraft((current) => {
-      if (current.scope !== imageScope) return { scope: imageScope, images: nextImages, dirty: false };
-      return current.dirty ? current : { scope: imageScope, images: nextImages, dirty: false };
-    });
-  }, [imageScope, savedImages]);
   const panel = useStudentActivityPanel();
   const panelKey = `activity:${activity.id}`;
   const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
@@ -227,26 +233,25 @@ export function BookPersonalActivityCard({
   const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
-  const requiresAnswer = activity.templateEnabled !== true && activity.requiresAnswer !== false;
-  const activityUrls = useStudentActivityUrls({
-    urls: savedUrls,
-    scope: `${panel?.scope ?? ""}:${entryOwnerId ?? ""}:${activity.id}`,
-    enabled: !isTeacher && Boolean(onSaveUrls),
-    ready: urlsReady,
-    onSave: (urls) => onSaveUrls(detailItem, urls),
+  const draft = useBookActivityDraft({
+    scope: `${panel?.draftScope ?? ""}:${entryOwnerId ?? ""}:activity:${activity.id}`,
+    detailItem, response, savedImages, savedUrls, savedTemplateValues,
+    enabled: !isTeacher && Boolean(onAutosave), ready: urlsReady, imagesBusy, onSave: onAutosave,
   });
-  const save = onSave ? () => activityUrls.save((urls) => {
-    const studentImages = allowStudentImages && imageDraft.dirty ? imageDraft.images : undefined;
-    const persist = async () => {
-      const saved = await onSave(detailItem, requiresAnswer ? answerDraft : undefined, checklist.confirmation, urls, studentImages);
-      if (saved !== false && studentImages !== undefined) {
-        setImageDraft((current) => current.scope === imageScope ? { ...current, dirty: false } : current);
-      }
-      return saved;
-    };
+  const activityUrls = draft.urls;
+  const answerDraft = draft.content.draft.text;
+  const setAnswerDraft = (text) => draft.content.change({ text });
+  const templateValues = draft.content.draft.templateValues;
+  const setTemplateValues = (values) => draft.content.change({ templateValues: values });
+  const save = onSave ? async () => {
+    if (imagesBusy || !await draft.autosave.flush()) return false;
+    const persist = () => onSave(detailItem, undefined, checklist.confirmation, undefined, undefined, true);
     return checklist.complete ? checklist.confirm(persist) : persist();
-  }) : undefined;
-  const urlViewProps = { savedUrls, activityUrls: !isTeacher && onSaveUrls ? activityUrls : undefined, urlsReady };
+  } : undefined;
+  const urlViewProps = {
+    savedUrls, activityUrls: !isTeacher && onSaveUrls ? activityUrls : undefined, urlsReady,
+    autosave: !isTeacher && onAutosave ? draft.autosave : undefined, templateReady: urlsReady,
+  };
 
   return (
     <article {...reorderProps?.card} aria-current={isCurrent ? "true" : undefined} onClick={(event) => { if (!event.target.closest("button, a, input, textarea")) openPanel(); }} className={`book-personal-activity-card is-compact${confirmed ? " is-confirmed" : ""}${isCurrent ? " is-current-activity" : ""}`}>
@@ -286,7 +291,7 @@ export function BookPersonalActivityCard({
       {!isTeacher && saveState.failedId === activity.id && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
       {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
-        <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} savedImages={savedImages} imageDraft={allowStudentImages ? imageDraft.images : undefined} onImageDraftChange={allowStudentImages ? (images) => setImageDraft({ scope: imageScope, images, dirty: true }) : undefined} imagesBusy={imagesBusy} onImagesBusyChange={(busy) => setImageBusy("panel", busy)} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} saveError={saveState.failedMessage} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
+        <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} savedImages={savedImages} imageDraft={allowStudentImages ? draft.content.draft.images : undefined} onImageDraftChange={allowStudentImages ? (images) => draft.content.change({ images }) : undefined} imagesBusy={imagesBusy} onImagesBusyChange={(busy) => setImageBusy("panel", busy)} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} saveError={saveState.failedMessage} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
       {expanded && isTeacher && onPresent ? <TeacherActivityDemoView detailItem={detailItem} index={index} onClose={() => setExpanded(false)} /> : expanded && (
         <BookPersonalItemViewModal
@@ -300,8 +305,8 @@ export function BookPersonalActivityCard({
           onTemplateChange={setTemplateValues}
           answerDraft={answerDraft}
           savedImages={savedImages}
-          imageDraft={allowStudentImages ? imageDraft.images : undefined}
-          onImageDraftChange={allowStudentImages ? (images) => setImageDraft({ scope: imageScope, images, dirty: true }) : undefined}
+          imageDraft={allowStudentImages ? draft.content.draft.images : undefined}
+          onImageDraftChange={allowStudentImages ? (images) => draft.content.change({ images }) : undefined}
           imagesBusy={imagesBusy}
           onImagesBusyChange={(busy) => setImageBusy("expanded", busy)}
           checklistValues={checklistValues}
