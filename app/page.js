@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { backdropClose } from "@/lib/modal";
@@ -48,6 +48,13 @@ export default function LandingPage() {
   const [busy, setBusy] = useState(false);
   const [entryBusy, setEntryBusy] = useState(false);
   const [pinFlow, setPinFlow] = useState(null);
+  const booksPrefetched = useRef(false);
+
+  function prefetchBooks() {
+    if (booksPrefetched.current) return;
+    booksPrefetched.current = true;
+    router.prefetch("/books");
+  }
 
   useEffect(() => {
     const saved = getGuestTeacherSession();
@@ -76,6 +83,7 @@ export default function LandingPage() {
 
   async function handleGuestStart(e) {
     e.preventDefault();
+    prefetchBooks();
     const nextSchoolName = schoolName.trim();
     const nextTeacherName = teacherName.trim();
     if (!nextSchoolName || !nextTeacherName) {
@@ -96,6 +104,7 @@ export default function LandingPage() {
   }
 
   async function handleGoogle() {
+    prefetchBooks();
     setError("");
     setBusy(true);
     try {
@@ -115,7 +124,7 @@ export default function LandingPage() {
       <span className="landing-logo">
         <IconLogo size={26} /> 교사 개발자
       </span>
-      <form className="landing-quick-start" onSubmit={handleGuestStart}>
+      <form className="landing-quick-start" onFocus={prefetchBooks} onSubmit={handleGuestStart}>
         <label className="sr-only" htmlFor="landing-school">학교 이름</label>
         <input
           id="landing-school"
