@@ -101,7 +101,7 @@ async function loadApi(firebase = false, options = {}) {
     "./bookItemUrls": urlModule,
     "./bookProjectTrash": trashModule,
   };
-  for (const name of ["bookProjectExport", "bookConfirmations", "store"]) {
+  for (const name of ["bookProjectExport", "bookConfirmations", "bookPortfolioBroadcastCore", "store"]) {
     const module = new vm.SourceTextModule(source(name) + (name === "store" ? "\nexport const testMock = mock;" : ""), { context });
     await module.link((specifier) => deps[specifier]);
     await module.evaluate();

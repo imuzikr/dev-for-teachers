@@ -645,6 +645,42 @@ service cloud.firestore {
       allow read: if isAdmin() || ownsClass(classId) || isClassMember(classId);
       allow create, update, delete: if classDeletionClientWritesOpen()
                                     && (isAdmin() || ownsClassEditable(classId));
+
+      match /portfolioChunks/{chunkId} {
+        allow get: if isAdmin()
+                   || ownsClass(classId)
+                   || (
+                        isClassMember(classId)
+                        && resource.data.classId == classId
+                        && exists(/databases/$(database)/documents/broadcasts/$(classId))
+                        && get(/databases/$(database)/documents/broadcasts/$(classId)).data.mode == 'bookPortfolio'
+                        && get(/databases/$(database)/documents/broadcasts/$(classId)).data.get('portfolioSessionId', '') == resource.data.sessionId
+                        && get(/databases/$(database)/documents/broadcasts/$(classId)).data.get('scrollSessionId', '') == resource.data.sessionId
+                        && get(/databases/$(database)/documents/broadcasts/$(classId)).data.updatedAt is timestamp
+                        && get(/databases/$(database)/documents/broadcasts/$(classId)).data.updatedAt > request.time - duration.value(10, 'm')
+                      );
+        allow list: if isAdmin() || ownsClass(classId);
+        allow create: if classDeletionClientWritesOpen()
+                      && (isAdmin() || ownsClassEditable(classId))
+                      && request.resource.data.keys().hasOnly(['classId', 'sessionId', 'index', 'html', 'bytes', 'createdAt'])
+                      && request.resource.data.classId == classId
+                      && request.resource.data.sessionId is string
+                      && request.resource.data.sessionId.size() > 0
+                      && request.resource.data.index is int
+                      && request.resource.data.index >= 0
+                      && request.resource.data.index < 40
+                      && request.resource.data.html is string
+                      && request.resource.data.html.size() > 0
+                      && request.resource.data.html.size() <= 760000
+                      && request.resource.data.bytes is int
+                      && request.resource.data.bytes > 0
+                      && request.resource.data.bytes <= 760000
+                      && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if classDeletionClientWritesOpen()
+                      && resource.data.classId == classId
+                      && (isAdmin() || ownsClassEditable(classId));
+      }
     }
 
     // ── 참여 상태 — 발표 중 학생 화면이 보이는지(교사 전광판용) ──

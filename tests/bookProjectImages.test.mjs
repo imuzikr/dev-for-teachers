@@ -13,6 +13,9 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
   const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
   await urlModule.link(() => {});
   await urlModule.evaluate();
+  const portfolioBroadcastModule = new vm.SourceTextModule(source("bookPortfolioBroadcastCore"), { context });
+  await portfolioBroadcastModule.link(() => {});
+  await portfolioBroadcastModule.evaluate();
   const trashModule = new vm.SourceTextModule(source("bookProjectTrash"), { context });
   await trashModule.link(() => {});
   await trashModule.evaluate();
@@ -45,6 +48,7 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
     "./bookProjectImages": imageModule,
     "./bookItemUrls": urlModule,
     "./bookProjectTrash": trashModule,
+    "./bookPortfolioBroadcastCore": portfolioBroadcastModule,
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => {
       uploads += 1;
       if (uploadFails) throw new Error("Image upload failed");

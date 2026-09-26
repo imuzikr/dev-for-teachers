@@ -22,3 +22,9 @@
 .books-step-tabs:has(.book-portfolio-trigger) { flex-wrap: nowrap; overflow-x: auto; padding: 2px; }
 .books-step-tabs .book-portfolio-trigger { flex: none; }
 .books-step-tabs .book-portfolio-trigger:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.modal-backdrop.book-portfolio-backdrop.book-portfolio-audience { z-index: 4500; }
+.book-portfolio-head h2 { overflow-wrap: anywhere; word-break: keep-all; }
+.book-portfolio-live { flex-shrink: 0; color: var(--primary-dark); background: var(--primary-light); border-radius: var(--radius-btn); padding: 8px 12px; font-size: 12px; font-weight: 700; }
+.book-portfolio-notes .book-portfolio-announcement { color: var(--primary-dark); font-size: 12px; line-height: 1.6; }
+.book-portfolio-toolbar .book-portfolio-stop { color: var(--danger); border-color: var(--danger); }

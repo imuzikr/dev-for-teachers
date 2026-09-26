@@ -6,12 +6,15 @@
 // 그대로). 학생 쪽에는 닫기 버튼이 없고, 교사가 방송을 끝내면(또는
 // 모달을 닫으면) 자동으로 사라집니다.
 // =============================================================
+import dynamic from "next/dynamic";
 import { sanitizeHtml } from "@/lib/html";
 import { normalizeMindmap } from "@/lib/mindmap";
 import BookPresentationModal, { bookPresentationItemFromBroadcast } from "./BookPresentationModal";
 import MindmapCanvas from "./MindmapCanvas";
 
-const KNOWN_MODES = ["mindmap", "lesson", "carousel", "single", "bookItem"];
+const BookPortfolioPresentation = dynamic(() => import("./BookPortfolioPresentation"), { ssr: false });
+
+const KNOWN_MODES = ["mindmap", "lesson", "carousel", "single", "bookItem", "bookPortfolio"];
 
 export default function PresentationOverlay({ broadcast }) {
   // [버전이 어긋났을 때]
@@ -95,6 +98,9 @@ export default function PresentationOverlay({ broadcast }) {
 }
 
 function PresentationOverlayBody({ broadcast }) {
+  if (broadcast.mode === "bookPortfolio") {
+    return <BookPortfolioPresentation key={`${broadcast.classId}:${broadcast.scrollSessionId}`} broadcast={broadcast} />;
+  }
   if (broadcast.mode === "bookItem") {
     return (
       <BookPresentationModal

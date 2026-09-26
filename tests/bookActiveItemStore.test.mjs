@@ -16,6 +16,12 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
   const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
   await urlModule.link(() => {});
   await urlModule.evaluate();
+  const portfolioBroadcastModule = new vm.SourceTextModule(source("bookPortfolioBroadcastCore"), { context });
+  await portfolioBroadcastModule.link(() => {});
+  await portfolioBroadcastModule.evaluate();
+  const portfolioBroadcastExports = Object.fromEntries(
+    Object.keys(portfolioBroadcastModule.namespace).map((name) => [name, portfolioBroadcastModule.namespace[name]])
+  );
   const trashModule = new vm.SourceTextModule(source("bookProjectTrash"), { context });
   await trashModule.link(() => {});
   await trashModule.evaluate();
@@ -47,12 +53,13 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
     "firebase/firestore": stub(firestore),
     "./firebase": stub({ db: {}, isFirebaseConfigured: firebase }),
     "./classPurpose": stub({ CLASS_PURPOSE_INTERNAL: "internal", getClassPurpose: () => "internal", normalizeClassPurpose: () => "internal" }),
-    "./user": stub({ getCurrentUser: () => null, isAdmin: () => false }),
+    "./user": stub({ getCurrentUser: () => null, isAdmin: (candidate) => candidate?.role === "admin" }),
     "./storageUpload": stub({ deleteAttachedFiles: async () => {} }),
     "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Unexpected class deletion during active item test"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
     "./bookItemUrls": urlModule,
+    "./bookPortfolioBroadcastCore": stub(portfolioBroadcastExports),
     "./bookProjectTrash": trashModule,
   };
   const store = new vm.SourceTextModule(storeSource, { context });
@@ -65,6 +72,8 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
 }
 
 const user = { uid: "teacherA" };
+const adminUser = { uid: "teacherA", role: "admin" };
+const studentUser = { uid: "studentA", role: "student" };
 
 test("scroll updates reject old slides, out-of-order writes and ended broadcasts", async () => {
   const api = await loadStore();
@@ -80,6 +89,60 @@ test("scroll updates reject old slides, out-of-order writes and ended broadcasts
   await api.updateBookBroadcastScroll("classA", "new", { ratio: 1, sequence: 4 });
   assert.equal(broadcast, null);
   unsubscribe();
+});
+
+test("portfolio broadcasts chunk large HTML and reconstruct it for class viewers", async () => {
+  const api = await loadStore();
+  const cls = await api.addClass(adminUser, "1차시", { purpose: "internal" });
+  await api.joinClass(cls.id, studentUser, cls.joinCode);
+  let broadcast;
+  const unsubscribe = api.subscribeBroadcast(cls.id, value => { broadcast = value; });
+  const html = `<main><h1>학생별 차시 보고서</h1><a href="https://example.com">결과 URL</a><p>${"포트폴리오 ".repeat(90000)}</p></main>`;
+
+  await api.startBookPortfolioBroadcast({
+    user: adminUser,
+    classId: cls.id,
+    projectId: cls.id,
+    participantUid: studentUser.uid,
+    studentName: "김학생",
+    className: "1차시",
+    html,
+    sessionId: "portfolio-session",
+  });
+
+  assert.equal(broadcast.mode, "bookPortfolio");
+  assert.equal(broadcast.portfolioChunkCount > 1, true);
+  assert.equal(await api.loadBookPortfolioBroadcast(broadcast), html);
+  await api.stopBookPortfolioBroadcast(cls.id, "old-session");
+  assert.equal(broadcast.mode, "bookPortfolio");
+  await api.updateBookBroadcastScroll(cls.id, "old-session", { ratio: 0.2, anchor: 1, offset: 0.2, sequence: 6 });
+  assert.notEqual(broadcast.scrollPosition?.ratio, 0.2);
+  await api.updateBookBroadcastScroll(cls.id, "portfolio-session", { ratio: 0.4, anchor: 1, offset: 0.2, sequence: 5 });
+  assert.equal(broadcast.scrollPosition.ratio, 0.4);
+  await api.stopBookPortfolioBroadcast(cls.id, "portfolio-session");
+  assert.equal(broadcast, null);
+  unsubscribe();
+});
+
+test("portfolio broadcasts require a teacher and a student in the same active class", async () => {
+  const api = await loadStore();
+  const cls = await api.addClass(adminUser, "1차시", { purpose: "internal" });
+
+  await assert.rejects(api.startBookPortfolioBroadcast({
+    user: studentUser,
+    classId: cls.id,
+    participantUid: studentUser.uid,
+    html: "<main>보고서</main>",
+    sessionId: "student-denied",
+  }), { code: "permission-denied" });
+
+  await assert.rejects(api.startBookPortfolioBroadcast({
+    user: adminUser,
+    classId: cls.id,
+    participantUid: studentUser.uid,
+    html: "<main>보고서</main>",
+    sessionId: "missing-member",
+  }), { code: "permission-denied" });
 });
 
 const plain = (value) => JSON.parse(JSON.stringify(value));

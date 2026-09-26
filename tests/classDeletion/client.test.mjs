@@ -154,6 +154,7 @@ test("deletes child records before owned files, preserves shared or unknown file
     "bookActivities/activity-a/groups/group-a/words/word-a": { value: "word" },
     "bookActivities/activity-a/groups/missing-parent/words/word-b": { value: "orphan-owned" },
     "broadcasts/class-a": { title: "legacy" },
+    "broadcasts/class-a/portfolioChunks/session_0": { classId: "class-a", sessionId: "session" },
     "broadcasts/other": { classId: "other" },
     "bookProjects/class-a": { classId: "other" },
     "memberships/student_class-a": { classId: "class-a" },
@@ -171,6 +172,7 @@ test("deletes child records before owned files, preserves shared or unknown file
   assert.equal(result.retainedFiles, 4);
   assert.equal(harness.data.has("classes/class-a"), false);
   assert.equal(harness.data.has("broadcasts/class-a"), false);
+  assert.equal(harness.data.has("broadcasts/class-a/portfolioChunks/session_0"), false);
   assert.equal(harness.data.has("broadcasts/other"), true);
   assert.equal(harness.data.has("bookProjects/class-a"), true);
   assert.equal(harness.data.has("bookActivities/activity-a/groups/missing-parent/words/word-b"), false);

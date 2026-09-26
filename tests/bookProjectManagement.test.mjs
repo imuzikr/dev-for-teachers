@@ -72,7 +72,7 @@ async function loadApi(firebase = false) {
     "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Must not delete a class"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
   };
-  for (const name of ["bookProjectImages", "bookProjectExport", "bookConfirmations", "bookItemUrls", "bookProjectTrash", "store"]) {
+  for (const name of ["bookProjectImages", "bookProjectExport", "bookConfirmations", "bookItemUrls", "bookProjectTrash", "bookPortfolioBroadcastCore", "store"]) {
     const module = new vm.SourceTextModule(source(name) + (name === "store" ? "\nexport const testMock = mock;" : ""), { context });
     await module.link(specifier => {
       assert(deps[specifier], `Unknown dependency ${specifier}`);
