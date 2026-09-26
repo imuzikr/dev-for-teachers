@@ -276,6 +276,7 @@ async function assertResponsiveModal(dialog, screenshotPrefix = "portfolio-modal
     await page.setViewportSize({ width, height: 920 });
     await dialog.waitFor();
     const box = await dialog.boundingBox();
+    assert(box, `Modal is measurable at ${width}`);
     const overflow = await dialog.evaluate((element) => ({
       modal: element.getBoundingClientRect().toJSON(),
       scrollWidth: element.scrollWidth,
@@ -283,7 +284,10 @@ async function assertResponsiveModal(dialog, screenshotPrefix = "portfolio-modal
       toolbar: element.querySelector(".book-portfolio-toolbar")?.getBoundingClientRect().toJSON(),
       frame: element.querySelector("iframe")?.getBoundingClientRect().toJSON(),
     }));
-    assert(box.width <= width + 1, `Modal fits viewport ${width}`);
+    assert(Math.abs(box.x) <= 1, `Modal starts at viewport left edge ${width}`);
+    assert(Math.abs(box.y) <= 1, `Modal starts at viewport top edge ${width}`);
+    assert(Math.abs(box.width - width) <= 1, `Modal fills viewport width ${width}`);
+    assert(Math.abs(box.height - 920) <= 1, `Modal fills viewport height ${width}`);
     assert(overflow.scrollWidth <= overflow.clientWidth + 1, `Modal has no horizontal overflow ${width}`);
     const frameWidth = await dialog.locator('iframe[title="학생별 차시 보고서 미리보기"]').evaluate((frame) => ({
       scrollWidth: frame.contentDocument?.documentElement.scrollWidth ?? 0,

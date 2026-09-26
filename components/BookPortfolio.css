@@ -1,5 +1,5 @@
-.book-portfolio-backdrop { z-index: 3900; padding: 16px; }
-.book-portfolio-modal { width: min(100%, 1080px); max-width: 1080px; height: 92dvh; max-height: 92dvh; display: flex; flex-direction: column; gap: 0; padding: 24px; overflow: hidden; }
+.modal-backdrop.book-portfolio-backdrop { z-index: 3900; padding: 0; align-items: stretch; justify-content: stretch; }
+.modal.book-portfolio-modal { box-sizing: border-box; width: 100vw; width: 100dvw; max-width: none; height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; max-height: none; margin: 0; border-radius: 0; display: flex; flex-direction: column; gap: 0; padding: 24px; overflow: hidden; }
 .book-portfolio-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-shrink: 0; }
 .book-portfolio-head h2 { margin: 4px 0 16px; font-size: 28px; }
 .book-portfolio-head small { color: var(--text-sub); overflow-wrap: anywhere; }
@@ -12,8 +12,8 @@
 .book-portfolio-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
 .book-portfolio-state { padding: 32px; color: var(--text-sub); line-height: 1.8; }
 @media (max-width: 600px) {
-  .book-portfolio-backdrop { padding: 8px; }
-  .book-portfolio-modal { padding: 16px; height: 96dvh; max-height: 96dvh; border-radius: 16px; }
+  .modal-backdrop.book-portfolio-backdrop { padding: 0; }
+  .modal.book-portfolio-modal { padding: 16px; height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; max-height: none; border-radius: 0; }
   .book-portfolio-head h2 { font-size: 24px; margin-bottom: 12px; }
   .book-portfolio-toolbar { display: grid; grid-template-columns: 1fr 1fr; }
   .book-portfolio-toolbar button:first-child { grid-column: 1 / -1; }
