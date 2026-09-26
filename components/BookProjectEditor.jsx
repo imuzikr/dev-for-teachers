@@ -295,7 +295,7 @@ export default function BookProjectEditor({
         <label className="book-step-description-field">
           <span>Step {stepNumber} 안내</span>
           <textarea
-            rows={4}
+            rows={16}
             value={step.description ?? ""}
             onChange={(event) => updateStep(step.id, { description: event.target.value })}
             aria-label={`Step ${stepNumber} 안내`}
