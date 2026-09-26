@@ -353,3 +353,17 @@ test("whole-project and single-step exports retain introductions without replaci
     assert.equal(api.appendClonedBookProjectSteps(null, project).steps[0].description, description ?? "");
   }
 });
+
+test("long resource prompts save intact and oversized prompts fail before uploads or writes", async () => {
+  const api = await loadModules(true);
+  const project = draft();
+  project.steps[0].resources[0].content = "<p>" + "한글 안내 ".repeat(2000) + "</p>";
+  await api.saveBookProject(user, project);
+  assert.equal(api.writes.find(([ref]) => ref.id === "res1")[1].content, project.steps[0].resources[0].content);
+  const oversized = await loadModules(true);
+  project.steps[0].resources[0].content = "가".repeat(100001);
+  await assert.rejects(oversized.saveBookProject(user, project), error =>
+    error.code === "book-project/resource-content-limit" && error.message.includes("자료"));
+  assert.equal(oversized.uploads(), 0);
+  assert.equal(oversized.commits(), 0);
+});

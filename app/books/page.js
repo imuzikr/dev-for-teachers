@@ -14,6 +14,7 @@ import {
   updateBookActivity,
 } from "@/lib/store";
 import { isAdmin, isTeacher } from "@/lib/user";
+import { bookProjectSaveErrorMessage } from "@/lib/bookProjectSaveError";
 import {
   getSelectedClassId,
   getSelectedClassPurpose,
@@ -253,11 +254,9 @@ function BooksPageInner() {
       return true;
     } catch (error) {
       console.error("[책방] 프로젝트 저장 실패:", error);
-      const message = error?.code?.startsWith("book-project/")
-        ? error.message
-        : "프로젝트를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.";
+      const message = bookProjectSaveErrorMessage(error);
       setToast(message);
-      throw new Error(message);
+      throw Object.assign(new Error(message), { code: error?.code });
     } finally {
       setSavingProject(false);
     }

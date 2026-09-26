@@ -927,7 +927,7 @@ service cloud.firestore {
              && request.resource.data.title.size() > 0
              && request.resource.data.title.size() <= 120
              && request.resource.data.content is string
-             && request.resource.data.content.size() <= 5000
+             && request.resource.data.content.size() <= 100000
              && request.resource.data.url is string
              && request.resource.data.url.size() <= 1000
              && request.resource.data.locked is bool

@@ -43,6 +43,15 @@ const resourcePayload = (uid, overrides = {}) => ({
   ...overrides,
 });
 
+const richKoreanHtmlPrompt = (targetSize) => {
+  const prefix = "<h1>앱 생성 요청</h1><p>선생님이 수업에서 바로 사용할 수 있는 웹 앱을 만들어 주세요.</p><ul>";
+  const suffix = "</ul><section><strong>조건</strong><p>학생들이 단계별로 따라 할 수 있게 구성해 주세요.</p></section>";
+  const repeatedInstruction = "<li>한국어 안내, 예시 코드, 오류 해결 팁, 평가 기준을 포함해 주세요.</li>";
+  const body = repeatedInstruction.repeat(Math.ceil((targetSize - prefix.length - suffix.length) / repeatedInstruction.length));
+
+  return `${prefix}${body}${suffix}`.slice(0, targetSize);
+};
+
 const activityPayload = (uid, overrides = {}) => ({
   classId: "cA",
   projectId: "cA",
@@ -121,6 +130,22 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     await assertFails(setDoc(doc(db, "bookResources", "res1"), resourcePayload("teacherA", { teacherDescription: 123 })));
     await assertFails(setDoc(doc(asStudent(env, "studentA").firestore(), "bookResources", "res1"), resourcePayload("studentA", { teacherDescription: "학생 작성" })));
     await assertFails(setDoc(doc(asTeacher(env, "teacherB").firestore(), "bookResources", "res1"), resourcePayload("teacherB", { teacherDescription: "다른 반 교사 작성" })));
+  });
+
+  it("담당 교사는 긴 한국어 HTML 앱 생성 프롬프트를 자료 본문으로 저장할 수 있다", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+
+    await assertSucceeds(setDoc(
+      doc(db, "bookResources", "res1"),
+      resourcePayload("teacherA", { content: richKoreanHtmlPrompt(100000) })
+    ));
+    await assertFails(setDoc(
+      doc(db, "bookResources", "resTooLong"),
+      resourcePayload("teacherA", {
+        resourceId: "resTooLong",
+        content: richKoreanHtmlPrompt(100001),
+      })
+    ));
   });
 
   it("다른 반 교사는 프로젝트를 저장할 수 없다", async () => {
