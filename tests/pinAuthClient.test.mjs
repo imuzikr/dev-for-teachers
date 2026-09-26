@@ -64,7 +64,7 @@ test("public PIN login ignores locally stored guest credentials", async () => {
   }
 });
 
-test("requestPinAuth includes a Firebase bearer token when currentUser supplies one", async () => {
+test("PIN reset includes a Firebase bearer token when currentUser supplies one", async () => {
   const calls = [];
   const { namespace } = await loadPinAuthClient({
     currentUser: { getIdToken: async () => "firebase-id-token" },
@@ -74,7 +74,7 @@ test("requestPinAuth includes a Firebase bearer token when currentUser supplies 
     },
   });
 
-  await namespace.requestPinAuth({ action: "register" });
+  await namespace.requestPinAuth({ action: "reset" });
 
   assert.equal(calls[0][1].headers.Authorization, "Bearer firebase-id-token");
   assert.equal(calls[0][1].cache, "no-store");
@@ -101,29 +101,31 @@ test("public PIN login does not attempt to refresh a stale Firebase token", asyn
   assert.equal(calls[0][1].headers.Authorization, undefined);
 });
 
-for (const stalledPhase of ["auth restoration", "old token refresh"]) {
-  test(`public PIN login starts while previous session ${stalledPhase} is stalled`, async () => {
-    let release;
-    const stalled = new Promise(resolve => { release = resolve; });
-    const calls = [];
-    const { namespace } = await loadPinAuthClient({
-      authStateReadyImpl: () => stalledPhase === "auth restoration" ? stalled : Promise.resolve(),
-      currentUser: { getIdToken: () => stalled },
-      fetchImpl: async (...args) => {
-        calls.push(args);
-        return { ok: true, json: async () => ({ customToken: "new-pin-token" }) };
-      },
+for (const action of ["begin", "register", "login"]) {
+  for (const stalledPhase of ["auth restoration", "old token refresh"]) {
+    test(`public PIN ${action} starts while previous session ${stalledPhase} is stalled`, async () => {
+      let release;
+      const stalled = new Promise(resolve => { release = resolve; });
+      const calls = [];
+      const { namespace } = await loadPinAuthClient({
+        authStateReadyImpl: () => stalledPhase === "auth restoration" ? stalled : Promise.resolve(),
+        currentUser: { getIdToken: () => stalled },
+        fetchImpl: async (...args) => {
+          calls.push(args);
+          return { ok: true, json: async () => ({ customToken: "new-pin-token" }) };
+        },
+      });
+      const login = namespace.requestPinAuth({ action, schoolName: "S", realName: "T", pin: "1234" });
+      try {
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(calls.length, 1, "PIN verification must not wait for a previous session");
+        assert.equal(calls[0][1].headers.Authorization, undefined);
+        assert.deepEqual(await login, { customToken: "new-pin-token" });
+      } finally {
+        release();
+      }
     });
-    const login = namespace.requestPinAuth({ action: "login", schoolName: "S", realName: "T", pin: "1234" });
-    try {
-      await new Promise(resolve => setImmediate(resolve));
-      assert.equal(calls.length, 1, "PIN verification must not wait for a previous session");
-      assert.equal(calls[0][1].headers.Authorization, undefined);
-      assert.deepEqual(await login, { customToken: "new-pin-token" });
-    } finally {
-      release();
-    }
-  });
+  }
 }
 
 test("PIN reset rethrows stale Firebase token refresh failure before fetch", async () => {
@@ -178,4 +180,89 @@ test("requestPinAuth maps unavailable Firebase and backend request failures to s
     nonJson.namespace.requestPinAuth({ action: "login" }),
     { code: "auth/pin-unavailable", message: "로그인 서버에 연결하지 못했습니다." }
   );
+});
+
+for (const action of ["begin", "register"]) {
+  test(`PIN ${action} retries legacy enrollment once with its authenticated bearer`, async () => {
+    const calls = [];
+    let tokenCalls = 0;
+    const { auth, namespace } = await loadPinAuthClient({
+      currentUser: { getIdToken: async () => { tokenCalls += 1; return "legacy-owner-token"; } },
+      fetchImpl: async (...args) => {
+        calls.push(args);
+        return calls.length === 1
+          ? { ok: false, json: async () => ({ code: "auth/pin-enrollment-required", message: "Owner authentication required" }) }
+          : { ok: true, json: async () => ({ mode: "enroll" }) };
+      },
+    });
+    const payload = { action, schoolName: "S", realName: "T", pin: "1234", pinConfirm: "1234" };
+    assert.deepEqual(await namespace.requestPinAuth(payload), { mode: "enroll" });
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0][1].headers.Authorization, undefined);
+    assert.equal(calls[1][1].headers.Authorization, "Bearer legacy-owner-token");
+    assert.equal(calls[0][1].body, calls[1][1].body);
+    assert.equal(calls[1][1].cache, "no-store");
+    assert.equal(auth.authStateReadyCalls, 1);
+    assert.equal(tokenCalls, 1);
+  });
+}
+
+for (const unavailable of ["signed out", "empty token", "token failure", "restoration failure"]) {
+  test(`legacy PIN enrollment does not retry when ${unavailable}`, async () => {
+    let requests = 0;
+    const { namespace } = await loadPinAuthClient({
+      authStateReadyImpl: async () => { if (unavailable === "restoration failure") throw new Error("restore failed"); },
+      currentUser: unavailable === "signed out" ? null : { getIdToken: async () => {
+        if (unavailable === "token failure") throw new Error("token expired");
+        return "";
+      } },
+      fetchImpl: async () => {
+        requests += 1;
+        return { ok: false, json: async () => ({ code: "auth/pin-enrollment-required", message: "Owner authentication required" }) };
+      },
+    });
+    await assert.rejects(namespace.requestPinAuth({ action: "register" }), { code: "auth/pin-enrollment-required" });
+    assert.equal(requests, 1);
+  });
+}
+
+for (const code of ["auth/pin-enrollment-required", "auth/pin-invalid-credentials", "auth/pin-rate-limited", "auth/pin-unavailable"]) {
+  test(`PIN enrollment stops after one authenticated retry even when the retry returns ${code}`, async () => {
+    let requests = 0;
+    const { namespace } = await loadPinAuthClient({
+      currentUser: { getIdToken: async () => "legacy-owner-token" },
+      fetchImpl: async () => {
+        requests += 1;
+        return { ok: false, json: async () => ({ code: requests === 1 ? "auth/pin-enrollment-required" : code }) };
+      },
+    });
+    await assert.rejects(namespace.requestPinAuth({ action: "begin" }), { code });
+    assert.equal(requests, 2);
+  });
+}
+
+for (const action of ["begin", "register", "login"]) {
+  for (const code of ["auth/pin-invalid-credentials", "auth/pin-rate-limited", "auth/pin-ip-rate-limited", "auth/pin-unavailable"]) {
+    test(`public PIN ${action} does not retry ${code} or restore the old session`, async () => {
+      let requests = 0;
+      const { auth, namespace } = await loadPinAuthClient({
+        currentUser: { getIdToken: async () => { throw new Error("Unexpected token refresh"); } },
+        fetchImpl: async () => { requests += 1; return { ok: false, json: async () => ({ code }) }; },
+      });
+      await assert.rejects(namespace.requestPinAuth({ action }), { code });
+      assert.equal(requests, 1);
+      assert.equal(auth.authStateReadyCalls, 0);
+    });
+  }
+}
+
+test("public PIN login never retries enrollment authentication errors", async () => {
+  let requests = 0;
+  const { auth, namespace } = await loadPinAuthClient({
+    currentUser: { getIdToken: async () => "old-token" },
+    fetchImpl: async () => { requests += 1; return { ok: false, json: async () => ({ code: "auth/pin-enrollment-required" }) }; },
+  });
+  await assert.rejects(namespace.requestPinAuth({ action: "login" }), { code: "auth/pin-enrollment-required" });
+  assert.equal(requests, 1);
+  assert.equal(auth.authStateReadyCalls, 0);
 });
