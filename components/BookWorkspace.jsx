@@ -17,6 +17,7 @@ import { IconAddFeature } from "./StatusIcons";
 import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 import BookProjectDeleteButton from "./BookProjectDeleteButton";
+import BookProjectTrash from "./BookProjectTrash";
 import TeacherActivityDemoView, { TeacherActivityDemoProvider } from "./TeacherActivityDemo";
 
 const LIBRARY_COLLAPSED_KEY = "book_library_panel_collapsed";
@@ -360,7 +361,7 @@ export default function BookWorkspace({
     <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
       {sidebar}
       {showLibraryPanel && (
-      <aside className={`book-library-side${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
+      <aside className={`book-library-side has-project-trash${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
         <button
           type="button"
           className="book-library-collapse"
@@ -422,6 +423,9 @@ export default function BookWorkspace({
             onClose={() => setTeacherDetailExpanded(false)}
           />}
         </div>
+        <BookProjectTrash key={`${classId}:${user?.uid}:${user?.role}`} user={user} classId={classId}
+          disabled={!liveProjectReady || editingProject || savingProject || exportingProject}
+          onRestored={onToast} />
       </aside>
       )}
 

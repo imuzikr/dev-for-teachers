@@ -34,16 +34,33 @@ async function loadApi(firebase = false) {
       && (reference.filters ?? []).every(({ field, value }) => documents.get(path)[field] === value)).map(path => snap(ref(path))) }),
     deleteDoc: async reference => remove(reference),
     writeBatch: () => {
-      const references = [];
-      return { delete: reference => references.push(reference), commit: async () => {
-        assert(references.length <= 400);
-        references.forEach(remove);
+      const writes = [];
+      return {
+        delete: reference => writes.push(["delete", reference]),
+        set: (reference, data) => writes.push(["set", reference, data]),
+        commit: async () => {
+          assert(writes.length <= 500);
+          writes.forEach(([kind, reference, data]) => kind === "delete" ? remove(reference) : documents.set(reference.path, data));
       } };
     },
     runTransaction: async (_db, callback) => {
-      const references = [];
-      await callback({ get: async reference => snap(reference), delete: reference => references.push(reference) });
-      references.forEach(remove);
+      const writes = [];
+      let wrote = false;
+      await callback({
+        get: async reference => {
+          assert.equal(wrote, false, "transaction read after write");
+          return snap(reference);
+        },
+        set: (reference, data) => {
+          wrote = true;
+          writes.push(["set", reference, data]);
+        },
+        delete: reference => {
+          wrote = true;
+          writes.push(["delete", reference]);
+        },
+      });
+      writes.forEach(([kind, reference, data]) => kind === "delete" ? remove(reference) : documents.set(reference.path, data));
     },
   });
   const deps = {
@@ -55,7 +72,7 @@ async function loadApi(firebase = false) {
     "./classDeletionClient": stub({ deleteClassInBrowser: async () => { throw new Error("Must not delete a class"); } }),
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
   };
-  for (const name of ["bookProjectImages", "bookProjectExport", "bookConfirmations", "bookItemUrls", "store"]) {
+  for (const name of ["bookProjectImages", "bookProjectExport", "bookConfirmations", "bookItemUrls", "bookProjectTrash", "store"]) {
     const module = new vm.SourceTextModule(source(name) + (name === "store" ? "\nexport const testMock = mock;" : ""), { context });
     await module.link(specifier => {
       assert(deps[specifier], `Unknown dependency ${specifier}`);

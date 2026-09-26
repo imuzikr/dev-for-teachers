@@ -1059,3 +1059,65 @@
 .book-personal-activity-card footer.book-personal-card-actions.book-student-review-actions {
   grid-template-columns: 1fr;
 }
+
+/* Keep the recycle bin outside the independently scrolling teacher content. */
+.books-main--split .book-library-side.has-project-trash {
+  height: 100%;
+  max-height: 100%;
+  align-self: stretch;
+}
+.book-library-side.has-project-trash {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.book-library-side.has-project-trash > .book-library-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 16px;
+}
+.book-project-trash-footer {
+  flex-shrink: 0;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--sage-card, var(--primary-light));
+}
+.book-project-trash-trigger { width: 100%; min-height: 44px; gap: 8px; }
+.book-library-side.is-collapsed > .book-project-trash-footer { display: none; }
+.book-project-trash-modal {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+.book-project-trash-help { margin: 0; color: var(--text-sub); font-size: 14px; line-height: 1.7; word-break: keep-all; }
+.book-project-trash-body { min-height: 0; overflow-y: auto; }
+.book-project-trash-empty { padding: 32px 16px; text-align: center; color: var(--text-sub); }
+.book-project-trash-list { list-style: none; display: grid; gap: 12px; padding: 0; margin: 0; }
+.book-project-trash-list li { display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg); }
+.book-project-trash-list li > div { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.book-project-trash-kind { color: var(--primary-dark); font-size: 12px; font-weight: 800; }
+.book-project-trash-list strong { color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.book-project-trash-list small { color: var(--text-sub); font-size: 12px; overflow-wrap: anywhere; }
+.book-project-trash-list button { flex-shrink: 0; min-height: 44px; }
+.book-project-trash-actions { display: flex; justify-content: flex-end; }
+.book-project-trash-actions button { min-height: 44px; }
+@media (max-width: 480px) {
+  .book-project-trash-list li { align-items: stretch; flex-direction: column; gap: 12px; }
+  .book-project-trash-list button { width: 100%; }
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .books-main--split .book-library-side.has-project-trash {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}

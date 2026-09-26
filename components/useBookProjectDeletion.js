@@ -11,7 +11,7 @@ function projectItem(project, target) {
 }
 
 export function useBookProjectDeletion({
-  user, classId, project, ready = true, saveProject, deleteActivity, onToast,
+  user, classId, project, ready = true, saveProject, onToast,
 }) {
   const scope = JSON.stringify([user?.uid, user?.role, classId, project?.id, project?.version]);
   const current = useRef(null);
@@ -21,7 +21,6 @@ export function useBookProjectDeletion({
   const [target, setTarget] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [cleanupPending, setCleanupPending] = useState(false);
 
   function canDelete(targetScope) {
     const context = current.current;
@@ -40,34 +39,31 @@ export function useBookProjectDeletion({
   useEffect(() => {
     const active = operation.current;
     if (active && canFinish(active)
-      && (busy.current || active.projectSaved || (active.scope === scope && canDelete(scope)))) return;
+      && (busy.current || (active.scope === scope && canDelete(scope)))) return;
     operation.current = null;
     setTarget(null);
     setError("");
-    setCleanupPending(false);
   }, [scope, ready]);
 
   function requestDelete(request) {
-    if (busy.current || operation.current?.projectSaved || !canDelete(scope)
+    if (busy.current || !canDelete(scope)
       || request?.classId !== classId || request?.projectId !== project.id) return false;
     const item = projectItem(project, request);
     if (!item) return false;
     const nextTarget = { ...request, item };
     operation.current = {
-      target: nextTarget, scope, projectSaved: false, userId: user.uid, userRole: user.role,
+      target: nextTarget, scope, userId: user.uid, userRole: user.role,
     };
     setTarget(nextTarget);
     setError("");
-    setCleanupPending(false);
     return true;
   }
 
   function closeDelete() {
-    if (busy.current || operation.current?.projectSaved) return;
+    if (busy.current) return;
     operation.current = null;
     setTarget(null);
     setError("");
-    setCleanupPending(false);
   }
 
   async function confirmDelete() {
@@ -83,37 +79,26 @@ export function useBookProjectDeletion({
     setPending(true);
     setError("");
     try {
-      if (!active.projectSaved) {
-        const collection = selected.kind === "activity" ? "activities" : "resources";
-        const nextSteps = context.project.steps.map((step) => step.id !== selected.stepId ? step : {
-          ...step,
-          [collection]: (step[collection] ?? []).filter((item) => item.id !== selected.item.id),
-          itemOrder: (step.itemOrder ?? []).filter((item) => (
-            item.kind !== selected.kind || item.id !== selected.item.id
-          )),
-        });
-        await saveProject(context.user, {
-          classId: context.classId, title: context.project.title, steps: nextSteps,
-        });
-        active.projectSaved = true;
-      }
-      if (!canFinish(active) || operation.current !== active) return false;
-      if (selected.kind === "activity") {
-        setCleanupPending(true);
-        await deleteActivity(selected.item.id);
-      }
+      const collection = selected.kind === "activity" ? "activities" : "resources";
+      const nextSteps = context.project.steps.map((step) => step.id !== selected.stepId ? step : {
+        ...step,
+        [collection]: (step[collection] ?? []).filter((item) => item.id !== selected.item.id),
+        itemOrder: (step.itemOrder ?? []).filter((item) => (
+          item.kind !== selected.kind || item.id !== selected.item.id
+        )),
+      });
+      await saveProject(context.user, {
+        classId: context.classId, title: context.project.title, steps: nextSteps,
+      });
       if (!canFinish(active) || operation.current !== active) return false;
       operation.current = null;
       setTarget(null);
-      setCleanupPending(false);
-      if (canDelete(active.scope)) onToast?.(selected.kind === "activity" ? "활동을 삭제했어요." : "자료를 삭제했어요.");
+      if (canDelete(active.scope)) onToast?.(selected.kind === "activity" ? "활동을 휴지통으로 옮겼어요." : "자료를 휴지통으로 옮겼어요.");
       return true;
     } catch (failure) {
       console.error("[책방] 프로젝트 항목 삭제 실패:", failure);
       if (canFinish(active) && operation.current === active) {
-        setError(active.projectSaved
-          ? "활동 카드는 삭제했지만 학생 기록을 정리하지 못했어요. 다시 시도해 주세요."
-          : "삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setError("휴지통으로 옮기지 못했어요. 잠시 후 다시 시도해 주세요.");
       }
       return false;
     } finally {
@@ -124,6 +109,6 @@ export function useBookProjectDeletion({
 
   return {
     target: canDelete(operation.current?.scope) ? target : null,
-    pending, error, cleanupPending, requestDelete, confirmDelete, closeDelete,
+    pending, error, cleanupPending: false, requestDelete, confirmDelete, closeDelete,
   };
 }

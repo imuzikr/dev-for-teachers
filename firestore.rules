@@ -983,6 +983,51 @@ service cloud.firestore {
              && resource.data.itemKind == request.resource.data.itemKind
              && resource.data.itemId == request.resource.data.itemId;
     }
+    function isActiveBookProjectActivity(aId) {
+      let activity = get(/databases/$(database)/documents/bookActivities/$(aId)).data;
+      let projectId = activity.get('projectId', '__legacy_standalone__');
+      let project = get(/databases/$(database)/documents/bookProjects/$(projectId)).data;
+      return !activity.keys().hasAny(['projectId'])
+             || (
+                  activity.projectId is string
+                  && exists(/databases/$(database)/documents/bookProjects/$(projectId))
+                  && project.classId == activity.classId
+                  && (
+                       (
+                         project.keys().hasAny(['confirmableItemKeys'])
+                         && activity.projectVersion is string
+                         && project.version == activity.projectVersion
+                         && project.confirmableItemKeys.hasAny(['activity:' + aId])
+                       )
+                       || (
+                         !project.keys().hasAny(['confirmableItemKeys'])
+                         && activity.projectId == activity.classId
+                       )
+                     )
+                );
+    }
+    function validBookProjectTrash() {
+      return request.resource.data.keys().hasOnly([
+               'classId', 'kind', 'title', 'projectVersion', 'projectTitle',
+               'payload', 'deletedBy', 'deletedAt'
+             ])
+             && request.resource.data.classId is string
+             && request.resource.data.classId.size() > 0
+             && request.resource.data.kind in ['project', 'step', 'activity', 'resource']
+             && request.resource.data.title is string
+             && request.resource.data.title.size() <= 120
+             && (!('projectVersion' in request.resource.data)
+                 || request.resource.data.projectVersion == null
+                 || (
+                      request.resource.data.projectVersion is string
+                      && request.resource.data.projectVersion.size() > 0
+                    ))
+             && request.resource.data.projectTitle is string
+             && request.resource.data.projectTitle.size() <= 100
+             && request.resource.data.payload is map
+             && request.resource.data.deletedBy == uid()
+             && request.resource.data.deletedAt == request.time;
+    }
     function canConfirmBookItem() {
       return (
                request.resource.data.itemKind == 'resource'
@@ -991,14 +1036,16 @@ service cloud.firestore {
                && (
                     (
                       get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
-                      && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.confirmableItemKeys.hasAny(['resource:' + request.resource.data.itemId])
-                      && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
-                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
-                      && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
-                    )
-                    || (
-                      !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
-                      && request.resource.data.projectId == request.resource.data.classId
+                       && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.confirmableItemKeys.hasAny(['resource:' + request.resource.data.itemId])
+                       && exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
+                       && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+                       && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+                       && get(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId)).data.projectVersion
+                          == get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.version
+                     )
+                     || (
+                       !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
+                       && request.resource.data.projectId == request.resource.data.classId
                       && (
                            !exists(/databases/$(database)/documents/bookResources/$(request.resource.data.itemId))
                            || (
@@ -1010,12 +1057,26 @@ service cloud.firestore {
                   )
              )
              || (
-               request.resource.data.itemKind == 'activity'
-               &&
-               exists(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId))
-               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
-               && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
-             );
+                request.resource.data.itemKind == 'activity'
+                &&
+                exists(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId))
+                && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.classId == request.resource.data.classId
+                && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.projectId == request.resource.data.projectId
+                && exists(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId))
+                && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.classId == request.resource.data.classId
+                && (
+                     (
+                       get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
+                       && get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.confirmableItemKeys.hasAny(['activity:' + request.resource.data.itemId])
+                       && get(/databases/$(database)/documents/bookActivities/$(request.resource.data.itemId)).data.projectVersion
+                          == get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.version
+                     )
+                     || (
+                       !get(/databases/$(database)/documents/bookProjects/$(request.resource.data.projectId)).data.keys().hasAny(['confirmableItemKeys'])
+                       && request.resource.data.projectId == request.resource.data.classId
+                     )
+                   )
+              );
     }
 
     match /bookProjects/{classId} {
@@ -1030,6 +1091,18 @@ service cloud.firestore {
                     && validBookProjectUpdate(classId);
       allow delete: if classDeletionClientWritesOpen()
                     && (isAdmin() || ownsClassEditable(classId));
+    }
+
+    match /bookProjectTrash/{trashId} {
+      allow read: if signedIn() && (
+        isAdmin() || ownsClass(resource.data.classId)
+      );
+      allow create: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(request.resource.data.classId))
+                    && validBookProjectTrash();
+      allow update: if false;
+      allow delete: if classDeletionClientWritesOpen()
+                    && (isAdmin() || ownsClassEditable(resource.data.classId));
     }
 
     match /bookResources/{resourceId} {
@@ -1091,7 +1164,8 @@ service cloud.firestore {
                       && sId == uid()
                       && request.resource.data.authorId == uid()
                       && (!('urls' in request.resource.data) || request.resource.data.urls is list)
-                      && isBookActivityMember(aId);
+                      && isBookActivityMember(aId)
+                      && isActiveBookProjectActivity(aId);
         allow delete: if classDeletionClientWritesOpen()
                       && (isAdmin() || ownsBookActivityEditable(aId));
       }

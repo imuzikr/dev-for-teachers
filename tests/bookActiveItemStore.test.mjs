@@ -16,6 +16,9 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
   const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
   await urlModule.link(() => {});
   await urlModule.evaluate();
+  const trashModule = new vm.SourceTextModule(source("bookProjectTrash"), { context });
+  await trashModule.link(() => {});
+  await trashModule.evaluate();
   const storeSource = source("store");
   const firestoreNames = storeSource.match(/import \{([^}]+)\} from "firebase\/firestore"/)[1]
     .split(",")
@@ -50,6 +53,7 @@ async function loadStore(firebase = false, { initialActiveItemByStep = { step2: 
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
     "./bookItemUrls": urlModule,
+    "./bookProjectTrash": trashModule,
   };
   const store = new vm.SourceTextModule(storeSource, { context });
   await store.link((specifier) => {

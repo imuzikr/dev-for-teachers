@@ -145,7 +145,7 @@ test("real browser SDK deletes archived class records and exclusive files withou
     await setDoc(doc(db, "bookActivities/activity/groups/group"), {});
     await setDoc(doc(db, "bookActivities/activity/groups/group/words/word"), { word: "word" });
     await setDoc(doc(db, "bookActivities/activity/groups/missing/words/orphan"), { word: "orphan" });
-    for (const name of ["bookResources", "bookHelpNotes", "bookConfirmations", "memberships", "presence", "studentNotes", "rewards", "kwl", "classJoinLookup", "classJoinClaims"]) {
+    for (const name of ["bookResources", "bookHelpNotes", "bookProjectTrash", "bookConfirmations", "memberships", "presence", "studentNotes", "rewards", "kwl", "classJoinLookup", "classJoinClaims"]) {
       await setDoc(doc(db, `${name}/owned`), { classId: "target" });
     }
     await setDoc(doc(db, "classJoinSecrets/target"), { joinCode: "123456" });
@@ -182,7 +182,7 @@ test("real browser SDK deletes archived class records and exclusive files withou
     for (const name of ["attendanceRecords", "questionSignals", "seatLayouts", "groupAssignments"]) {
       assert.equal((await getDocs(collection(db, `classes/target/${name}`))).size, 0);
     }
-    for (const name of ["bookResources", "bookHelpNotes", "bookConfirmations", "memberships", "presence", "studentNotes", "rewards", "kwl", "classJoinLookup", "classJoinClaims"]) {
+    for (const name of ["bookResources", "bookHelpNotes", "bookProjectTrash", "bookConfirmations", "memberships", "presence", "studentNotes", "rewards", "kwl", "classJoinLookup", "classJoinClaims"]) {
       assert.equal((await getDoc(doc(db, `${name}/owned`))).exists(), false);
     }
     await assert.rejects(ctx.storage(bucketUrl).ref(filePath("a")).getMetadata(), { code: "storage/object-not-found" });

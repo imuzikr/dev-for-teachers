@@ -6,7 +6,7 @@ import ProjectItemDeleteModal from "@/components/ProjectItemDeleteModal";
 import { useBookProjectDeletion } from "@/components/useBookProjectDeletion";
 import { getSelectedClassId, setSelectedClassId } from "@/lib/classroom";
 import { isFirebaseConfigured } from "@/lib/firebase";
-import { deleteBookActivity, getBookProject, saveBookProject, subscribeBookActivities, subscribeBookProject } from "@/lib/store";
+import { getBookProject, saveBookProject, subscribeBookActivities, subscribeBookProject } from "@/lib/store";
 import { isTeacher } from "@/lib/user";
 
 const owner = { uid: "delete-teacher", role: "admin", displayName: "선생님" };
@@ -63,7 +63,7 @@ export default function CardDeletePage() {
   const [project, setProject] = useState(null);
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
-  const control = useRef({ saveCalls: [], cleanupCalls: [], requests: [], toasts: [], failSave: 0, failCleanup: 0 });
+  const control = useRef({ saveCalls: [], requests: [], toasts: [], failSave: 0 });
   const user = role === "teacher" ? owner : student;
   const deletion = useBookProjectDeletion({
     user, classId, project, ready,
@@ -73,13 +73,6 @@ export default function CardDeletePage() {
       if (state.holdSave) await new Promise(resolve => { state.releaseSave = resolve; });
       if (state.failSave-- > 0) throw new Error("Fixture project save failure");
       await saveBookProject(actor, draft);
-    },
-    deleteActivity: async id => {
-      const state = control.current;
-      state.cleanupCalls.push(id);
-      if (state.holdCleanup) await new Promise(resolve => { state.releaseCleanup = resolve; });
-      if (state.failCleanup-- > 0) throw new Error("Fixture activity cleanup failure");
-      await deleteBookActivity(id);
     },
     onToast: text => control.current.toasts.push(text),
   });
@@ -104,13 +97,12 @@ export default function CardDeletePage() {
   useEffect(() => {
     window.__cardDelete = {
       state: () => ({ role, classId, target: deletion.target, pending: deletion.pending, error: deletion.error,
-        saveCalls: control.current.saveCalls, cleanupCalls: control.current.cleanupCalls,
+        saveCalls: control.current.saveCalls,
         requests: control.current.requests, toasts: control.current.toasts }),
       stored: (id = classId) => getBookProject(id),
       activities: (id = classId) => storedActivities(id),
       configure: patch => Object.assign(control.current, patch),
       releaseSave: () => { control.current.holdSave = false; control.current.releaseSave?.(); },
-      releaseCleanup: () => { control.current.holdCleanup = false; control.current.releaseCleanup?.(); },
       role: setRole,
       editing: setEditing,
       request: deletion.requestDelete,

@@ -1,6 +1,6 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import { assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import { makeEnv, asStudent, asTeacher, seed } from "./helpers.mjs";
 
 const projectPayload = (uid, overrides = {}) => ({
@@ -57,6 +57,18 @@ const activityPayload = (uid, overrides = {}) => ({
   locked: true,
   createdBy: uid,
   createdAt: serverTimestamp(),
+  ...overrides,
+});
+
+const trashPayload = (uid, overrides = {}) => ({
+  classId: "cA",
+  kind: "activity",
+  title: "Node.js 설치하기",
+  projectVersion: "version1",
+  projectTitle: "개발자실 프로젝트",
+  payload: { id: "act1", title: "Node.js 설치하기" },
+  deletedBy: uid,
+  deletedAt: serverTimestamp(),
   ...overrides,
 });
 
@@ -206,6 +218,57 @@ describe("개발자실 프로젝트 저장 규칙", () => {
     for (const [collectionName, id] of [["bookActivities", "act1"], ["bookResources", "res1"], ["bookProjects", "cA"]]) {
       await assertSucceeds(deleteDoc(doc(db, collectionName, id)));
     }
+  });
+
+  it("담당 교사는 프로젝트 휴지통 스냅샷을 만들고 복원 후 삭제할 수 있다", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+    const trashRef = doc(db, "bookProjectTrash", "trash1");
+
+    await assertSucceeds(setDoc(trashRef, trashPayload("teacherA")));
+    await assertSucceeds(getDoc(trashRef));
+    await assertSucceeds(getDocs(query(collection(db, "bookProjectTrash"), where("classId", "==", "cA"))));
+    await assertFails(updateDoc(trashRef, { title: "수정된 제목" }));
+    await assertSucceeds(deleteDoc(trashRef));
+  });
+
+  it("담당 교사는 legacy 프로젝트 휴지통 스냅샷에 null 버전을 저장할 수 있다", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+
+    await assertSucceeds(setDoc(
+      doc(db, "bookProjectTrash", "legacyTrash"),
+      trashPayload("teacherA", { projectVersion: null, payload: { project: { title: "legacy" } } })
+    ));
+  });
+
+  it("학생과 다른 반 교사는 프로젝트 휴지통을 읽거나 쓸 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjectTrash", "trash1"), {
+        classId: "cA",
+        kind: "activity",
+        title: "Node.js 설치하기",
+        projectVersion: "version1",
+        projectTitle: "개발자실 프로젝트",
+        payload: { id: "act1" },
+        deletedBy: "teacherA",
+        deletedAt: new Date(),
+      });
+      await setDoc(doc(db, "memberships", "studentA_cA"), { uid: "studentA", classId: "cA", accessVersion: 2 });
+    });
+
+    for (const db of [asStudent(env, "studentA").firestore(), asTeacher(env, "teacherB").firestore()]) {
+      await assertFails(getDoc(doc(db, "bookProjectTrash", "trash1")));
+      await assertFails(setDoc(doc(db, "bookProjectTrash", "trash2"), trashPayload("teacherB", { deletedBy: "teacherB" })));
+      await assertFails(deleteDoc(doc(db, "bookProjectTrash", "trash1")));
+    }
+  });
+
+  it("보관된 반에는 프로젝트 휴지통 스냅샷을 만들 수 없다", async () => {
+    const db = asTeacher(env, "teacherA").firestore();
+
+    await assertFails(setDoc(
+      doc(db, "bookProjectTrash", "archivedTrash"),
+      trashPayload("teacherA", { classId: "archived" })
+    ));
   });
 
   it("보관된 반에는 담당 교사도 프로젝트를 저장할 수 없다", async () => {

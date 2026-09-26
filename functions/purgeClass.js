@@ -2,7 +2,7 @@ const { createHash, randomUUID } = require("node:crypto");
 
 const CLASS_COLLECTIONS = new Set([
   "studyBoards", "bookActivities", "bookResources", "bookConfirmations",
-  "bookHelpNotes", "bookProjects", "memberships", "presence", "studentNotes",
+  "bookHelpNotes", "bookProjects", "bookProjectTrash", "memberships", "presence", "studentNotes",
   "rewards", "kwl", "broadcasts", "classJoinClaims", "classJoinLookup",
 ]);
 const INTERNAL = new Set(["classDeletionJobs", "classStorageRetentions"]);

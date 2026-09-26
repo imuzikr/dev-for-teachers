@@ -32,8 +32,17 @@ describe("개인 활동 제출물 규칙", () => {
       await setDoc(doc(db, "classes", "cA"), { createdBy: "teacherA", accessVersion: 2, archived: false });
       await setDoc(doc(db, "memberships", "stu1_cA"), { uid: "stu1", classId: "cA" });
       await setDoc(doc(db, "memberships", "stu2_cA"), { uid: "stu2", classId: "cA" });
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "책방 프로젝트",
+        version: "v1",
+        steps: [],
+        confirmableItemKeys: ["activity:act1"],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
       await setDoc(doc(db, "bookActivities", "act1"), {
-        classId: "cA", type: "kwls", title: "KWLS", locked: false,
+        classId: "cA", projectId: "cA", projectVersion: "v1", type: "kwls", title: "KWLS", locked: false,
       });
       await setDoc(doc(db, "bookActivities", "locked1"), {
         classId: "cA", type: "kwls", title: "잠긴 활동", locked: true,
@@ -107,6 +116,94 @@ describe("개인 활동 제출물 규칙", () => {
     await assertSucceeds(setDoc(
       doc(db, "bookActivities", "locked1", "entries", "stu1"),
       entry("stu1", { K: "안다" }, { activityId: "locked1" })
+    ));
+  });
+
+  it("학생은 confirmableItemKeys와 projectVersion이 없는 legacy 프로젝트 활동에 답변을 쓸 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "기존 책방 프로젝트",
+        version: "legacy",
+        steps: [],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(db, "bookActivities", "legacyProjectAct"), {
+        classId: "cA", projectId: "cA", type: "kwls", title: "기존 프로젝트 활동", locked: false,
+      });
+    });
+    const db = asStudent(env, "stu1").firestore();
+
+    await assertSucceeds(setDoc(
+      doc(db, "bookActivities", "legacyProjectAct", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "legacyProjectAct" })
+    ));
+  });
+
+  it("보관된 legacy 프로젝트 활동에는 답변을 쓸 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cArchived"), {
+        classId: "cArchived",
+        title: "보관된 기존 책방 프로젝트",
+        version: "legacy",
+        steps: [],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(db, "bookActivities", "legacyArchivedAct"), {
+        classId: "cArchived", projectId: "cArchived", type: "kwls", title: "보관된 기존 활동", locked: false,
+      });
+    });
+    const db = asStudent(env, "stu1").firestore();
+
+    await assertFails(setDoc(
+      doc(db, "bookActivities", "legacyArchivedAct", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "legacyArchivedAct" })
+    ));
+  });
+
+  it("프로젝트에서 제거되거나 현재 버전이 아닌 활동에는 답변을 쓸 수 없다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookActivities", "removedAct"), {
+        classId: "cA", projectId: "cA", projectVersion: "v1", type: "kwls", title: "삭제된 활동", locked: false,
+      });
+      await setDoc(doc(db, "bookActivities", "oldVersionAct"), {
+        classId: "cA", projectId: "cA", projectVersion: "old", type: "kwls", title: "이전 버전 활동", locked: false,
+      });
+    });
+    const db = asStudent(env, "stu1").firestore();
+
+    await assertFails(setDoc(
+      doc(db, "bookActivities", "removedAct", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "removedAct" })
+    ));
+    await assertFails(setDoc(
+      doc(db, "bookActivities", "oldVersionAct", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "oldVersionAct" })
+    ));
+  });
+
+  it("복원되어 현재 프로젝트 버전에 다시 포함된 활동에는 답변을 쓸 수 있다", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "bookProjects", "cA"), {
+        classId: "cA",
+        title: "복원된 책방 프로젝트",
+        version: "v2",
+        steps: [],
+        confirmableItemKeys: ["activity:restoredAct"],
+        createdBy: "teacherA",
+        updatedAt: new Date(),
+      });
+      await setDoc(doc(db, "bookActivities", "restoredAct"), {
+        classId: "cA", projectId: "cA", projectVersion: "v2", type: "kwls", title: "복원된 활동", locked: false,
+      });
+    });
+    const db = asStudent(env, "stu1").firestore();
+
+    await assertSucceeds(setDoc(
+      doc(db, "bookActivities", "restoredAct", "entries", "stu1"),
+      entry("stu1", { K: "안다" }, { activityId: "restoredAct" })
     ));
   });
 

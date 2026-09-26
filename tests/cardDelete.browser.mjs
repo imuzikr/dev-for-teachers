@@ -93,7 +93,7 @@ async function newPage(origin, role = "teacher", width = 1280) {
     window.__expectedFixtureErrors = [];
     console.error = (...args) => {
       if (args[0] === "[책방] 프로젝트 항목 삭제 실패:" && args[1] instanceof Error
-        && ["Fixture project save failure", "Fixture activity cleanup failure"].includes(args[1].message)) {
+        && args[1].message === "Fixture project save failure") {
         window.__expectedFixtureErrors.push(args[1].message);
         return;
       }
@@ -176,27 +176,21 @@ try {
       record(`teacher-${width}-coarse-touch-capture-and-cancel`);
       await context.close(); page = null;
     }
-    for (const failure of ["save", "cleanup"]) {
+    for (const failure of ["save"]) {
       const context = await newPage(origin, "teacher", 375);
       const before = await stored();
-      await configure(failure === "save" ? { failSave: 1 } : { failCleanup: 1 });
+      await configure({ failSave: 1 });
       await openDelete(activityTitle, "activity");
-      await dialog().getByRole("button", { name: "삭제", exact: true }).click();
+      await dialog().getByRole("button", { name: "휴지통으로 이동", exact: true }).click();
       await dialog().getByRole("alert").waitFor();
       assert.equal((await state()).saveCalls.length, 1);
-      if (failure === "save") {
-        assert.deepEqual((await stored()).steps, before.steps);
-        assert.equal((await state()).cleanupCalls.length, 0);
-      } else {
-        assert.equal((await state()).cleanupCalls.length, 1);
-        assert.equal(await dialog().getByRole("button", { name: "취소", exact: true }).isDisabled(), true);
-      }
+      assert.deepEqual((await stored()).steps, before.steps);
       await capture(`teacher-375-${failure}-error-clean`);
-      assert.deepEqual(await page.evaluate(() => window.__expectedFixtureErrors), [failure === "save" ? "Fixture project save failure" : "Fixture activity cleanup failure"]);
+      assert.deepEqual(await page.evaluate(() => window.__expectedFixtureErrors), ["Fixture project save failure"]);
       await dialog().getByRole("button", { name: "다시 시도", exact: true }).click();
       await dialog().waitFor({ state: "hidden" });
-      assert.equal((await state()).saveCalls.length, failure === "save" ? 2 : 1);
-      assert.equal((await state()).cleanupCalls.length, failure === "save" ? 1 : 2);
+      assert.equal((await state()).saveCalls.length, 2);
+      assert.equal(await page.evaluate(id => window.__cardDelete.activities().some(item => item.id === id), "activity-target"), true);
       record(`${failure}-error-clean-capture-and-retry`);
       await context.close(); page = null;
     }
@@ -235,7 +229,6 @@ try {
       assert.equal(await dialog().count(), 0);
       assert.equal((await state()).requests.length, 0);
       assert.equal((await state()).saveCalls.length, 0);
-      assert.equal((await state()).cleanupCalls.length, 0);
       assert.deepEqual((await stored()).steps, before.steps);
       await capture(`${name}-cards`);
       record(`${name}-student-hidden-and-denied`);
@@ -251,15 +244,14 @@ try {
     await openDelete(title, kind);
     const forwarded = (await state()).requests[0];
     assert.deepEqual(forwarded, target);
-    await dialog().getByRole("button", { name: "삭제", exact: true }).click();
+    await dialog().getByRole("button", { name: "휴지통으로 이동", exact: true }).click();
     await dialog().waitFor({ state: "hidden" });
     await card(title).waitFor({ state: "hidden" });
     const after = await stored();
     assert.deepEqual(contentSteps(after), withoutTarget({ steps: contentSteps(before) }, target));
     assert.equal(after.title, before.title);
     assert.equal((await state()).saveCalls.length, 1);
-    assert.equal((await state()).cleanupCalls.length, kind === "activity" ? 1 : 0);
-    if (kind === "activity") assert.equal(await page.evaluate(id => window.__cardDelete.activities().some(item => item.id === id), target.item.id), false);
+    if (kind === "activity") assert.equal(await page.evaluate(id => window.__cardDelete.activities().some(item => item.id === id), target.item.id), true);
     await capture(`teacher-1280-deleted-${kind}`);
     record(`${kind}-confirm-persists-only-target-and-preserves-order`);
     await context.close(); page = null;
@@ -270,8 +262,8 @@ try {
     await configure({ holdSave: true });
     await openDelete(resourceTitle, "resource");
     await page.evaluate(() => { window.__cardDelete.confirm(); window.__cardDelete.confirm(); });
-    await dialog().getByRole("button", { name: "삭제 중...", exact: true }).waitFor();
-    assert.equal(await dialog().getByRole("button", { name: "삭제 중...", exact: true }).isDisabled(), true);
+    await dialog().getByRole("button", { name: "이동 중...", exact: true }).waitFor();
+    assert.equal(await dialog().getByRole("button", { name: "이동 중...", exact: true }).isDisabled(), true);
     assert.equal(await dialog().getByRole("button", { name: "취소", exact: true }).isDisabled(), true);
     assert.equal((await state()).saveCalls.length, 1);
     await page.evaluate(() => window.__cardDelete.close());
@@ -284,29 +276,23 @@ try {
     await context.close(); page = null;
   }
 
-  for (const failure of ["save", "cleanup"]) {
+  for (const failure of ["save"]) {
     const context = await newPage(origin, "teacher", 375);
     const before = await stored();
-    await configure(failure === "save" ? { failSave: 1 } : { failCleanup: 1 });
+    await configure({ failSave: 1 });
     await openDelete(activityTitle, "activity");
-    await dialog().getByRole("button", { name: "삭제", exact: true }).click();
+    await dialog().getByRole("button", { name: "휴지통으로 이동", exact: true }).click();
     await dialog().getByRole("alert").waitFor();
     assert.equal((await state()).saveCalls.length, 1);
-    if (failure === "save") {
-      assert.deepEqual((await stored()).steps, before.steps);
-      assert.equal((await state()).cleanupCalls.length, 0);
-      assert.equal(await dialog().getByRole("button", { name: "취소", exact: true }).isDisabled(), false);
-    } else {
-      assert.equal((await state()).cleanupCalls.length, 1);
-      assert.equal(await dialog().getByRole("button", { name: "취소", exact: true }).isDisabled(), true);
-    }
+    assert.deepEqual((await stored()).steps, before.steps);
+    assert.equal(await dialog().getByRole("button", { name: "취소", exact: true }).isDisabled(), false);
     await capture(`teacher-375-${failure}-error`);
     await dialog().getByRole("button", { name: "다시 시도", exact: true }).click();
     await dialog().waitFor({ state: "hidden" });
     await card(activityTitle).waitFor({ state: "hidden" });
-    assert.equal((await state()).saveCalls.length, failure === "save" ? 2 : 1);
-    assert.equal((await state()).cleanupCalls.length, failure === "save" ? 1 : 2);
-    record(`${failure}-failure-retained-and-retry${failure === "cleanup" ? "-without-resave" : ""}`);
+    assert.equal((await state()).saveCalls.length, 2);
+    assert.equal(await page.evaluate(id => window.__cardDelete.activities().some(item => item.id === id), "activity-target"), true);
+    record(`${failure}-failure-retained-and-retry`);
     await context.close(); page = null;
   }
 
@@ -331,37 +317,17 @@ try {
     const otherBefore = await page.evaluate(() => window.__cardDelete.stored("delete-b"));
     await configure({ holdSave: true });
     await openDelete(activityTitle, "activity");
-    await dialog().getByRole("button", { name: "삭제", exact: true }).click();
-    await dialog().getByRole("button", { name: "삭제 중...", exact: true }).waitFor();
+    await dialog().getByRole("button", { name: "휴지통으로 이동", exact: true }).click();
+    await dialog().getByRole("button", { name: "이동 중...", exact: true }).waitFor();
     await page.locator(".class-select").selectOption("delete-b");
     await dialog().waitFor({ state: "hidden" });
     await page.evaluate(() => window.__cardDelete.releaseSave());
     await page.waitForFunction(() => !window.__cardDelete.state().pending);
     assert.equal((await state()).saveCalls.length, 1);
-    assert.deepEqual((await state()).cleanupCalls, [target.item.id]);
     assert.deepEqual((await stored()).steps, otherBefore.steps);
-    assert.equal(await page.evaluate(id => window.__cardDelete.activities("delete-a").some(item => item.id === id), target.item.id), false);
+    assert.equal(await page.evaluate(id => window.__cardDelete.activities("delete-a").some(item => item.id === id), target.item.id), true);
     assert.equal((await state()).toasts.length, 0);
-    record("class-switch-during-save-completes-captured-cleanup-only");
-    await context.close(); page = null;
-  }
-
-  {
-    const context = await newPage(origin);
-    await configure({ failCleanup: 1 });
-    await openDelete(activityTitle, "activity");
-    await dialog().getByRole("button", { name: "삭제", exact: true }).click();
-    await dialog().getByRole("alert").waitFor();
-    await page.locator(".class-select").selectOption("delete-b");
-    await dialog().waitFor({ state: "hidden" });
-    await page.locator(".class-select").selectOption("delete-a");
-    await dialog().getByRole("alert").waitFor();
-    assert.equal((await state()).saveCalls.length, 1);
-    await dialog().getByRole("button", { name: "다시 시도", exact: true }).click();
-    await dialog().waitFor({ state: "hidden" });
-    assert.equal((await state()).saveCalls.length, 1);
-    assert.equal((await state()).cleanupCalls.length, 2);
-    record("cleanup-failure-survives-class-return-without-resave");
+    record("class-switch-during-save-completes-captured-project-removal-only");
     await context.close(); page = null;
   }
 

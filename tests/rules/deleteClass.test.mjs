@@ -72,6 +72,7 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await db.doc(`presence/stu1_${GONE}`).set({ classId: GONE, uid: "stu1", visible: true });
     await db.doc(`memberships/stu1_${GONE}`).set({ classId: GONE, uid: "stu1" });
     await db.doc(`broadcasts/${GONE}`).set({ classId: GONE, mode: "slide" });
+    await db.doc("bookProjectTrash/trashGone").set({ classId: GONE, kind: "activity", payload: { id: "a1" } });
 
     // ── 남아 있어야 하는 것들 ──
     await db.doc(`classes/${KEEP}`).set({ createdBy: "teacherA", archived: false, name: "남을 반" });
@@ -80,6 +81,7 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await db.doc(`bookActivities/a9`).set({ classId: KEEP, type: "consonant" });
     await db.doc(`rewards/${KEEP}_stu9`).set({ classId: KEEP, uid: "stu9", count: 3 });
     await db.doc(`memberships/stu9_${KEEP}`).set({ classId: KEEP, uid: "stu9" });
+    await db.doc("bookProjectTrash/trashKeep").set({ classId: KEEP, kind: "activity", payload: { id: "a9" } });
     // 수업 자료는 반이 아니라 교사(ownerId)에 귀속 — 반을 지워도 남아야 합니다.
     await db.doc(`lessons/l1`).set({ ownerId: "teacherA", title: "수업 자료" });
 
@@ -131,6 +133,7 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await gone(`presence/stu1_${GONE}`);
     await gone(`memberships/stu1_${GONE}`);
     await gone(`broadcasts/${GONE}`);
+    await gone("bookProjectTrash/trashGone");
   });
 
   it("다른 반의 자료는 건드리지 않는다", async () => {
@@ -138,6 +141,7 @@ describe("반 삭제 시 하위 데이터 정리", () => {
     await kept(`classes/${KEEP}/attendanceRecords/2026-08-23_stu9`);
     await kept("studyBoards/b9");
     await kept("bookActivities/a9");
+    await kept("bookProjectTrash/trashKeep");
     await kept(`rewards/${KEEP}_stu9`);
     await kept(`memberships/stu9_${KEEP}`);
   });

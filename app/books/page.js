@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  deleteBookActivity,
   getBookProject,
   getBookProjectForCopy,
   joinClassByCode,
@@ -158,7 +157,6 @@ function BooksPageInner() {
     user, classId, project,
     ready: Boolean(classId && projectLoadedClass === classId && activitiesLoadedClass === classId),
     saveProject: saveBookProject,
-    deleteActivity: deleteBookActivity,
     onToast: setToast,
   });
 
@@ -402,7 +400,7 @@ function BooksPageInner() {
         deletingProject={deletingProject}
         onProjectDeletionPending={setDeletingProject}
         onProjectDeleted={() => {
-          if (activeClassRef.current === classId) { setEditingProject(false); setToast("프로젝트를 삭제했어요."); }
+          if (activeClassRef.current === classId) { setEditingProject(false); setToast("프로젝트를 휴지통으로 옮겼어요."); }
         }}
         exportingProject={exportingProject}
         onSelectTeacherClass={setTeacherClassId} onToast={setToast} onEditProject={openProjectEditor}

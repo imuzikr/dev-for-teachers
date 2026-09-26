@@ -13,6 +13,9 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
   const urlModule = new vm.SourceTextModule(source("bookItemUrls"), { context });
   await urlModule.link(() => {});
   await urlModule.evaluate();
+  const trashModule = new vm.SourceTextModule(source("bookProjectTrash"), { context });
+  await trashModule.link(() => {});
+  await trashModule.evaluate();
   const writes = [];
   let commits = 0;
   let id = 0;
@@ -41,6 +44,7 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => steps }),
     "./bookProjectImages": imageModule,
     "./bookItemUrls": urlModule,
+    "./bookProjectTrash": trashModule,
     "./bookProjectStorage": stub({ uploadBookProjectImages: async (_user, { steps }) => {
       uploads += 1;
       if (uploadFails) throw new Error("Image upload failed");
@@ -48,7 +52,7 @@ async function loadModules(firebase = false, { existingProject = null, uploadFai
       return steps.map((step) => ({ ...step, activities: step.activities.map(uploadItem), resources: step.resources.map(uploadItem) }));
     } }),
   };
-  const store = new vm.SourceTextModule(storeSource, { context });
+  const store = new vm.SourceTextModule(`${storeSource}\nexport const testMock = mock;`, { context });
   await store.link((specifier) => {
     if (!dependencies[specifier]) throw new Error(`Unexpected store dependency: ${specifier}`);
     return dependencies[specifier];
@@ -254,6 +258,7 @@ test("reordered and removed image-size pairs survive save and export", async () 
 
 test("step introductions survive mock save and reload, and can be cleared independently", async () => {
   const api = await loadModules();
+  api.testMock.classes.push({ id: "image-class", createdBy: user.uid, archived: false });
   const project = draft();
   const description = "  활동 전에 자료를 읽어 주세요.\n\n두 번째 줄을 확인하세요.  ";
   project.steps[0].description = description;
@@ -290,6 +295,7 @@ test("Firestore step introductions preserve formatting and explicit empty values
 
 test("resource teacher descriptions survive save, clearing, Firestore writes and export without replacing copy body", async () => {
   const api = await loadModules();
+  api.testMock.classes.push({ id: "image-class", createdBy: user.uid, archived: false });
   const project = draft();
   const teacherDescription = "  설치 전에 참고할 설명입니다.\n복사할 내용과 분리합니다.  ";
   project.steps[0].resources[0].teacherDescription = teacherDescription;

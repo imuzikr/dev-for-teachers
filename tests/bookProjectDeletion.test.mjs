@@ -30,7 +30,6 @@ async function harness(overrides = {}) {
   const props = {
     user: teacher, classId: "class-1", project: initialProject(), ready: true,
     saveProject: async (user, draft) => calls.push({ type: "save", user, draft }),
-    deleteActivity: async (id) => calls.push({ type: "delete", id }),
     onToast: (message) => calls.push({ type: "toast", message }),
     ...overrides,
   };
@@ -120,50 +119,60 @@ test("resource deletion uses project item, preserves sibling content, and remove
   assert.equal(h.render().target, null);
 });
 
-test("activity removal saves the latest project before deleting student records", async () => {
+test("activity removal saves the latest project and preserves student records", async () => {
   const h = await harness();
   h.initial.requestDelete(request());
   const latest = initialProject();
   latest.steps[0].resources.push({ id: "r-added", title: "새 자료" });
   const dialog = h.render({ project: latest });
   assert.equal(await dialog.confirmDelete(), true);
-  assert.deepEqual(h.calls.map((call) => call.type), ["save", "delete", "toast"]);
-  assert.equal(h.calls[1].id, "a1");
+  assert.deepEqual(h.calls.map((call) => call.type), ["save", "toast"]);
   assert.deepEqual(Array.from(h.calls[0].draft.steps[0].resources, (item) => item.id), ["r1", "r2", "r-added"]);
 });
 
 test("failed project save preserves student records and permits a visible retry", async () => {
   let fail = true;
-  const h = await harness({ saveProject: async () => { if (fail) throw new Error("offline"); } });
+  const saves = [];
+  const h = await harness({
+    saveProject: async (user, draft) => {
+      saves.push({ user, draft });
+      if (fail) throw new Error("offline");
+    },
+  });
   h.initial.requestDelete(request());
   assert.equal(await h.render().confirmDelete(), false);
   const retry = h.render();
   assert.ok(retry.target);
-  assert.match(retry.error, /삭제하지 못했어요/);
+  assert.match(retry.error, /휴지통으로 옮기지 못했어요/);
   assert.equal(retry.pending, false);
   assert.equal(retry.cleanupPending, false);
   assert.equal(h.calls.length, 0);
+  assert.equal(saves.length, 1);
   fail = false;
   assert.equal(await retry.confirmDelete(), true);
-  assert.deepEqual(h.calls.map((call) => call.type), ["delete", "toast"]);
+  assert.equal(saves.length, 2);
+  assert.deepEqual(h.calls.map((call) => call.type), ["toast"]);
 });
 
-test("failed activity cleanup keeps its target and retries without resaving the removed item", async () => {
-  let cleanupCalls = 0;
-  const h = await harness({ deleteActivity: async () => { if (++cleanupCalls === 1) throw new Error("offline"); } });
+test("duplicate retry after a save failure resaves once per explicit confirmation", async () => {
+  let release;
+  let saves = 0;
+  const h = await harness({
+    saveProject: () => {
+      saves++;
+      return new Promise((_, reject) => { release = () => reject(new Error("offline")); });
+    },
+  });
   h.initial.requestDelete(request());
-  assert.equal(await h.render().confirmDelete(), false);
-  const removedProject = { ...h.props.project, steps: h.calls[0].draft.steps };
-  const retry = h.render({ project: removedProject });
-  assert.match(retry.error, /학생 기록을 정리하지 못했어요/);
-  assert.equal(retry.cleanupPending, true);
-  retry.closeDelete();
-  assert.ok(h.render().target);
-  assert.equal(await retry.confirmDelete(), true);
-  assert.equal(cleanupCalls, 2);
-  assert.equal(h.calls.filter((call) => call.type === "save").length, 1);
-  assert.equal(h.calls.filter((call) => call.type === "toast").length, 1);
-  assert.equal(h.render().target, null);
+  const dialog = h.render();
+  const first = dialog.confirmDelete();
+  assert.equal(await dialog.confirmDelete(), false);
+  release();
+  assert.equal(await first, false);
+  assert.equal(saves, 1);
+  const retry = h.render();
+  assert.ok(retry.target);
+  assert.match(retry.error, /휴지통으로 옮기지 못했어요/);
 });
 
 test("cancelled confirmation never invokes mutation handlers", async () => {
@@ -190,7 +199,7 @@ test("synchronous double confirm runs only once and pending cannot be closed", a
   release();
   assert.equal(await result, true);
   assert.equal(saves, 1);
-  assert.equal(h.calls.filter((call) => call.type === "delete").length, 1);
+  assert.equal(h.calls.filter((call) => call.type === "delete").length, 0);
 });
 
 test("class, user, role and project replacement invalidate captured deletion callbacks", async () => {
@@ -211,7 +220,7 @@ test("class, user, role and project replacement invalidate captured deletion cal
   }
 });
 
-test("role switch while project save is pending prevents later cleanup and stale success toast", async () => {
+test("role switch while project save is pending prevents stale success toast", async () => {
   let release;
   const h = await harness({ saveProject: () => new Promise((resolve) => { release = resolve; }) });
   h.initial.requestDelete(request());
@@ -233,40 +242,38 @@ test("an item removed by a newer project snapshot cannot be deleted through an o
   assert.equal(h.calls.length, 0);
 });
 
-test("class switch during save finishes authorized cleanup without a stale toast", async () => {
+test("class switch during save keeps the saved removal but skips a stale toast", async () => {
   let release;
-  const h = await harness({ saveProject: () => new Promise((resolve) => { release = resolve; }) });
+  let saves = 0;
+  const h = await harness({ saveProject: () => { saves++; return new Promise((resolve) => { release = resolve; }); } });
   h.initial.requestDelete(request());
   const result = h.render().confirmDelete();
   const otherClass = { ...initialProject(), id: "class-2", classId: "class-2" };
   assert.equal(h.render({ classId: "class-2", project: otherClass }).target, null);
   release();
   assert.equal(await result, true);
-  assert.deepEqual(h.calls.map((call) => call.type), ["delete"]);
-  assert.equal(h.calls[0].id, "a1");
+  assert.equal(saves, 1);
+  assert.deepEqual(h.calls, []);
   assert.equal(h.render({ classId: "class-1", project: initialProject() }).target, null);
 });
 
-test("cleanup failure after class switch can be retried on return without another project save", async () => {
+test("save failure after class switch can be retried on return", async () => {
   let release;
   let saves = 0;
-  let cleanups = 0;
   const h = await harness({
-    saveProject: () => { saves++; return new Promise((resolve) => { release = resolve; }); },
-    deleteActivity: async () => { if (++cleanups === 1) throw new Error("offline"); },
+    saveProject: () => { saves++; return new Promise((resolve, reject) => { release = reject; }); },
   });
   h.initial.requestDelete(request());
   const result = h.render().confirmDelete();
   h.render({ classId: "class-2", project: { ...initialProject(), id: "class-2", classId: "class-2" } });
-  release();
+  release(new Error("offline"));
   assert.equal(await result, false);
   assert.equal(h.render().target, null);
-  const removed = initialProject();
-  removed.steps[0].activities = removed.steps[0].activities.filter((item) => item.id !== "a1");
-  const retry = h.render({ classId: "class-1", project: removed });
+  const retry = h.render({ classId: "class-1", project: initialProject() });
   assert.equal(retry.target.item.id, "a1");
-  assert.match(retry.error, /학생 기록을 정리하지 못했어요/);
-  assert.equal(await retry.confirmDelete(), true);
-  assert.equal(saves, 1);
-  assert.equal(cleanups, 2);
+  assert.match(retry.error, /휴지통으로 옮기지 못했어요/);
+  h.props.saveProject = async () => { saves++; };
+  assert.equal(await h.render().confirmDelete(), true);
+  assert.equal(saves, 2);
+  assert.deepEqual(h.calls.map((call) => call.type), ["toast"]);
 });
