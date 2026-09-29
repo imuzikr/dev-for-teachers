@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { createRequire } from "node:module";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -20,6 +21,15 @@ try {
   server.stdout.on("data", value => { logs += value; }); server.stderr.on("data", value => { logs += value; });
   const deadline = Date.now() + 120000;
   while (!logs.includes("Ready in")) { if (server.exitCode !== null || Date.now() > deadline) throw new Error(logs); await new Promise(resolve => setTimeout(resolve, 250)); }
+  if (process.env.AGENT_BROWSER_CLI) {
+    const agent = (...args) => promisify(execFile)(process.execPath, [process.env.AGENT_BROWSER_CLI, "--session", "student-confirm", ...args], { windowsHide: true, timeout: 60000 });
+    try {
+      await agent("open", "http://127.0.0.1:3249");
+      console.log((await agent("snapshot", "-i")).stdout);
+      await agent("screenshot", path.join(output, "initial.png"));
+      console.log((await agent("errors")).stdout);
+    } finally { await agent("close"); }
+  }
   browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(60000);
@@ -31,31 +41,38 @@ try {
   await confirm(first).waitFor();
   assert.equal(await confirm(first).textContent(), "미확인");
   assert.equal(await confirm(resource).textContent(), "미확인");
-  assert(await confirm(first).isDisabled()); assert(await confirm(second).isDisabled()); assert(await confirm(resource).isDisabled());
+  await page.waitForFunction(() => !document.querySelector('.book-personal-detail-list > article footer button').disabled);
+  assert(await confirm(first).isEnabled()); assert(await confirm(second).isEnabled()); assert(await confirm(resource).isEnabled());
+  await confirm(resource).click();
+  await resource.getByRole("button", { name: "확인됨", exact: true }).waitFor();
+  assert(await confirm(resource).isDisabled());
   await first.getByRole("button", { name: "패널에서 열기" }).click();
   await page.waitForFunction(() => !document.querySelector('.book-personal-detail-list > article footer button').disabled);
-  assert(await confirm(second).isDisabled());
+  assert(await confirm(second).isEnabled());
   await page.getByRole("button", { name: "활동 패널 접기" }).click();
-  assert(await confirm(first).isDisabled());
+  assert(await confirm(first).isEnabled());
   await first.getByRole("button", { name: "패널에서 열기" }).click();
   const panel = page.getByRole("complementary", { name: "선택한 활동과 자료" });
   await panel.getByRole("textbox", { name: "답변 내용" }).fill("패널에서 작성한 아이디어");
-  await panel.getByRole("button", { name: "저장", exact: true }).click();
+  await page.getByRole("button", { name: "활동 패널 접기" }).click();
+  await confirm(first).click();
   await first.getByRole("button", { name: "확인됨", exact: true }).waitFor();
   assert.equal(JSON.parse(await page.getByTestId("saved").textContent()).first, "패널에서 작성한 아이디어");
-  assert.equal(await page.getByText("자동 저장됨", { exact: true }).count(), 0);
   await second.getByRole("button", { name: "활동 확대" }).click();
   const modal = page.getByRole("dialog");
   await modal.getByRole("textbox", { name: "답변 내용" }).fill("모달에서 작성한 기능");
   await modal.getByRole("button", { name: "저장", exact: true }).click();
   await second.getByRole("button", { name: "확인됨", exact: true }).waitFor();
   assert.equal(JSON.parse(await page.getByTestId("saved").textContent()).second, "모달에서 작성한 기능");
-  assert.equal(await page.getByText("자동 저장됨", { exact: true }).count(), 0);
   await modal.waitFor({ state: "hidden" });
-  await resource.getByRole("button", { name: "패널에서 열기" }).click();
-  await page.waitForFunction(() => !document.querySelectorAll('.book-personal-detail-list > article footer button')[4].disabled);
+  await page.reload();
+  await first.getByRole("button", { name: "패널에서 열기" }).click();
+  await panel.getByRole("textbox", { name: "답변 내용" }).waitFor();
+  await confirm(second).click();
+  await second.getByRole("button", { name: "확인됨", exact: true }).waitFor();
   await confirm(resource).click();
   await resource.getByRole("button", { name: "확인됨", exact: true }).waitFor();
+  assert.equal(await panel.locator("h3").textContent(), "first");
   for (const width of [375, 768, 1280]) { await page.setViewportSize({ width, height: 900 }); await page.screenshot({ path: path.join(output, `${width}.png`), fullPage: true }); }
   assert.deepEqual(errors, []);
   const teacher = page.getByTestId("teacher-card");
@@ -63,7 +80,7 @@ try {
   assert.equal(await teacher.getByRole("button", { name: "활동중", exact: true }).getAttribute("aria-pressed"), "true");
   await teacher.getByRole("button", { name: "활동중", exact: true }).click();
   assert.equal(await teacher.getByRole("button", { name: "활동 전", exact: true }).getAttribute("aria-pressed"), "false");
-  console.log(`PASS: closed/matching/collapsed panel gating, panel and modal save confirmations, resources, no autosave message. ${output}`);
+  console.log(`PASS: independent student confirmation with closed or collapsed panels, draft preservation, modal saves, and teacher controls. ${output}`);
 } finally {
   await browser?.close();
   if (server && server.exitCode === null) await new Promise(resolve => spawn("taskkill", ["/PID", String(server.pid), "/T", "/F"], { windowsHide: true }).on("close", resolve));

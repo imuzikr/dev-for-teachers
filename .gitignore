@@ -15,5 +15,6 @@ artifacts/class-deletion-ui/
 artifacts/book-project-management/
 artifacts/teacher-activity-demo/
 artifacts/resource-sections-*/
+artifacts/student-confirm-*/
 tests/classDeletion/*.log
 tests/rules/deletion-*.log

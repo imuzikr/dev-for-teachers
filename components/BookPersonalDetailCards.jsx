@@ -149,7 +149,7 @@ export function BookPersonalResourceCard({
         <footer className="book-personal-card-actions book-student-review-actions"><button type="button" className="btn-primary" onClick={openPanel}>패널에서 열기</button></footer>
       ) : !isTeacher && (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{confirmState.pendingKey === confirmationKey ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
@@ -280,7 +280,7 @@ export function BookPersonalActivityCard({
         <footer className="book-personal-card-actions book-student-review-actions"><button type="button" className="btn-primary" onClick={openPanel}>패널에서 열기</button></footer>
       ) : !isTeacher ? (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!panel?.isOpen || panel.selectedKey !== panelKey || !save || !urlsReady || imagesBusy || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
+          <button type="button" className="btn-outline" disabled={!save || !urlsReady || imagesBusy || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
             if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
             else save();
           }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
