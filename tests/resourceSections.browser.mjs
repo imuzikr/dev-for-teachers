@@ -32,6 +32,10 @@ try{
  server=spawn(process.execPath,[require.resolve("next/dist/bin/next"),"dev","--hostname","127.0.0.1","--port","3197"],{cwd:fixture,windowsHide:true,stdio:["ignore","pipe","pipe"]});
  server.stdout.on("data",d=>logs+=d);server.stderr.on("data",d=>logs+=d);
  const deadline=Date.now()+120000;while(!logs.includes("Ready in")){if(server.exitCode!==null||Date.now()>deadline)throw Error(logs);await new Promise(r=>setTimeout(r,250));}
+ if(process.env.AGENT_BROWSER_CLI){
+  const agent=(...args)=>promisify(execFile)(process.execPath,[process.env.AGENT_BROWSER_CLI,"--session","resource-format",...args],{windowsHide:true,timeout:60000});
+  try{await agent("open","http://127.0.0.1:3197");console.log((await agent("snapshot","-i")).stdout);await agent("screenshot",path.join(output,"initial.png"));console.log((await agent("errors")).stdout);}finally{await agent("close");}
+ }
  browser=await chromium.launch({channel:"chrome",headless:true});
  const context=await browser.newContext({viewport:{width:1280,height:900}});
  await context.addInitScript(()=>Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{if(window.resourceCopyFail)throw Error("denied");window.resourceCopied=text;}}}));
@@ -45,12 +49,27 @@ try{
   await panel().getByRole("button",{name:"확대",exact:true}).click();await copied(page.getByRole("dialog"));await capture("modal-"+width);await page.getByRole("button",{name:"닫기",exact:true}).click();
  }
  await page.getByRole("button",{name:"edit",exact:true}).click();const edit=page.getByRole("dialog");
- await edit.getByLabel("교사 설명",{exact:true}).fill("새로운 교사 설명");await capture("editor-1280");await edit.getByRole("button",{name:"자료 저장",exact:true}).click();
+ assert.equal(await edit.getByLabel("교사 설명",{exact:true}).innerText(),"설치 전에 안내를 읽고\n아래 명령을 복사해 주세요.");
+ const descriptionEditor=edit.getByLabel("교사 설명",{exact:true});
+ await descriptionEditor.fill("새로운 교사 설명");await descriptionEditor.press("Control+a");
+ await edit.locator(".book-resource-description-field").getByRole("button",{name:"굵게",exact:true}).click();
+ assert.equal(await descriptionEditor.locator("b, strong").innerText(),"새로운 교사 설명");
+ await capture("editor-1280");await edit.getByRole("button",{name:"자료 저장",exact:true}).click();
  await panel().getByText("새로운 교사 설명",{exact:true}).waitFor();await copied(panel());
- await page.getByRole("button",{name:"edit",exact:true}).click();assert.equal(await edit.getByLabel("교사 설명",{exact:true}).inputValue(),"새로운 교사 설명");await edit.getByRole("button",{name:"닫기",exact:true}).last().click();
+ assert.equal(await panel().locator(".book-resource-description b, .book-resource-description strong").innerText(),"새로운 교사 설명");
+ await page.getByRole("button",{name:"edit",exact:true}).click();assert.equal(await edit.getByLabel("교사 설명",{exact:true}).innerText(),"새로운 교사 설명");
+ assert.equal(await edit.getByLabel("교사 설명",{exact:true}).locator("b, strong").innerText(),"새로운 교사 설명");await edit.getByRole("button",{name:"닫기",exact:true}).last().click();
  for(const view of ["presentation","broadcast"])for(const width of [375,768,1280]){
-  await page.setViewportSize({width,height:900});await page.getByRole("button",{name:view,exact:true}).click();const modal=page.getByRole("alertdialog");await modal.getByText("새로운 교사 설명",{exact:true}).waitFor();await copied(modal);await capture(view+"-"+width);await page.getByRole("button",{name:"발표 종료",exact:true}).click();
+  await page.setViewportSize({width,height:900});await page.getByRole("button",{name:view,exact:true}).click();const modal=page.getByRole("alertdialog");await modal.getByText("새로운 교사 설명",{exact:true}).waitFor();assert.equal(await modal.locator(".book-resource-description b, .book-resource-description strong").innerText(),"새로운 교사 설명");await copied(modal);await capture(view+"-"+width);await page.getByRole("button",{name:"발표 종료",exact:true}).click();
  }
+ await page.getByRole("button",{name:"step-editor",exact:true}).click();
+ const stepDescription=page.getByLabel("자료 1 교사 설명",{exact:true});
+ assert.equal(await stepDescription.locator("b, strong").innerText(),"새로운 교사 설명");
+ await stepDescription.fill("프로젝트 편집 설명");await stepDescription.press("Control+a");
+ await page.locator(".book-resource-description-field").getByRole("button",{name:"큰 글자",exact:true}).click();
+ await page.getByRole("button",{name:"panel",exact:true}).click();
+ assert.equal(await panel().locator(".book-resource-description .rte-size-large").innerText(),"프로젝트 편집 설명");await copied(panel());
+ report.checks.push("rich teacher description survives both editors and remains separate from resource copy");
  await page.getByRole("button",{name:"edit",exact:true}).click();await edit.getByLabel("교사 설명",{exact:true}).fill("");await edit.getByRole("button",{name:"자료 저장",exact:true}).click();
  assert.equal(await panel().getByRole("region",{name:"교사 설명"}).count(),0);await copied(panel());
  report.checks.push("editor save/reopen/clear, presentation and broadcast across 375/768/1280");

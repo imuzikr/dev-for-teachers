@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import BasicFormatEditor from "./BasicFormatEditor";
+import { safeDisplayHtml } from "@/lib/html";
 import ActivityTemplateSetting from "./ActivityTemplateSetting";
 import BookItemImageEditor from "./BookItemImageEditor";
 
@@ -287,10 +288,10 @@ export default function BookProjectItemEditModal({
               {draftKind === "activity" ? "자료로 변환" : "활동으로 변환"}
             </button>
           </div>
-          {draftKind === "resource" && <label className="book-resource-description-field">
+          {draftKind === "resource" && <div className="book-resource-description-field">
             <span>교사 설명 <small>(선택)</small></span>
-            <textarea aria-label="교사 설명" rows={4} value={teacherDescription} onChange={event => setTeacherDescription(event.target.value)} placeholder="자료 사용 방법을 안내해 주세요. 복사할 내용에는 포함되지 않습니다." />
-          </label>}
+            <BasicFormatEditor ariaLabel="교사 설명" value={safeDisplayHtml(teacherDescription)} onChange={setTeacherDescription} disabled={saving} placeholder="자료 사용 방법을 안내해 주세요. 복사할 내용에는 포함되지 않습니다." />
+          </div>}
           {draftKind === "resource" && <strong className="book-resource-editor-label">복사할 내용</strong>}
           <BasicFormatEditor
             templateEnabled={templateEnabled}

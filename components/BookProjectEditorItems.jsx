@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { orderedStepItems } from "./BookProjectPreview";
 import BasicFormatEditor from "./BasicFormatEditor";
+import { safeDisplayHtml } from "@/lib/html";
 import ActivityTemplateSetting from "./ActivityTemplateSetting";
 import BookItemImageEditor from "./BookItemImageEditor";
 import { IconChevronDown, IconChevronUp, IconTrash } from "./StatusIcons";
@@ -111,10 +112,10 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                   {resource ? "활동으로 변환" : "자료로 변환"}
                 </button>
               </div>
-              {resource && <label className="book-resource-description-field">
+              {resource && <div className="book-resource-description-field">
                 <span>교사 설명 <small>(선택)</small></span>
-                <textarea aria-label={`자료 ${index + 1} 교사 설명`} rows={4} value={source.teacherDescription || ""} onChange={event => onChange(entry.kind, source.id, { teacherDescription: event.target.value })} placeholder="자료 사용 방법을 안내해 주세요. 복사할 내용에는 포함되지 않습니다." />
-              </label>}
+                <BasicFormatEditor ariaLabel={`자료 ${index + 1} 교사 설명`} value={safeDisplayHtml(source.teacherDescription || "")} onChange={teacherDescription => onChange(entry.kind, source.id, { teacherDescription })} disabled={disabled} placeholder="자료 사용 방법을 안내해 주세요. 복사할 내용에는 포함되지 않습니다." />
+              </div>}
               {resource && <strong className="book-resource-editor-label">복사할 내용</strong>}
               <BasicFormatEditor
                 templateEnabled={source.templateEnabled === true}

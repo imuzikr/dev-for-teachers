@@ -14,5 +14,6 @@ ui-debug.log
 artifacts/class-deletion-ui/
 artifacts/book-project-management/
 artifacts/teacher-activity-demo/
+artifacts/resource-sections-*/
 tests/classDeletion/*.log
 tests/rules/deletion-*.log
