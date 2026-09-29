@@ -12230,8 +12230,13 @@ button.book-project-flow-pill:focus-visible {
   flex: 0 0 auto;
 }
 
+.book-personal-expand-backdrop {
+  padding: 28px;
+}
+
 .book-personal-expand-modal {
-  width: min(94vw, 700px);
+  width: min(1400px, calc(100vw - 56px));
+  height: min(90dvh, 820px);
   max-width: none;
   max-height: min(90dvh, 820px);
   display: flex;
@@ -12759,7 +12764,9 @@ button.book-project-flow-pill:focus-visible {
     font-size: 15px;
   }
   .book-answer-edit-footer { grid-template-columns: 1fr; }
+  .book-personal-expand-backdrop,
   .book-presentation-backdrop { padding: 14px; }
+  .book-personal-expand-modal,
   .book-presentation-modal {
     width: calc(100vw - 28px);
     max-height: 88vh;

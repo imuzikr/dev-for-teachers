@@ -65,6 +65,13 @@ async function loadApi(firebase = false, options = {}) {
           if (options.staleProjectInTransaction && reference.path === "bookProjects/classA") {
             return snap(reference, { ...documents.get(reference.path), title: "다른 저장" });
           }
+          if (options.reorderProjectInTransaction && reference.path === "bookProjects/classA") {
+            const reorder = (value) => Array.isArray(value) ? value.map(reorder)
+              : value && typeof value === "object"
+                ? Object.fromEntries(Object.entries(value).reverse().map(([key, entry]) => [key, reorder(entry)]))
+                : value;
+            return snap(reference, reorder(documents.get(reference.path)));
+          }
           return snap(reference);
         },
         set: (reference, data) => {
@@ -236,6 +243,29 @@ test("Firestore removal save rejects stale live project before writing trash", a
     steps: [],
   }), { code: "book-project/stale" });
   assert.equal([...api.documents.keys()].some((path) => path.startsWith("bookProjectTrash/")), false);
+});
+
+test("Firestore removal accepts unchanged maps with different key order and can restore the item", async () => {
+  const api = await loadApi(true, { reorderProjectInTransaction: true });
+  const project = { ...projectDraft("classA"), version: "v1" };
+  api.documents.set("classes/classA", { createdBy: "teacher", archived: false });
+  api.documents.set("bookProjects/classA", project);
+  api.documents.set("bookActivities/activity-a/entries/student", { answer: "keep" });
+  await api.saveBookProject(teacher, {
+    ...project,
+    steps: project.steps.map((step) => step.id === "step-a" ? {
+      ...step, resources: [], itemOrder: step.itemOrder.filter((item) => item.kind !== "resource"),
+    } : step),
+  });
+  const trashEntries = [...api.documents.entries()].filter(([path]) => path.startsWith("bookProjectTrash/"));
+  assert.equal(trashEntries.length, 1);
+  const [trashPath, trash] = trashEntries[0];
+  assert.equal(trash.payload.item.id, "resource-a");
+  assert.equal(api.documents.get("bookProjects/classA").steps[0].resources.length, 0);
+  assert.equal(api.documents.get("bookActivities/activity-a/entries/student").answer, "keep");
+  await api.restoreBookTrash(teacher, { classId: "classA", trashId: trashPath.split("/").at(-1) });
+  assert.equal(api.documents.get("bookProjects/classA").steps[0].resources[0].id, "resource-a");
+  assert.equal(api.documents.has(trashPath), false);
 });
 
 test("Firestore archive and restore read before writes and strip synthetic project id", async () => {

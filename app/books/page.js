@@ -51,6 +51,7 @@ function BooksPageInner() {
   const classes = useMemo(() => classSnapshot?.key === subscriptionKey
     ? classSnapshot.items : [], [classSnapshot, subscriptionKey]);
   const [localSelectedId, setLocalSelectedId] = useState(null);
+  const [selectionReady, setSelectionReady] = useState(false);
   const [classPurpose, setClassPurpose] = useState(getSelectedClassPurpose);
   const [teacherClassId, setTeacherClassId] = useState(null);
   const [directory, setDirectory] = useState([]);
@@ -72,6 +73,7 @@ function BooksPageInner() {
   useEffect(() => {
     function sync() {
       setLocalSelectedId(getSelectedClassId());
+      setSelectionReady(true);
     }
     sync();
     window.addEventListener("class-change", sync);
@@ -135,7 +137,9 @@ function BooksPageInner() {
       : membershipIds[0] ?? null;
 
   useEffect(() => {
-    if (!admin) return;
+    // An unresolved subscription is not an empty class list. Keep the remembered
+    // selection until both browser storage and this user's classes are loaded.
+    if (!admin || !selectionReady || classSnapshot?.key !== subscriptionKey) return;
     if (myClasses.length === 0) {
       if (teacherClassId) setTeacherClassId(null);
       if (localSelectedId) setSelectedClassId(null);
@@ -148,9 +152,12 @@ function BooksPageInner() {
         : myClasses[0].id;
     setTeacherClassId(remembered);
     if (localSelectedId !== remembered) setSelectedClassId(remembered);
-  }, [admin, myClasses, teacherClassId, localSelectedId]);
+  }, [admin, myClasses, teacherClassId, localSelectedId, selectionReady, classSnapshot, subscriptionKey]);
 
-  const classId = admin ? (teacherClassId && myClasses.some((classItem) => classItem.id === teacherClassId) ? teacherClassId : myClasses[0]?.id ?? null) : studentClassId;
+  const classId = admin
+    ? !selectionReady ? null
+      : [teacherClassId, localSelectedId].find(id => id && myClasses.some(item => item.id === id)) ?? myClasses[0]?.id ?? null
+    : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
   const activeClassRef = useRef(classId);
   activeClassRef.current = classId;
