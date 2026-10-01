@@ -7,6 +7,26 @@ import vm from "node:vm";
 
 const source = readFileSync(new URL("../lib/server/pinAuth.js", import.meta.url), "utf8");
 
+test("withdrawn student can register again with a new UID and PIN", async () => {
+  const api = await loadPinAuth();
+  const h = deps();
+  const payload = { schoolName: "아이고", realName: "오마니", pin: "1234", pinConfirm: "1234" };
+  assert.equal((await api.handlePinAuthPost(req({ ...payload, action: "register" }), h.value, response)).status, 200);
+  const hash = api.pinAuthInternals.identityHash(api.pinAuthInternals.canonicalIdentity(payload.schoolName, payload.realName));
+  const oldUid = h.db.docs.get(`pinIdentities/${hash}`).uid;
+  h.db.docs.delete(`users/${oldUid}`);
+  const begin = await api.handlePinAuthPost(req({ ...payload, action: "begin" }), h.value, response);
+  assert.equal(begin.status, 200);
+  assert.equal(begin.body.mode, "register");
+  const result = await api.handlePinAuthPost(req({ ...payload, action: "register", pin: "5678", pinConfirm: "5678" }), h.value, response);
+  assert.equal(result.status, 200);
+  const newUid = h.db.docs.get(`pinIdentities/${hash}`).uid;
+  assert.notEqual(newUid, oldUid);
+  assert.equal(h.db.docs.has(`users/${oldUid}`), false);
+  assert.equal((await api.handlePinAuthPost(req({ ...payload, action: "login" }), h.value, response)).status, 401);
+  assert.equal((await api.handlePinAuthPost(req({ ...payload, action: "login", pin: "5678" }), h.value, response)).status, 200);
+});
+
 async function loadPinAuth() {
   const context = vm.createContext({
     Array,
@@ -426,7 +446,7 @@ test("login fails closed on account lookup failures and preserves account reject
   }
 });
 
-test("orphaned PIN identities fail closed instead of returning a token for a deleted profile", async () => {
+test("withdrawn identity offers registration but refuses login to the deleted profile", async () => {
   const api = await loadPinAuth();
   const h = deps();
   await api.handlePinAuthPost(req({
@@ -444,8 +464,8 @@ test("orphaned PIN identities fail closed instead of returning a token for a del
     schoolName: "삭제초",
     realName: "윤학생",
   }), h.value, response);
-  assert.equal(begin.status, 409);
-  assert.equal(begin.body.code, "auth/pin-orphaned-identity");
+  assert.equal(begin.status, 200);
+  assert.equal(begin.body.mode, "register");
 
   const login = await api.handlePinAuthPost(req({
     action: "login",
@@ -752,4 +772,33 @@ test("missing config maps to 503 and active deletion lock blocks creates and res
     pinConfirm: "6666",
   }), deps({ db }).value, response);
   assert.equal(locked.status, 409);
+});
+
+
+test("reregistration cannot overwrite a restored profile or a system admin identity", async () => {
+  const api = await loadPinAuth();
+  for (const scenario of ["restored", "admin", "lookup-failed"]) {
+    const h = deps();
+    const payload = { schoolName: "보호초", realName: "학생", pin: "1234", pinConfirm: "1234" };
+    await api.handlePinAuthPost(req({ ...payload, action: "register" }), h.value, response);
+    const oldUid = h.auth.customTokens[0].uid;
+    const originalProfile = h.db.docs.get(`users/${oldUid}`);
+    h.db.docs.delete(`users/${oldUid}`);
+    if (scenario === "admin") h.db.docs.set("system/admin", { uid: oldUid });
+    if (scenario === "lookup-failed") {
+      h.db.beforeGet = async (path) => { if (path === `users/${oldUid}`) throw new Error("unavailable"); };
+    }
+    if (scenario === "restored") {
+      const originalTransaction = h.db.runTransaction.bind(h.db);
+      h.db.runTransaction = async (fn) => {
+        h.db.docs.set(`users/${oldUid}`, originalProfile);
+        return originalTransaction(fn);
+      };
+    }
+    const result = await api.handlePinAuthPost(req({ ...payload, action: "register" }), h.value, response);
+    assert.notEqual(result.status, 200, scenario);
+    assert.equal(h.auth.customTokens.length, 1, scenario);
+    const hash = api.pinAuthInternals.identityHash(api.pinAuthInternals.canonicalIdentity(payload.schoolName, payload.realName));
+    assert.equal(h.db.docs.get(`pinIdentities/${hash}`).uid, oldUid, scenario);
+  }
 });
