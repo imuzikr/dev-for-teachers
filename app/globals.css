@@ -15052,3 +15052,21 @@ button.book-project-flow-pill:focus-visible {
     height: 44px;
   }
 }
+
+.book-step-flow-head:has(.book-step-delete-btn) .book-step-flow-trigger {
+  grid-template-columns: minmax(0, 1fr) 30px;
+}
+.book-step-flow-head:has(.book-step-delete-btn) .book-step-flow-actions {
+  position: static;
+  width: auto;
+  transform: none;
+  padding: 0 8px 8px;
+}
+.book-step-flow-head:has(.book-step-delete-btn) .book-step-order-btn {
+  width: 44px;
+  height: 44px;
+}
+.book-step-delete-btn:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BookProjectEditor from "./BookProjectEditor";
+import { IconTrash } from "./StatusIcons";
 import { stepPreviewItems } from "./BookProjectPreview";
 import BookProjectSidebarTools from "./BookProjectSidebarTools";
 
@@ -87,6 +88,15 @@ export default function BookProjectPanel({ project, classPurpose, editing, expan
     await saveOrder(nextSteps, "Step 순서를 저장하지 못했어요. 다시 시도해 주세요.");
   }
 
+  async function removeProjectStep(stepId) {
+    if (!onSave || saving || orderSaving || project.steps.length <= 1) return;
+    const step = project.steps.find((candidate) => candidate.id === stepId);
+    if (!step || !window.confirm(`“${step.title || "제목 없는 Step"}”을 삭제할까요?
+활동 ${step.activities?.length ?? 0}개와 자료 ${step.resources?.length ?? 0}개가 함께 휴지통으로 이동합니다.
+휴지통에서 복원할 수 있습니다.`)) return;
+    await saveOrder(project.steps.filter((candidate) => candidate.id !== stepId), "Step을 삭제하지 못했어요. 다시 시도해 주세요.");
+  }
+
   async function moveStepItem(stepId, itemIndex, direction) {
     if (!onSave || saving || orderSaving) return;
     const currentSteps = project.steps ?? [];
@@ -153,6 +163,9 @@ export default function BookProjectPanel({ project, classPurpose, editing, expan
     const index = stepIndexById.get(step.id) ?? displayIndex;
     return (
       <div className="book-step-reorder-actions" aria-label={`${step.title || "Step"} 순서 이동`}>
+        {onSave && <button type="button" className="book-step-order-btn book-step-delete-btn" aria-label={`Step ${index + 1} 삭제`} title={project.steps.length <= 1 ? "프로젝트에는 최소 한 개의 Step이 필요합니다." : "Step 삭제"} disabled={saving || orderSaving || project.steps.length <= 1} onClick={() => removeProjectStep(step.id)}>
+          <IconTrash size={15} />
+        </button>}
         <button
           type="button"
           className="book-step-order-btn"

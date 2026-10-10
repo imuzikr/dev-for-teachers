@@ -203,7 +203,11 @@ export default function BookProjectEditor({
   }
 
   function removeStep(stepId) {
-    const nextSteps = steps.filter((step) => step.id !== stepId);
+    if (saving || busyImages.size > 0 || steps.length <= 1) return;
+    const step = steps.find((candidate) => candidate.id === stepId);
+    if (!step || !window.confirm(`“${step.title || "제목 없는 Step"}”을 삭제할까요?
+활동 ${step.activities.length}개와 자료 ${step.resources.length}개가 함께 삭제됩니다.
+프로젝트 저장 후 휴지통에서 복원할 수 있습니다.`)) return;
     setSteps((current) => current.filter((step) => step.id !== stepId));
     setOpenIds((current) => {
       const next = new Set(current);
@@ -305,9 +309,7 @@ export default function BookProjectEditor({
         </label>
         <div className="book-step-edit-meta">
           <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>
-          <button type="button" className="btn-ghost role-danger-btn book-step-remove" onClick={() => removeStep(step.id)}>
-            <IconTrash size={15} /> Step 삭제
-          </button>
+
         </div>
         <BookProjectEditorItems
           step={step}
@@ -393,6 +395,9 @@ export default function BookProjectEditor({
     const index = steps.findIndex((item) => item.id === step.id);
     return (
       <div className="book-step-reorder-actions" aria-label={`${step.title || "Step"} 순서 이동`}>
+        <button type="button" className="book-step-order-btn book-step-delete-btn" aria-label={`Step ${index + 1} 삭제`} title={steps.length <= 1 ? "프로젝트에는 최소 한 개의 Step이 필요합니다." : "Step 삭제"} disabled={saving || busyImages.size > 0 || steps.length <= 1} onClick={() => removeStep(step.id)}>
+          <IconTrash size={15} />
+        </button>
         <button
           type="button"
           className="book-step-order-btn"
@@ -449,7 +454,7 @@ export default function BookProjectEditor({
         disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0}
         onClick={saveProject}
       >
-        {saving ? "저장 중..." : "순서 저장"}
+        {saving ? "저장 중..." : "프로젝트 저장"}
       </button>
     </div>
   );
@@ -466,6 +471,7 @@ export default function BookProjectEditor({
           openStepIds={openIds}
           onPickStep={toggleStep}
           renderStepContent={renderStepEditor}
+          renderStepAction={renderStepOrderAction}
         />
         <button
           type="button"

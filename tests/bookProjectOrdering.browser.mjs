@@ -46,6 +46,7 @@ export default async function verifyBookProjectOrdering(page, baseUrl) {
   await page.getByRole("button", { name: "프로젝트 크게 편집", exact: true }).waitFor();
   await capture("desktop-ordering-sidebar", 1280, 900);
   await capture("mobile-ordering-sidebar", 375, 812);
+  await capture("tablet-ordering-sidebar", 768, 900);
 
   assert.equal(await page.getByRole("textbox", { name: /Step \d+ 제목/ }).count(), 0);
   assert.equal(await page.getByRole("button", { name: "Step 추가", exact: true }).count(), 0);
@@ -63,7 +64,7 @@ export default async function verifyBookProjectOrdering(page, baseUrl) {
 
   await page.getByRole("button", { name: "Step 2 위로 이동", exact: true }).click();
   assert.equal((await draftProject()).steps[0].id, "s2");
-  await page.getByRole("button", { name: "순서 저장", exact: true }).click();
+  await page.getByRole("button", { name: "프로젝트 저장", exact: true }).click();
   await page.waitForFunction(() => JSON.parse(document.querySelector('[data-testid="saved-project"]').textContent).steps[0].id === "s2");
   assert.equal((await savedProject()).steps[0].id, "s2");
 
@@ -92,6 +93,29 @@ export default async function verifyBookProjectOrdering(page, baseUrl) {
   });
   await page.getByRole("button", { name: "프로젝트 크게 편집", exact: true }).click();
   await page.getByRole("dialog").waitFor();
+
+  await capture("mobile-full-editor-modal", 375, 812);
+  await capture("tablet-full-editor-modal", 768, 900);
+  assert.equal(await page.getByRole("button", { name: /Step \d+ 삭제/ }).count(), 3);
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Step 3 삭제", exact: true }).click();
+  assert.equal((await draftProject()).steps.length, 3);
+  page.once("dialog", (dialog) => {
+    assert.match(dialog.message(), /휴지통/);
+    return dialog.accept();
+  });
+  await page.getByRole("button", { name: "Step 3 삭제", exact: true }).click();
+  assert.equal((await draftProject()).steps.length, 2);
+  assert.equal((await savedProject()).steps.length, 3);
+  await page.getByRole("dialog").getByRole("button", { name: "프로젝트 저장", exact: true }).last().click();
+  await page.waitForFunction(() => JSON.parse(document.querySelector('[data-testid="saved-project"]').textContent).steps.length === 2);
+  await page.getByRole("button", { name: "패널에서 계속 편집", exact: true }).click();
+  await page.getByRole("button", { name: "저장된 사이드바 보기", exact: true }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Step 2 삭제", exact: true }).click();
+  await page.waitForFunction(() => JSON.parse(document.querySelector('[data-testid="saved-project"]').textContent).steps.length === 1);
+  assert.equal(await page.getByRole("button", { name: "Step 1 삭제", exact: true }).isDisabled(), true);
+  await capture("last-step-delete-disabled", 1280, 900);
 
   assert.deepEqual(errors, []);
   return {
