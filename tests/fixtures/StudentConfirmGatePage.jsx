@@ -6,7 +6,7 @@ import { BookPersonalActivityCard } from "@/components/BookPersonalDetailCards";
 
 const user = { uid: "qa-student", realName: "학생" };
 const activities = ["first", "second"].map(id => ({ id, title: id, content: "<p>활동 안내</p>", requiresAnswer: true }));
-const resource = { id: "resource", title: "자료", content: "<p>읽기 자료</p>" };
+const resource = { id: "resource", title: "자료", content: "<p>읽기 자료</p>", teacherDescription: "복사에서 제외할 교사 설명" };
 const items = [...activities.map(source => ({ id: source.id, kind: "activity", source })), { id: resource.id, kind: "resource", source: resource }];
 const sections = [{ id: "step", title: "연습", activities, resources: [resource], items }];
 const keys = new Set(items.map(item => `${item.kind}:${item.id}`));

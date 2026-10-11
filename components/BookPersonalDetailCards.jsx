@@ -10,7 +10,6 @@ import useStudentChecklist from "./useStudentChecklist";
 import useStudentAutosave from "./useStudentAutosave";
 import useBookActivityDraft from "./useBookActivityDraft";
 import { fillTemplate, templatePlainText, templateStringValues } from "@/lib/activityTemplate.mjs";
-import ChecklistWarningModal from "./ChecklistWarningModal";
 import { BookItemImageIndicator } from "./BookItemImages";
 import TeacherActivityDemoView from "./TeacherActivityDemo";
 
@@ -89,7 +88,6 @@ export function BookPersonalResourceCard({
   reorderProps,
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const resource = detailItem.source;
   const checklist = useStudentChecklist(detailItem);
   const checklistValues = checklist.values;
@@ -131,7 +129,7 @@ export function BookPersonalResourceCard({
         <div className="book-personal-card-head-actions">
           {isTeacher && onEdit && <button type="button" className="btn-ghost book-card-expand-btn" title="자료 수정" aria-label="자료 수정" onClick={() => onEdit(detailItem)}><IconEdit size={14} /></button>}
           {isTeacher && onDelete && <button type="button" className="btn-ghost book-card-expand-btn book-card-delete-btn" title="자료 삭제" aria-label="자료 삭제" disabled={deletionDisabled} onClick={() => onDelete(detailItem)}><IconTrash size={14} /></button>}
-          {onCopy && <button type="button" className="btn-ghost book-personal-copy-btn" title={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} onClick={() => onCopy(resource)}>
+          {isTeacher && onCopy && <button type="button" className="btn-ghost book-personal-copy-btn" title={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} aria-label={copiedId === resource.id ? "자료를 복사했습니다" : "자료 복사"} onClick={() => onCopy(resource)}>
             <IconCopy size={13} />
           </button>}
           {isTeacher && <BookItemImageIndicator images={resource.images} />}
@@ -149,15 +147,11 @@ export function BookPersonalResourceCard({
         <footer className="book-personal-card-actions book-student-review-actions"><button type="button" className="btn-primary" onClick={openPanel}>패널에서 열기</button></footer>
       ) : !isTeacher && (
         <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!save || confirmed || confirmState.pendingKey === confirmationKey || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
-            if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
-            else save();
-          }}>{confirmState.pendingKey === confirmationKey ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
+          <button type="button" className="btn-outline" disabled={!onCopy} onClick={() => onCopy(resource)}>{copiedId === resource.id ? "복사됨" : "복사"}</button>
           <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       )}
       {!isTeacher && confirmState.failedKey === confirmationKey && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
-      {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
         <BookPersonalItemViewModal {...resourceDraftProps} detailItem={detailItem} index={index} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} confirmed={confirmed} saving={confirmState.pendingKey === confirmationKey} failed={confirmState.failedKey === confirmationKey} onSave={save} onCopy={() => onCopy(resource)} copied={copiedId === resource.id} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
@@ -215,7 +209,6 @@ export function BookPersonalActivityCard({
   reorderProps,
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const activity = detailItem.source;
   const checklist = useStudentChecklist(detailItem);
   const checklistValues = checklist.values;
@@ -279,16 +272,11 @@ export function BookPersonalActivityCard({
       ) : isTeacher && panel ? (
         <footer className="book-personal-card-actions book-student-review-actions"><button type="button" className="btn-primary" onClick={openPanel}>패널에서 열기</button></footer>
       ) : !isTeacher ? (
-        <footer className="book-personal-card-actions">
-          <button type="button" className="btn-outline" disabled={!save || !urlsReady || imagesBusy || activityUrls.saving || confirmed || saveState.savingId === activity.id || checklist.status === "loading" || checklist.status === "saving"} onClick={() => {
-            if (checklist.hasChecklist && !checklist.complete) setShowChecklistWarning(true);
-            else save();
-          }}>{saveState.savingId === activity.id ? "저장 중..." : confirmed ? "확인됨" : "미확인"}</button>
+        <footer className="book-personal-card-actions book-student-review-actions">
           <button type="button" className="btn-primary" disabled={!panel} onClick={openPanel}>패널에서 열기</button>
         </footer>
       ) : null}
       {!isTeacher && saveState.failedId === activity.id && <p role="alert">저장하지 못했어요. 다시 시도해 주세요.</p>}
-      {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} />}
       {panel?.selectedKey === panelKey && panel.target && (
         <BookPersonalItemViewModal {...urlViewProps} detailItem={detailItem} index={index} response={response} isTeacher={isTeacher} participantLabel={participantLabel} panelTarget={panel.target} onExpand={() => setExpanded(true)} templateValues={templateValues} onTemplateChange={setTemplateValues} answerDraft={answerDraft} onAnswerChange={setAnswerDraft} savedImages={savedImages} imageDraft={allowStudentImages ? draft.content.draft.images : undefined} onImageDraftChange={allowStudentImages ? (images) => draft.content.change({ images }) : undefined} imagesBusy={imagesBusy} onImagesBusyChange={(busy) => setImageBusy("panel", busy)} onSave={save} saving={saveState.savingId === activity.id} failed={saveState.failedId === activity.id} saveError={saveState.failedMessage} confirmed={confirmed} checklistValues={checklistValues} onChecklistChange={setChecklistValues} onCheckAll={checkAll} onUncheckAll={checklist.uncheckAll} checklistStatus={checklist.status} onRetryChecklist={checklist.retry} hasChecklist={checklist.hasChecklist} checklistComplete={checklist.complete} />
       )}
