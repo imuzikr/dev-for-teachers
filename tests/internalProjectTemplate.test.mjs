@@ -4,9 +4,9 @@ import { createInternalProjectTemplate, initialBookProject } from "../lib/intern
 
 test("internal projects contain five steps and six ordered, open answer activities", () => {
   const project = createInternalProjectTemplate();
-  assert.deepEqual(project.steps.map(step => step.title), ["나의 고민은?", "한 번 들어보세요.", "프롬프트", "시제품", "짜잔!"]);
+  assert.deepEqual(project.steps.map(step => step.title), ["내가 찾은 문제", "한 번 들어보세요.", "프롬프트", "MVP", "My Product"]);
   assert.deepEqual(project.steps.map(step => step.activities.length), [1, 2, 1, 1, 1]);
-  assert.deepEqual(project.steps[1].activities.map(item => item.title), ["나의 아이디어", "기능 설명"]);
+  assert.deepEqual(project.steps.flatMap(step => step.activities.map(item => item.title)), ["내가 찾은 문제", "이렇게 해결해요", "주요 기능 및 디자인", "프롬프트", "MVP", "My Product"]);
   for (const step of project.steps) {
     assert.deepEqual(step.resources, []);
     assert.deepEqual(step.itemOrder, step.activities.map(({ id }) => ({ kind: "activity", id })));

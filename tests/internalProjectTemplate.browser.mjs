@@ -39,7 +39,7 @@ try {
   await page.goto(`http://127.0.0.1:${port}`);
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
-  assert.deepEqual(await dialog.locator('.book-step-nav-copy strong').allTextContents(), ["나의 고민은?", "한 번 들어보세요.", "프롬프트", "시제품", "짜잔!"]);
+  assert.deepEqual(await dialog.locator('.book-step-nav-copy strong').allTextContents(), ["내가 찾은 문제", "한 번 들어보세요.", "프롬프트", "MVP", "My Product"]);
   for (const width of [375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await page.screenshot({ path: path.join(output, `template-${width}.png`), fullPage: true });
@@ -48,6 +48,7 @@ try {
   await dialog.getByRole("button", { name: "프로젝트 저장", exact: true }).last().click();
   await dialog.waitFor({ state: "hidden" });
   const saved = JSON.parse(await page.getByTestId("saved").textContent());
+  assert.deepEqual(saved.steps.flatMap(step => step.activities.map(item => item.title)), ["내가 찾은 문제", "이렇게 해결해요", "주요 기능 및 디자인", "프롬프트", "MVP", "My Product"]);
   assert.deepEqual(saved.steps.map(step => step.activities.length), [1, 2, 1, 1, 1]);
   await page.getByRole("button", { name: "프로젝트 크게 편집", exact: true }).click();
   await dialog.waitFor();
