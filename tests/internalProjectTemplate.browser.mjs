@@ -58,6 +58,17 @@ try {
   await page.getByRole("button", { name: "New training", exact: true }).click();
   await dialog.waitFor();
   assert.equal(await dialog.locator('.book-step-flow-trigger').count(), 0);
+  await dialog.getByRole("button", { name: "패널로 돌아가기", exact: true }).click();
+  await dialog.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Existing internal", exact: true }).click();
+  await dialog.waitFor();
+  assert.deepEqual(await dialog.locator('.book-step-nav-copy strong').allTextContents(), ["내가 찾은 문제", "프롬프트", "MVP"]);
+  await dialog.getByRole("button", { name: "프로젝트 저장", exact: true }).last().click();
+  await dialog.waitFor({ state: "hidden" });
+  const legacySaved = JSON.parse(await page.getByTestId("saved").textContent());
+  assert.deepEqual(legacySaved.steps.flatMap(step => step.activities.map(item => item.title)), ["내가 찾은 문제", "이렇게 해결해요", "주요 기능 및 디자인", "프롬프트", "MVP", "My Product"]);
+  assert.deepEqual(legacySaved.steps.map(step => step.id), ["s1", "s2", "s3"]);
+  await page.screenshot({ path: path.join(output, "existing-internal.png"), fullPage: true });
   assert.deepEqual(errors, []);
   await writeFile(path.join(output, "results.json"), JSON.stringify({ passed: true, errors, activityCounts: saved.steps.map(step => step.activities.length) }));
   console.log(`PASS: template creation, save, reopen, training isolation, responsive layout. Evidence: ${output}`);

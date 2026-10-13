@@ -21,6 +21,7 @@ import {
   setSelectedClassId,
 } from "@/lib/classroom";
 import { getClassPurpose } from "@/lib/classPurpose";
+import { normalizeInternalProject, normalizeInternalActivity } from "@/lib/internalProjectTemplate.mjs";
 import {
   appendClonedBookProjectItem,
   appendClonedBookProjectStep,
@@ -159,6 +160,7 @@ function BooksPageInner() {
       : [teacherClassId, localSelectedId].find(id => id && myClasses.some(item => item.id === id)) ?? myClasses[0]?.id ?? null
     : studentClassId;
   const currentClass = (admin ? myClassesAll : classes).find((c) => c.id === classId) ?? null;
+  const projectPurpose = getClassPurpose(currentClass);
   const activeClassRef = useRef(classId);
   activeClassRef.current = classId;
   const deletion = useBookProjectDeletion({
@@ -186,11 +188,11 @@ function BooksPageInner() {
     setEditingProject(false);
     const unsubscribe = subscribeBookProject(classId, (nextProject) => {
       if (!active) return;
-      setProject(nextProject);
+      setProject(normalizeInternalProject(nextProject, projectPurpose));
       setProjectLoadedClass(classId);
     });
     return () => { active = false; unsubscribe(); };
-  }, [classId]);
+  }, [classId, projectPurpose]);
 
   useEffect(() => {
     if (!admin || !classId) {
@@ -216,7 +218,8 @@ function BooksPageInner() {
 
   const visibleActivities = useMemo(
     () => {
-      if (!project) return activities.filter((activity) => activity.type === "book" && !activity.projectId);
+      if (!project) return activities.filter((activity) => activity.type === "book" && !activity.projectId)
+        .map(activity => normalizeInternalActivity(activity, projectPurpose));
 
       const activityById = new Map(activities.map((activity) => [activity.id, activity]));
       return (project.steps ?? [])
@@ -224,9 +227,10 @@ function BooksPageInner() {
         .map((projectActivity) => activityById.get(projectActivity.id))
         .filter((activity) => activity
           && activity.projectId === project.id
-          && (!project.version || activity.projectVersion === project.version));
+          && (!project.version || activity.projectVersion === project.version))
+        .map(activity => normalizeInternalActivity(activity, projectPurpose));
     },
-    [activities, project]
+    [activities, project, projectPurpose]
   );
   const displayedProject = useMemo(() => {
     if (!project) return null;
