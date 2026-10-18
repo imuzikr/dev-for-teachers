@@ -55,15 +55,72 @@ async function capture(page, name, width = 1280, height = 900) {
 async function openClass(page, name = "3학년 1반") {
   await page.getByRole("button", { name: `${name} 클래스 열기`, exact: true }).click();
   await page.locator(".classroom-workspace").waitFor();
-  await page.getByRole("navigation", { name: "STEP과 활동 목록", exact: true }).waitFor();
+  await page.locator(".classroom-outline").waitFor();
 }
 
 async function selectOutline(page, title) {
   const toggle = page.getByRole("button", { name: "수업 차례 펼치기", exact: true });
   if (await toggle.isVisible()) await toggle.click();
+  if (await page.locator('.classroom-outline[aria-label="STEP 목록"]').count()) {
+    const steps = page.locator(".classroom-step-trigger");
+    for (let index = 0; index < await steps.count(); index += 1) {
+      await steps.nth(index).click();
+      const row = page.locator(".classroom-overview-row").filter({ hasText: title });
+      if (await row.count()) { await row.first().click(); return; }
+      if (await toggle.isVisible()) await toggle.click();
+    }
+    throw new Error(`Teacher overview item missing: ${title}`);
+  }
   await page.locator(".classroom-outline-item").filter({ hasText: title }).first().click();
 }
 
+
+async function verifyTeacherOutline(page) {
+  await page.goto("/qa-classroom");
+  await page.locator(".classroom-catalog").waitFor();
+  await openClass(page);
+  const outline = page.locator('.classroom-outline[aria-label="STEP 목록"]');
+  assert.equal(await outline.locator(".classroom-step-trigger").count(), 2);
+  assert.equal(await outline.locator(".classroom-outline-item").count(), 0);
+  assert.equal(await outline.getByText(/개 항목/).count(), 0);
+  for (const width of [1280, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    const toggle = page.getByRole("button", { name: "수업 차례 펼치기", exact: true });
+    if (await toggle.isVisible()) await toggle.click();
+    await capture(page, `teacher-step-only-${width}`, width);
+    await outline.locator(".classroom-step-trigger").nth(1).click();
+    await page.locator(".classroom-overview-row").filter({ hasText: "동료 피드백을 반영한 최종 기획서" }).click();
+    await page.locator(".classroom-teacher-detail .student-activity-detail").waitFor();
+    assert.equal(await page.locator(".classroom-overview-row").count(), 2);
+    await page.locator('.classroom-overview-row[aria-current="page"]').filter({ hasText: "동료 피드백을 반영한 최종 기획서" }).waitFor();
+    if (width >= 1100) {
+      const list = await page.locator(".classroom-overview-items").boundingBox();
+      const detail = await page.getByRole("region", { name: "활동·자료 상세", exact: true }).boundingBox();
+      assert.ok(list.x + list.width <= detail.x && Math.abs(list.y - detail.y) < 2, "list and selected detail share two columns");
+    }
+    await page.locator(".classroom-overview-row").filter({ hasText: "발표와 상호 점검 안내" }).click();
+    await page.locator('.classroom-overview-row[aria-current="page"]').filter({ hasText: "발표와 상호 점검 안내" }).waitFor();
+    await page.locator(".classroom-teacher-detail").getByRole("heading", { name: /발표와 상호 점검 안내/ }).waitFor();
+    assert.equal(await outline.locator('.classroom-step-trigger[aria-current="step"]').count(), 1);
+    assert.equal(await outline.locator(".classroom-outline-item").count(), 0);
+    if (await toggle.isVisible()) await toggle.click();
+    await outline.locator(".classroom-step-trigger").nth(0).click();
+    await page.locator(".classroom-overview-row").filter({ hasText: "안전한 도구 설계 체크리스트" }).click();
+    await page.locator(".classroom-teacher-detail").waitFor();
+    if (await toggle.isVisible()) await toggle.click();
+    await capture(page, `teacher-step-selected-detail-${width}`, width);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "클래스 목록", exact: true }).click();
+  await page.getByRole("button", { name: "학생", exact: true }).click();
+  await openClass(page);
+  assert.ok(await page.locator(".classroom-outline-item").count() > 0);
+  await selectOutline(page, "우리 수업의 문제 정의 작성");
+  await page.locator(".student-activity-detail").waitFor();
+  await capture(page, "student-outline-preserved-1280");
+  assert.deepEqual(evidence.errors, []);
+  evidence.checks.push("teacher outline has only STEP buttons, keeps current STEP selected for activity/resource details, works at 375/768/1280; student item navigation preserved");
+}
 
 async function verifyLanding(page) {
   await page.goto("/");
@@ -241,7 +298,7 @@ async function run(page) {
   await page.getByRole("button", { name: "학생 하나 개인 카드 열기", exact: true }).click();
   await selectOutline(page, "두 번째 자료");
   await page.locator(".student-activity-detail").getByRole("heading", { name: "두 번째 자료", exact: true }).waitFor();
-  await page.locator(".classroom-outline-item.is-selected").filter({ hasText: "두 번째 자료" }).waitFor();
+  await page.locator(".classroom-step-trigger.is-selected").nth(0).waitFor();
   await capture(page, "teacher-cross-step-resource-review-1280");
   evidence.checks.push("teacher participant review cross-STEP resource stays selected in right detail");
   evidence.checks.push("existing BookWorkflowPage renders both teacher and student lesson shell");
@@ -293,6 +350,7 @@ try {
   activePage.on("console", message => { if (["warning", "error"].includes(message.type())) (evidence.consoleIssues ??= []).push({ type: message.type(), text: message.text(), url: activePage.url() }); });
   activePage.on("pageerror", (error) => evidence.errors.push(error.message));
   if (process.env.CLASSROOM_QA_FOCUS === "landing") await verifyLanding(activePage);
+  else if (process.env.CLASSROOM_QA_FOCUS === "teacher-outline") await verifyTeacherOutline(activePage);
   else if (process.env.CLASSROOM_QA_FOCUS === "extra") await verifyPortfolioAndHelp(activePage);
   else await run(activePage);
   evidence.status = "passed";
@@ -311,7 +369,7 @@ try {
     if (process.platform === "win32") await new Promise((resolve) => spawn("taskkill", ["/PID", String(server.pid), "/T", "/F"], { windowsHide: true }).on("close", resolve));
     else server.kill("SIGTERM");
   }
-  const sourceFiles = ["app/layout.js", "app/globals.css", "app/book-sidebar.css", "app/classroom-theme.css", "app/classroom-workspace.css", "app/classroom-catalog.css", "components/BooksHome.jsx", "components/BookWorkspace.jsx", "components/ClassroomLesson.jsx", "components/StudentActivityPanel.jsx", "components/BookPersonalDashboard.jsx", "components/ClassroomHelpReader.jsx", "components/BookHelpNoteModal.jsx"];
+  const sourceFiles = ["app/layout.js", "app/globals.css", "app/book-sidebar.css", "app/classroom-theme.css", "app/classroom-workspace.css", "app/classroom-catalog.css", "components/BooksHome.jsx", "components/BookWorkspace.jsx", "components/ClassroomLesson.jsx", "components/ClassroomOutline.jsx", "components/ClassroomLessonOverview.jsx", "components/StudentActivityPanel.jsx", "components/BookPersonalDashboard.jsx", "components/ClassroomHelpReader.jsx", "components/BookHelpNoteModal.jsx"];
   evidence.sourceHashes = [];
   for (const name of sourceFiles) {
     const [source, copied] = await Promise.all([readFile(path.join(root, name)), readFile(path.join(fixture, name))]);

@@ -48,12 +48,14 @@ export default function ClassroomLesson({ sections, selectedStepId, onSelectStep
   return <div className="classroom-lesson">
     <button type="button" className="classroom-outline-toggle btn-outline" aria-expanded={mobileOpen} aria-controls="classroom-outline-region" onClick={() => setMobileOpen(!mobileOpen)}>수업 차례 {mobileOpen ? "접기" : "펼치기"}</button>
     <aside id="classroom-outline-region" className={`classroom-outline-region${mobileOpen ? " is-open" : ""}`}>
-      <ClassroomOutline sections={sections} stepId={section?.id} itemKey={itemKey} completed={completed} onSelect={select} onOverview={id => select(id, null)} />
+      <ClassroomOutline sections={sections} stepId={section?.id} itemKey={itemKey} completed={completed} showItems={!isTeacher} onSelect={select} onOverview={id => select(id, null)} />
       <div className="classroom-outline-footer"><button type="button" className="btn-outline" aria-pressed={mode === "participants"} onClick={() => setMode(mode === "participants" ? "lesson" : "participants")}>{isTeacher ? "참여자 활동 보기" : "나의 STEP 카드"}</button>{portfolio}</div>
     </aside>
     <section className="classroom-detail-region" aria-label="선택한 STEP 상세">
-      <div className="classroom-detail-content">
-        {mode === "lesson" && !item && <ClassroomLessonOverview section={section} index={sectionIndex} onSelect={select} renderAddItem={renderAddItem} />}
+      <div className={`classroom-detail-content${isTeacher && mode === "lesson" && section ? " is-teacher-split" : ""}`}>
+        {mode === "lesson" && (!item || isTeacher) && <ClassroomLessonOverview section={section} index={sectionIndex} itemKey={itemKey} onSelect={select} renderAddItem={renderAddItem} />}
+        <div className="classroom-item-detail" role={isTeacher && mode === "lesson" ? "region" : undefined} aria-label={isTeacher && mode === "lesson" ? "활동·자료 상세" : undefined}>
+        {isTeacher && mode === "lesson" && section && !item && <p className="classroom-item-prompt">왼쪽 목록에서 활동이나 자료를 선택하면 상세 내용이 표시됩니다.</p>}
         <div className={mode === "participants" ? "classroom-participants-view" : teacherDemo && item ? "classroom-item-tools" : "classroom-source-cards"} hidden={mode === "lesson" && (!teacherDemo || !item)}>
           {renderDashboard({ itemKey: mode === "lesson" ? itemKey : null, participantsOnly: mode === "participants", selectStep: stepId => select(stepId, null) })}
         </div>
@@ -63,6 +65,7 @@ export default function ClassroomLesson({ sections, selectedStepId, onSelectStep
           {expanded && <TeacherActivityDemoView detailItem={item} index={itemIndex} onClose={() => setExpanded(false)} />}
         </>}
         <div className="classroom-student-detail" hidden={mode === "lesson" ? !showPanel : !panel?.readOnly}>{sidebar}</div>
+        </div>
       </div>
       {mode === "lesson" && section && <footer className="classroom-lesson-navigation" aria-label="수업 순서 이동">
         <button type="button" className="btn-outline" disabled={position <= 0} onClick={() => { const row = positions[position - 1]; if (row) select(row.stepId, row.key); }}>← 이전</button>

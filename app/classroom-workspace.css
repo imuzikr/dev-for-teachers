@@ -134,3 +134,21 @@
   .classroom-workspace-layout .classroom-lesson-navigation > button { width: 100%; min-width: 0; padding: 10px 12px; }
   .classroom-workspace-layout .classroom-lesson-navigation > span { white-space: nowrap; }
 }
+
+.classroom-item-detail { min-width: 0; }
+.is-teacher-split.classroom-detail-content { display: grid; grid-template-columns: minmax(240px, .4fr) minmax(0, 1fr); gap: 24px; align-content: start; align-items: start; }
+.is-teacher-split .classroom-lesson-overview { display: contents; }
+.is-teacher-split .classroom-lesson-banner, .is-teacher-split .classroom-step-description { grid-column: 1 / -1; margin: 0; }
+.is-teacher-split .classroom-overview-items { grid-column: 1; grid-row: 3; min-width: 0; margin: 0; padding: 16px; }
+.is-teacher-split .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 28px; gap: 8px; padding: 12px; min-height: 44px; border-radius: var(--radius-btn); }
+.is-teacher-split .classroom-overview-row > span:last-child { display: none; }
+.is-teacher-split .classroom-overview-row strong { font-size: 13px; word-break: keep-all; }
+.is-teacher-split .classroom-overview-row small { font-size: 11px; }
+.is-teacher-split .classroom-overview-row.is-selected { background: var(--primary-soft); border-color: var(--primary-dark); }
+.is-teacher-split .classroom-overview-row.is-selected strong { color: var(--primary-dark); }
+.is-teacher-split > .classroom-item-detail { grid-column: 2; grid-row: 3; }
+.classroom-item-prompt { display: grid; place-items: center; min-height: 240px; padding: 32px; margin: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); color: var(--text-sub); text-align: center; word-break: keep-all; }
+@media (max-width: 1099px) {
+  .is-teacher-split.classroom-detail-content { grid-template-columns: minmax(0, 1fr); }
+  .is-teacher-split .classroom-overview-items, .is-teacher-split > .classroom-item-detail { grid-column: 1; grid-row: auto; }
+}
