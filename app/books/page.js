@@ -396,7 +396,7 @@ function BooksPageInner() {
   return (
     <div className="board-shell books-board-shell">
       <BooksHome
-        key={`${subscriptionKey}:${classId ?? ""}`}
+        key={subscriptionKey}
         topNav={<TopNav active="books" />}
         admin={admin} user={user} classId={classId} classes={classes} currentClass={currentClass}
         classPurpose={classPurpose} myClasses={myClasses} myClassesAll={myClassesAll}

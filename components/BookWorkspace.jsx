@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import "@/app/classroom-workspace.css";
 import { setBookActiveItem, subscribeBookEntries, subscribeMyBookEntry } from "@/lib/store";
 import { bookConfirmationKey, saveBookConfirmation, saveBookTemplateDraft, subscribeBookConfirmations } from "@/lib/bookConfirmations";
 import { currentChecklistConfirmation } from "@/lib/activityChecklist";
@@ -75,7 +76,7 @@ export default function BookWorkspace({
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [teacherDetailTarget, setTeacherDetailTarget] = useState(null);
   const [teacherDetailExpanded, setTeacherDetailExpanded] = useState(false);
-  const [helpCollapsed, setHelpCollapsed] = useState(false);
+  const [helpCollapsed, setHelpCollapsed] = useState(true);
   const [draftProject, setDraftProject] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
   const [addingCard, setAddingCard] = useState(null);
@@ -92,7 +93,7 @@ export default function BookWorkspace({
   const panelScope = reviewStudent ? `${reviewScope}:review:${reviewStudent.uid}` : scope;
   useEffect(() => { setReviewSelection(null); }, [reviewScope, editingProject]);
   function selectReviewStudent(uid) {
-    setReviewSelection(uid ? { scope: reviewScope, uid } : null);
+    setReviewSelection(uid ? { scope: reviewScope, uid, stepId: selectedStepId } : null);
     setTeacherDetailExpanded(false);
   }
   const entriesByActivity = entrySnapshot.scope === entryScope ? entrySnapshot.entries : {};
@@ -200,9 +201,10 @@ export default function BookWorkspace({
       .map((item) => `${item.kind}:${item.id}`),
   ), [sections, selectedStepId, reviewStudent]);
   const reviewItems = reviewStudent ? sections.flatMap(section => section.items).filter(item => studentPanelItemKeys.has(`${item.kind}:${item.id}`)) : [];
-  const initialReviewItem = reviewItems.find(item => item.kind === "activity") ?? reviewItems[0];
+  const initialReviewItems = sections.find(section => section.id === reviewSelection?.stepId)?.items ?? reviewItems;
+  const initialReviewItem = initialReviewItems.find(item => item.kind === "activity") ?? initialReviewItems[0];
   const reviewAutoOpen = initialReviewItem ? {
-    scope: panelScope, requestId: selectedStepId ?? "all",
+    scope: panelScope, requestId: "review-entry",
     key: `${initialReviewItem.kind}:${initialReviewItem.id}`,
   } : null;
   const bookPresentation = useBookPresentationMode({
@@ -225,7 +227,7 @@ export default function BookWorkspace({
 
   useEffect(() => {
     setLibraryCollapsed(window.localStorage.getItem(LIBRARY_COLLAPSED_KEY) === "1");
-    setHelpCollapsed(window.localStorage.getItem(HELP_DRAWER_COLLAPSED_KEY) === "1");
+    setHelpCollapsed(window.localStorage.getItem(HELP_DRAWER_COLLAPSED_KEY) !== "0");
   }, []);
 
   useEffect(() => {
@@ -368,15 +370,21 @@ export default function BookWorkspace({
   return (
     <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
-    <StudentActivityPanel key={`${panelScope}:${isTeacher}:${reviewStudent ? selectedStepId : ""}`} enabled={!isTeacher || !!reviewStudent} readOnly={!!reviewStudent} itemKeys={studentPanelItemKeys} scope={panelScope}
+    <StudentActivityPanel inline key={`${panelScope}:${isTeacher}`} enabled={!isTeacher || !!reviewStudent} readOnly={!!reviewStudent} itemKeys={studentPanelItemKeys} scope={panelScope}
       draftScope={`${panelScope}:${project?.version ?? ""}`} recordsReady={confirmationReadyScope === entryScope} saveTemplate={isTeacher ? undefined : saveTemplate}
       records={confirmationReadyScope !== entryScope ? [] : reviewStudent ? confirmations.filter(record => record.projectId === projectId && record.authorId === reviewStudent.uid) : confirmations}
       saveChecklist={isTeacher ? undefined : confirmBookItem} autoOpenRequest={reviewStudent ? reviewAutoOpen : studentPanelAutoOpen}>
     {({ collapsed, sidebar }) => (
-    <div className={`book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
-      {sidebar}
+    <div className={`classroom-workspace-layout book-library-layout${(showLibraryPanel ? libraryCollapsed : collapsed) ? " is-library-collapsed" : ""}${helpCollapsed ? " is-help-collapsed" : ""}${showLibraryPanel ? "" : " is-student-main has-student-panel"}`}>
+      <section className="book-library-main" aria-label="개발자실 메인 화면">
+        {typeof header === "function" ? header(isTeacher && classPurpose === "internal" && project?.id && project.steps?.length > 0 ? (
+          <BookPortfolioButton key={JSON.stringify([project.id, project.version, activeClassId, user?.uid, isTeacher, reviewStudent?.uid, className])}
+            project={project} participant={reviewStudent} classId={activeClassId} className={className} user={user}
+            entriesByActivity={entriesByActivity} disabled={!liveProjectReady || editingProject || savingProject} />
+        ) : null) : header}
       {showLibraryPanel && (
-      <aside className={`book-library-side has-project-trash${libraryCollapsed ? " is-collapsed" : ""}`} aria-label="선생님이 준비한 활동과 자료">
+      <details className="classroom-management" open={editingProject || undefined}><summary>프로젝트 관리 · 순서 편집 · 휴지통</summary>
+      <aside className="book-library-side has-project-trash" aria-label="선생님이 준비한 활동과 자료">
         <button
           type="button"
           className="book-library-collapse"
@@ -388,7 +396,7 @@ export default function BookWorkspace({
           <span aria-hidden="true">{libraryCollapsed ? "»" : "«"}</span>
         </button>
 
-        <div className="book-library-content" aria-hidden={libraryCollapsed ? "true" : undefined}>
+        <div className="book-library-content">
           <div className="book-library-title">
             <div>
               <h2>{editingProject ? "프로젝트 구성" : "프로젝트"}</h2>
@@ -442,15 +450,12 @@ export default function BookWorkspace({
           disabled={!liveProjectReady || editingProject || savingProject || exportingProject}
           onRestored={onToast} />
       </aside>
+      </details>
       )}
 
-      <section className="book-library-main" aria-label="개발자실 메인 화면">
-        {typeof header === "function" ? header(isTeacher && classPurpose === "internal" && project?.id && project.steps?.length > 0 ? (
-          <BookPortfolioButton key={JSON.stringify([project.id, project.version, activeClassId, user?.uid, isTeacher, reviewStudent?.uid, className])}
-            project={project} participant={reviewStudent} classId={activeClassId} className={className} user={user}
-            entriesByActivity={entriesByActivity} disabled={!liveProjectReady || editingProject || savingProject} />
-        ) : null) : header}
         <BookPersonalDashboard
+          lessonSidebar={sidebar}
+          lessonAutoOpenRequest={studentPanelAutoOpen}
           participants={participants}
           classPurpose={classPurpose}
           classId={activeClassId}

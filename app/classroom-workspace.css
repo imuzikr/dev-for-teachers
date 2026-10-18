@@ -1,0 +1,136 @@
+.classroom-workspace-layout.book-library-layout { display: flex; flex-direction: column; overflow: auto; background: var(--page-bg, #f6f7f9); min-height: 0; }
+.classroom-workspace-layout > .book-library-main { flex: 1; min-height: 0; overflow: visible; padding: 0; }
+.classroom-management { flex: none; border-bottom: 1px solid var(--border); background: var(--card-bg); }
+.classroom-management > summary { cursor: pointer; padding: 12px 24px; color: var(--primary-dark, #3564c4); font-size: 13px; min-height: 44px; }
+.classroom-management > .book-library-side { width: 100%; max-height: 65vh; overflow: auto; border: 0; }
+.classroom-management .book-library-collapse { display: none; }
+.classroom-management .book-library-content { display: block; width: 100%; }
+.classroom-workspace-layout > .book-help-drawer { position: fixed; right: 0; bottom: 0; z-index: 40; max-height: 75vh; }
+.classroom-lesson { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 0; flex: 1; height: 100%; }
+.classroom-outline-region { background: #f8f9fb; border-right: 1px solid var(--border); overflow-y: auto; min-height: 0; display: flex; flex-direction: column; }
+.classroom-outline { padding: 20px 12px; }
+.classroom-outline-title { display: flex; justify-content: space-between; padding: 0 12px 20px; font-size: 15px; }
+.classroom-outline-title > span { font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+.classroom-outline-group { border-top: 1px solid var(--border); padding: 8px 0; }
+.classroom-outline button { background: transparent; border: 1px solid transparent; width: 100%; text-align: left; border-radius: 8px; color: var(--text); cursor: pointer; min-height: 44px; }
+.classroom-step-trigger { display: grid; gap: 4px; padding: 12px; }
+.classroom-step-trigger small { color: var(--primary-dark, #3564c4); font-size: 11px; font-weight: 700; letter-spacing: .07em; }
+.classroom-step-trigger strong { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.classroom-step-trigger > span { color: var(--muted); font-size: 12px; }
+.classroom-outline-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) 16px; gap: 8px; align-items: center; padding: 12px 8px; }
+.classroom-outline-item strong { font-size: 13px; line-height: 1.65; font-weight: 500; display: block; overflow-wrap: anywhere; }
+.classroom-outline-item small { color: var(--muted); font-size: 11px; display: block; }
+.classroom-item-symbol { border-radius: 8px; background: #e7efff; color: var(--primary); width: 28px; height: 28px; display: grid; place-items: center; }
+.classroom-item-symbol.is-resource { background: #fff0dc; color: #b66824; }
+.classroom-outline button:hover { background: #edf1f7; }
+.classroom-outline button.is-selected { background: var(--primary-soft, #e7efff); border-color: #d0defa; }
+.classroom-outline-item.is-selected strong { color: #2857b5; font-weight: 700; }
+.classroom-item-done { color: #36734b; }
+.classroom-outline-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+.classroom-outline-footer > button { width: 100%; }
+.classroom-detail-region { min-width: 0; display: flex; flex-direction: column; overflow: auto; }
+.classroom-detail-content { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 28px 32px 40px; }
+.classroom-lesson-banner { padding: 28px 32px; background: linear-gradient(110deg, var(--lesson-accent, #ed9548), #f6c68e); border-radius: 16px; color: #fff; }
+.classroom-lesson-banner small { font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.classroom-lesson-banner h2 { font-size: 28px; margin: 8px 0; overflow-wrap: anywhere; }
+.classroom-lesson-banner p { margin: 0; opacity: .95; }
+.classroom-step-description, .classroom-overview-items { margin-top: 24px; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+.classroom-step-description h3, .classroom-overview-items h3 { margin: 0 0 16px; font-size: 19px; }
+.classroom-step-description p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.85; }
+.classroom-muted { color: var(--muted); }
+.classroom-overview-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) 32px 20px; align-items: center; gap: 12px; width: 100%; border: 1px solid var(--border); background: #fff; border-radius: 12px; padding: 20px 16px; margin-top: 12px; text-align: left; color: var(--text); cursor: pointer; }
+.classroom-overview-row:hover { border-color: var(--primary); background: var(--primary-soft); }
+.classroom-overview-row > span:first-child { color: var(--primary-dark, #3564c4); font-size: 13px; font-weight: 700; }
+.classroom-overview-row strong { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.classroom-overview-row small { color: var(--muted); }
+.classroom-empty { padding: 32px; color: var(--muted); line-height: 1.8; }
+.classroom-lesson-navigation { display: flex; justify-content: center; align-items: center; gap: 24px; padding: 16px 24px; background: var(--card-bg); border-top: 1px solid var(--border); }
+.classroom-lesson-navigation span { font-size: 13px; color: var(--muted); }
+.classroom-item-tools .book-dashboard-head, .classroom-item-tools .book-personal-grid, .classroom-item-tools .book-step-guidance { display: none; }
+.classroom-item-tools .book-personal-dashboard { padding: 0; background: transparent; border: 0; }
+.classroom-item-tools .book-personal-detail-list { display: block; }
+.classroom-item-tools .book-personal-activity-card { margin: 0 0 16px; min-height: 0; }
+.classroom-item-tools .book-personal-card-body { display: none; }
+.classroom-item-tools .book-main-add-item { width: 100%; min-height: 44px; margin-bottom: 16px; }
+.classroom-student-detail > .student-activity-side.is-inline { display: block; width: 100%; height: auto; max-height: none; background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: visible; position: static; }
+.classroom-student-detail .book-library-collapse { display: none; }
+.classroom-student-detail .student-activity-panel-content { padding: 0; overflow: visible; height: auto; }
+.classroom-student-detail .student-activity-panel-item { padding: 0; }
+.classroom-student-detail .student-activity-detail, .classroom-teacher-detail .student-activity-detail { border-radius: 16px; background: #fff; border: 1px solid var(--border); overflow: hidden; }
+.classroom-student-detail .book-personal-expand-head, .classroom-teacher-detail .book-personal-expand-head { padding: 24px; }
+.classroom-student-detail .book-personal-expand-head h3, .classroom-teacher-detail .book-personal-expand-head h3 { font-size: 24px; line-height: 1.6; overflow-wrap: anywhere; }
+.classroom-student-detail .book-personal-expand-body, .classroom-teacher-detail .book-personal-expand-body { padding: 24px; max-height: none; overflow: visible; }
+.classroom-student-detail .book-personal-expand-content, .classroom-teacher-detail .book-personal-expand-content { font-size: 15px; line-height: 1.85; max-height: none; overflow: visible; }
+.classroom-outline-toggle { display: none; }
+.classroom-lesson [hidden], .classroom-source-cards[hidden] { display: none !important; }
+@media (min-width: 768px) {
+  .classroom-workspace-layout.book-library-layout { overflow: hidden; }
+  .classroom-workspace-layout > .book-library-main { display: flex; flex-direction: column; overflow: hidden; }
+  .classroom-outline-region, .classroom-detail-region { max-height: 100%; }
+}
+@media (max-width: 767px) {
+  .classroom-lesson { display: block; height: auto; }
+  .classroom-outline-toggle { display: flex; width: calc(100% - 32px); margin: 16px; justify-content: space-between; }
+  .classroom-outline-region { display: none; border-right: 0; border-bottom: 1px solid var(--border); max-height: none; }
+  .classroom-outline-region.is-open { display: flex; }
+  .classroom-detail-region { overflow: visible; }
+  .classroom-detail-content { padding: 8px 16px 24px; }
+  .classroom-lesson-banner { padding: 24px; }
+  .classroom-lesson-banner h2 { font-size: 23px; }
+  .classroom-step-description, .classroom-overview-items { padding: 20px; }
+  .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 20px; padding: 16px 12px; gap: 8px; }
+  .classroom-overview-row small { display: none; }
+  .classroom-student-detail .book-personal-expand-head, .classroom-teacher-detail .book-personal-expand-head,
+  .classroom-student-detail .book-personal-expand-body, .classroom-teacher-detail .book-personal-expand-body { padding: 16px; }
+  .classroom-lesson-navigation { gap: 16px; padding: 16px; }
+}
+.classroom-workspace-layout > .book-help-drawer { width: min(380px, calc(100vw - 32px)); height: min(640px, 75vh); right: 16px; bottom: 16px; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px #192a461f; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed { width: 104px; height: 48px; max-height: 48px; background: var(--primary-dark, #3564c4); border: 0; border-radius: 24px; overflow: hidden; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-content { display: none; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle { width: 104px; min-height: 48px; height: 48px; padding: 8px 12px; writing-mode: horizontal-tb; color: white; background: transparent; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.classroom-lesson-banner h2 { color: #352619; }
+.classroom-lesson-banner small, .classroom-lesson-banner p { color: #49311e; opacity: 1; }
+.classroom-item-tools .book-project-flow-overview, .classroom-item-tools .book-project-flow-selected, .classroom-item-tools .book-personal-step-section, .classroom-item-tools .book-project-flow-detail-list { display: block; padding: 0; margin: 0; min-height: 0; height: auto; }
+.classroom-item-tools .book-personal-activity-card { display: flex; width: 100%; min-height: 0; padding: 8px 12px; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 16px; border-radius: 12px; }
+.classroom-item-tools .book-personal-activity-card > header { flex: 1; padding: 0; min-width: 0; }
+.classroom-item-tools .book-personal-activity-copy, .classroom-item-tools .book-personal-activity-order, .classroom-item-tools .book-main-add-item { display: none; }
+.classroom-item-tools .book-personal-card-head-actions { margin-left: 0; }
+.classroom-item-tools .book-personal-activity-card > footer { flex: 0 1 300px; width: auto; margin: 0; padding: 0; border: 0; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle::after { content: "도움말"; font-size: 13px; font-weight: 700; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-rail-label { display: none; }
+.classroom-workspace-layout > .book-help-drawer:not(.is-collapsed) .book-help-toggle { position: absolute; top: 8px; right: 8px; min-width: 44px; width: 44px; height: 44px; border-radius: 8px; z-index: 1; }
+.classroom-workspace-layout > .book-help-drawer:not(.is-collapsed) .book-help-content { padding-top: 56px; height: 100%; overflow-y: auto; }
+.classroom-item-tools .book-personal-activity-card.is-compact { height: auto; min-height: 64px; flex-direction: row; box-sizing: border-box; }
+.classroom-item-tools .book-personal-activity-card > header { flex-basis: auto; }
+@media (max-width: 767px) {
+  .classroom-item-tools .book-personal-activity-card.is-compact { min-width: 0; }
+  .classroom-item-tools .book-personal-activity-card > footer { flex-basis: 100%; }
+}
+.classroom-workspace-layout > .book-help-drawer { padding: 0; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle { position: static; margin: 0; max-width: none; max-height: none; }
+.classroom-workspace-layout > .book-help-drawer:not(.is-collapsed) .book-help-toggle { left: auto; max-width: none; max-height: none; }
+.classroom-workspace-layout > .book-help-drawer:not(.is-collapsed) .book-help-content { padding: 56px 20px 20px; }
+.books-main--split .classroom-workspace-layout > .book-help-drawer.is-collapsed { padding: 0; width: 104px; min-width: 104px; max-width: 104px; height: 48px; min-height: 48px; max-height: 48px; box-sizing: border-box; }
+.books-main--split .classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle { padding: 8px 12px; width: 104px; min-width: 104px; max-width: 104px; height: 48px; min-height: 48px; max-height: 48px; position: static; margin: 0; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed { pointer-events: none; }
+.classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle { pointer-events: auto; }
+.books-main--split .classroom-workspace-layout > .book-help-drawer.is-collapsed { position: static; inset: auto; align-self: flex-end; flex: 0 0 48px; margin: 8px 16px; z-index: auto; pointer-events: auto; }
+.classroom-workspace-layout .classroom-item-tools .book-personal-activity-card.is-compact { max-width: none; width: 100%; }
+.classroom-workspace-layout .classroom-item-tools .book-personal-detail-list { display: block; grid-template-columns: minmax(0, 1fr); }
+.classroom-workspace-layout .book-library-main > .classroom-management { flex: none; max-height: calc(40vh + 44px); overflow-y: auto; }
+.classroom-workspace-layout .classroom-management > summary { position: sticky; top: 0; z-index: 1; background: var(--card-bg); }
+.classroom-workspace-layout .classroom-management > .book-library-side { width: 100%; height: auto; max-height: 40vh; min-height: 0; padding: 16px 24px; overflow: auto; }
+.classroom-workspace-layout .classroom-management .book-library-content { width: 100%; }
+.books-main--split .classroom-workspace-layout.book-library-layout { width: 100%; min-width: 0; max-width: 100%; }
+.classroom-workspace-layout .book-library-main, .classroom-workspace-layout .classroom-lesson, .classroom-workspace-layout .classroom-detail-region { min-width: 0; max-width: 100%; }
+.classroom-workspace-layout .classroom-student-detail > .student-activity-side.is-inline { padding: 0; min-width: 0; height: auto; min-height: 0; max-height: none; scrollbar-gutter: auto; }
+.classroom-workspace-layout .classroom-student-detail .student-activity-panel-content,
+.classroom-workspace-layout .classroom-student-detail .student-activity-panel-item { width: 100%; min-width: 0; max-width: none; padding: 0; box-sizing: border-box; }
+.classroom-workspace-layout .classroom-student-detail .student-activity-detail { width: 100%; min-width: 0; max-width: none; padding: 0; box-sizing: border-box; border: 0; }
+.classroom-workspace-layout .classroom-student-detail .book-personal-expand-head,
+.classroom-workspace-layout .classroom-student-detail .book-personal-expand-body { width: 100%; min-width: 0; max-width: none; box-sizing: border-box; }
+@media (max-width: 767px) {
+  .classroom-workspace-layout .classroom-lesson-navigation { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); width: 100%; min-width: 0; gap: 12px; padding: 16px; box-sizing: border-box; }
+  .classroom-workspace-layout .classroom-lesson-navigation > button { width: 100%; min-width: 0; padding: 10px 12px; }
+  .classroom-workspace-layout .classroom-lesson-navigation > span { white-space: nowrap; }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ClassroomLesson from "./ClassroomLesson";
 import BookPersonalDetail from "./BookPersonalDetail";
 import BookProjectFlowOverview from "./BookProjectFlowOverview";
 import BookStepGuidance from "./BookStepGuidance";
@@ -10,7 +11,7 @@ import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from
 import { participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
-export default function BookPersonalDashboard({ classPurpose = "training", classId, className = "", portfolioDisabled = false, participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
+function DashboardContent({ visibleItemKey, participantsOnly = false, classPurpose = "training", classId, className = "", portfolioDisabled = false, participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
   const [localSelectedUid, setLocalSelectedUid] = useState(null);
   const selectedUid = selectedParticipantUid === undefined ? localSelectedUid : selectedParticipantUid;
   const setSelectedUid = onSelectParticipant ?? setLocalSelectedUid;
@@ -49,17 +50,7 @@ export default function BookPersonalDashboard({ classPurpose = "training", class
   if (!isTeacher && ownParticipant) {
     return (
       <>
-        <nav className="book-student-navigation" aria-label="개인 카드와 Step 선택">
-          <button type="button" className="btn-outline" aria-pressed={!activeStepSection} onClick={() => onSelectStep?.(null)}>← 개인 카드</button>
-          <div className="books-step-tabs books-step-tabs--student" aria-label="프로젝트 Step 선택">
-            {sections.map((section, index) => <button type="button" key={section.id}
-              className={activeStepSection?.id === section.id ? "is-active" : ""}
-              aria-pressed={activeStepSection?.id === section.id} onClick={() => onSelectStep?.(section.id)}>
-              STEP {index + 1}
-            </button>)}
-            {portfolioButton}
-          </div>
-        </nav>
+
         <div className="book-personal-selected-view" hidden={!activeStepSection}>
           <BookStepGuidance step={activeStepSection} />
           <BookPersonalDetail allowStudentImages={internalProject} selected={ownParticipant} sections={sections} visibleStepId={activeStepSection?.id ?? null} activities={activities} entriesByActivity={entriesByActivity} selectedProgress={ownProgress} itemCount={itemCount} user={user} isTeacher={false} showNavigation={false} onBack={() => onSelectStep?.(null)} onConfirmItem={onConfirmItem} saveDashboardText={saveDashboardText} />
@@ -120,10 +111,11 @@ export default function BookPersonalDashboard({ classPurpose = "training", class
   return (
     <section className="book-personal-dashboard" aria-label={isTeacher ? "참여자 개인 카드" : "나의 Step 카드"}>
       <BookStepGuidance step={activeStepSection} />
-      {isTeacher && (
+      {isTeacher && !participantsOnly && (
         <BookProjectFlowOverview
           project={project}
           sections={sections}
+          visibleItemKey={visibleItemKey}
           itemCount={itemCount}
           isTeacher={isTeacher}
           onToggleItemLock={onToggleProjectItemLock}
@@ -236,4 +228,16 @@ export default function BookPersonalDashboard({ classPurpose = "training", class
 
     </section>
   );
+}
+
+export default function BookPersonalDashboard(props) {
+  const sections = props.sections ?? bookDetailSections(props.project, props.activities);
+  const selectedStepId = props.selectedStepId ?? sections[0]?.id;
+  const participant = props.participants.find(row => row.uid === props.user?.uid) ?? props.user;
+  const portfolio = !props.isTeacher && props.classPurpose === "internal" && props.project?.steps?.length > 0 ?
+    <BookPortfolioButton project={props.project} participant={participant} classId={props.classId} className={props.className} user={props.user} entriesByActivity={props.entriesByActivity} disabled={props.portfolioDisabled} /> : null;
+  return <ClassroomLesson autoOpenRequest={props.lessonAutoOpenRequest} portfolio={portfolio} sections={sections} selectedStepId={selectedStepId} onSelectStep={props.onSelectStep}
+    isTeacher={props.isTeacher} user={props.user} progressByUser={props.progressByUser}
+    sidebar={props.lessonSidebar} renderAddItem={props.renderAddItem}
+    renderDashboard={({ itemKey, participantsOnly, selectStep }) => <DashboardContent {...props} onSelectStep={selectStep} selectedStepId={participantsOnly && !props.isTeacher ? null : selectedStepId} visibleItemKey={itemKey} participantsOnly={participantsOnly} />} />;
 }

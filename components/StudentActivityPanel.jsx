@@ -8,7 +8,7 @@ export function useStudentActivityPanel() {
   return useContext(PanelContext);
 }
 
-export default function StudentActivityPanel({ children, enabled, readOnly = false, scope = "", records = [], recordsReady = true, draftScope = scope, saveTemplate, saveChecklist, itemKeys, autoOpenRequest = null }) {
+export default function StudentActivityPanel({ children, enabled, inline = false, readOnly = false, scope = "", records = [], recordsReady = true, draftScope = scope, saveTemplate, saveChecklist, itemKeys, autoOpenRequest = null }) {
   const [selectedKey, setSelectedKey] = useState(null);
   const [requestedKey, setRequestedKey] = useState(null);
   const [collapsed, setCollapsed] = useState(true);
@@ -34,8 +34,8 @@ export default function StudentActivityPanel({ children, enabled, readOnly = fal
   }, [scope, readOnly]);
 
   useEffect(() => {
-    if (requestedKey !== nextKey) setRequestedKey(nextKey);
-    if (selectedKey && !visibleKey) setSelectedKey(null);
+    if (requestedKey !== nextKey) setRequestedKey(current => current === requestedKey ? nextKey : current);
+    if (selectedKey && !visibleKey) setSelectedKey(current => current === selectedKey ? null : current);
     if (!readOnly && restored.current) {
       try { localStorage.setItem(`student-panel:${scope}`, JSON.stringify({ selectedKey: nextKey, collapsed })); }
       catch { /* In-memory panel state still works without browser storage. */ }
@@ -44,8 +44,8 @@ export default function StudentActivityPanel({ children, enabled, readOnly = fal
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => {
       setSelectedKey(nextKey);
-      if (target) target.closest("aside").scrollTop = 0;
-    }, switching && !collapsed && !reduceMotion ? 120 : 0);
+      if (target?.closest("aside")) target.closest("aside").scrollTop = 0;
+    }, switching && !inline && !collapsed && !reduceMotion ? 120 : 0);
     return () => window.clearTimeout(timer);
   }, [requestedKey, nextKey, selectedKey, visibleKey, switching, collapsed, scope, target, readOnly]);
 
@@ -71,11 +71,11 @@ export default function StudentActivityPanel({ children, enabled, readOnly = fal
   return (
     <PanelContext.Provider value={value}>
       {children({ collapsed, sidebar: enabled ? (
-        <aside className={`book-library-side student-activity-side${collapsed ? " is-collapsed" : ""}`} aria-label="선택한 활동과 자료">
+        <aside className={`book-library-side student-activity-side${inline ? " is-inline" : ""}${!inline && collapsed ? " is-collapsed" : ""}`} aria-label="선택한 활동과 자료">
           <button type="button" className="book-library-collapse" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed} aria-label={collapsed ? "활동 패널 펼치기" : "활동 패널 접기"} title={collapsed ? "활동 패널 펼치기" : "활동 패널 접기"}>
             <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
           </button>
-          <div className="student-activity-panel-content" inert={collapsed} aria-hidden={collapsed}>
+          <div className="student-activity-panel-content" inert={!inline && collapsed} aria-hidden={!inline && collapsed}>
             {readOnly && itemKeys.size === 0 && <p className="book-library-empty">이 Step에 등록된 활동과 자료가 없습니다.</p>}
             <div className={`student-activity-panel-item${switching ? " is-switching" : ""}`} inert={switching} ref={setTarget} />
           </div>

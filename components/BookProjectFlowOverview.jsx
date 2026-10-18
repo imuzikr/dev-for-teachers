@@ -23,7 +23,7 @@ function OverviewHeader({ project, sections, itemCount, activityCount, resourceC
   );
 }
 
-export default function BookProjectFlowOverview({
+export default function BookProjectFlowOverview({ visibleItemKey,
   project,
   sections,
   itemCount,
@@ -170,6 +170,7 @@ export default function BookProjectFlowOverview({
               {section.items.length > 0 || renderAddItem ? (
                 <div className="book-personal-detail-list book-project-flow-detail-list" aria-label={`${section.title} 활동과 자료`}>
                   {section.items.map((detailItem, index) => (
+                    visibleItemKey && `${detailItem.kind}:${detailItem.id}` !== visibleItemKey ? null :
                     detailItem.kind === "resource" ? (
                       <BookPersonalResourceCard
                         key={`resource:${detailItem.id ?? `${section.id}-${index}`}`}

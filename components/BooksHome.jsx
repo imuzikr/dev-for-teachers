@@ -6,7 +6,8 @@ import { setSelectedClassId } from "@/lib/classroom";
 import { getClassPurpose } from "@/lib/classPurpose";
 import BookClassroomTools from "./BookClassroomTools";
 import BookWorkspace from "./BookWorkspace";
-import { IconDeveloperRoom } from "./IconDeveloperRoom";
+import ClassroomCatalog from "./ClassroomCatalog";
+import "@/app/classroom-catalog.css";
 
 export default function BooksHome(props) {
   const {
@@ -31,11 +32,34 @@ export default function BooksHome(props) {
   const stepScope = JSON.stringify([classId, displayedProject?.id, user?.uid, admin]);
   const [stepSelection, setStepSelection] = useState({ scope: stepScope, id: undefined });
   const setSelectedStepId = useCallback((id) => setStepSelection({ scope: stepScope, id }), [stepScope]);
+  const [openedClassId, setOpenedClassId] = useState(null);
   const [changingClass, setChangingClass] = useState(false);
+  const catalogClasses = useMemo(() => admin ? myClasses : classes.filter((item) => membershipIds.includes(item.id) && !item.archived), [admin, myClasses, classes, membershipIds]);
+  const openClass = useCallback((id) => {
+    if (deletingProject) return;
+    setOpenedClassId(id);
+    if (admin) onSelectTeacherClass(id);
+    setSelectedClassId(id);
+  }, [admin, deletingProject, onSelectTeacherClass]);
+  const returnToCatalog = useCallback(() => {
+    if (deletingProject) return;
+    setOpenedClassId(null);
+    setProgressOpen(false);
+  }, [deletingProject]);
+  const showWorkspace = openedClassId !== null;
+  const workspaceReady = openedClassId === classId && liveProjectReady !== false;
+  useEffect(() => {
+    if (openedClassId && !catalogClasses.some((item) => item.id === openedClassId)) setOpenedClassId(null);
+  }, [catalogClasses, classId, openedClassId]);
   const [progressOpen, setProgressOpen] = useState(false);
   const closeProgress = useCallback(() => setProgressOpen(false), []);
   useEffect(() => { setProgressOpen(false); }, [classId, displayedProject?.id, admin]);
   const closeClassChange = useCallback(() => setChangingClass(false), []);
+  const joinClass = useCallback(async (code) => {
+    const joined = await onJoinClass(code);
+    if (joined) setOpenedClassId(null);
+    return joined;
+  }, [onJoinClass]);
 
   useEffect(() => {
     setStepSelection((current) => {
@@ -54,82 +78,54 @@ export default function BooksHome(props) {
   const classroomTools = (
     <BookClassroomTools user={user} isTeacher={admin} classId={classId} currentClass={currentClass}
       classes={myClassesAll} allClasses={allTeacherClasses ?? myClassesAll} classPurpose={classPurpose}
-      roster={roster} onSelectClass={onSelectTeacherClass} onToast={onToast}
-      onOpenProgress={() => setProgressOpen(true)} />
+      roster={roster} onSelectClass={openClass} onToast={onToast}
+      onOpenProgress={showWorkspace ? () => setProgressOpen(true) : undefined} />
   );
 
   return (
-    <main className={`books-main books-main--split${admin ? "" : " books-main--student"}`}>
-      <BookWorkspace
-        liveProjectReady={liveProjectReady}
+    <main className={showWorkspace
+      ? `books-main books-main--split classroom-workspace${admin ? "" : " books-main--student"}`
+      : "books-main classroom-catalog"}>
+      {!showWorkspace ? <>
+        {topNav}
+        <ClassroomCatalog classes={catalogClasses} currentClass={currentClass} isTeacher={admin}
+          classPurpose={classPurpose} disabled={deletingProject} tools={classroomTools}
+          onOpen={openClass} onJoin={onJoinClass ? () => setChangingClass(true) : null} />
+      </> : <BookWorkspace
+        key={openedClassId}
+        liveProjectReady={workspaceReady}
         header={(portfolioAction) => (
           <>
             {topNav}
-            <div className="books-content-head">
-              <div className="books-head">
-                <div className="books-head-main">
-                  <h1><IconDeveloperRoom size={26} /> 개발자실</h1>
-                  {admin && myClasses.length > 0 && (
-                    <select className="class-select" disabled={deletingProject} value={classId ?? ""} onChange={(event) => {
-                      onSelectTeacherClass(event.target.value);
-                      setSelectedClassId(event.target.value);
-                    }}>
-                      {myClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                    </select>
-                  )}
-                  {!admin && membershipIds.length > 1 ? (
-                    <select className="class-select" value={classId ?? ""} onChange={(event) => setSelectedClassId(event.target.value)}>
-                      {membershipIds.map((id) => <option key={id} value={id}>{classes.find((item) => item.id === id)?.name ?? "우리 반"}</option>)}
-                    </select>
-                  ) : !admin && currentClass && <span className="books-class-name">{currentClass.name}</span>}
-                  {admin ? classroomTools : <div className="books-student-class-actions">
-                    {onJoinClass && <button type="button" className="btn-outline books-class-change" onClick={() => setChangingClass(true)}>반 변경</button>}
-                    {classroomTools}
-                  </div>}
-                </div>
-                {admin && classId && (
-                  <button type="button" className="btn-primary books-project-create" disabled={savingProject || liveProjectReady === false} onClick={() => onEditProject(false)}>
-                    {project ? "프로젝트 편집" : "프로젝트 만들기"}
-                  </button>
-                )}
+            <div className="classroom-workspace-head">
+              <button type="button" className="btn-outline" disabled={deletingProject} aria-label="클래스 목록" onClick={returnToCatalog}>← 클래스 목록</button>
+              <div className="classroom-workspace-title">
+                <h1>{workspaceReady ? currentClass?.name : "클래스 불러오는 중..."}</h1>
+                <p>{workspaceReady ? displayedProject?.title || "활동과 자료" : "선택한 클래스의 내용을 준비하고 있어요."}</p>
               </div>
-              {admin && stepTabs.length > 0 && (
-                <div className="books-step-switcher-row">
-                  <div className="books-step-tabs books-step-tabs--teacher" aria-label="프로젝트 Step 선택">
-                    {stepTabs.map((step) => {
-                      const stepId = step.id;
-                      return (
-                        <button
-                          type="button"
-                          className={activeStepId === stepId ? "is-active" : ""}
-                          key={stepId}
-                          aria-pressed={activeStepId === stepId}
-                          onClick={() => setSelectedStepId(stepId)}
-                        >
-                          STEP {step.index + 1}
-                        </button>
-                      );
-                    })}
-                    {portfolioAction}
-                  </div>
-                </div>
-              )}
-
-              {!admin && <p className="books-intro">개발 활동에서 떠올린 생각을 활동과 자료로 정리하고{" "}<span className="keep-together">함께 살펴볼 수 있어요.</span></p>}
+              <div className="classroom-workspace-actions">
+                {workspaceReady && classroomTools}
+                {!admin && onJoinClass && <button type="button" className="btn-outline books-class-change" onClick={() => setChangingClass(true)}>반 변경</button>}
+                {admin && classId && <button type="button" className="btn-primary books-project-create"
+                  disabled={savingProject || !workspaceReady} onClick={() => onEditProject(false)}>
+                  {project ? "프로젝트 편집" : "프로젝트 만들기"}
+                </button>}
+                {workspaceReady && portfolioAction}
+              </div>
             </div>
           </>
         )}
-        activities={visibleActivities}
-        participants={participants}
+        activities={workspaceReady ? visibleActivities : []}
+        participants={workspaceReady ? participants : []}
         progressOpen={progressOpen}
         onCloseProgress={closeProgress}
-        className={currentClass?.name ?? ""}
+        className={workspaceReady ? currentClass?.name ?? "" : ""}
         user={user}
         isTeacher={admin}
-        hasClass={!!classId}
-        activeClassId={classId}
+        hasClass={!!classId && openedClassId === classId}
+        activeClassId={openedClassId === classId ? classId : null}
         classPurpose={currentClass ? getClassPurpose(currentClass) : classPurpose}
-        project={displayedProject}
+        project={workspaceReady ? displayedProject : null}
         editingProject={editingProject}
         projectEditorKey={projectEditorKey}
         appendProjectStep={appendProjectStep}
@@ -149,8 +145,8 @@ export default function BooksHome(props) {
         onToast={onToast}
         onProjectDeleted={onProjectDeleted}
         onProjectDeletionPending={onProjectDeletionPending}
-      />
-      {!admin && changingClass && <ClassChangeModal joining={joiningClass} onJoin={onJoinClass} onClose={closeClassChange} />}
+      />}
+      {!admin && changingClass && <ClassChangeModal joining={joiningClass} onJoin={joinClass} onClose={closeClassChange} />}
     </main>
   );
 }

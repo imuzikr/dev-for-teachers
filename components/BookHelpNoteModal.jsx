@@ -4,7 +4,7 @@ import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
-import BookHelpSections from "./BookHelpSections";
+import ClassroomHelpReader from "./ClassroomHelpReader";
 
 export default function BookHelpNoteModal({ note, onClose }) {
   const dialogRef = useRef(null);
@@ -73,7 +73,7 @@ export default function BookHelpNoteModal({ note, onClose }) {
               <strong>{resourceLinkLabel(href)}</strong>
             </a>
           )}
-          <BookHelpSections sections={note.sections} expanded />
+          <ClassroomHelpReader key={note.id} sections={note.sections} />
         </div>
       </section>
     </div>,
