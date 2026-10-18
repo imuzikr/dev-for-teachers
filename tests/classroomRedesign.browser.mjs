@@ -114,6 +114,8 @@ async function verifyTeacherOutline(page) {
     assert.ok(await page.locator(".classroom-overview-row").first().evaluate(node => node.getBoundingClientRect().height >= 88), "item rows have STEP-card height");
     const palette = await page.locator(".classroom-item-detail").evaluate(node => ({ green: getComputedStyle(node).getPropertyValue("--primary").trim(), orange: getComputedStyle(node).getPropertyValue("--teacher-orange").trim() }));
     assert.deepEqual(palette, { green: "#2f6f3e", orange: "#b45b20" });
+    const actionColors = await page.locator(".classroom-item-tools .book-teacher-card-actions > button").evaluateAll(buttons => buttons.map(button => ({ background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color })));
+    assert.deepEqual(actionColors, Array.from({ length: 2 }, () => ({ background: "rgb(237, 246, 237)", color: "rgb(36, 85, 47)" })));
     await capture(page, `teacher-step-selected-detail-${width}`, width);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
