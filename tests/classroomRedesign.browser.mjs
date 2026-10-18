@@ -83,7 +83,7 @@ async function verifyTeacherOutline(page) {
   assert.equal(await outline.locator(".classroom-step-trigger").count(), 2);
   assert.equal(await outline.locator(".classroom-outline-item").count(), 0);
   assert.equal(await outline.getByText(/개 항목/).count(), 0);
-  for (const width of [1280, 768, 375]) {
+  for (const width of [1900, 1280, 768, 375]) {
     await page.setViewportSize({ width, height: 900 });
     const toggle = page.getByRole("button", { name: "수업 차례 펼치기", exact: true });
     if (await toggle.isVisible()) await toggle.click();
@@ -97,6 +97,9 @@ async function verifyTeacherOutline(page) {
       const list = await page.locator(".classroom-overview-items").boundingBox();
       const detail = await page.getByRole("region", { name: "활동·자료 상세", exact: true }).boundingBox();
       assert.ok(list.x + list.width <= detail.x && Math.abs(list.y - detail.y) < 2, "list and selected detail share two columns");
+      const content = await page.locator(".classroom-detail-content").boundingBox();
+      const region = await page.locator(".classroom-detail-region").boundingBox();
+      assert.ok(content.width >= region.width - 2, "teacher content uses full available width");
     }
     await page.locator(".classroom-overview-row").filter({ hasText: "발표와 상호 점검 안내" }).click();
     await page.locator('.classroom-overview-row[aria-current="page"]').filter({ hasText: "발표와 상호 점검 안내" }).waitFor();
@@ -108,6 +111,9 @@ async function verifyTeacherOutline(page) {
     await page.locator(".classroom-overview-row").filter({ hasText: "안전한 도구 설계 체크리스트" }).click();
     await page.locator(".classroom-teacher-detail").waitFor();
     if (await toggle.isVisible()) await toggle.click();
+    assert.ok(await page.locator(".classroom-overview-row").first().evaluate(node => node.getBoundingClientRect().height >= 88), "item rows have STEP-card height");
+    const palette = await page.locator(".classroom-item-detail").evaluate(node => ({ green: getComputedStyle(node).getPropertyValue("--primary").trim(), orange: getComputedStyle(node).getPropertyValue("--teacher-orange").trim() }));
+    assert.deepEqual(palette, { green: "#2f6f3e", orange: "#b45b20" });
     await capture(page, `teacher-step-selected-detail-${width}`, width);
   }
   await page.setViewportSize({ width: 1280, height: 900 });

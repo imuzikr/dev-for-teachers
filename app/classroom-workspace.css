@@ -136,13 +136,13 @@
 }
 
 .classroom-item-detail { min-width: 0; }
-.is-teacher-split.classroom-detail-content { display: grid; grid-template-columns: minmax(240px, .4fr) minmax(0, 1fr); gap: 24px; align-content: start; align-items: start; }
+.is-teacher-split.classroom-detail-content { max-width: none; padding-inline: 24px; display: grid; grid-template-columns: minmax(280px, .35fr) minmax(0, 1fr); gap: 24px; align-content: start; align-items: start; }
 .is-teacher-split .classroom-lesson-overview { display: contents; }
 .is-teacher-split .classroom-lesson-banner, .is-teacher-split .classroom-step-description { grid-column: 1 / -1; margin: 0; }
 .is-teacher-split .classroom-overview-items { grid-column: 1; grid-row: 3; min-width: 0; margin: 0; padding: 16px; }
-.is-teacher-split .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 28px; gap: 8px; padding: 12px; min-height: 44px; border-radius: var(--radius-btn); }
+.is-teacher-split .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 28px; gap: 8px; padding: 16px; min-height: 88px; border-radius: var(--radius-btn); }
 .is-teacher-split .classroom-overview-row > span:last-child { display: none; }
-.is-teacher-split .classroom-overview-row strong { font-size: 13px; word-break: keep-all; }
+.is-teacher-split .classroom-overview-row strong { font-size: 15px; word-break: keep-all; }
 .is-teacher-split .classroom-overview-row small { font-size: 11px; }
 .is-teacher-split .classroom-overview-row.is-selected { background: var(--primary-soft); border-color: var(--primary-dark); }
 .is-teacher-split .classroom-overview-row.is-selected strong { color: var(--primary-dark); }
@@ -151,4 +151,25 @@
 @media (max-width: 1099px) {
   .is-teacher-split.classroom-detail-content { grid-template-columns: minmax(0, 1fr); }
   .is-teacher-split .classroom-overview-items, .is-teacher-split > .classroom-item-detail { grid-column: 1; grid-row: auto; }
+}
+
+.is-teacher-split > .classroom-item-detail {
+  --teacher-orange: #b45b20;
+  --teacher-orange-soft: #fff7ed;
+  --primary: #2f6f3e;
+  --primary-dark: #24552f;
+  --primary-hover: #24552f;
+  --primary-soft: #edf6ed;
+  --primary-light: var(--primary-soft);
+  --border: #edcfae;
+  --focus-ring-primary: 0 0 0 3px rgba(47, 111, 62, .22);
+}
+.is-teacher-split .classroom-teacher-detail .book-personal-expand-head { background: var(--teacher-orange-soft); border-top: 4px solid var(--teacher-orange); }
+.is-teacher-split .classroom-teacher-detail .book-personal-expand-head > span { color: var(--teacher-orange); }
+.is-teacher-split .classroom-item-tools .book-personal-activity-card { border-color: var(--border); background: var(--teacher-orange-soft); }
+.is-teacher-split .classroom-item-detail .book-resource-copy-section { background: var(--primary-soft); }
+.is-teacher-split .classroom-item-detail .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.is-teacher-split .classroom-item-detail button:focus-visible, .is-teacher-split .classroom-item-detail a:focus-visible { outline-color: var(--primary-dark); }
+@media (max-width: 767px) {
+  .is-teacher-split.classroom-detail-content { padding-inline: 16px; }
 }
