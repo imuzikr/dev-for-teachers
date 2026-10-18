@@ -71,7 +71,30 @@ async function verifyLanding(page) {
   await page.getByRole("dialog").waitFor();
   await page.getByRole("dialog").getByRole("button", { name: "닫기", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "detached" });
-  for (const width of [375, 1280]) await capture(page, `landing-hydrated-${width}`, width);
+  for (const width of [375, 768, 1280, 1900]) {
+    await capture(page, `landing-hydrated-${width}`, width);
+    const layout = await page.locator(".landing").evaluate(landing => {
+      const hero = landing.querySelector(".hero");
+      const card = hero.querySelector(".hero-glass").getBoundingClientRect();
+      return {
+        background: getComputedStyle(landing).backgroundImage,
+        size: getComputedStyle(landing).backgroundSize,
+        alignment: getComputedStyle(hero).textAlign,
+        extraImage: getComputedStyle(hero, "::after").content,
+        center: card.x + card.width / 2,
+        viewportCenter: innerWidth / 2,
+        backgroundBottom: landing.getBoundingClientRect().bottom,
+        viewportHeight: innerHeight,
+      };
+    });
+    assert.match(layout.background, /teacher-collaboration-hero.png/);
+    assert.equal(layout.size, "cover");
+    assert.ok(layout.backgroundBottom >= layout.viewportHeight, `background reaches viewport bottom at ${width}px`);
+    assert.equal(layout.alignment, "center");
+    assert.equal(layout.extraImage, "none");
+    assert.ok(Math.abs(layout.center - layout.viewportCenter) <= 1, `centered landing copy at ${width}px`);
+  }
+  evidence.checks.push("landing illustration fills background and copy stays centered at 375/768/1280/1900px");
   evidence.visibleIssueBadges = await page.evaluate(() => [...document.querySelectorAll("nextjs-portal")].flatMap(portal => [...(portal.shadowRoot?.querySelectorAll("button") ?? [])]).filter(button => button.checkVisibility() && /[1-9]\d*\s*Issues?/i.test(button.textContent)).length);
   assert.equal(evidence.visibleIssueBadges, 0);
   assert.deepEqual(evidence.consoleIssues ?? [], []);

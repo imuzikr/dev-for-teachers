@@ -36,17 +36,11 @@
   --landing-outline-border: var(--border);
   --landing-error-bg: #fff4f4;
   --landing-error-border: #edcaca;
-  --landing-glass-bg: #fff;
   --landing-glass-modal-bg: #fff;
-  --landing-glass-border: var(--border);
   --landing-glass-modal-border: var(--border);
-  --landing-title-shadow: none;
-  --landing-copy-shadow: none;
-  --landing-shadow: var(--shadow-soft);
   --landing-error-shadow: var(--shadow-soft);
   --landing-header-height: 64px;
   --landing-top-padding: 10px 32px;
-  --landing-hero-radius: 16px;
   --auth-error-bg: #fff4f4;
   --auth-error-border: #edcaca;
 }
@@ -83,37 +77,6 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height: 44px; }
 
 .landing-top { min-height: 64px; }
 .landing-logo { font-family: var(--font-serif); white-space: nowrap; }
-.landing { min-height: calc(100dvh - 64px); background: var(--page-bg); padding: 48px 32px; }
-.landing .hero {
-  width: min(1200px, 100%);
-  margin: auto;
-  padding: 32px 0;
-  display: grid;
-  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
-  align-items: center;
-  gap: 40px;
-  text-align: left;
-}
-.landing .hero::after {
-  content: "";
-  display: block;
-  width: 100%;
-  aspect-ratio: 1.35;
-  background: #fff url("/teacher-collaboration-hero.png") center / cover no-repeat;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
-}
-.landing .hero-glass {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.landing .hero h1 { font-size: clamp(32px, 4vw, 48px); letter-spacing: -.04em; line-height: 1.25; }
-.landing .hero-sub { margin-top: 24px; font-size: clamp(18px, 2vw, 22px); font-weight: 500; line-height: 1.7; color: var(--text-sub); }
 .landing-quick-start input { font-weight: 500; }
 .landing-quick-start .btn-outline { color: var(--text); }
 .landing-entry-error { z-index: 1; font-size: 13px; }
@@ -174,8 +137,6 @@ html:has(.modal-backdrop), body:has(.modal-backdrop) { background: var(--page-bg
 @media (max-width: 900px) {
   .landing-top { flex-wrap: wrap; gap: 16px; padding: 16px 24px; }
   .landing-quick-start { flex: 1; }
-  .landing { min-height: calc(100dvh - 128px); }
-  .landing .hero { gap: 24px; }
   .admin-shell .admin-main { padding: 24px; }
   .admin-shell .admin-hero { flex-wrap: wrap; }
 }
@@ -195,11 +156,7 @@ html:has(.modal-backdrop), body:has(.modal-backdrop) { background: var(--page-bg
   .landing-quick-start { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .landing-quick-start input, .landing-quick-start .btn-primary, .landing-quick-start .btn-outline { width: 100%; min-width: 0; }
   .landing-entry-error { position: static; grid-column: 1 / -1; width: 100%; }
-  .landing { min-height: calc(100dvh - 180px); padding: 32px 20px; }
-  .landing .hero { padding: 0; grid-template-columns: minmax(0, 1fr); gap: 32px; }
-  .landing .hero h1 { font-size: 32px; }
-  .landing .hero-sub { margin-top: 16px; font-size: 18px; }
-  .landing .hero::after { aspect-ratio: 1.5; }
+  .landing { min-height: calc(100dvh - 180px); }
   .modal-backdrop { padding: 16px; }
   .modal { padding: 20px; }
   .modal.book-personal-expand-modal.book-help-note-modal { width: 100%; height: min(90dvh, 820px); max-height: min(90dvh, 820px); }
