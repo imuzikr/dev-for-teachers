@@ -9,6 +9,7 @@
 .classroom-catalog-current { display: flex; justify-content: space-between; margin-top: 24px; padding: 12px; background: white; border-radius: 8px; color: var(--primary-dark, #3564c4); font-weight: 700; }
 .classroom-catalog-tools { margin: 16px 0; border-top: 1px solid var(--border); padding-top: 16px; }
 .classroom-catalog-tools .books-classroom-tools { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.classroom-catalog-tools .books-classroom-tools > .btn-ghost { width: 100%; }
 .classroom-catalog-rail > button { width: 100%; white-space: normal; }
 .classroom-catalog-content { min-width: 0; overflow-y: auto; padding: 40px clamp(24px, 4vw, 64px); }
 .classroom-catalog-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; max-width: 1200px; margin: 0 auto 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
