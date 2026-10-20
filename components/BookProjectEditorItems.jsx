@@ -20,6 +20,15 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
   const items = orderedStepItems(step);
   const activeKey = items.some(item => itemKey(item.kind, item.id) === selectedKey) ? selectedKey : items[0] ? itemKey(items[0].kind, items[0].id) : null;
 
+  function removeEntry(entry) {
+    if (disabled) return;
+    const label = entry.kind === "resource" ? "자료" : "활동";
+    if (!window.confirm(`“${entry.title || label}”을 삭제할까요? 프로젝트 저장 후 휴지통에서 복원할 수 있습니다.`)) return;
+    onRemove(entry.kind, entry.id);
+    setDraggingKey(null);
+    setDropKey(null);
+  }
+
   if (items.length === 0) {
     return <p className="book-step-empty">등록된 활동과 자료가 없습니다.</p>;
   }
@@ -34,7 +43,8 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
       <div className="book-editor-item-track" aria-label="활동과 자료 순서">
         {items.map((entry, index) => {
           const key = itemKey(entry.kind, entry.id);
-          return <button type="button" key={key} disabled={disabled} draggable={!disabled} aria-pressed={activeKey === key}
+          return <div className="book-editor-item-card" key={key}>
+          <button type="button" disabled={disabled} draggable={!disabled} aria-pressed={activeKey === key}
             className={`book-editor-item-tab is-${entry.kind}${activeKey === key ? " is-selected" : ""}${dropKey === key ? " is-drop-target" : ""}${draggingKey === key ? " is-dragging" : ""}`}
             onClick={() => {
               setSelectedKey(key);
@@ -46,7 +56,9 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
             onDrop={event => { event.preventDefault(); if (!disabled && draggingKey) onMove(draggingKey, key); setDraggingKey(null); setDropKey(null); }}
             onKeyDown={event => { if (!event.altKey || !["ArrowLeft", "ArrowRight"].includes(event.key)) return; event.preventDefault(); const target = items[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (!disabled && target) onMove(key, itemKey(target.kind, target.id)); }}>
             <small>{String(index + 1).padStart(2, "0")} · {entry.kind === "resource" ? "자료" : "활동"}</small><strong>{entry.title || "제목을 입력해 주세요"}</strong><span>{entry.kind === "resource" ? "읽고 활용할 자료" : "함께 진행할 활동"}</span>
-          </button>;
+          </button>
+          <button type="button" className="btn-ghost book-editor-item-delete" disabled={disabled} draggable={false} aria-label={`${entry.kind === "resource" ? "자료" : "활동"} ${index + 1} 삭제`} title={`${entry.title || (entry.kind === "resource" ? "자료" : "활동")} 삭제`} onClick={() => removeEntry(entry)}><IconTrash size={18} /></button>
+          </div>;
         })}
       </div>
       <div ref={detailRef} className="book-editor-section-heading"><strong>3. 선택 항목 상세 편집</strong><span>변경 내용은 프로젝트 저장을 누르면 반영됩니다.</span></div>
@@ -129,7 +141,7 @@ export default function BookProjectEditorItems({ step, onChange, onRemove, onMov
                   <IconChevronDown size={14} />
                 </button>
               </div>
-              <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} disabled={disabled} onClick={() => { if (window.confirm(`“${source.title || label}”을 삭제할까요? 프로젝트 저장 후 휴지통에서 복원할 수 있습니다.`)) onRemove(entry.kind, source.id); }}><IconTrash size={13} /></button>
+              <button type="button" className="btn-ghost role-danger-btn" title={`${label} 삭제`} aria-label={`${label} ${index + 1} 삭제`} disabled={disabled} onClick={() => removeEntry(entry)}><IconTrash size={13} /></button>
             </header>
             <div className="book-step-item-fields">
               <div className="book-item-kind-settings">

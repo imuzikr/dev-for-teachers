@@ -104,6 +104,9 @@ export default function BookProjectEditor({
   const [saveError, setSaveError] = useState("");
   const [busyImages, setBusyImages] = useState(new Set());
   const dialogRef = useRef(null);
+  const draggedStep = useRef(null);
+  const [draggingStepId, setDraggingStepId] = useState(null);
+  const [dropStepId, setDropStepId] = useState(null);
   const expandRef = useRef(null);
   const previousExpandRequest = useRef(expandRequest);
 
@@ -183,10 +186,11 @@ export default function BookProjectEditor({
     setActiveStepId(step.id);
   }
 
-  function moveStep(stepId, direction) {
+  function moveStep(stepId, target) {
+    if (saving || busyImages.size > 0) return;
     setSteps((current) => {
       const fromIndex = current.findIndex((step) => step.id === stepId);
-      const toIndex = fromIndex + direction;
+      const toIndex = typeof target === "number" ? fromIndex + target : current.findIndex(step => step.id === target);
       if (fromIndex < 0 || toIndex < 0 || toIndex >= current.length) return current;
       const nextSteps = [...current];
       const [moved] = nextSteps.splice(fromIndex, 1);
@@ -316,9 +320,6 @@ export default function BookProjectEditor({
     const index = steps.findIndex((item) => item.id === step.id);
     return (
       <div className="book-step-reorder-actions" aria-label={`${step.title || "Step"} 순서 이동`}>
-        <button type="button" className="book-step-order-btn book-step-delete-btn" aria-label={`Step ${index + 1} 삭제`} title={steps.length <= 1 ? "프로젝트에는 최소 한 개의 Step이 필요합니다." : "Step 삭제"} disabled={saving || busyImages.size > 0 || steps.length <= 1} onClick={() => removeStep(step.id)}>
-          <IconTrash size={15} />
-        </button>
         <button
           type="button"
           className="book-step-order-btn"
@@ -365,11 +366,43 @@ export default function BookProjectEditor({
         <span>프로젝트 이름</span>
         <input value={title} disabled={saving} onChange={event => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
       </label>
-      <div className="book-editor-section-heading"><strong>1. STEP 선택</strong><span>STEP을 선택한 뒤 활동과 자료를 편집하세요.</span></div>
-      <nav className="book-editor-step-track" aria-label="프로젝트 STEP 선택">
-        {steps.map((step, index) => <button type="button" key={step.id} className={`book-editor-step-tab${selectedEditorStep?.id === step.id ? " is-selected" : ""}`} aria-pressed={selectedEditorStep?.id === step.id} disabled={saving || busyImages.size > 0} onClick={() => setActiveStepId(step.id)}>
-          <small>STEP {String(index + 1).padStart(2, "0")}</small><strong>{step.title || "제목 없는 STEP"}</strong><span>{step.activities.length} 활동 · {step.resources.length} 자료</span>
-        </button>)}
+      <div className="book-editor-section-heading"><strong>1. STEP 선택</strong><span>드래그 또는 Alt + 방향키로 순서 변경 · 카드 오른쪽 아래에서 삭제</span></div>
+      <nav className="book-editor-step-track" aria-label="프로젝트 STEP 선택" onDragOver={event => {
+        if (!draggedStep.current || saving || busyImages.size > 0) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left + 48) event.currentTarget.scrollBy({ left: -18 });
+        else if (event.clientX > bounds.right - 48) event.currentTarget.scrollBy({ left: 18 });
+      }}>
+        {steps.map((step, index) => <div key={step.id} data-step-id={step.id}
+          className={`book-editor-step-card${draggingStepId === step.id ? " is-dragging" : ""}${dropStepId === step.id ? " is-drop-target" : ""}`}
+          draggable={!saving && busyImages.size === 0}
+          onDragStart={event => {
+            if (saving || busyImages.size > 0 || event.target.closest(".book-editor-step-delete")) { event.preventDefault(); return; }
+            draggedStep.current = step.id;
+            setDraggingStepId(step.id);
+            event.dataTransfer.setData("text/plain", step.id);
+            event.dataTransfer.effectAllowed = "move";
+          }}
+          onDragOver={event => {
+            if (!saving && busyImages.size === 0 && draggedStep.current && draggedStep.current !== step.id) {
+              event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropStepId(step.id);
+            }
+          }}
+          onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropStepId(current => current === step.id ? null : current); }}
+          onDrop={event => {
+            event.preventDefault();
+            if (draggedStep.current && draggedStep.current !== step.id) moveStep(draggedStep.current, step.id);
+            draggedStep.current = null; setDraggingStepId(null); setDropStepId(null);
+          }}
+          onDragEnd={() => { draggedStep.current = null; setDraggingStepId(null); setDropStepId(null); }}>
+          <button type="button" className={`book-editor-step-tab${selectedEditorStep?.id === step.id ? " is-selected" : ""}`} aria-pressed={selectedEditorStep?.id === step.id} disabled={saving || busyImages.size > 0} onClick={() => setActiveStepId(step.id)}
+            onKeyDown={event => {
+              if (event.altKey && ["ArrowLeft", "ArrowRight"].includes(event.key)) { event.preventDefault(); moveStep(step.id, event.key === "ArrowLeft" ? -1 : 1); }
+            }}>
+            <small>STEP {String(index + 1).padStart(2, "0")}</small><strong>{step.title || "제목 없는 STEP"}</strong><span>{step.activities.length} 활동 · {step.resources.length} 자료</span>
+          </button>
+          <button type="button" className="btn-ghost book-editor-step-delete" aria-label={`Step ${index + 1} 삭제`} title={steps.length <= 1 ? "프로젝트에는 최소 한 개의 STEP이 필요합니다." : `${step.title || "제목 없는 STEP"} 삭제`} disabled={saving || busyImages.size > 0 || steps.length <= 1} draggable={false} onPointerDown={event => event.stopPropagation()} onClick={() => removeStep(step.id)}><IconTrash size={18} /></button>
+        </div>)}
         <button type="button" className="btn-outline book-editor-add-step" disabled={saving || busyImages.size > 0} onClick={addStep}><IconAddFeature size={17} /> STEP 추가</button>
       </nav>
       {selectedEditorStep && <section className="book-editor-selected-step" key={selectedEditorStep.id} aria-label={`${selectedEditorStep.title} 편집`}>
