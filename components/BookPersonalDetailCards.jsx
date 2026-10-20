@@ -112,7 +112,7 @@ export function BookPersonalResourceCard({
   const linkHref = resourceHref(resource.url);
   const linkLabel = resourceLinkLabel(resource.url);
   const confirmationKey = bookConfirmationKey("resource", resource.id);
-  const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
+  const confirmed = selectedProgress.has(confirmationKey);
   const save = onConfirm ? async () => {
     if (!await templateAutosave.flush()) return false;
     return checklist.confirm(() => onConfirm(detailItem, checklist.confirmation));
@@ -222,7 +222,7 @@ export function BookPersonalActivityCard({
   const openPanel = () => panel ? panel.open(panelKey) : isTeacher && onPresent && setExpanded(true);
   const isCurrent = panel?.readOnly ? panel.selectedKey === panelKey : detailItem.isActive;
   const confirmationKey = bookConfirmationKey("activity", activity.id);
-  const confirmed = selectedProgress.has(confirmationKey) && (isTeacher || checklist.complete);
+  const confirmed = selectedProgress.has(confirmationKey);
   const activityHref = resourceHref(activity.bookUrl || activity.url);
   const activityLinkLabel = resourceLinkLabel(activity.bookUrl || activity.url);
   const draft = useBookActivityDraft({

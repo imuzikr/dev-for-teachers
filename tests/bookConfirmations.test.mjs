@@ -294,3 +294,18 @@ test("saveBookTemplateDraft validates template input before writes", async () =>
 
   assert.equal(api.writes.length, 0);
 });
+
+test("card view status survives later checklist and template writes", async () => {
+  const { saveBookConfirmation, saveBookTemplateDraft, records } = await loadBookConfirmationsModule(true);
+  await saveBookConfirmation(validInput({ confirmed: false, checklistVersion: "v1", checklistValues: [false] }));
+  await saveBookConfirmation(validInput({ confirmed: false, viewed: true }));
+  let record = [...records.values()][0];
+  assert.equal(record.viewed, true);
+  assert.deepEqual(plain(record.checklistValues), [false]);
+  await saveBookTemplateDraft(validInput({ templateValues: { answer: "작성한 답변" } }));
+  await saveBookConfirmation(validInput({ confirmed: false, checklistValues: [false], checklistVersion: "v1" }));
+  record = [...records.values()][0];
+  assert.equal(record.viewed, true);
+  assert.deepEqual(plain(record.templateValues), { answer: "작성한 답변" });
+  await assert.rejects(saveBookConfirmation(validInput({ viewed: "true" })), /viewed must be a boolean/);
+});

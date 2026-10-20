@@ -136,21 +136,21 @@
 }
 
 .classroom-item-detail { min-width: 0; }
-.is-teacher-split.classroom-detail-content { max-width: none; padding-inline: 24px; display: grid; grid-template-columns: minmax(280px, .35fr) minmax(0, 1fr); gap: 24px; align-content: start; align-items: start; }
-.is-teacher-split .classroom-lesson-overview { display: contents; }
-.is-teacher-split .classroom-lesson-banner, .is-teacher-split .classroom-step-description { grid-column: 1 / -1; margin: 0; }
-.is-teacher-split .classroom-overview-items { grid-column: 1; grid-row: 3; min-width: 0; margin: 0; padding: 16px; }
-.is-teacher-split .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 28px; gap: 8px; padding: 16px; min-height: 88px; border-radius: var(--radius-btn); }
-.is-teacher-split .classroom-overview-row > span:last-child { display: none; }
-.is-teacher-split .classroom-overview-row strong { font-size: 15px; word-break: keep-all; }
-.is-teacher-split .classroom-overview-row small { font-size: 11px; }
-.is-teacher-split .classroom-overview-row.is-selected { background: var(--primary-soft); border-color: var(--primary-dark); }
-.is-teacher-split .classroom-overview-row.is-selected strong { color: var(--primary-dark); }
-.is-teacher-split > .classroom-item-detail { grid-column: 2; grid-row: 3; }
+.is-lesson-split.classroom-detail-content { max-width: none; padding-inline: 24px; display: grid; grid-template-columns: minmax(280px, .35fr) minmax(0, 1fr); gap: 24px; align-content: start; align-items: start; }
+.is-lesson-split .classroom-lesson-overview { display: contents; }
+.is-lesson-split .classroom-lesson-banner, .is-lesson-split .classroom-step-description { grid-column: 1 / -1; margin: 0; }
+.is-lesson-split .classroom-overview-items { grid-column: 1; grid-row: 3; min-width: 0; margin: 0; padding: 16px; }
+.is-lesson-split .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 52px; gap: 8px; padding: 16px; min-height: 88px; border-radius: var(--radius-btn); }
+.is-lesson-split .classroom-overview-row > span:last-child { display: none; }
+.is-lesson-split .classroom-overview-row strong { font-size: 15px; word-break: keep-all; }
+.is-lesson-split .classroom-overview-row small { display: block; font-size: 11px; }
+.is-lesson-split .classroom-overview-row.is-selected { background: var(--primary-soft); border-color: var(--primary-dark); }
+.is-lesson-split .classroom-overview-row.is-selected strong { color: var(--primary-dark); }
+.is-lesson-split > .classroom-item-detail { grid-column: 2; grid-row: 3; }
 .classroom-item-prompt { display: grid; place-items: center; min-height: 240px; padding: 32px; margin: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); color: var(--text-sub); text-align: center; word-break: keep-all; }
 @media (max-width: 1099px) {
-  .is-teacher-split.classroom-detail-content { grid-template-columns: minmax(0, 1fr); }
-  .is-teacher-split .classroom-overview-items, .is-teacher-split > .classroom-item-detail { grid-column: 1; grid-row: auto; }
+  .is-lesson-split.classroom-detail-content { grid-template-columns: minmax(0, 1fr); }
+  .is-teacher-split .classroom-overview-items, .is-lesson-split > .classroom-item-detail { grid-column: 1; grid-row: auto; }
 }
 
 .is-teacher-split > .classroom-item-detail {
@@ -187,3 +187,5 @@
 .is-teacher-split .classroom-item-tools .book-teacher-card-actions > button[aria-pressed="true"] {
   box-shadow: inset 0 0 0 1px var(--primary-dark);
 }
+
+.classroom-overview-done { display: block; white-space: nowrap; color: var(--primary-dark); font-weight: 700; }

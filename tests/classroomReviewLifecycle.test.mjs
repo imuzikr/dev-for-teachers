@@ -48,6 +48,7 @@ test("entering teacher participant review immediately reveals the remounted revi
 test("ordinary teacher entry remains in lesson overview", () => {
   currentPanel = null;
   const html = renderToStaticMarkup(React.createElement(ClassroomLesson, base));
-  assert.match(html, /class="classroom-source-cards" hidden=""/);
+  assert.doesNotMatch(html, /class="classroom-source-cards"|수업 도구|참여자 기록/);
+  assert.match(html, /왼쪽 목록에서 활동이나 자료를 선택하면 상세 내용이 표시됩니다/);
   assert.match(html, /aria-label="수업 순서 이동"/);
 });

@@ -974,7 +974,7 @@ service cloud.firestore {
     function validBookConfirmation() {
       return request.resource.data.keys().hasOnly([
                'classId', 'projectId', 'itemKind', 'itemId', 'itemTitle',
-               'stepId', 'authorId', 'authorName', 'confirmed',
+               'stepId', 'authorId', 'authorName', 'confirmed', 'viewed',
                'checklistValues', 'checklistVersion', 'templateValues',
                'templateText', 'createdAt', 'updatedAt'
              ])
@@ -994,6 +994,7 @@ service cloud.firestore {
              && request.resource.data.authorName.size() > 0
              && request.resource.data.authorName.size() <= 80
              && request.resource.data.confirmed is bool
+             && (!('viewed' in request.resource.data) || request.resource.data.viewed is bool)
              && (!('checklistValues' in request.resource.data)
                  || (request.resource.data.checklistValues is list
                      && request.resource.data.checklistValues.size() <= 500

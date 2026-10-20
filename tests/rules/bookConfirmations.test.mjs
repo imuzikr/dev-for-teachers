@@ -97,6 +97,14 @@ describe("책방 활동·자료 확인 규칙", () => {
     ));
   });
 
+  it("카드 열람은 체크리스트를 완료하지 않고 확인 상태로 저장할 수 있다", async () => {
+    const db = asStudent(env, "stu1").firestore();
+    const ref = doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu1"));
+    await assertSucceeds(setDoc(ref, confirmation("stu1", { viewed: true, confirmed: false, checklistValues: [false], checklistVersion: "v1" })));
+    await assertFails(setDoc(ref, confirmation("stu1", { viewed: "true", confirmed: false })));
+    await assertFails(setDoc(doc(db, "bookConfirmations", confirmationId("resource", "res1", "stu2")), confirmation("stu2", { viewed: true, confirmed: false })));
+  });
+
   it("학생은 미완료 체크리스트 초안을 저장할 수 있다", async () => {
     const db = asStudent(env, "stu1").firestore();
     await assertSucceeds(setDoc(

@@ -31,3 +31,8 @@ test("teacher progress excludes outdated and incomplete checklist confirmations"
   assert.equal(currentChecklistConfirmation({ ...record, checklistValues: [true] }, "original", 2), false);
   assert.equal(currentChecklistConfirmation({ ...record, checklistValues: [] }, "original", 0), true);
 });
+
+test("opening a card confirms viewing without completing its checklist", () => {
+  assert.equal(currentChecklistConfirmation({ viewed: true, confirmed: false, checklistValues: [false] }, "instructions", 1), true);
+  assert.equal(currentChecklistConfirmation({ viewed: false, confirmed: false }, "instructions", 0), false);
+});

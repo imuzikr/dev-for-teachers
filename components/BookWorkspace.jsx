@@ -325,6 +325,7 @@ export default function BookWorkspace({
       return [
         ...current.filter((confirmation) => !(confirmation.authorId === user.uid && bookConfirmationKey(confirmation.itemKind, confirmation.itemId) === confirmationKey)),
         {
+          ...current.find(confirmation => confirmation.authorId === user.uid && bookConfirmationKey(confirmation.itemKind, confirmation.itemId) === confirmationKey),
           classId,
           projectId,
           itemKind: item.kind,
@@ -359,6 +360,12 @@ export default function BookWorkspace({
     } finally {
       if (saveQueues.current.get(key) === write) saveQueues.current.delete(key);
     }
+  }
+
+  async function confirmOpenedItem(item) {
+    if (isTeacher || !user?.uid) return;
+    const record = confirmations.find(row => row.authorId === user.uid && row.itemKind === item.kind && row.itemId === item.id);
+    return confirmBookItem(item, { confirmed: record?.confirmed === true, viewed: true });
   }
 
   async function saveTemplate(item, templateValues, templateText) {
@@ -473,6 +480,7 @@ export default function BookWorkspace({
           onToggleActivityLock={onToggleActivityLock}
           onToggleProjectItemLock={onToggleProjectItemLock}
           onConfirmItem={confirmBookItem}
+          onOpenItem={confirmOpenedItem}
           onPresentItem={isTeacher ? bookPresentation.presentItem : null}
           onActivateItem={isTeacher ? activateItem : null}
           activationDisabled={editingProject || savingProject || activatingScope === scope}
