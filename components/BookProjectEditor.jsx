@@ -7,8 +7,6 @@ import { backdropClose } from "@/lib/modal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import BookProjectEditorItems from "./BookProjectEditorItems";
 import { updateBookProjectItem } from "./bookProjectItems";
-import { orderedStepItems } from "./BookProjectPreview";
-import BookProjectSidebarTools from "./BookProjectSidebarTools";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
 import { initialBookProject } from "@/lib/internalProjectTemplate.mjs";
 import { appendClonedBookProjectSteps } from "@/lib/bookProjectExport";
@@ -75,7 +73,6 @@ function initialDraft(project, appendStep, initialOpenStepId) {
     title: project?.title ?? "",
     steps,
     selectedStepId,
-    openIds: new Set(selectedStepId ? [selectedStepId] : []),
   };
 }
 
@@ -100,7 +97,6 @@ export default function BookProjectEditor({
   ));
   const [title, setTitle] = useState(draft.title);
   const [steps, setSteps] = useState(draft.steps);
-  const [openIds, setOpenIds] = useState(draft.openIds);
   const [activeStepId, setActiveStepId] = useState(draft.selectedStepId ?? null);
   const [addingItem, setAddingItem] = useState(null);
   const [expanded, setExpanded] = useState(!appendStep && !initialOpenStepId);
@@ -118,7 +114,6 @@ export default function BookProjectEditor({
       const copied = appendClonedBookProjectSteps(null, source);
       setTitle(copied.title);
       setSteps(copied.steps);
-      setOpenIds(new Set());
       setActiveStepId(null);
       setSaveError("");
     }}
@@ -185,7 +180,6 @@ export default function BookProjectEditor({
   function addStep() {
     const step = newStep(steps.length);
     setSteps((current) => [...current, step]);
-    setOpenIds(new Set([step.id]));
     setActiveStepId(step.id);
   }
 
@@ -209,11 +203,6 @@ export default function BookProjectEditor({
 활동 ${step.activities.length}개와 자료 ${step.resources.length}개가 함께 삭제됩니다.
 프로젝트 저장 후 휴지통에서 복원할 수 있습니다.`)) return;
     setSteps((current) => current.filter((step) => step.id !== stepId));
-    setOpenIds((current) => {
-      const next = new Set(current);
-      next.delete(stepId);
-      return next;
-    });
     setActiveStepId((current) => current === stepId ? null : current);
   }
 
@@ -269,25 +258,12 @@ export default function BookProjectEditor({
     updateStep(stepId, { itemOrder: nextOrder });
   }
 
-  function toggleStep(stepId) {
-    const open = !openIds.has(stepId);
-    setOpenIds((current) => {
-      const next = new Set(current);
-      if (open) {
-        next.add(stepId);
-      } else {
-        next.delete(stepId);
-      }
-      return next;
-    });
-    setActiveStepId(open ? stepId : null);
-  }
-
   function renderStepEditor(step) {
     const index = steps.findIndex((item) => item.id === step.id);
     const stepNumber = index >= 0 ? index + 1 : 1;
     return (
       <div className="book-step-edit-panel">
+        <details className="book-editor-step-settings"><summary>STEP {stepNumber} 이름·학습 안내 수정</summary>
         <label className="book-step-title-field">
           <span>Step {stepNumber} 제목</span>
           <input
@@ -299,7 +275,7 @@ export default function BookProjectEditor({
         <label className="book-step-description-field">
           <span>Step {stepNumber} 안내</span>
           <textarea
-            rows={16}
+            rows={4}
             value={step.description ?? ""}
             onChange={(event) => updateStep(step.id, { description: event.target.value })}
             aria-label={`Step ${stepNumber} 안내`}
@@ -307,6 +283,7 @@ export default function BookProjectEditor({
           />
           <small>이 Step의 활동과 자료를 소개해 주세요. 비워 두어도 됩니다.</small>
         </label>
+        </details>
         <div className="book-step-edit-meta">
           <small>{step.activities.length}개 활동 · {step.resources.length}개 자료</small>
 
@@ -330,63 +307,7 @@ export default function BookProjectEditor({
           <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "activity")}>+ 활동 추가</button>
           <button type="button" className="btn-ghost" onClick={() => openAddItemModal(step.id, "resource")}>+ 자료 추가</button>
         </div>}
-        <button
-          type="button"
-          className="btn-primary book-step-save"
-          disabled={saving || busyImages.size > 0 || !title.trim()}
-          onClick={saveProject}
-        >
-          {saving ? "저장 중..." : `Step ${stepNumber} 저장`}
-        </button>
-      </div>
-    );
-  }
 
-  function renderOrderingStepContent(step) {
-    const items = orderedStepItems(step);
-    return (
-      <div className="book-step-order-panel">
-        {items.length > 0 ? (
-          <ol className="book-step-order-list" aria-label={`${step.title || "Step"} 활동과 자료 순서`}>
-            {items.map((item, index) => (
-              <li key={`${item.kind}:${item.id}`}>
-                <span>{index + 1}</span>
-                <strong>{item.title || (item.kind === "activity" ? "제목 없는 활동" : "제목 없는 자료")}</strong>
-                <small>{item.label}</small>
-                <div className="book-step-item-reorder-actions" aria-label={`${item.title || item.label} 순서 이동`}>
-                  <button
-                    type="button"
-                    className="book-step-order-btn"
-                    aria-label={`${item.label} ${index + 1} 위로 이동`}
-                    title="위로 이동"
-                    disabled={saving || index <= 0}
-                    onClick={() => {
-                      const target = items[index - 1];
-                      if (target) moveItem(step.id, orderKey(item.kind, item.id), orderKey(target.kind, target.id));
-                    }}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className="book-step-order-btn"
-                    aria-label={`${item.label} ${index + 1} 아래로 이동`}
-                    title="아래로 이동"
-                    disabled={saving || index >= items.length - 1}
-                    onClick={() => {
-                      const target = items[index + 1];
-                      if (target) moveItem(step.id, orderKey(item.kind, item.id), orderKey(target.kind, target.id));
-                    }}
-                  >
-                    ↓
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="book-step-order-empty">등록된 활동과 자료가 없습니다.</p>
-        )}
       </div>
     );
   }
@@ -401,28 +322,28 @@ export default function BookProjectEditor({
         <button
           type="button"
           className="book-step-order-btn"
-          aria-label={`Step ${index + 1} 위로 이동`}
-          title="위로 이동"
+          aria-label={`Step ${index + 1} 왼쪽으로 이동`}
+          title="왼쪽으로 이동"
           disabled={saving || index <= 0}
           onClick={(event) => {
             event.stopPropagation();
             moveStep(step.id, -1);
           }}
         >
-          ↑
+          ←
         </button>
         <button
           type="button"
           className="book-step-order-btn"
-          aria-label={`Step ${index + 1} 아래로 이동`}
-          title="아래로 이동"
+          aria-label={`Step ${index + 1} 오른쪽으로 이동`}
+          title="오른쪽으로 이동"
           disabled={saving || index < 0 || index >= steps.length - 1}
           onClick={(event) => {
             event.stopPropagation();
             moveStep(step.id, 1);
           }}
         >
-          ↓
+          →
         </button>
       </div>
     );
@@ -435,66 +356,34 @@ export default function BookProjectEditor({
     onDraftChange?.(draftProject);
   }, [draftProject, onDraftChange]);
 
-  const sidebarEditor = (
-    <div className="book-project-editor book-project-editor--ordering">
-      {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
-      <BookProjectSidebarTools
-        project={draftProject}
-        participantCount={participantCount}
-        activeStepId={activeStepId}
-        editing={false}
-        openStepIds={openIds}
-        onPickStep={toggleStep}
-        renderStepContent={renderOrderingStepContent}
-        renderStepAction={renderStepOrderAction}
-      />
-      <button
-        type="button"
-        className="btn-primary book-project-save book-project-order-save"
-        disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0}
-        onClick={saveProject}
-      >
-        {saving ? "저장 중..." : "프로젝트 저장"}
-      </button>
-    </div>
-  );
-
+  const selectedEditorStep = steps.find(step => step.id === activeStepId) ?? steps[0];
   const fullEditor = (
-      <div className="book-project-editor">
-        {copyPicker}
-        {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
-        <BookProjectSidebarTools
-          project={draftProject}
-          participantCount={participantCount}
-          activeStepId={activeStepId}
-          editing
-          openStepIds={openIds}
-          onPickStep={toggleStep}
-          renderStepContent={renderStepEditor}
-          renderStepAction={renderStepOrderAction}
-        />
-        <button
-          type="button"
-          className="btn-primary book-project-save"
-          disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0}
-          onClick={saveProject}
-        >
-          {saving ? "저장 중..." : "프로젝트 저장"}
-        </button>
-        <label className="book-project-title-field">
-          <span>프로젝트 이름</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
-        </label>
-        <button type="button" className="btn-outline book-step-add" onClick={addStep}>
-          <IconAddFeature size={17} /> Step 추가
-        </button>
-      </div>
+    <div className="book-project-editor book-project-editor--visual">
+      {copyPicker}
+      {saveError && <p className="book-item-images-error" role="alert">{saveError}</p>}
+      <label className="book-project-title-field">
+        <span>프로젝트 이름</span>
+        <input value={title} disabled={saving} onChange={event => setTitle(event.target.value)} placeholder="예: 우리 동네 생태 탐구" />
+      </label>
+      <div className="book-editor-section-heading"><strong>1. STEP 선택</strong><span>STEP을 선택한 뒤 활동과 자료를 편집하세요.</span></div>
+      <nav className="book-editor-step-track" aria-label="프로젝트 STEP 선택">
+        {steps.map((step, index) => <button type="button" key={step.id} className={`book-editor-step-tab${selectedEditorStep?.id === step.id ? " is-selected" : ""}`} aria-pressed={selectedEditorStep?.id === step.id} disabled={saving || busyImages.size > 0} onClick={() => setActiveStepId(step.id)}>
+          <small>STEP {String(index + 1).padStart(2, "0")}</small><strong>{step.title || "제목 없는 STEP"}</strong><span>{step.activities.length} 활동 · {step.resources.length} 자료</span>
+        </button>)}
+        <button type="button" className="btn-outline book-editor-add-step" disabled={saving || busyImages.size > 0} onClick={addStep}><IconAddFeature size={17} /> STEP 추가</button>
+      </nav>
+      {selectedEditorStep && <section className="book-editor-selected-step" key={selectedEditorStep.id} aria-label={`${selectedEditorStep.title} 편집`}>
+        <header className="book-editor-selected-heading"><h3>{selectedEditorStep.title}</h3>{renderStepOrderAction(selectedEditorStep)}</header>
+        {renderStepEditor(selectedEditorStep)}
+      </section>}
+      {!expanded && <button type="button" className="btn-primary book-project-save" disabled={saving || busyImages.size > 0 || !title.trim() || steps.length === 0} onClick={saveProject}>{saving ? "저장 중..." : "프로젝트 저장"}</button>}
+    </div>
   );
 
   return (
     <>
       <button ref={expandRef} type="button" className="btn-outline book-project-expand" onClick={() => setExpanded(true)}>프로젝트 크게 편집</button>
-      {!expanded && <>{copyPicker}{sidebarEditor}</>}
+      {!expanded && fullEditor}
       {mounted && expanded && createPortal(
         <div className="modal-backdrop book-project-edit-backdrop" {...backdropClose(() => setExpanded(false))}>
           <section ref={dialogRef} inert={addingItem ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">

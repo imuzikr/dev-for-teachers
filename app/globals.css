@@ -15154,3 +15154,59 @@ button.book-project-flow-pill:focus-visible {
   color: var(--danger);
   border-color: var(--danger);
 }
+
+/* Project editing follows STEP → item → detail, keeping one editor visible. */
+.book-project-editor--visual { display: grid; gap: 24px; min-width: 0; font-size: 16px; }
+.book-project-editor--visual .book-project-title-field { margin: 0; display: grid; gap: 8px; }
+.book-project-editor--visual input, .book-project-editor--visual textarea, .book-project-editor--visual button { font-size: 16px; }
+.book-editor-section-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 20px; }
+.book-editor-section-heading > strong { font-size: 20px; }
+.book-editor-section-heading > span { font-size: 14px; color: var(--text-sub); }
+.book-editor-step-track, .book-editor-item-track { display: flex; gap: 12px; overflow-x: auto; min-width: 0; padding: 4px 4px 12px; scroll-snap-type: x proximity; }
+.book-editor-step-tab, .book-editor-item-tab {
+  flex: 0 0 220px; min-width: 0; display: grid; align-content: start; gap: 10px;
+  padding: 18px; border: 1px solid var(--border); border-radius: 12px;
+  background: #fff; color: var(--text); text-align: left; cursor: pointer; scroll-snap-align: start;
+}
+.book-editor-step-tab small, .book-editor-item-tab small { color: var(--primary-dark); font-size: 14px; font-weight: 800; }
+.book-editor-step-tab strong, .book-editor-item-tab strong { font-size: 18px; line-height: 1.5; overflow-wrap: anywhere; }
+.book-editor-step-tab > span, .book-editor-item-tab > span { font-size: 14px; color: var(--text-sub); }
+.book-editor-step-tab.is-selected, .book-editor-item-tab.is-selected { background: #eef3ff; border: 2px solid #4667c5; padding: 17px; }
+.book-editor-item-tab.is-resource small { color: #9c591d; }
+.book-editor-item-tab { cursor: grab; }
+.book-editor-item-tab.is-dragging { opacity: .45; }
+.book-editor-item-tab.is-drop-target { outline: 3px solid var(--primary); outline-offset: 2px; }
+.book-editor-step-tab:focus-visible, .book-editor-item-tab:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.book-editor-add-step { flex: 0 0 150px; align-self: stretch; }
+.book-editor-selected-step { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: #fff; }
+.book-editor-selected-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.book-editor-selected-heading h3 { font-size: 24px; margin: 0; overflow-wrap: anywhere; }
+.book-editor-step-settings { padding: 16px; background: #f6f8fb; border-radius: 10px; margin-bottom: 20px; }
+.book-editor-step-settings summary { cursor: pointer; font-size: 16px; font-weight: 700; }
+.book-editor-step-settings[open] summary { margin-bottom: 16px; }
+.book-editor-step-settings label { display: grid; gap: 8px; margin-top: 14px; }
+.book-project-editor--visual .book-step-items-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+.book-project-editor--visual .book-step-items-head strong { font-size: 20px; }
+.book-project-editor--visual .book-step-items-head small { font-size: 14px; color: var(--text-sub); }
+.book-editor-add-items { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.book-project-editor--visual .book-step-item-edit { margin-top: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
+.book-project-editor--visual .book-step-item-edit > header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.book-project-editor--visual .book-step-item-edit > header > input { flex: 1 1 220px; min-width: 0; font-size: 20px; font-weight: 700; }
+.book-project-editor--visual .basic-format-editor [contenteditable] { font-size: 18px; line-height: 1.8; min-height: 220px; }
+.book-project-editor--visual .book-step-edit-panel, .book-project-editor--visual .book-step-items { min-width: 0; }
+.book-project-edit-modal .book-step-edit-modal-body { display: block; }
+.book-project-edit-modal .book-item-edit-footer { flex-shrink: 0; }
+@media (max-width: 767px) {
+  .book-editor-selected-step { padding: 14px; }
+  .book-project-editor--visual { gap: 18px; }
+  .book-editor-step-tab, .book-editor-item-tab { flex-basis: 200px; }
+  .book-project-editor--visual .book-step-item-edit { padding: 12px; }
+  .book-editor-add-items { margin-left: 0; }
+}
+
+.modal.book-project-edit-modal { width: min(1280px, calc(100vw - 24px)); max-width: none; }
+.book-editor-selected-heading .book-step-order-btn { min-width: 44px; min-height: 44px; }
+.book-project-editor--visual .book-project-title-field > span,
+.book-project-editor--visual .book-step-edit-meta small,
+.book-project-editor--visual .book-step-title-field > span,
+.book-project-editor--visual .book-step-description-field > span { font-size: 15px; }

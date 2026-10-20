@@ -189,3 +189,35 @@
 }
 
 .classroom-overview-done { display: block; white-space: nowrap; color: var(--primary-dark); font-weight: 700; }
+
+/* Readable lesson details, with expansion beside the title. */
+.classroom-workspace-layout .student-activity-detail .book-personal-expand-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+}
+.classroom-workspace-layout .student-activity-detail .book-personal-expand-head > span { grid-column: 1 / -1; font-size: 14px; }
+.classroom-workspace-layout .student-activity-detail .book-personal-expand-head h3 { grid-column: 1; grid-row: 2; font-size: 28px; line-height: 1.4; }
+.classroom-workspace-layout .student-activity-detail .book-personal-expand-head > button { grid-column: 2; grid-row: 2; min-height: 44px; font-size: 16px; }
+.classroom-workspace-layout .book-personal-expand-body,
+.classroom-workspace-layout .book-personal-expand-content,
+.classroom-workspace-layout .book-resource-copy-content { font-size: 18px; line-height: 1.85; }
+.classroom-workspace-layout .book-personal-expand-body textarea,
+.classroom-workspace-layout .book-personal-expand-body input,
+.classroom-workspace-layout .book-personal-expand-body button { font-size: 16px; }
+.classroom-workspace-layout .classroom-overview-row strong { font-size: 17px; }
+.classroom-workspace-layout .classroom-overview-row small { font-size: 13px; }
+.classroom-workspace-layout .classroom-outline-item strong { font-size: 15px; }
+.classroom-workspace-layout .classroom-step-description p { font-size: 18px; }
+.classroom-workspace-layout .book-personal-expand-content,
+.classroom-workspace-layout .activity-template-result {
+  --rich-text-small-size: 19px;
+  --rich-text-normal-size: 24px;
+  --rich-text-large-size: 30px;
+  font-size: 24px;
+  line-height: 1.8;
+}
+.classroom-workspace-layout .book-personal-expand-body textarea,
+.classroom-workspace-layout .book-personal-expand-body input,
+.classroom-workspace-layout .book-personal-expand-body button { font-size: 18px; }
