@@ -8,7 +8,7 @@ import BookStepGuidance from "./BookStepGuidance";
 import BookPortfolioButton from "./BookPortfolioButton";
 import { STUDENT_PROGRESS_COLORS } from "./bookProgressItems";
 import { ClassAverageProgress, PersonalProgressGroups, progressStepGroups } from "./BookProgressBars";
-import { participantName } from "./BookPersonalDetailCards";
+import { dashboardText, participantEntry, participantName } from "./BookPersonalDetailCards";
 import { bookDetailSections, bookProjectItemCount } from "./bookProjectItems";
 
 function DashboardContent({ visibleItemKey, participantsOnly = false, classPurpose = "training", classId, className = "", portfolioDisabled = false, participants, activities, sections: preparedSections = null, project = null, entriesByActivity = {}, progressByUser, user, isTeacher, onToggleActivityLock, onToggleProjectItemLock, onConfirmItem, onPresentItem, onActivateItem, activationDisabled, onEditItem, onDeleteItem, deletionDisabled, renderAddItem, onReorderItem, reorderDisabled, reorderError, saveDashboardText, selectedStepId, onSelectStep, selectedParticipantUid, onSelectParticipant }) {
@@ -109,7 +109,7 @@ function DashboardContent({ visibleItemKey, participantsOnly = false, classPurpo
   }
 
   return (
-    <section className="book-personal-dashboard" aria-label={isTeacher ? "참여자 개인 카드" : "나의 Step 카드"}>
+    <section className={`book-personal-dashboard${isTeacher && participantsOnly ? " book-participant-dashboard" : ""}`} aria-label={isTeacher ? "참여자 개인 카드" : "나의 Step 카드"}>
       <BookStepGuidance step={activeStepSection} />
       {isTeacher && !participantsOnly && (
         <BookProjectFlowOverview
@@ -158,6 +158,9 @@ function DashboardContent({ visibleItemKey, participantsOnly = false, classPurpo
             const isOwn = !isTeacher && participant.uid === user?.uid;
             const canOpen = isTeacher || isOwn;
             const studentColor = STUDENT_PROGRESS_COLORS[participantIndex % STUDENT_PROGRESS_COLORS.length];
+            const recordPreview = isTeacher && participantsOnly
+              ? sections.flatMap(section => section.activities).map(activity => dashboardText(participantEntry(entriesByActivity, activity.id, participant.uid))).find(text => text.trim())
+              : null;
             return (
               <article
                 className={`book-personal-card${canOpen ? " is-openable" : ""}`}
@@ -184,7 +187,8 @@ function DashboardContent({ visibleItemKey, participantsOnly = false, classPurpo
                       <span style={{ width: `${itemCount ? (completed.size / itemCount) * 100 : 0}%` }} />
                     </div>
                   )}
-                  <p className="book-personal-card-hint">{isTeacher ? "학생 진행 현황" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
+                  {isTeacher && participantsOnly && <div className={`book-participant-record${recordPreview ? "" : " is-empty"}`}><span>활동 기록</span><p>{recordPreview || "아직 작성한 활동 기록이 없어요."}</p></div>}
+                  <p className="book-personal-card-hint">{isTeacher && participantsOnly ? "전체 기록 보기 ›" : isTeacher ? "학생 진행 현황" : isOwn ? "내 활동 목록 열기" : activities.length ? "활동 진행 현황" : "새 활동 대기 중"}</p>
                 </button>
               </article>
             );

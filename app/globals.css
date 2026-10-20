@@ -11831,6 +11831,90 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-card-hint { margin: 0; color: var(--primary-dark); font-size: 11px; font-weight: 800; }
+
+/* Teacher participant cards: keep the existing segmented progress indicators. */
+.book-participant-dashboard { background: #f3f5f7; }
+.book-participant-dashboard .book-personal-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+}
+.book-participant-dashboard .book-personal-card {
+  border: 1.5px solid #55cc93;
+  border-radius: 14px;
+  background: #f3fcf6;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.book-participant-dashboard .book-personal-card.is-openable:hover {
+  border-color: #24925a;
+  box-shadow: 0 4px 14px rgba(36, 146, 90, 0.1);
+}
+.book-participant-dashboard .book-personal-card-trigger {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 236px;
+  padding: 14px 12px 12px;
+}
+.book-participant-dashboard .book-personal-card-trigger:focus-visible {
+  outline: 3px solid #24925a;
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+.book-participant-dashboard .book-personal-card-trigger > header {
+  width: 100%;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.book-participant-dashboard .book-personal-avatar {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d9e8dc;
+  background: #e6eee5;
+  font-size: 24px;
+}
+.book-participant-dashboard .book-personal-card-trigger header > em {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #dcf8e5;
+  color: #287947;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.book-participant-dashboard .book-personal-progress-groups {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.book-participant-record {
+  width: 100%;
+  min-width: 0;
+  margin: 4px 0 14px;
+  padding: 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.75);
+}
+.book-participant-record > span { color: #368454; font-size: 10px; font-weight: 800; }
+.book-participant-record > p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  margin: 5px 0 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.book-participant-record.is-empty { background: transparent; }
+.book-participant-record.is-empty > p { color: #788477; }
+.book-participant-dashboard .book-personal-card-hint {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #e1f0e5;
+  color: #287947;
+  text-align: right;
+}
 .book-personal-empty { margin: 12px 0 0; color: var(--text-sub); font-size: 12px; }
 
 .book-personal-detail {
