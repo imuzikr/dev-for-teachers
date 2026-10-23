@@ -25,7 +25,7 @@
 .book-rich-text--compact-code pre { display: none; }
 .book-rich-text--compact-code .rich-code-actions { display: block; }
 .rich-code-compact-control { min-width: 0; width: 100%; }
-.rich-code-actions button.rich-code-copy-row {
+.rich-code-compact-control .rich-code-copy-row {
   width: 100%;
   height: auto;
   min-height: 48px;
@@ -36,9 +36,17 @@
 }
 .rich-code-copy-row > span { flex: 1; min-width: 0; }
 .rich-code-copy-row > svg { flex-shrink: 0; }
-.rich-code-copy-row:hover { border-color: var(--primary); }
+
 .rich-code-copy-status { display: block; padding: 4px 0 0; color: var(--text-sub); }
 .rich-code-copy-content { display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
 .rich-code-preview { display: block; font-family: var(--font-mono), monospace; font-size: 12px; line-height: 1.5; color: var(--text); text-transform: none; font-weight: 400; }
 .rich-code-preview > span { display: block; overflow: hidden; white-space: pre; text-overflow: ellipsis; }
 .book-rich-text--compact-code .rte-checklist-text:has(.rich-code-block) { flex: 1; }
+
+.rich-code-compact-control .rich-code-copy-row { border: 1px solid var(--border); border-radius: 8px; background: var(--primary-light); }
+.rich-code-compact-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rich-code-compact-head strong { font-size: 14px; }
+.rich-code-compact-buttons { display: flex; gap: 8px; margin-left: auto; }
+.rich-code-actions button.rich-code-action { width: auto; height: auto; min-height: 36px; padding: 7px 10px; gap: 6px; font-size: 14px; white-space: nowrap; }
+.rich-code-compact-control .rich-code-preview { margin-top: 8px; }
+.book-rich-text--compact-code pre.is-code-expanded { display: block; max-height: 420px; overflow: auto; }

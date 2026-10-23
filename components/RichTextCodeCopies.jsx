@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useId, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconCopy } from "./BookProjectPreview";
 import "./RichTextCode.css";
@@ -14,6 +14,17 @@ function codeText(pre) {
 
 function CopyCode({ pre, compact, index, count }) {
   const [status, setStatus] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const contentId = useId();
+  useLayoutEffect(() => {
+    const originalId = pre.id;
+    if (!pre.id) pre.id = contentId;
+    pre.classList.toggle("is-code-expanded", compact && expanded);
+    return () => {
+      pre.classList.remove("is-code-expanded");
+      pre.id = originalId;
+    };
+  }, [pre, compact, expanded, contentId]);
   const [pending, setPending] = useState(false);
   async function copy(event) {
     event.preventDefault();
@@ -32,14 +43,16 @@ function CopyCode({ pre, compact, index, count }) {
     const label = count > 1 ? `코드 ${index + 1} 복사` : "코드 복사";
     const preview = codeText(pre).split(/\r?\n/).filter((line) => line.trim()).slice(0, 2);
     return <div className="rich-code-compact-control">
-      <button type="button" className="rich-code-copy-row" title={label} aria-label={label} disabled={pending} onClick={copy}>
-        <code aria-hidden="true">&lt;/&gt;</code>
-        <span className="rich-code-copy-content">
-          <span>{pending ? "복사 중..." : label}</span>
-          <code className="rich-code-preview" aria-label="코드 미리보기">{preview.map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}</code>
-        </span>
-        <IconCopy />
-      </button>
+      <div className="rich-code-copy-row">
+        <div className="rich-code-compact-head">
+          <code aria-hidden="true">&lt;/&gt;</code><strong>{count > 1 ? `코드 ${index + 1}` : "코드 내용"}</strong>
+          <div className="rich-code-compact-buttons">
+            <button type="button" className="rich-code-action" title={label} aria-label={label} disabled={pending} onClick={copy}><IconCopy />{pending ? "복사 중..." : "복사"}</button>
+            <button type="button" className="rich-code-action" aria-expanded={expanded} aria-controls={pre.id || contentId} aria-label={`${count > 1 ? `코드 ${index + 1}` : "코드"} ${expanded ? "접기" : "펼치기"}`} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }}>{expanded ? "접기" : "펼치기"}</button>
+          </div>
+        </div>
+        {!expanded && <code className="rich-code-preview" aria-label="코드 미리보기">{preview.map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}</code>}
+      </div>
       {status && <span className="rich-code-copy-status" role="status">{status}</span>}
     </div>;
   }

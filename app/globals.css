@@ -10517,7 +10517,7 @@ pre code {
 }
 
 .book-item-edit-modal {
-  width: min(94vw, 700px);
+  width: min(94vw, 640px);
   max-width: none;
   max-height: min(92dvh, 860px);
   display: flex;
@@ -12319,7 +12319,7 @@ button.book-project-flow-pill:focus-visible {
 }
 
 .book-personal-expand-modal {
-  width: min(1400px, calc(100vw - 56px));
+  width: min(960px, calc(100vw - 56px));
   height: min(90dvh, 820px);
   max-width: none;
   max-height: min(90dvh, 820px);
