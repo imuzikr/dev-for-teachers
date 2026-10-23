@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 function LessonItemWheel({ section, onSelect, itemKey, completed }) {
   const viewportRef = useRef(null);
   const frameRef = useRef(null);
+  const pointerFocusRef = useRef(false);
   const identity = section.items.map(item => `${item.kind}:${item.id}`).join("|");
 
   function centerCard(row, smooth = true) {
@@ -55,14 +56,28 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
       const key = `${item.kind}:${item.id}`;
       return <div className="classroom-wheel-slot" data-item-key={key} key={key}>
         <button type="button" className={`classroom-overview-row${itemKey === key ? " is-selected" : ""}`} aria-current={itemKey === key ? "page" : undefined}
-          onFocus={event => centerCard(event.currentTarget.parentElement)}
+          onPointerDown={() => { pointerFocusRef.current = true; }}
+          onMouseDown={event => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            pointerFocusRef.current = true;
+            event.currentTarget.focus({ preventScroll: true });
+          }}
+          onPointerUp={() => { pointerFocusRef.current = false; }}
+          onPointerCancel={() => { pointerFocusRef.current = false; }}
+          onFocus={event => { if (!pointerFocusRef.current) centerCard(event.currentTarget.parentElement); }}
           onKeyDown={event => {
+            pointerFocusRef.current = false;
             const rows = [...viewportRef.current.querySelectorAll(".classroom-wheel-slot")];
             const next = { ArrowUp: itemIndex - 1, ArrowDown: itemIndex + 1, Home: 0, End: rows.length - 1 }[event.key];
             if (next === undefined) return;
             event.preventDefault(); rows[next]?.querySelector("button")?.focus({ preventScroll: true });
           }}
-          onClick={() => onSelect(section.id, key)}>
+          onClick={event => {
+            pointerFocusRef.current = false;
+            onSelect(section.id, key);
+            centerCard(event.currentTarget.parentElement);
+          }}>
           <span>{String(itemIndex + 1).padStart(2, "0")}</span><strong>{item.title}</strong>
           <small>{item.kind === "resource" ? "자료" : "활동"}{completed.has(key) && <span className="classroom-overview-done">확인 완료</span>}</small>
           <span aria-hidden="true">→</span>
