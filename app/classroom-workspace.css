@@ -30,10 +30,9 @@
 .classroom-outline-footer > button { width: 100%; }
 .classroom-detail-region { min-width: 0; display: flex; flex-direction: column; overflow: auto; }
 .classroom-detail-content { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 28px 32px 40px; }
-.classroom-lesson-banner { padding: 28px 32px; background: linear-gradient(110deg, var(--lesson-accent, #ed9548), #f6c68e); border-radius: 16px; color: #fff; }
+.classroom-lesson-banner { padding: 16px 28px; background: linear-gradient(110deg, var(--lesson-accent, #ed9548), #f6c68e); border-radius: 16px; color: #fff; }
 .classroom-lesson-banner small { font-size: 12px; font-weight: 700; letter-spacing: .08em; }
-.classroom-lesson-banner h2 { font-size: 28px; margin: 8px 0; overflow-wrap: anywhere; }
-.classroom-lesson-banner p { margin: 0; opacity: .95; }
+.classroom-lesson-banner h2 { font-size: 28px; line-height: 1.35; margin: 4px 0 0; overflow-wrap: anywhere; }
 .classroom-step-description, .classroom-overview-items { margin-top: 24px; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
 .classroom-step-description h3, .classroom-overview-items h3 { margin: 0 0 16px; font-size: 19px; }
 .classroom-step-description p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.85; }
@@ -75,7 +74,7 @@
   .classroom-outline-region.is-open { display: flex; }
   .classroom-detail-region { overflow: visible; }
   .classroom-detail-content { padding: 8px 16px 24px; }
-  .classroom-lesson-banner { padding: 24px; }
+  .classroom-lesson-banner { padding: 14px 20px; }
   .classroom-lesson-banner h2 { font-size: 23px; }
   .classroom-step-description, .classroom-overview-items { padding: 20px; }
   .classroom-overview-row { grid-template-columns: 24px minmax(0, 1fr) 20px; padding: 16px 12px; gap: 8px; }
@@ -89,7 +88,7 @@
 .classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-content { display: none; }
 .classroom-workspace-layout > .book-help-drawer.is-collapsed .book-help-toggle { width: 104px; min-height: 48px; height: 48px; padding: 8px 12px; writing-mode: horizontal-tb; color: white; background: transparent; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .classroom-lesson-banner h2 { color: #352619; }
-.classroom-lesson-banner small, .classroom-lesson-banner p { color: #49311e; opacity: 1; }
+.classroom-lesson-banner small { color: #49311e; opacity: 1; }
 .classroom-item-tools .book-project-flow-overview, .classroom-item-tools .book-project-flow-selected, .classroom-item-tools .book-personal-step-section, .classroom-item-tools .book-project-flow-detail-list { display: block; padding: 0; margin: 0; min-height: 0; height: auto; }
 .classroom-item-tools .book-personal-activity-card { display: flex; width: 100%; min-height: 0; padding: 8px 12px; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 16px; border-radius: 12px; }
 .classroom-item-tools .book-personal-activity-card > header { flex: 1; padding: 0; min-width: 0; }
@@ -239,64 +238,40 @@
   height: 360px;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 144px 8px;
+  padding: 140px 16px;
   scroll-snap-type: y mandatory;
   scrollbar-width: thin;
   scrollbar-color: #bec9df transparent;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
-.classroom-wheel-slot { height: 72px; margin-bottom: 8px; scroll-snap-align: center; }
+.classroom-wheel-slot { height: 80px; margin-bottom: 8px; scroll-snap-align: center; }
 .classroom-wheel-slot:last-child { margin-bottom: 0; }
 .classroom-item-wheel .classroom-overview-row {
   margin: 0;
   height: 100%;
   min-height: 0;
   padding: 8px 10px;
-  transform: perspective(700px) rotateX(var(--wheel-tilt, 0deg)) scale(var(--wheel-scale, 1));
+  border: 1px solid #cbd5e6;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 4px 0 #c4cfe2, 0 10px 18px rgba(41, 61, 101, .14);
+  transform: perspective(720px) translateZ(var(--wheel-depth, 0px)) rotateX(var(--wheel-tilt, 0deg)) scale(var(--wheel-scale, 1));
   opacity: var(--wheel-opacity, 1);
   transform-origin: center;
   backface-visibility: hidden;
 }
 .classroom-item-wheel .classroom-overview-row strong { display: -webkit-box; line-height: 1.5; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .classroom-item-wheel .classroom-overview-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
-@media (prefers-reduced-motion: reduce) {
-  .classroom-item-wheel .classroom-overview-row { transform: none; opacity: 1; }
-}
-
-/* A tapered card face adds depth while leaving its text legible. */
-.classroom-item-wheel .classroom-overview-row,
 .classroom-item-wheel .classroom-overview-row.is-selected {
-  position: relative;
-  isolation: isolate;
-  border-color: transparent;
-  background: transparent;
-  filter: drop-shadow(0 6px 5px rgba(41, 61, 101, .2));
+  border-color: #a8bbdf;
+  background: #fff;
+  box-shadow: 0 5px 0 #b9c6dc, 0 10px 18px rgba(41, 61, 101, .18);
 }
-.classroom-item-wheel .classroom-overview-row::before,
-.classroom-item-wheel .classroom-overview-row::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 90%);
-}
-.classroom-item-wheel .classroom-overview-row::before {
-  inset: 5px -1px -6px 3px;
-  background: var(--wheel-edge, #b9c6dc);
-  z-index: -2;
-}
-.classroom-item-wheel .classroom-overview-row::after {
-  inset: 0;
-  background: var(--wheel-face, #fff);
-  z-index: -1;
-}
-.classroom-item-wheel .classroom-overview-row.is-selected {
-  --wheel-face: #e8efff;
-  --wheel-edge: #6684cf;
-}
-.classroom-item-wheel .classroom-overview-row:hover { --wheel-face: #f0f4ff; }
+.classroom-item-wheel .classroom-overview-row.is-selected strong { color: var(--text); }
+.classroom-item-wheel .classroom-overview-row:hover { border-color: var(--primary); background: #f0f4ff; }
 @media (prefers-reduced-motion: reduce) {
-  .classroom-item-wheel .classroom-overview-row { filter: none; }
+  .classroom-item-wheel .classroom-overview-row { transform: scale(var(--wheel-scale, 1)); opacity: 1; }
 }
 
 .student-activity-detail .book-personal-view-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }

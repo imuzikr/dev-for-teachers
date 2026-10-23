@@ -22,12 +22,14 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
     if (!viewport) return;
     function paint() {
       frameRef.current = null;
-      const middle = viewport.scrollTop + viewport.clientHeight / 2;
+      const middle = viewport.getBoundingClientRect().top + viewport.clientTop + viewport.clientHeight / 2;
       viewport.querySelectorAll(".classroom-wheel-slot").forEach(row => {
-        const distance = Math.max(-2, Math.min(2, (row.offsetTop + row.offsetHeight / 2 - middle) / 80));
-        row.style.setProperty("--wheel-tilt", `${-distance * 26}deg`);
-        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.1));
-        row.style.setProperty("--wheel-opacity", String(1 - Math.abs(distance) * 0.2));
+        const bounds = row.getBoundingClientRect();
+        const distance = Math.max(-2, Math.min(2, (bounds.top + bounds.height / 2 - middle) / (row.offsetHeight + 8)));
+        row.style.setProperty("--wheel-tilt", `${-distance * 32}deg`);
+        row.style.setProperty("--wheel-depth", `${-Math.abs(distance) * 24}px`);
+        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.08));
+        row.style.setProperty("--wheel-opacity", String(1 - Math.abs(distance) * 0.16));
       });
     }
     function schedulePaint() {
@@ -36,6 +38,7 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
     viewport.addEventListener("scroll", schedulePaint, { passive: true });
     const observer = new ResizeObserver(schedulePaint);
     observer.observe(viewport);
+    viewport.querySelectorAll(".classroom-wheel-slot").forEach(row => observer.observe(row));
     paint();
     return () => {
       viewport.removeEventListener("scroll", schedulePaint);
@@ -90,7 +93,7 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
 export default function ClassroomLessonOverview({ section, index, onSelect, renderAddItem, itemKey, completed = new Set() }) {
   if (!section) return <div className="classroom-empty">선생님이 수업을 준비하고 있습니다.</div>;
   return <article className="classroom-lesson-overview">
-    <header className="classroom-lesson-banner"><small>STEP {index + 1}</small><h2>{section.title}</h2><p>이 차시의 목표와 진행 순서</p></header>
+    <header className="classroom-lesson-banner"><small>STEP {index + 1}</small><h2>{section.title}</h2></header>
     <section className="classroom-step-description" aria-label="STEP 안내"><h3>학습 안내</h3>{section.description ? <p>{section.description}</p> : <p className="classroom-muted">아래 활동과 자료를 순서대로 살펴보세요.</p>}</section>
     <section className="classroom-overview-items"><h3>진행 순서</h3>
       {section.items.length === 0 && <p className="classroom-muted">등록된 활동이나 자료가 없습니다.</p>}
