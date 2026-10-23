@@ -7,7 +7,7 @@ import ClassroomOutline from "./ClassroomOutline";
 import { lessonPositions, lessonSelection } from "./classroomLessonNavigation.mjs";
 import ClassroomLessonOverview from "./ClassroomLessonOverview";
 
-export default function ClassroomLesson({ sections, selectedStepId, onSelectStep, isTeacher, user, progressByUser, sidebar, renderAddItem, renderDashboard, portfolio, autoOpenRequest, onOpenItem }) {
+export default function ClassroomLesson({ sections, selectedStepId, onSelectStep, isTeacher, user, progressByUser, sidebar, renderAddItem, renderDashboard, portfolio, autoOpenRequest, onOpenItem, onEditItem, onReorderItem, reorderDisabled, reorderError }) {
   const panel = useStudentActivityPanel();
   const [selection, setSelection] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -58,7 +58,7 @@ export default function ClassroomLesson({ sections, selectedStepId, onSelectStep
   return <div className="classroom-lesson">
     <button type="button" className="classroom-outline-toggle btn-outline" aria-expanded={mobileOpen} aria-controls="classroom-outline-region" onClick={() => setMobileOpen(!mobileOpen)}>수업 차례 {mobileOpen ? "접기" : "펼치기"}</button>
     <aside id="classroom-outline-region" className={`classroom-outline-region${mobileOpen ? " is-open" : ""}`}>
-      <ClassroomOutline sections={sections} stepId={section?.id} itemKey={itemKey} completed={completed} showItems={!isTeacher} onSelect={select} onOverview={id => select(id, null)} />
+      <ClassroomOutline sections={sections} stepId={section?.id} itemKey={itemKey} completed={completed} showItems={!isTeacher} onEditItem={isTeacher && !panel?.readOnly ? onEditItem : undefined} onReorderItem={isTeacher && !panel?.readOnly ? onReorderItem : undefined} reorderDisabled={reorderDisabled} reorderError={reorderError} onSelect={select} onOverview={id => select(id, null)} />
       <div className="classroom-outline-footer"><button type="button" className="btn-outline" aria-pressed={mode === "participants"} onClick={() => setMode(mode === "participants" ? "lesson" : "participants")}>{isTeacher ? "참여자 활동 보기" : "나의 STEP 카드"}</button>{portfolio}</div>
     </aside>
     <section className="classroom-detail-region" aria-label="선택한 STEP 상세">
