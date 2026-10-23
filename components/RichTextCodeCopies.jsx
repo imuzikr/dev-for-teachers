@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useLayoutEffect, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { backdropClose } from "@/lib/modal";
 import { IconCopy } from "./BookProjectPreview";
 import "./RichTextCode.css";
 
@@ -12,19 +13,45 @@ function codeText(pre) {
   return clone.textContent.replace(/\u00a0/g, " ");
 }
 
+function CodeContentModal({ text, onClose }) {
+  const titleId = useId();
+  const dialogRef = useRef(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.querySelector("button")?.focus();
+    function keydown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault(); event.stopPropagation(); closeRef.current();
+      } else if (event.key === "Tab") {
+        event.stopPropagation();
+        const controls = [...dialogRef.current.querySelectorAll('button, [tabindex="0"]')];
+        const first = controls[0], last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }
+    document.addEventListener("keydown", keydown, true);
+    return () => {
+      document.removeEventListener("keydown", keydown, true);
+      document.body.style.overflow = overflow;
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
+    };
+  }, []);
+  return createPortal(<div className="modal-backdrop rich-code-view-backdrop" {...backdropClose(onClose)}>
+    <section ref={dialogRef} className="modal rich-code-view-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={event => event.stopPropagation()}>
+      <header><h3 id={titleId}>코드 내용</h3><button type="button" className="btn-close" aria-label="코드 내용 닫기" onClick={onClose}>×</button></header>
+      <pre tabIndex={0} aria-label="전체 코드 내용"><code>{text}</code></pre>
+    </section>
+  </div>, document.body);
+}
+
 function CopyCode({ pre, compact, index, count }) {
   const [status, setStatus] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const contentId = useId();
-  useLayoutEffect(() => {
-    const originalId = pre.id;
-    if (!pre.id) pre.id = contentId;
-    pre.classList.toggle("is-code-expanded", compact && expanded);
-    return () => {
-      pre.classList.remove("is-code-expanded");
-      pre.id = originalId;
-    };
-  }, [pre, compact, expanded, contentId]);
   const [pending, setPending] = useState(false);
   async function copy(event) {
     event.preventDefault();
@@ -48,12 +75,13 @@ function CopyCode({ pre, compact, index, count }) {
           <code aria-hidden="true">&lt;/&gt;</code><strong>{count > 1 ? `코드 ${index + 1}` : "코드 내용"}</strong>
           <div className="rich-code-compact-buttons">
             <button type="button" className="rich-code-action" title={label} aria-label={label} disabled={pending} onClick={copy}><IconCopy />{pending ? "복사 중..." : "복사"}</button>
-            <button type="button" className="rich-code-action" aria-expanded={expanded} aria-controls={pre.id || contentId} aria-label={`${count > 1 ? `코드 ${index + 1}` : "코드"} ${expanded ? "접기" : "펼치기"}`} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }}>{expanded ? "접기" : "펼치기"}</button>
+            <button type="button" className="rich-code-action" aria-haspopup="dialog" aria-label={`${count > 1 ? `코드 ${index + 1}` : "코드"} 펼치기`} onClick={event => { event.stopPropagation(); setExpanded(true); }}>펼치기</button>
           </div>
         </div>
-        {!expanded && <code className="rich-code-preview" aria-label="코드 미리보기">{preview.map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}</code>}
+        {<code className="rich-code-preview" aria-label="코드 미리보기">{preview.map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}</code>}
       </div>
       {status && <span className="rich-code-copy-status" role="status">{status}</span>}
+      {expanded && <CodeContentModal text={codeText(pre)} onClose={() => setExpanded(false)} />}
     </div>;
   }
   return <><span role="status">{status}</span><button type="button" title="코드 복사" aria-label="코드 복사" disabled={pending} onClick={copy}><IconCopy /></button></>;

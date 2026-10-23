@@ -10,7 +10,7 @@ import BookHelpDrawer from "./BookHelpDrawer";
 import BookClassProgressModal from "./BookClassProgressModal";
 import BookPersonalDashboard from "./BookPersonalDashboard";
 import BookPortfolioButton from "./BookPortfolioButton";
-import { BookImagePresentationContext, useBookPresentationMode } from "./BookPresentationMode";
+import { BookImagePresentationContext, BookItemPresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
@@ -376,6 +376,7 @@ export default function BookWorkspace({
 
   return (
     <TeacherActivityDemoProvider key={`${scope}:${project?.version ?? ""}`} scope={`${scope}:${project?.version ?? ""}`}>
+    <BookItemPresentationContext.Provider value={isTeacher ? { presentItem: bookPresentation.presentItem, busy: bookPresentation.busy } : null}>
     <BookImagePresentationContext.Provider value={isTeacher ? bookPresentation.presentImage : null}>
     <StudentActivityPanel inline key={`${panelScope}:${isTeacher}`} enabled={!isTeacher || !!reviewStudent} readOnly={!!reviewStudent} itemKeys={studentPanelItemKeys} scope={panelScope}
       draftScope={`${panelScope}:${project?.version ?? ""}`} recordsReady={confirmationReadyScope === entryScope} saveTemplate={isTeacher ? undefined : saveTemplate}
@@ -538,6 +539,7 @@ export default function BookWorkspace({
     )}
     </StudentActivityPanel>
     </BookImagePresentationContext.Provider>
+    </BookItemPresentationContext.Provider>
     </TeacherActivityDemoProvider>
   );
 }

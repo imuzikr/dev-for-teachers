@@ -17,7 +17,7 @@ export default function BookResourceContent({ resource, children, templateIntera
     <section className="book-resource-copy-section" aria-label="복사할 내용">
       <header>
         <h4>복사할 내용</h4>
-        {!templateInteractive && <button type="button" className="btn-outline" onClick={() => clipboard.copy(templatePlainText(resource.content || ""), resource.id || "resource")}>{clipboard.copiedId === (resource.id || "resource") ? "복사됨" : "복사"}</button>}
+        {!templateInteractive && !/<pre(?:\s|>)/i.test(resource.content || "") && <button type="button" className="btn-outline" onClick={() => clipboard.copy(templatePlainText(resource.content || ""), resource.id || "resource")}>{clipboard.copiedId === (resource.id || "resource") ? "복사됨" : "복사"}</button>}
       </header>
       {children}
     </section>

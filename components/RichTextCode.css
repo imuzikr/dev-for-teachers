@@ -49,4 +49,12 @@
 .rich-code-compact-buttons { display: flex; gap: 8px; margin-left: auto; }
 .rich-code-actions button.rich-code-action { width: auto; height: auto; min-height: 36px; padding: 7px 10px; gap: 6px; font-size: 14px; white-space: nowrap; }
 .rich-code-compact-control .rich-code-preview { margin-top: 8px; }
-.book-rich-text--compact-code pre.is-code-expanded { display: block; max-height: 420px; overflow: auto; }
+
+
+.rich-code-view-backdrop { z-index: 4500; padding: 20px; }
+.modal.rich-code-view-modal { width: min(880px, calc(100vw - 40px)); max-width: none; max-height: 85dvh; display: flex; flex-direction: column; overflow: hidden; padding: 24px; }
+.rich-code-view-modal > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.rich-code-view-modal h3 { margin: 0; font-size: 22px; }
+.rich-code-view-modal pre { margin: 0; padding: 18px; min-height: 0; max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); font-family: var(--font-mono), monospace; font-size: 16px; line-height: 1.8; }
+.rich-code-view-modal pre:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (max-width: 600px) { .modal.rich-code-view-modal { padding: 16px; } }

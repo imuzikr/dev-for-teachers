@@ -85,7 +85,7 @@ export default function TeacherActivityDemoView({ detailItem, ...props }) {
   return <>
     {clipboard.notice}
     <BookPersonalItemViewModal {...props} detailItem={detailItem} isTeacher allowInteraction
-      autosave={detailItem.kind === "activity" ? demo?.autosave : undefined}
+      autosave={demo?.autosave}
       answerDraft={typeof draft.answer === "string" ? draft.answer : ""}
       onAnswerChange={answer => change({ answer })}
       templateValues={draft.templateValues || {}}

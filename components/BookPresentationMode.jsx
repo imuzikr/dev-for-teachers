@@ -9,6 +9,7 @@ import { safeBookImageUrl } from "./BookItemImages";
 const defaultBroadcastClient = { startBroadcast, stopBroadcast, subscribeBroadcast, updateBookBroadcastScroll };
 
 export const BookImagePresentationContext = createContext(null);
+export const BookItemPresentationContext = createContext(null);
 
 function itemKey(item) {
   return `${item?.kind}:${item?.id}`;
@@ -139,6 +140,7 @@ export function useBookPresentationMode({ isTeacher, classId, user, projectId, p
   }
 
   return {
+    busy,
     presentItem,
     presentImage,
     modal: activeItem ? (

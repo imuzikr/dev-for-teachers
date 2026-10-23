@@ -4,14 +4,13 @@ import { createPortal } from "react-dom";
 import { backdropClose } from "@/lib/modal";
 import { resourceHref, resourceLinkLabel } from "./BookProjectPreview";
 import RichTextDisplay from "./RichTextDisplay";
-import { useContext, useState } from "react";
-import { BookImagePresentationContext } from "./BookPresentationMode";
+import { useContext } from "react";
+import { BookImagePresentationContext, BookItemPresentationContext } from "./BookPresentationMode";
 import BookItemImages from "./BookItemImages";
 import BookItemImageEditor from "./BookItemImageEditor";
 import BookItemUrlEditor from "./BookItemUrlEditor";
 import BookItemUrlList from "./BookItemUrlList";
 import ActivityTemplate from "./ActivityTemplate";
-import ChecklistWarningModal from "./ChecklistWarningModal";
 import BookResourceContent from "./BookResourceContent";
 
 function modalUrlSlot(href, label) {
@@ -32,8 +31,8 @@ function modalUrlSlot(href, label) {
 }
 
 export default function BookPersonalItemViewModal({ detailItem, index, response, isTeacher, participantLabel, allowInteraction = false, saveLabel, hideResponse = false, templateValues = {}, onTemplateChange, onClose, panelTarget, onExpand, answerDraft, onAnswerChange, savedImages, imageDraft, onImageDraftChange, imagesBusy = false, onImagesBusyChange, onSave, saving, failed, saveError, confirmed, onCopy, copied, checklistValues, onChecklistChange, onCheckAll, onUncheckAll, checklistStatus, onRetryChecklist, hasChecklist, checklistComplete = false, savedUrls, activityUrls, urlsReady = true, autosave, templateReady = true }) {
-  const [showChecklistWarning, setShowChecklistWarning] = useState(false);
   const presentImage = useContext(BookImagePresentationContext);
+  const itemPresentation = useContext(BookItemPresentationContext);
   const onPresent = isTeacher && !participantLabel && !panelTarget && presentImage ? (index, inline = false) => presentImage(detailItem, index, inline) : null;
   const item = detailItem.source;
   const isResource = detailItem.kind === "resource";
@@ -69,7 +68,10 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
         <header className="book-personal-expand-head">
           <span>{participantLabel ? `${participantLabel} · ` : ""}{orderLabel} · {itemLabel}</span>
           <h3>{item.title}</h3>
-          {panelTarget ? <button type="button" className="btn-outline" onClick={onExpand}>확대</button> : <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>}
+          {panelTarget ? <div className="book-personal-view-actions">
+            <button type="button" className="btn-outline" onClick={onExpand}>확대</button>
+            {isTeacher && !participantLabel && itemPresentation?.presentItem && <button type="button" className="btn-primary" disabled={itemPresentation.busy} onClick={() => itemPresentation.presentItem(detailItem)}>발표</button>}
+          </div> : <button type="button" className="btn-close" onClick={onClose} aria-label="닫기">×</button>}
         </header>
         <div className="book-personal-expand-body">
           {modalUrlSlot(href, linkLabel)}
@@ -120,14 +122,6 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}
               </div>}
-              {isResource && onSave && <button type="button" className="btn-primary" disabled={saving || imagesBusy || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
-                if (!activityUrls && hasChecklist && !checklistComplete) {
-                  setShowChecklistWarning(true);
-                  return;
-                }
-                const saved = await onSave();
-                if (saved !== false && !panelTarget) onClose();
-              }}>{saving || activityUrls?.saving ? "저장 중..." : saveLabel || (activityUrls || requiresAnswer ? "저장" : hasChecklist ? "확인" : confirmed ? "확인됨" : "확인")}</button>}
               {checklistStatus === "failed" && <small role="alert">체크 상태를 저장하지 못했어요.</small>}
               {checklistStatus === "failed" && <button type="button" className="btn-outline" onClick={onRetryChecklist}>다시 저장</button>}
               {failed && <p role="alert">{saveError || "저장하지 못했어요. 다시 시도해 주세요."}</p>}
@@ -138,9 +132,6 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
       </section>
   );
   return <>{createPortal(panelTarget ? content : <div className="modal-backdrop book-personal-expand-backdrop" {...backdropClose(onClose)}>{content}</div>, panelTarget || document.body)}
-    {showChecklistWarning && <ChecklistWarningModal onClose={() => setShowChecklistWarning(false)} onAcknowledge={() => {
-      setShowChecklistWarning(false);
-      if (!panelTarget) onClose();
-    }} />}
+
   </>;
 }
