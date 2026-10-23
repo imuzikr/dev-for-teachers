@@ -24,8 +24,8 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
       const middle = viewport.scrollTop + viewport.clientHeight / 2;
       viewport.querySelectorAll(".classroom-wheel-slot").forEach(row => {
         const distance = Math.max(-2, Math.min(2, (row.offsetTop + row.offsetHeight / 2 - middle) / 128));
-        row.style.setProperty("--wheel-tilt", `${-distance * 14}deg`);
-        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.065));
+        row.style.setProperty("--wheel-tilt", `${-distance * 26}deg`);
+        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.1));
         row.style.setProperty("--wheel-opacity", String(1 - Math.abs(distance) * 0.2));
       });
     }
