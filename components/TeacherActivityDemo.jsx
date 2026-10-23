@@ -14,7 +14,8 @@ const empty = { answer: "", templateValues: {}, checklistValues: {}, confirmed: 
 export function TeacherActivityDemoProvider({ scope, children }) {
   const storageKey = `book-teacher-demo:v1:${scope}`;
   const [drafts, setDrafts] = useState({});
-  const saved = useRef({});
+  const latest = useRef({});
+  const [status, setStatus] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -22,34 +23,43 @@ export function TeacherActivityDemoProvider({ scope, children }) {
     try {
       const cached = JSON.parse(localStorage.getItem(storageKey) || "{}");
       if (cached && typeof cached === "object" && !Array.isArray(cached)) {
-        saved.current = cached;
+        latest.current = cached;
         setDrafts(cached);
       }
     } catch { /* Saving reports unavailable browser storage to the teacher. */ }
     setLoaded(true);
   }, [storageKey]);
 
-  function change(key, patch) {
-    setDrafts(current => ({ ...current, [key]: { ...empty, ...current[key], ...patch, confirmed: false } }));
-  }
-
-  function save(key) {
+  function persist(next) {
     if (!loaded) return false;
-    const value = { ...empty, ...drafts[key], confirmed: true };
     try {
-      const next = { ...saved.current, [key]: value };
       localStorage.setItem(storageKey, JSON.stringify(next));
-      saved.current = next;
-      setDrafts(current => ({ ...current, [key]: value }));
-      setNotice("시연 내용을 이 브라우저에 저장했습니다.");
+      setStatus("saved");
       return true;
     } catch {
-      setNotice("저장하지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해 주세요.");
+      setStatus("failed");
       return false;
     }
   }
 
-  return <DemoContext.Provider value={{ drafts, loaded, change, save }}>
+  function change(key, patch) {
+    const next = { ...latest.current, [key]: { ...empty, ...latest.current[key], ...patch, confirmed: false } };
+    latest.current = next;
+    setDrafts(next);
+    persist(next);
+  }
+
+  function save(key) {
+    if (!loaded) return false;
+    const next = { ...latest.current, [key]: { ...empty, ...latest.current[key], confirmed: true } };
+    latest.current = next;
+    setDrafts(next);
+    const success = persist(next);
+    setNotice(success ? "시연 내용을 이 브라우저에 저장했습니다." : "저장하지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해 주세요.");
+    return success;
+  }
+
+  return <DemoContext.Provider value={{ drafts, loaded, change, save, autosave: { status, error: "자동 저장하지 못했어요. 입력 내용은 유지됩니다.", flush: () => persist(latest.current) } }}>
     {children}
     <Toast message={notice} onDone={() => setNotice("")} />
   </DemoContext.Provider>;
@@ -75,6 +85,7 @@ export default function TeacherActivityDemoView({ detailItem, ...props }) {
   return <>
     {clipboard.notice}
     <BookPersonalItemViewModal {...props} detailItem={detailItem} isTeacher allowInteraction
+      autosave={detailItem.kind === "activity" ? demo?.autosave : undefined}
       answerDraft={typeof draft.answer === "string" ? draft.answer : ""}
       onAnswerChange={answer => change({ answer })}
       templateValues={draft.templateValues || {}}

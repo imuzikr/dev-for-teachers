@@ -120,7 +120,7 @@ export default function BookPersonalItemViewModal({ detailItem, index, response,
                 <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving" || checklistComplete} onClick={onCheckAll}>모두 체크하기</button>
                 {onUncheckAll && <button type="button" className="btn-outline student-checklist-check-all" disabled={saving || checklistStatus === "loading" || checklistStatus === "saving"} onClick={onUncheckAll}>모두 체크 해제하기</button>}
               </div>}
-              {onSave && <button type="button" className="btn-primary" disabled={saving || imagesBusy || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
+              {isResource && onSave && <button type="button" className="btn-primary" disabled={saving || imagesBusy || activityUrls?.saving || (!isResource && activityUrls && !urlsReady) || checklistStatus === "loading" || (activityUrls && checklistStatus === "saving") || (!activityUrls && !hasChecklist && !requiresAnswer && confirmed)} onClick={async () => {
                 if (!activityUrls && hasChecklist && !checklistComplete) {
                   setShowChecklistWarning(true);
                   return;
