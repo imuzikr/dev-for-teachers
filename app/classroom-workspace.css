@@ -281,3 +281,32 @@
   .classroom-workspace-layout .student-activity-detail .book-personal-expand-head:has(.book-personal-view-actions > button:nth-child(2)) h3 { grid-column: 1 / -1; }
   .classroom-workspace-layout .student-activity-detail .book-personal-expand-head:has(.book-personal-view-actions > button:nth-child(2)) > .book-personal-view-actions { grid-column: 1 / -1; grid-row: 3; }
 }
+
+/* Keep help reachable outside workspace scroll/clipping and deployment badges. */
+aside.book-help-drawer.book-help-floating {
+  position: fixed; z-index: 80; top: max(100px, 12dvh); right: 16px; bottom: auto;
+  width: min(380px, calc(100vw - 32px)); height: min(640px, calc(100dvh - 132px));
+  max-height: calc(100dvh - 132px); padding: 0; overflow: hidden; scrollbar-gutter: auto;
+  border: 1px solid var(--border); border-radius: 16px; background: var(--card-bg);
+  box-shadow: 0 8px 32px rgba(25, 42, 70, .18);
+}
+aside.book-help-drawer.book-help-floating.is-collapsed {
+  top: 50%; width: 112px; height: 48px; max-height: 48px; transform: translateY(-50%);
+  border: 0; border-radius: 12px; background: var(--primary-dark); overflow: hidden;
+}
+.book-help-floating .book-help-toggle {
+  top: 10px; right: 12px; left: auto; width: auto; min-width: 72px; max-width: none;
+  height: 36px; min-height: 36px; max-height: none; display: flex; align-items: center;
+  justify-content: center; gap: 8px; padding: 6px 12px; border-radius: 8px; font-size: 14px;
+}
+.book-help-floating.is-collapsed .book-help-toggle {
+  position: static; width: 112px; height: 48px; margin: 0; border: 0; border-radius: 12px;
+  background: var(--primary-dark); color: #fff; box-shadow: none;
+}
+.book-help-floating .book-help-content { width: 100%; height: 100%; padding: 58px 20px 20px; overflow-y: auto; box-sizing: border-box; }
+.book-help-floating .book-help-content[hidden] { display: none; }
+.book-help-floating .book-help-toggle:focus-visible { outline: 3px solid #8aa9ef; outline-offset: -4px; }
+@media (max-width: 600px) {
+  aside.book-help-drawer.book-help-floating { top: 88px; right: 12px; width: calc(100vw - 24px); height: min(640px, calc(100dvh - 112px)); max-height: calc(100dvh - 112px); }
+  aside.book-help-drawer.book-help-floating.is-collapsed { top: 50%; width: 112px; height: 48px; }
+}

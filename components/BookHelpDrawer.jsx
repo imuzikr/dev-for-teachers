@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   addBookHelpNote,
   deleteBookHelpNote,
@@ -75,6 +76,9 @@ export default function BookHelpDrawer({
   onToggleCollapsed,
   onToast,
 }) {
+  const [mounted, setMounted] = useState(false);
+  const contentId = useId();
+  useEffect(() => setMounted(true), []);
   const [notes, setNotes] = useState([]);
   const [expandedId, setExpandedId] = useState("");
   const [editingId, setEditingId] = useState("");
@@ -267,20 +271,22 @@ export default function BookHelpDrawer({
     persistNoteOrder(nextCurrentNotes);
   }
 
-  return (
-    <aside className={`book-help-drawer${collapsed ? " is-collapsed" : ""}`} aria-label="도움 글">
+  if (!mounted) return null;
+  return createPortal(
+    <aside className={`book-help-drawer book-help-floating${collapsed ? " is-collapsed" : ""}`} aria-label="도움 글">
       <button
         type="button"
         className="book-help-toggle"
         onClick={onToggleCollapsed}
         aria-expanded={!collapsed}
+        aria-controls={contentId}
         aria-label={collapsed ? "도움 글 패널 펼치기" : "도움 글 패널 접기"}
         title={collapsed ? "도움 글 패널 펼치기" : "도움 글 패널 접기"}
       >
-        <span aria-hidden="true">{collapsed ? "«" : "»"}</span>
+        <span aria-hidden="true">{collapsed ? "«" : "»"}</span><span className="book-help-toggle-label">{collapsed ? "도움 글" : "닫기"}</span>
       </button>
 
-      <div className="book-help-content" aria-hidden={collapsed ? "true" : undefined}>
+      <div id={contentId} className="book-help-content" hidden={collapsed} inert={collapsed} aria-hidden={collapsed ? "true" : undefined}>
         <header className="book-help-head">
           <div>
             <span>도움 글</span>
@@ -416,8 +422,7 @@ export default function BookHelpDrawer({
         </div>
       </div>
 
-      {collapsed && <span className="book-help-rail-label">도움 글</span>}
       {currentNotes.find((note) => note.id === modalId) && <BookHelpNoteModal note={currentNotes.find((note) => note.id === modalId)} onClose={() => setModalId("")} />}
-    </aside>
+    </aside>, document.body
   );
 }
