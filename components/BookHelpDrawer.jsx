@@ -283,7 +283,7 @@ export default function BookHelpDrawer({
         aria-label={collapsed ? "도움 글 패널 펼치기" : "도움 글 패널 접기"}
         title={collapsed ? "도움 글 패널 펼치기" : "도움 글 패널 접기"}
       >
-        <span aria-hidden="true">{collapsed ? "«" : "»"}</span><span className="book-help-toggle-label">{collapsed ? "도움 글" : "닫기"}</span>
+        {!collapsed && <span aria-hidden="true">»</span>}<span className="book-help-toggle-label">{collapsed ? "도움 글" : "닫기"}</span>
       </button>
 
       <div id={contentId} className="book-help-content" hidden={collapsed} inert={collapsed} aria-hidden={collapsed ? "true" : undefined}>

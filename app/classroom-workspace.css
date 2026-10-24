@@ -291,8 +291,9 @@ aside.book-help-drawer.book-help-floating {
   box-shadow: 0 8px 32px rgba(25, 42, 70, .18);
 }
 aside.book-help-drawer.book-help-floating.is-collapsed {
-  top: 50%; width: 112px; height: 48px; max-height: 48px; transform: translateY(-50%);
-  border: 0; border-radius: 12px; background: var(--primary-dark); overflow: hidden;
+  top: auto; right: 24px; bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  width: 60px; height: 60px; max-height: 60px; transform: none;
+  border: 0; border-radius: 50%; background: var(--primary-dark); overflow: hidden;
 }
 .book-help-floating .book-help-toggle {
   top: 10px; right: 12px; left: auto; width: auto; min-width: 72px; max-width: none;
@@ -300,13 +301,15 @@ aside.book-help-drawer.book-help-floating.is-collapsed {
   justify-content: center; gap: 8px; padding: 6px 12px; border-radius: 8px; font-size: 14px;
 }
 .book-help-floating.is-collapsed .book-help-toggle {
-  position: static; width: 112px; height: 48px; margin: 0; border: 0; border-radius: 12px;
-  background: var(--primary-dark); color: #fff; box-shadow: none;
+  position: static; width: 60px; min-width: 60px; max-width: 60px;
+  height: 60px; min-height: 60px; max-height: 60px; margin: 0; padding: 8px;
+  border: 0; border-radius: 50%; background: var(--primary-dark); color: #fff; box-shadow: none;
+  font-size: 13px; font-weight: 800;
 }
 .book-help-floating .book-help-content { width: 100%; height: 100%; padding: 58px 20px 20px; overflow-y: auto; box-sizing: border-box; }
 .book-help-floating .book-help-content[hidden] { display: none; }
 .book-help-floating .book-help-toggle:focus-visible { outline: 3px solid #8aa9ef; outline-offset: -4px; }
 @media (max-width: 600px) {
   aside.book-help-drawer.book-help-floating { top: 88px; right: 12px; width: calc(100vw - 24px); height: min(640px, calc(100dvh - 112px)); max-height: calc(100dvh - 112px); }
-  aside.book-help-drawer.book-help-floating.is-collapsed { top: 50%; width: 112px; height: 48px; }
+  aside.book-help-drawer.book-help-floating.is-collapsed { top: auto; right: 16px; width: 60px; height: 60px; }
 }
