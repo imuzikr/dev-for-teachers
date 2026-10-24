@@ -18,51 +18,64 @@ export default function ClassroomOutline({ sections, stepId, itemKey, completed 
       return next;
     });
   }
+  function draggedItem() {
+    const sourceSection = sections.find(section => section.id === drag.current?.sectionId);
+    const source = sourceSection?.items.find(item => `${item.kind}:${item.id}` === drag.current?.key);
+    return source ? { ...source, stepId: sourceSection.id } : null;
+  }
+  function over(event, section, item = null) {
+    if (!editMode || reorderDisabled || !onReorderItem || !drag.current) return;
+    event.preventDefault(); event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+    setDropKey(`${section.id}:${item ? `${item.kind}:${item.id}` : "end"}`);
+  }
+  function drop(event, section, target = null) {
+    event.preventDefault(); event.stopPropagation();
+    const source = draggedItem();
+    drag.current = null; setDropKey(null);
+    if (!editMode || reorderDisabled || !onReorderItem || !source) return;
+    const destination = source.stepId !== section.id ? { stepId: section.id } : target ?? section.items.at(-1);
+    if (!destination) return;
+    onReorderItem(source, { ...destination, stepId: section.id });
+    setOpenSteps(current => new Set([...current, section.id]));
+  }
   return <nav className="classroom-outline" aria-label={showItems ? "STEP과 활동 목록" : "STEP 목록"}>
     <div className="classroom-outline-title"><strong>수업 차례</strong><span>{sections.length} STEPS</span>{canEdit && <button type="button" className="classroom-outline-edit" aria-pressed={editMode} onClick={() => { setEditing(!editing); drag.current = null; setDropKey(null); }}>{editMode ? "편집 완료" : "편집"}</button>}</div>
-    {editMode && <p className="classroom-outline-edit-hint">STEP을 펼친 뒤 항목을 클릭해 편집하세요. 드래그 또는 Alt + 방향키로 바꾼 순서는 바로 저장됩니다.</p>}
-    {editMode && reorderDisabled && <p role="status" className="classroom-outline-edit-hint">순서 변경을 준비하거나 저장하고 있습니다.</p>}
+    {editMode && <p className="classroom-outline-edit-hint">드래그로 순서를 바꾸고, 편집 버튼으로 내용을 수정하세요. 다른 STEP에 놓으면 맨 마지막으로 이동하며 바로 저장됩니다.</p>}
+    {editMode && reorderDisabled && <p role="status" className="classroom-outline-edit-hint">변경 사항을 저장하고 있습니다.</p>}
     {editMode && reorderError && <p role="alert" className="book-project-error">{reorderError}</p>}
     {sections.length === 0 && <p className="classroom-empty">아직 준비된 STEP이 없습니다.</p>}
-    {sections.map((section, index) => <section className="classroom-outline-group" key={section.id}>
+    {sections.map((section, index) => <section className={`classroom-outline-group${dropKey === `${section.id}:end` ? " is-step-drop-target" : ""}`} key={section.id} onDragOver={event => over(event, section)} onDrop={event => drop(event, section)}>
       <button type="button" className={`classroom-step-trigger${stepId === section.id && (!showItems || !itemKey) ? " is-selected" : ""}`} aria-current={stepId === section.id && (!showItems || !itemKey) ? "step" : undefined} aria-expanded={editMode ? openSteps.has(section.id) : undefined} aria-controls={editMode ? `${panelId}-${section.id}` : undefined} onClick={() => editMode ? toggleStep(section.id) : onOverview(section.id)}>
         <small>STEP {String(index + 1).padStart(2, "0")}</small><strong>{section.title}</strong>{(showItems || editMode) && <span>{section.items.length}개 항목{editMode ? openSteps.has(section.id) ? " · 접기" : " · 펼치기" : ""}</span>}
       </button>
       {(showItems || editMode) && <div id={`${panelId}-${section.id}`} hidden={editMode && !openSteps.has(section.id)} className={editMode ? "classroom-outline-edit-items" : undefined}>
-      {editMode && section.items.length === 0 && <p className="classroom-empty">등록된 활동과 자료가 없습니다.</p>}
-      {section.items.map((item, itemIndex) => {
-        const key = `${item.kind}:${item.id}`;
-        const done = completed.has(key);
-        return <button type="button" key={key} className={`classroom-outline-item${stepId === section.id && itemKey === key ? " is-selected" : ""}${dropKey === `${section.id}:${key}` ? " is-drop-target" : ""}`} aria-current={stepId === section.id && itemKey === key ? "page" : undefined} disabled={editMode && reorderDisabled} draggable={editMode && Boolean(onReorderItem) && !reorderDisabled}
-          onDragStart={event => {
-            if (!editMode || reorderDisabled || !onReorderItem) { event.preventDefault(); return; }
-            drag.current = { sectionId: section.id, key };
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData("text/plain", key);
-          }}
-          onDragOver={event => {
-            if (!editMode || reorderDisabled || drag.current?.sectionId !== section.id || drag.current.key === key) return;
-            event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropKey(`${section.id}:${key}`);
-          }}
-          onDrop={event => {
-            event.preventDefault();
-            const source = drag.current?.sectionId === section.id ? section.items.find(row => `${row.kind}:${row.id}` === drag.current.key) : null;
-            drag.current = null; setDropKey(null);
-            if (editMode && !reorderDisabled && source && source !== item) onReorderItem?.({ ...source, stepId: section.id }, { ...item, stepId: section.id });
-          }}
-          onDragEnd={() => { drag.current = null; setDropKey(null); }}
-          onKeyDown={event => {
-            const direction = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[event.key];
-            if (!editMode || reorderDisabled || !onReorderItem || !event.altKey || !direction) return;
-            event.preventDefault(); onReorderItem({ ...item, stepId: section.id }, direction);
-          }}
-          onClick={() => editMode ? onEditItem({ ...item, stepId: section.id }) : onSelect(section.id, key)}>
-          <span className={`classroom-item-symbol is-${item.kind}`} aria-hidden="true">{item.kind === "resource" ? <IconBook size={16} /> : <IconPen size={16} />}</span>
-          <span><strong>{item.title}</strong><small>{itemIndex + 1}. {item.kind === "resource" ? "자료" : "활동"}</small></span>
-          {done && <span className="classroom-item-done" aria-label="확인 완료"><IconCheckSquare size={16} checked /></span>}
-          {editMode && <span className="classroom-outline-edit-label">편집</span>}
-        </button>;
-      })}</div>}
+        {editMode && section.items.length === 0 && <p className="classroom-empty">이곳에 놓으면 활동·자료가 이동합니다.</p>}
+        {section.items.map((item, itemIndex) => {
+          const key = `${item.kind}:${item.id}`;
+          const done = completed.has(key);
+          return <div key={key} data-outline-key={key} className={`classroom-outline-item${stepId === section.id && itemKey === key ? " is-selected" : ""}${dropKey === `${section.id}:${key}` ? " is-drop-target" : ""}`} draggable={editMode && Boolean(onReorderItem) && !reorderDisabled}
+            onDragStart={event => {
+              if (!editMode || reorderDisabled || !onReorderItem || event.target.closest(".classroom-outline-edit-item")) { event.preventDefault(); return; }
+              drag.current = { sectionId: section.id, key };
+              event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", key);
+            }}
+            onDragOver={event => over(event, section, item)} onDrop={event => drop(event, section, item)}
+            onDragEnd={() => { drag.current = null; setDropKey(null); }}
+            onKeyDown={event => {
+              const direction = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[event.key];
+              if (!editMode || reorderDisabled || !onReorderItem || !event.altKey || !direction) return;
+              event.preventDefault(); onReorderItem({ ...item, stepId: section.id }, direction);
+            }}>
+            <button type="button" className="classroom-outline-item-main" aria-current={stepId === section.id && itemKey === key ? "page" : undefined} onClick={() => onSelect(section.id, key)}>
+              <span className={`classroom-item-symbol is-${item.kind}`} aria-hidden="true">{item.kind === "resource" ? <IconBook size={16} /> : <IconPen size={16} />}</span>
+              <span><strong>{item.title}</strong><small>{itemIndex + 1}. {item.kind === "resource" ? "자료" : "활동"}</small></span>
+              {done && <span className="classroom-item-done" aria-label="확인 완료"><IconCheckSquare size={16} checked /></span>}
+            </button>
+            {editMode && <button type="button" className="classroom-outline-edit-item" aria-label={`${item.title} 편집`} disabled={reorderDisabled} draggable={false} onClick={() => onEditItem({ ...item, stepId: section.id })}>편집</button>}
+          </div>;
+        })}
+      </div>}
     </section>)}
   </nav>;
 }

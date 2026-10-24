@@ -16,7 +16,7 @@ import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { orderedStepItems } from "./BookProjectPreview";
 import { IconAddFeature } from "./StatusIcons";
-import { bookDetailSections, reorderBookProjectStepItem, updateBookProjectItem } from "./bookProjectItems";
+import { bookDetailSections, moveBookProjectItem, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 import BookProjectDeleteButton from "./BookProjectDeleteButton";
 import BookProjectTrash from "./BookProjectTrash";
@@ -160,14 +160,16 @@ export default function BookWorkspace({
 
   async function reorderProjectItem(item, target) {
     if (!isTeacher || !onSaveProject || !previewProject?.steps?.length || editingProject || savingProject || !item?.stepId) return;
-    if (target && typeof target !== "number" && target.stepId !== item.stepId) return;
     const pendingScope = scope;
     if (reorderPending.current.has(pendingScope)) return;
-    const step = previewProject.steps.find((candidate) => candidate.id === item.stepId);
-    if (!step) return;
-    const nextStep = reorderBookProjectStepItem(step, item, target);
-    if (nextStep === step) return;
-    const nextSteps = previewProject.steps.map((candidate) => (candidate.id === item.stepId ? nextStep : candidate));
+    let nextSteps;
+    try {
+      nextSteps = moveBookProjectItem(previewProject.steps, item, target);
+    } catch (error) {
+      setReorderError(error.message);
+      return;
+    }
+    if (nextSteps === previewProject.steps) return;
 
     reorderPending.current.add(pendingScope);
     setReorderingScope(pendingScope);

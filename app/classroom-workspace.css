@@ -313,3 +313,12 @@ aside.book-help-drawer.book-help-floating.is-collapsed {
   aside.book-help-drawer.book-help-floating { top: 88px; right: 12px; width: calc(100vw - 24px); height: min(640px, calc(100dvh - 112px)); max-height: calc(100dvh - 112px); }
   aside.book-help-drawer.book-help-floating.is-collapsed { top: auto; right: 16px; width: 60px; height: 60px; }
 }
+
+.classroom-outline .classroom-outline-item { display: flex; align-items: center; gap: 4px; padding: 2px; border: 1px solid transparent; border-radius: 8px; }
+.classroom-outline .classroom-outline-item-main { flex: 1; min-width: 0; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 10px 6px; }
+.classroom-outline-item-main strong { display: block; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.classroom-outline-item-main small { display: block; font-size: 11px; color: var(--text-sub); }
+.classroom-outline .classroom-outline-edit-item { flex: 0 0 auto; width: auto; min-height: 36px; padding: 6px 8px; color: var(--primary-dark); font-size: 12px; font-weight: 700; border: 1px solid var(--border); background: #fff; }
+.classroom-outline-item.is-selected { background: var(--primary-soft, #e7efff); }
+.classroom-outline-group.is-step-drop-target { outline: 2px dashed var(--primary); outline-offset: -2px; background: var(--primary-soft, #e7efff); }
+.classroom-outline-edit-items .classroom-outline-item-main { cursor: grab; }

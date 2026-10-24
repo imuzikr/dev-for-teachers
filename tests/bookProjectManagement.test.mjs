@@ -195,3 +195,29 @@ test("deletion rejects unauthorized users and stale versions before writing", as
   await assert.rejects(api.deleteBookProject(teacher, { classId: "source", version: "old" }, api.deleteBookProjectConfirmations), { code: "book-project/stale" });
   assert.equal(api.deleted.length, 0);
 });
+
+test("saving cross-STEP relocation preserves student entries and confirmations without creating trash", async () => {
+  const api = await loadApi();
+  await api.saveBookProject(teacher, draft("move-source"));
+  const original = await api.getBookProject("move-source");
+  const activity = original.steps[0].activities[0];
+  const resource = original.steps[0].resources[0];
+  await api.saveBookEntry(activity.id, {uid:"student"}, {answer:"keep student work"});
+  await api.saveBookConfirmation({classId:"move-source",projectId:"move-source",itemKind:"resource",itemId:resource.id,user:{uid:"student"},viewed:true,confirmed:false});
+  await api.saveBookProject(teacher, {...original,steps:[
+    {...original.steps[0],activities:[],resources:[],itemOrder:[]},
+    {id:"destination",title:"다음 STEP",activities:[activity],resources:[resource],itemOrder:original.steps[0].itemOrder},
+  ]});
+  const saved = await api.getBookProject("move-source");
+  assert.equal(saved.steps[1].activities[0].id, activity.id);
+  assert.equal(saved.steps[1].resources[0].id, resource.id);
+  assert.equal(api.testMock.bookEntries.length,1);
+  assert.equal(api.testMock.bookActivities.find(row=>row.id===activity.id).stepId,"destination");
+  let confirmations=[];
+  api.subscribeBookConfirmations({classId:"move-source",callback:rows=>{confirmations=rows;}});
+  assert.equal(confirmations.length,1);
+  assert.equal(confirmations[0].viewed,true);
+  let trash=[];
+  api.subscribeBookTrash("move-source",rows=>{trash=rows;});
+  assert.equal(trash.length,0);
+});

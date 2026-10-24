@@ -54,6 +54,34 @@ export function reorderBookProjectStepItem(step, item, target) {
   return { ...step, itemOrder: nextItems.map(orderEntry) };
 }
 
+// Cross-STEP moves retain item identity and append after the destination's mixed list.
+export function moveBookProjectItem(steps, item, target) {
+  if (!["activity", "resource"].includes(item?.kind)) return steps;
+  const source = steps.find(step => step.id === item.stepId);
+  if (!source) return steps;
+  const destinationId = typeof target === "number" ? item.stepId : target?.stepId ?? item.stepId;
+  if (destinationId === item.stepId) {
+    const next = reorderBookProjectStepItem(source, item, target);
+    return next === source ? steps : steps.map(step => step === source ? next : step);
+  }
+  const destination = steps.find(step => step.id === destinationId);
+  const collection = item.kind === "resource" ? "resources" : "activities";
+  const original = source[collection]?.find(entry => entry.id === item.id);
+  if (!destination || !original) return steps;
+  if (destination[collection]?.some(entry => entry.id === item.id)) throw new Error("대상 STEP에 같은 ID의 항목이 있어 이동할 수 없습니다.");
+  return steps.map(step => {
+    if (step === source) return { ...step,
+      [collection]: step[collection].filter(entry => entry.id !== item.id),
+      itemOrder: orderedStepItems(step).filter(entry => !(entry.kind === item.kind && entry.id === item.id)).map(orderEntry),
+    };
+    if (step === destination) return { ...step,
+      [collection]: [...(step[collection] ?? []), original],
+      itemOrder: [...orderedStepItems(step).map(orderEntry), { kind: item.kind, id: item.id }],
+    };
+    return step;
+  });
+}
+
 export function bookDetailSections(project, activities) {
   if (!project?.steps?.length) {
     return activities.length

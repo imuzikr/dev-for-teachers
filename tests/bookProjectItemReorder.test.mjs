@@ -124,3 +124,34 @@ test("reorderBookProjectStepItem returns the same step for invalid or out-of-ran
   assert.equal(reorderBookProjectStepItem(step, { kind: "activity", id: "shared" }, { kind: "resource", id: "missing" }), step);
   assert.equal(reorderBookProjectStepItem(step, { kind: "activity", id: "shared" }, { kind: "activity", id: "shared" }), step);
 });
+
+test("cross-STEP moves append after mixed destination items without changing identity or content", async () => {
+  const move = await loadHelper("moveBookProjectItem");
+  for (const kind of ["activity", "resource"]) {
+    const source = sampleStep();
+    const original = source[kind === "activity" ? "activities" : "resources"][0];
+    const destination = { id: "step-2", activities: [{ id: "dest-a", title: "A" }], resources: [{ id: "dest-r", title: "R" }], itemOrder: [{kind:"resource",id:"dest-r"},{kind:"activity",id:"dest-a"}] };
+    const steps = [source, destination];
+    const before = plain(steps);
+    const next = move(steps, { kind, id: original.id, stepId: source.id }, { stepId: destination.id, kind: "resource", id: "dest-r" });
+    assert.deepEqual(plain(next[1].itemOrder), [...destination.itemOrder, {kind,id:original.id}]);
+    const collection = kind === "activity" ? "activities" : "resources";
+    assert.strictEqual(next[1][collection].at(-1), original);
+    assert.equal(next[0][collection].some(item => item.id === original.id), false);
+    assert.equal(next[0].itemOrder.some(item => item.kind === kind && item.id === original.id), false);
+    assert.deepEqual(plain(steps), before);
+    const otherKind = kind === "activity" ? "resource" : "activity";
+    assert.equal(next[0][otherKind === "activity" ? "activities" : "resources"].some(item=>item.id===original.id), true);
+  }
+});
+
+test("moves into an empty STEP and invalid or duplicate destinations are safe", async () => {
+  const move = await loadHelper("moveBookProjectItem");
+  const steps = [sampleStep(), {id:"empty",activities:[],resources:[]}];
+  const item = {kind:"activity",id:"shared",stepId:"step-1"};
+  assert.deepEqual(plain(move(steps,item,{stepId:"empty"})[1].itemOrder),[{kind:"activity",id:"shared"}]);
+  assert.strictEqual(move(steps,item,{stepId:"missing"}),steps);
+  assert.strictEqual(move(steps,{...item,id:"missing"},{stepId:"empty"}),steps);
+  const collision = [steps[0],{id:"dest",activities:[{id:"shared"}],resources:[]}];
+  assert.throws(()=>move(collision,item,{stepId:"dest"}),/같은 ID/);
+});
