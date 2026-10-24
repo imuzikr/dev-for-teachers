@@ -6,6 +6,7 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
   const viewportRef = useRef(null);
   const frameRef = useRef(null);
   const pointerFocusRef = useRef(false);
+  const previousLayoutRef = useRef(null);
   const identity = section.items.map(item => `${item.kind}:${item.id}`).join("|");
 
   function centerCard(row, smooth = true) {
@@ -50,7 +51,10 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
   useEffect(() => {
     const viewport = viewportRef.current;
     const rows = [...viewport.querySelectorAll(".classroom-wheel-slot")];
-    centerCard(rows.find(row => row.dataset.itemKey === itemKey) ?? rows[0], false);
+    const previous = previousLayoutRef.current;
+    const animate = previous?.sectionId === section.id && previous.identity === identity;
+    previousLayoutRef.current = { sectionId: section.id, identity };
+    centerCard(rows.find(row => row.dataset.itemKey === itemKey) ?? rows[0], animate);
   }, [section.id, identity, itemKey]);
 
   return <div className="classroom-item-wheel" ref={viewportRef} role="region" aria-label="휠로 탐색하는 활동과 자료 목록">
@@ -78,7 +82,7 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
           onClick={event => {
             pointerFocusRef.current = false;
             onSelect(section.id, key);
-            centerCard(event.currentTarget.parentElement);
+            if (itemKey === key) centerCard(event.currentTarget.parentElement);
           }}>
           <span>{String(itemIndex + 1).padStart(2, "0")}</span><strong>{item.title}</strong>
           <small>{item.kind === "resource" ? "자료" : "활동"}{completed.has(key) && <span className="classroom-overview-done">확인 완료</span>}</small>
