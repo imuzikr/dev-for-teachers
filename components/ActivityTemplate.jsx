@@ -34,6 +34,9 @@ export default function ActivityTemplate({ content, values, onChange, hasCheckli
   }
 
   return <section className="activity-template" aria-label={readOnly ? "학생 프롬프트" : "나의 프롬프트"}>
+    <div className="activity-template-top-actions">
+      <button type="button" className="btn-outline" disabled={!complete} onClick={copy} aria-label="템플릿 내용 복사"><IconCopy /> 복사하기</button>
+    </div>
     <div className="activity-template-fields">
       {fields.map((field, index) => <label key={field} htmlFor={`${id}-${index}`}>
         <span>{field}</span>

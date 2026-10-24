@@ -1130,3 +1130,6 @@
 .student-autosave-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; color: var(--text-sub); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .student-autosave-status.is-failed { color: var(--danger); }
 .student-autosave-status button { flex-shrink: 0; }
+
+.activity-template-top-actions { display: flex; justify-content: flex-end; }
+.activity-template-top-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 14px; }
