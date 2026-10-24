@@ -26,10 +26,9 @@ function LessonItemWheel({ section, onSelect, itemKey, completed }) {
       viewport.querySelectorAll(".classroom-wheel-slot").forEach(row => {
         const bounds = row.getBoundingClientRect();
         const distance = Math.max(-2, Math.min(2, (bounds.top + bounds.height / 2 - middle) / (row.offsetHeight + 8)));
-        row.style.setProperty("--wheel-tilt", `${-distance * 32}deg`);
-        row.style.setProperty("--wheel-depth", `${-Math.abs(distance) * 24}px`);
-        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.08));
-        row.style.setProperty("--wheel-opacity", String(1 - Math.abs(distance) * 0.16));
+        row.style.setProperty("--wheel-tilt", `${-distance * 26}deg`);
+        row.style.setProperty("--wheel-scale", String(1 - Math.abs(distance) * 0.1));
+        row.style.setProperty("--wheel-opacity", String(1 - Math.abs(distance) * 0.2));
       });
     }
     function schedulePaint() {

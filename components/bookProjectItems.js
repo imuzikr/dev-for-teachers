@@ -55,6 +55,16 @@ export function reorderBookProjectStepItem(step, item, target) {
 }
 
 // Cross-STEP moves retain item identity and append after the destination's mixed list.
+export function reorderBookProjectSteps(steps, stepId, target) {
+  const from = steps.findIndex(step => step.id === stepId);
+  const to = typeof target === "number" ? from + target : steps.findIndex(step => step.id === target);
+  if (from < 0 || to < 0 || to >= steps.length || from === to) return steps;
+  const next = [...steps];
+  const [step] = next.splice(from, 1);
+  next.splice(to, 0, step);
+  return next;
+}
+
 export function moveBookProjectItem(steps, item, target) {
   if (!["activity", "resource"].includes(item?.kind)) return steps;
   const source = steps.find(step => step.id === item.stepId);

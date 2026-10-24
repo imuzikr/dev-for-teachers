@@ -155,3 +155,17 @@ test("moves into an empty STEP and invalid or duplicate destinations are safe", 
   const collision = [steps[0],{id:"dest",activities:[{id:"shared"}],resources:[]}];
   assert.throws(()=>move(collision,item,{stepId:"dest"}),/같은 ID/);
 });
+
+test("STEP reordering preserves child collections and supports drag targets and keyboard directions", async () => {
+  const reorder = await loadHelper("reorderBookProjectSteps");
+  const first = sampleStep();
+  const second = {id:"step-2",activities:[],resources:[{id:"r",content:"keep"}]};
+  const steps = [first,second,{id:"step-3",activities:[],resources:[]}];
+  const moved = reorder(steps,first.id,"step-3");
+  assert.deepEqual(Array.from(moved.map(step=>step.id)),["step-2","step-3","step-1"]);
+  assert.strictEqual(moved[2],first);
+  assert.strictEqual(moved[0],second);
+  assert.deepEqual(Array.from(reorder(moved,first.id,-1).map(step=>step.id)),["step-2","step-1","step-3"]);
+  assert.strictEqual(reorder(steps,first.id,-1),steps);
+  assert.strictEqual(reorder(steps,"missing",second.id),steps);
+});

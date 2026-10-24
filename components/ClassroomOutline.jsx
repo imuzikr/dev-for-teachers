@@ -1,15 +1,15 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { IconBook, IconPen, IconCheckSquare } from "./StatusIcons";
+import { IconBook, IconPen, IconCheckSquare, IconTrash } from "./StatusIcons";
 
-export default function ClassroomOutline({ sections, stepId, itemKey, completed = new Set(), showItems = true, onSelect, onOverview, onEditItem, onReorderItem, reorderDisabled = false, reorderError }) {
+export default function ClassroomOutline({ sections, stepId, itemKey, completed = new Set(), showItems = true, onSelect, onOverview, onEditItem, onReorderItem, onEditStep, onReorderStep, onDeleteStep, reorderDisabled = false, reorderError }) {
   const [editing, setEditing] = useState(false);
   const [openSteps, setOpenSteps] = useState(new Set());
   const [dropKey, setDropKey] = useState(null);
   const drag = useRef(null);
   const panelId = useId();
-  const canEdit = !showItems && Boolean(onEditItem);
+  const canEdit = !showItems && Boolean(onEditItem || onEditStep);
   const editMode = canEdit && editing;
   function toggleStep(id) {
     setOpenSteps(current => {
@@ -27,10 +27,17 @@ export default function ClassroomOutline({ sections, stepId, itemKey, completed 
     if (!editMode || reorderDisabled || !onReorderItem || !drag.current) return;
     event.preventDefault(); event.stopPropagation();
     event.dataTransfer.dropEffect = "move";
+    if (drag.current.type === "step") { setDropKey(`${section.id}:step`); return; }
     setDropKey(`${section.id}:${item ? `${item.kind}:${item.id}` : "end"}`);
   }
   function drop(event, section, target = null) {
     event.preventDefault(); event.stopPropagation();
+    if (drag.current?.type === "step") {
+      const id = drag.current.sectionId;
+      drag.current = null; setDropKey(null);
+      if (editMode && !reorderDisabled) onReorderStep?.(id, section.id);
+      return;
+    }
     const source = draggedItem();
     drag.current = null; setDropKey(null);
     if (!editMode || reorderDisabled || !onReorderItem || !source) return;
@@ -45,10 +52,26 @@ export default function ClassroomOutline({ sections, stepId, itemKey, completed 
     {editMode && reorderDisabled && <p role="status" className="classroom-outline-edit-hint">변경 사항을 저장하고 있습니다.</p>}
     {editMode && reorderError && <p role="alert" className="book-project-error">{reorderError}</p>}
     {sections.length === 0 && <p className="classroom-empty">아직 준비된 STEP이 없습니다.</p>}
-    {sections.map((section, index) => <section className={`classroom-outline-group${dropKey === `${section.id}:end` ? " is-step-drop-target" : ""}`} key={section.id} onDragOver={event => over(event, section)} onDrop={event => drop(event, section)}>
+    {sections.map((section, index) => <section className={`classroom-outline-group${[`${section.id}:end`, `${section.id}:step`].includes(dropKey) ? " is-step-drop-target" : ""}`} key={section.id} onDragOver={event => over(event, section)} onDrop={event => drop(event, section)}>
+      <div className="classroom-outline-step-head" data-outline-step={section.id} draggable={editMode && !!onReorderStep && !reorderDisabled}
+        onDragStart={event => {
+          if (!editMode || reorderDisabled || !onReorderStep || event.target.closest(".classroom-outline-step-actions")) { event.preventDefault(); return; }
+          event.stopPropagation(); drag.current = { type: "step", sectionId: section.id };
+          event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", section.id);
+        }}
+        onDragEnd={() => { drag.current = null; setDropKey(null); }}
+        onKeyDown={event => {
+          const direction = { ArrowUp: -1, ArrowDown: 1 }[event.key];
+          if (editMode && !reorderDisabled && onReorderStep && event.altKey && direction) { event.preventDefault(); onReorderStep(section.id, direction); }
+        }}>
       <button type="button" className={`classroom-step-trigger${stepId === section.id && (!showItems || !itemKey) ? " is-selected" : ""}`} aria-current={stepId === section.id && (!showItems || !itemKey) ? "step" : undefined} aria-expanded={editMode ? openSteps.has(section.id) : undefined} aria-controls={editMode ? `${panelId}-${section.id}` : undefined} onClick={() => editMode ? toggleStep(section.id) : onOverview(section.id)}>
         <small>STEP {String(index + 1).padStart(2, "0")}</small><strong>{section.title}</strong>{(showItems || editMode) && <span>{section.items.length}개 항목{editMode ? openSteps.has(section.id) ? " · 접기" : " · 펼치기" : ""}</span>}
       </button>
+      {editMode && <div className="classroom-outline-step-actions">
+        {onEditStep && <button type="button" aria-label={`${section.title} STEP 편집`} disabled={reorderDisabled} onClick={() => onEditStep(section.id)}>편집</button>}
+        {onDeleteStep && <button type="button" aria-label={`${section.title} STEP 삭제`} title={sections.length <= 1 ? "마지막 STEP은 삭제할 수 없습니다." : "STEP 삭제"} disabled={reorderDisabled || sections.length <= 1} onClick={() => onDeleteStep(section.id)}><IconTrash size={15} /></button>}
+      </div>}
+      </div>
       {(showItems || editMode) && <div id={`${panelId}-${section.id}`} hidden={editMode && !openSteps.has(section.id)} className={editMode ? "classroom-outline-edit-items" : undefined}>
         {editMode && section.items.length === 0 && <p className="classroom-empty">이곳에 놓으면 활동·자료가 이동합니다.</p>}
         {section.items.map((item, itemIndex) => {
@@ -57,7 +80,7 @@ export default function ClassroomOutline({ sections, stepId, itemKey, completed 
           return <div key={key} data-outline-key={key} className={`classroom-outline-item${stepId === section.id && itemKey === key ? " is-selected" : ""}${dropKey === `${section.id}:${key}` ? " is-drop-target" : ""}`} draggable={editMode && Boolean(onReorderItem) && !reorderDisabled}
             onDragStart={event => {
               if (!editMode || reorderDisabled || !onReorderItem || event.target.closest(".classroom-outline-edit-item")) { event.preventDefault(); return; }
-              drag.current = { sectionId: section.id, key };
+              drag.current = { type: "item", sectionId: section.id, key };
               event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", key);
             }}
             onDragOver={event => over(event, section, item)} onDrop={event => drop(event, section, item)}

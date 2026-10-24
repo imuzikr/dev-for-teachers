@@ -12,11 +12,12 @@ import BookPersonalDashboard from "./BookPersonalDashboard";
 import BookPortfolioButton from "./BookPortfolioButton";
 import { BookImagePresentationContext, BookItemPresentationContext, useBookPresentationMode } from "./BookPresentationMode";
 import BookProjectPanel from "./BookProjectPanel";
+import ClassroomStepEditModal from "./ClassroomStepEditModal";
 import BookProjectItemEditModal from "./BookProjectItemEditModal";
 import StudentActivityPanel from "./StudentActivityPanel";
 import { orderedStepItems } from "./BookProjectPreview";
 import { IconAddFeature } from "./StatusIcons";
-import { bookDetailSections, moveBookProjectItem, updateBookProjectItem } from "./bookProjectItems";
+import { bookDetailSections, moveBookProjectItem, reorderBookProjectSteps, updateBookProjectItem } from "./bookProjectItems";
 import { useStudentPanelAutoOpenRequest } from "./studentPanelAutoOpen";
 import BookProjectDeleteButton from "./BookProjectDeleteButton";
 import BookProjectTrash from "./BookProjectTrash";
@@ -79,6 +80,7 @@ export default function BookWorkspace({
   const [helpCollapsed, setHelpCollapsed] = useState(true);
   const [draftProject, setDraftProject] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
+  const [editingStep, setEditingStep] = useState(null);
   const [addingCard, setAddingCard] = useState(null);
   const addingPending = useRef(false);
   const [reviewSelection, setReviewSelection] = useState(null);
@@ -187,6 +189,44 @@ export default function BookWorkspace({
       reorderPending.current.delete(pendingScope);
       setReorderingScope((current) => (current === pendingScope ? null : current));
     }
+  }
+  const editingStepItem = editingStep?.scope === scope && isTeacher ? previewProject?.steps?.find(step => step.id === editingStep.id) : null;
+
+  async function saveStepStructure(nextSteps) {
+    if (!isTeacher || !onSaveProject || editingProject || savingProject || reorderPending.current.has(scope)) return false;
+    if (nextSteps === previewProject.steps) return true;
+    const pendingScope = scope;
+    reorderPending.current.add(pendingScope);
+    setReorderingScope(pendingScope);
+    setReorderError("");
+    try {
+      const saved = await onSaveProject({ title: previewProject.title, steps: nextSteps });
+      if (saved === false) throw new Error("STEP 변경을 저장하지 못했어요. 다시 시도해 주세요.");
+      return true;
+    } catch (error) {
+      if (activeScope.current === pendingScope) setReorderError(error.message || "STEP 변경을 저장하지 못했어요.");
+      return false;
+    } finally {
+      reorderPending.current.delete(pendingScope);
+      setReorderingScope(current => current === pendingScope ? null : current);
+    }
+  }
+  async function saveStepDetails(patch) {
+    if (!editingStepItem) return false;
+    const pendingScope = scope;
+    const saved = await saveStepStructure(previewProject.steps.map(step => step.id === editingStepItem.id ? { ...step, ...patch } : step));
+    if (saved && activeScope.current === pendingScope) setEditingStep(null);
+    return saved;
+  }
+  function reorderStep(stepId, target) {
+    return saveStepStructure(reorderBookProjectSteps(previewProject.steps, stepId, target));
+  }
+  async function deleteStep(stepId) {
+    if (savingProject || editingProject || reorderPending.current.has(scope) || previewProject.steps.length <= 1) return;
+    const step = previewProject.steps.find(row => row.id === stepId);
+    if (!step || !window.confirm(`“${step.title}” STEP을 삭제할까요?\n활동 ${step.activities.length}개와 자료 ${step.resources.length}개가 함께 휴지통으로 이동합니다.`)) return;
+    const next = previewProject.steps.filter(row => row.id !== stepId);
+    if (await saveStepStructure(next) && selectedStepId === stepId) onSelectStep?.(next[0]?.id);
   }
   const previewActivities = useMemo(() => {
     const projectActivities = projectStepActivities(previewProject);
@@ -496,12 +536,16 @@ export default function BookWorkspace({
             </button>
           ) : null}
           onReorderItem={isTeacher && onSaveProject ? reorderProjectItem : null}
+          onEditStep={isTeacher && onSaveProject ? stepId => setEditingStep({ scope, id: stepId }) : null}
+          onReorderStep={isTeacher && onSaveProject ? reorderStep : null}
+          onDeleteStep={isTeacher && onSaveProject ? deleteStep : null}
           reorderDisabled={editingProject || savingProject || reorderingScope === scope}
           reorderError={reorderError}
           selectedStepId={selectedStepId}
           onSelectStep={onSelectStep}
         />
         {bookPresentation.modal}
+        {editingStepItem && <ClassroomStepEditModal key={`${scope}:${editingStepItem.id}`} step={editingStepItem} onSave={saveStepDetails} onClose={() => setEditingStep(null)} />}
         {addingCardStep && <BookProjectItemEditModal
           key={addingCard.id} project={previewProject} step={addingCardStep} kind={null}
           saving={savingProject} onSave={saveNewCard} onClose={() => { if (!addingPending.current) setAddingCard(null); }}

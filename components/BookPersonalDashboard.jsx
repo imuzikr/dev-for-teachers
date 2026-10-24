@@ -240,7 +240,7 @@ export default function BookPersonalDashboard(props) {
   const participant = props.participants.find(row => row.uid === props.user?.uid) ?? props.user;
   const portfolio = !props.isTeacher && props.classPurpose === "internal" && props.project?.steps?.length > 0 ?
     <BookPortfolioButton project={props.project} participant={participant} classId={props.classId} className={props.className} user={props.user} entriesByActivity={props.entriesByActivity} disabled={props.portfolioDisabled} /> : null;
-  return <ClassroomLesson autoOpenRequest={props.lessonAutoOpenRequest} onOpenItem={props.onOpenItem} onEditItem={props.onEditItem} onReorderItem={props.onReorderItem} reorderDisabled={props.reorderDisabled} reorderError={props.reorderError} portfolio={portfolio} sections={sections} selectedStepId={selectedStepId} onSelectStep={props.onSelectStep}
+  return <ClassroomLesson autoOpenRequest={props.lessonAutoOpenRequest} onOpenItem={props.onOpenItem} onEditItem={props.onEditItem} onEditStep={props.onEditStep} onReorderStep={props.onReorderStep} onDeleteStep={props.onDeleteStep} onReorderItem={props.onReorderItem} reorderDisabled={props.reorderDisabled} reorderError={props.reorderError} portfolio={portfolio} sections={sections} selectedStepId={selectedStepId} onSelectStep={props.onSelectStep}
     isTeacher={props.isTeacher} user={props.user} progressByUser={props.progressByUser}
     sidebar={props.lessonSidebar} renderAddItem={props.renderAddItem}
     renderDashboard={({ itemKey, participantsOnly, selectStep }) => <DashboardContent {...props} onSelectStep={selectStep} selectedStepId={participantsOnly && !props.isTeacher ? null : selectedStepId} visibleItemKey={itemKey} participantsOnly={participantsOnly} />} />;
