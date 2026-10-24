@@ -98,6 +98,26 @@ body .is-teacher-split > .classroom-item-detail {
 body .student-activity-detail .book-personal-expand-head { background: #faf8f6; border-color: var(--border); }
 body .book-personal-expand-modal .book-personal-expand-head { background: #faf8f6; border-bottom-color: var(--border); }
 body .book-personal-expand-content { overflow-wrap: anywhere; }
+body .book-personal-expand-body > a.book-project-resource-link {
+  min-height: 56px;
+  padding: 12px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #faf8f6;
+}
+body .book-personal-expand-body > a.book-project-resource-link span {
+  font-size: 14px;
+}
+body .book-personal-expand-body > a.book-project-resource-link strong {
+  min-width: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 body .book-resource-description {
   border: 1px solid var(--border);
   border-left: 3px solid var(--primary);
