@@ -46,7 +46,7 @@ export default function ClassroomOutline({ sections, stepId, itemKey, completed 
     onReorderItem(source, { ...destination, stepId: section.id });
     setOpenSteps(current => new Set([...current, section.id]));
   }
-  return <nav className="classroom-outline" aria-label={showItems ? "STEP과 활동 목록" : "STEP 목록"}>
+  return <nav className={`classroom-outline${showItems ? " classroom-outline--student" : ""}`} aria-label={showItems ? "STEP과 활동 목록" : "STEP 목록"}>
     <div className="classroom-outline-title"><strong>수업 차례</strong><span>{sections.length} STEPS</span>{canEdit && <button type="button" className="classroom-outline-edit" aria-pressed={editMode} onClick={() => { setEditing(!editing); drag.current = null; setDropKey(null); }}>{editMode ? "편집 완료" : "편집"}</button>}</div>
     {editMode && <p className="classroom-outline-edit-hint">드래그로 순서를 바꾸고, 편집 버튼으로 내용을 수정하세요. 다른 STEP에 놓으면 맨 마지막으로 이동하며 바로 저장됩니다.</p>}
     {editMode && reorderDisabled && <p role="status" className="classroom-outline-edit-hint">변경 사항을 저장하고 있습니다.</p>}

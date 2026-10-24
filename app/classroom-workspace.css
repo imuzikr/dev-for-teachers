@@ -359,3 +359,17 @@ aside.book-help-drawer.book-help-floating.is-collapsed {
 .book-step-settings-modal label { display: grid; gap: 8px; font-weight: 700; font-size: 16px; }
 .book-step-settings-modal input, .book-step-settings-modal textarea { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-weight: 400; }
 .book-step-settings-modal footer { justify-content: flex-end; }
+
+/* Student STEP headings remain distinct from their activity/resource rows. */
+.classroom-outline--student .classroom-step-trigger {
+  margin: 4px 0 10px;
+  padding: 14px 12px;
+  border: 1px solid #b8d7bf;
+  border-radius: 10px;
+  background: #edf7ef;
+}
+.classroom-outline--student .classroom-step-trigger small { color: #36764a; }
+.classroom-outline--student .classroom-step-trigger strong { color: #244b33; font-weight: 800; }
+.classroom-outline--student .classroom-step-trigger > span { color: #587361; }
+.classroom-outline--student .classroom-step-trigger:hover { background: #e3f2e7; border-color: #87b996; }
+.classroom-outline--student .classroom-step-trigger.is-selected { background: #dcefe1; border-color: #6aa57a; }
