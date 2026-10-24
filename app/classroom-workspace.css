@@ -234,12 +234,12 @@
 
 .classroom-wheel-hint { margin: -6px 0 12px; color: var(--text-sub); font-size: 12px; line-height: 1.6; }
 .classroom-item-wheel {
-  --wheel-height: 560px;
+  --wheel-height: clamp(360px, 48dvh, 480px);
   position: relative;
   height: var(--wheel-height);
   overflow-x: hidden;
   overflow-y: auto;
-  padding: calc((var(--wheel-height) - 80px) / 2) 16px;
+  padding: 16px;
   scroll-snap-type: y mandatory;
   scrollbar-width: thin;
   scrollbar-color: #bec9df transparent;
