@@ -1,0 +1,122 @@
+/* Visual language adapted from the supplied training handbook.
+   Keep interaction, progress semantics, and the wheel geometry in their owners. */
+:root {
+  --primary: #c94f1e;
+  --primary-hover: #b04318;
+  --primary-dark: #b3461a;
+  --primary-soft: #fcede5;
+  --primary-light: var(--primary-soft);
+  --page-bg: #f6f4f1;
+  --bg: var(--page-bg);
+  --bg-deep: #eee9e3;
+  --card-bg: #fff;
+  --border: #e6e0d9;
+  --neutral: #faf8f6;
+  --dark: #1e1a17;
+  --text: #3e3732;
+  --muted: #6c635c;
+  --text-sub: var(--muted);
+  --text-secondary: var(--muted);
+  --sidebar-bg: #faf8f6;
+  --sidebar-text: var(--text);
+  --sidebar-active: var(--primary-soft);
+  --lesson-accent: #c94f1e;
+  --lesson-accent-soft: #fcede5;
+  --resource-light: #faf1d9;
+  --resource-border: #e6d4a5;
+  --resource-ink: #805400;
+  --radius: 18px;
+  --radius-btn: 10px;
+  --shadow-soft: 0 1px 2px #3022160f, 0 6px 20px #3022160f;
+  --focus-ring-primary: 0 0 0 3px #c94f1e30;
+  --font-serif: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+body { color: var(--text); font-size: 16px; line-height: 1.7; }
+body :is(h1, h2, h3, h4) { color: var(--dark); letter-spacing: -.025em; }
+body :is(button, a, summary):focus-visible { outline-color: var(--primary); }
+body :is(input, textarea, select) { border-color: #d2c9bf; }
+body :is(.btn-primary, .btn-outline, .btn-ghost) {
+  border-radius: 999px;
+  font-weight: 600;
+}
+body .btn-primary { background: var(--primary); color: #fff; }
+body .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+body .btn-outline { background: #fff; border-color: #d2c9bf; color: var(--text); }
+body .btn-outline:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-soft); }
+body .topbar { border-bottom-color: var(--border); background: #fff; }
+body :is(.profile-menu, .topnav-dropdown, .modal) { box-shadow: var(--shadow-soft); }
+body .modal-backdrop { background: #1e1a1766; }
+body .modal { border-color: var(--border); }
+
+/* A quiet navigation rail and generous, paper-like class cards. */
+body :is(.classroom-catalog-rail, .classroom-outline-region) { background: #faf8f6; }
+body .classroom-catalog-summary { box-shadow: var(--shadow-soft); border-radius: 18px; }
+body .classroom-catalog-heading { border-bottom: 2px solid #d2c9bf; padding-bottom: 28px; }
+body .classroom-catalog-heading h1 { font-size: clamp(26px, 2.4vw, 36px); }
+body .classroom-catalog-eyebrow { letter-spacing: .06em; font-size: 12px; }
+body .classroom-card { border-radius: 18px; box-shadow: var(--shadow-soft); }
+body .classroom-card:hover { border-color: var(--primary); box-shadow: 0 4px 18px #30221618; }
+body .classroom-card-icon { border-radius: 50%; background: var(--primary-soft); }
+body .classroom-card:nth-child(3n + 2) .classroom-card-icon { background: #e7f2eb; color: #18673e; }
+body .classroom-card:nth-child(3n) .classroom-card-icon { background: #eeeaFC; color: #5837bb; }
+body .classroom-workspace-head { background: #fff; border-bottom-color: var(--border); }
+body .classroom-outline-title { letter-spacing: -.02em; }
+body .classroom-outline button:hover { background: #f1ece5; }
+body .classroom-outline button.is-selected { background: var(--primary-soft); border-color: #e9bba6; }
+body .classroom-outline-item.is-selected strong { color: var(--primary-dark); }
+body .classroom-item-symbol { background: #fcede5; color: #b3461a; }
+body .classroom-item-symbol.is-resource { background: #faf1d9; color: #805400; }
+
+/* The student STEP hierarchy intentionally keeps its green identity. */
+body .classroom-outline--student .classroom-step-trigger { background: #edf7ef; border-color: #b8d7bf; }
+body .classroom-outline--student .classroom-step-trigger:hover { background: #e3f2e7; border-color: #87b996; }
+body .classroom-outline--student .classroom-step-trigger.is-selected { background: #dcefe1; border-color: #6aa57a; }
+
+body .classroom-lesson-banner {
+  background: #f9ede7;
+  border: 1px solid #ead2c4;
+  border-left: 5px solid var(--primary);
+  border-radius: 18px;
+  padding-block: 24px;
+}
+body .classroom-lesson-banner small { color: var(--primary-dark); letter-spacing: .09em; }
+body .classroom-lesson-banner h2 { color: var(--dark); }
+body :is(.classroom-step-description, .classroom-overview-items) { border-radius: 18px; box-shadow: var(--shadow-soft); }
+body .classroom-step-description p { color: var(--muted); }
+body .is-teacher-split > .classroom-item-detail {
+  --primary: #c94f1e;
+  --primary-dark: #b3461a;
+  --primary-hover: #b04318;
+  --primary-soft: #fcede5;
+  --primary-light: var(--primary-soft);
+  --border: #e6e0d9;
+  --teacher-orange: #c94f1e;
+  --teacher-orange-soft: #faf8f6;
+  --focus-ring-primary: 0 0 0 3px #c94f1e30;
+}
+body .student-activity-detail .book-personal-expand-head { background: #faf8f6; border-color: var(--border); }
+body .book-personal-expand-modal .book-personal-expand-head { background: #faf8f6; border-bottom-color: var(--border); }
+body .book-personal-expand-content { overflow-wrap: anywhere; }
+body .activity-template { background: #e7f2eb; border-color: #b8d7bf; border-radius: 18px; }
+body .activity-template-top-actions .btn-outline { color: #18673e; border-color: #a8c7b3; }
+
+/* Preserve the perspective and animated positioning; recolor only the faces. */
+body .classroom-item-wheel { scrollbar-color: #cbbdb0 transparent; }
+body .classroom-item-wheel .classroom-overview-row { --wheel-edge: #d2c9bf; filter: drop-shadow(0 6px 5px #30221626); }
+body .classroom-item-wheel .classroom-overview-row::after { box-shadow: inset 0 0 0 1px #ded4c9; }
+body .classroom-item-wheel .classroom-overview-row.is-selected { --wheel-face: #fcede5; --wheel-edge: #c98a6d; }
+body .classroom-item-wheel .classroom-overview-row:hover { --wheel-face: #faf2ec; }
+body .book-help-floating { border-color: var(--border); box-shadow: var(--shadow-soft); }
+body .book-help-floating.is-collapsed { background: var(--primary-dark); }
+body .book-help-floating .book-help-toggle:focus-visible { outline-color: #f6bd9f; }
+
+/* Editor selection uses the same palette as the reading experience. */
+body :is(.book-editor-step-tab, .book-editor-item-tab) { border-color: var(--border); border-radius: 12px; }
+body :is(.book-editor-step-tab, .book-editor-item-tab).is-selected { border-color: var(--primary); background: var(--primary-soft); }
+
+@media (max-width: 767px) {
+  body .classroom-lesson-banner { padding: 18px 20px; }
+  body .classroom-catalog-heading { padding-bottom: 20px; }
+  body .classroom-card { padding: 20px; }
+}

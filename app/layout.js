@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./book-sidebar.css";
 import "./classroom-theme.css";
+import "./learning-lab-theme.css";
 
 export const metadata = {
   title: "교사 개발자 — 선생님들의 수업 연구 작업실",
