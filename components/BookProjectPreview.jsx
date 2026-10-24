@@ -1,4 +1,5 @@
 "use client";
+import BookResourceDescription from "./BookResourceDescription";
 
 import useClipboardCopy from "./useClipboardCopy";
 import { templatePlainText } from "@/lib/activityTemplate.mjs";
@@ -164,6 +165,7 @@ export function ProjectDisplayItem({ item, kind, onEdit, onDelete, onToggleLock,
             )}
           </div>
         </div>
+        {compactResource && <BookResourceDescription description={item.teacherDescription} />}
         {!compactResource && content && <RichTextDisplay className="book-project-detail-text" html={content} />}
         {linkHref && (
           <a className="book-project-resource-link" href={linkHref} target="_blank" rel="noreferrer">
