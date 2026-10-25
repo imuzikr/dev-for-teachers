@@ -139,6 +139,14 @@ body .book-help-floating.is-collapsed { background: var(--primary-dark); }
 body .book-help-floating .book-help-toggle:focus-visible { outline-color: #f6bd9f; }
 
 /* Editor selection uses the same palette as the reading experience. */
+.book-step-add-backdrop { z-index: 5000; }
+.book-step-add-modal { width: min(560px, 100%); max-height: 90dvh; overflow-y: auto; }
+.book-step-add-options, .book-step-import-fields { display: grid; gap: 20px; }
+body .book-step-add-options > button { display: grid; gap: 6px; padding: 20px; text-align: left; border-radius: 14px; white-space: normal; }
+.book-step-add-options span, .book-step-import-fields p { color: var(--text-sub); font-size: 14px; }
+.book-step-import-fields label { display: grid; gap: 8px; }
+.book-step-import-summary { padding: 16px; background: var(--primary-soft); border-radius: 12px; }
+.book-step-add-footer { display: flex; justify-content: space-between; gap: 12px; }
 body :is(.book-editor-step-tab, .book-editor-item-tab) { border-color: var(--border); border-radius: 12px; }
 body :is(.book-editor-step-tab, .book-editor-item-tab).is-selected { border-color: var(--primary); background: var(--primary-soft); }
 

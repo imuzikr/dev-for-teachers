@@ -9,8 +9,9 @@ import BookProjectEditorItems from "./BookProjectEditorItems";
 import { updateBookProjectItem } from "./bookProjectItems";
 import { IconAddFeature, IconTrash } from "./StatusIcons";
 import { initialBookProject } from "@/lib/internalProjectTemplate.mjs";
-import { appendClonedBookProjectSteps } from "@/lib/bookProjectExport";
+import { appendClonedBookProjectSteps, cloneBookProjectStep } from "@/lib/bookProjectExport";
 import BookProjectCopyPicker from "./BookProjectCopyPicker";
+import BookStepAddModal from "./BookStepAddModal";
 
 function newStep(index) {
   return { id: crypto.randomUUID(), title: `Step ${index + 1}`, description: "", activities: [], resources: [], itemOrder: [] };
@@ -99,6 +100,7 @@ export default function BookProjectEditor({
   const [steps, setSteps] = useState(draft.steps);
   const [activeStepId, setActiveStepId] = useState(draft.selectedStepId ?? null);
   const [addingItem, setAddingItem] = useState(null);
+  const [addingStepDialog, setAddingStepDialog] = useState(false);
   const [expanded, setExpanded] = useState(!appendStep && !initialOpenStepId);
   const [mounted, setMounted] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -129,7 +131,7 @@ export default function BookProjectEditor({
   }, [expandRequest]);
 
   useEffect(() => {
-    if (!mounted || !expanded || addingItem) return;
+    if (!mounted || !expanded || addingItem || addingStepDialog) return;
     const previous = document.activeElement;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -158,7 +160,7 @@ export default function BookProjectEditor({
       if (previous?.isConnected) previous.focus();
       else expandRef.current?.focus();
     };
-  }, [addingItem, expanded, mounted]);
+  }, [addingItem, addingStepDialog, expanded, mounted]);
 
   async function saveProject() {
     if (saving || busyImages.size > 0 || !title.trim()) return;
@@ -403,7 +405,7 @@ export default function BookProjectEditor({
           </button>
           <button type="button" className="btn-ghost book-editor-step-delete" aria-label={`Step ${index + 1} 삭제`} title={steps.length <= 1 ? "프로젝트에는 최소 한 개의 STEP이 필요합니다." : `${step.title || "제목 없는 STEP"} 삭제`} disabled={saving || busyImages.size > 0 || steps.length <= 1} draggable={false} onPointerDown={event => event.stopPropagation()} onClick={() => removeStep(step.id)}><IconTrash size={18} /></button>
         </div>)}
-        <button type="button" className="btn-outline book-editor-add-step" disabled={saving || busyImages.size > 0} onClick={addStep}><IconAddFeature size={17} /> STEP 추가</button>
+        <button type="button" className="btn-outline book-editor-add-step" disabled={saving || busyImages.size > 0} onClick={() => setAddingStepDialog(true)}><IconAddFeature size={17} /> STEP 추가</button>
       </nav>
       {selectedEditorStep && <section className="book-editor-selected-step" key={selectedEditorStep.id} aria-label={`${selectedEditorStep.title} 편집`}>
         <header className="book-editor-selected-heading"><h3>{selectedEditorStep.title}</h3>{renderStepOrderAction(selectedEditorStep)}</header>
@@ -419,7 +421,7 @@ export default function BookProjectEditor({
       {!expanded && fullEditor}
       {mounted && expanded && createPortal(
         <div className="modal-backdrop book-project-edit-backdrop" {...backdropClose(() => setExpanded(false))}>
-          <section ref={dialogRef} inert={addingItem ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">
+          <section ref={dialogRef} inert={addingItem || addingStepDialog ? true : undefined} className="modal book-step-edit-modal book-project-edit-modal" role="dialog" aria-modal="true" aria-labelledby="book-project-dialog-title">
             <header className="modal-head">
               <h3 id="book-project-dialog-title">{project ? "프로젝트 편집" : "프로젝트 만들기"}</h3>
               <button type="button" className="btn-close" aria-label="패널로 돌아가기" onClick={() => setExpanded(false)}>×</button>
@@ -432,6 +434,16 @@ export default function BookProjectEditor({
           </section>
         </div>, document.body
       )}
+      {addingStepDialog && <BookStepAddModal classes={copyClasses} currentClassId={currentClassId} loadProject={loadProject}
+        onClose={() => setAddingStepDialog(false)}
+        onCreate={() => { addStep(); setAddingStepDialog(false); }}
+        onImport={sourceStep => {
+          const copied = cloneBookProjectStep(sourceStep);
+          assertBookProjectSize({ title, steps: [...steps, copied] }, { pendingImageUploads: true });
+          setSteps(current => [...current, copied]);
+          setActiveStepId(copied.id);
+          setAddingStepDialog(false);
+        }} />}
       {addingItem && addingStep && (
         <BookProjectItemEditModal
           project={draftProject}
