@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopNav from "@/components/TopNav";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
+import AdminInternalWork from "@/components/AdminInternalWork";
 import ConfirmModal from "@/components/ConfirmModal";
 import PinAuthModal from "@/components/PinAuthModal";
 import { requestPinAuth } from "@/lib/pinAuthClient";
@@ -203,6 +204,7 @@ export default function AdminDashboardPage() {
                 </button>
                 </div>
               </header>
+              <AdminInternalWork key={selected.uid} participant={selected} classes={classes} memberships={memberships} />
               <ActivityHeatmap events={activityEvents} />
             </>
           ) : (
